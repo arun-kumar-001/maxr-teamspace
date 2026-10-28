@@ -203,3 +203,18 @@ If a feature needs a change there, stop and flag it instead of editing it.
 
 `docs/requirements/` · `docs/architecture/` · `docs/security/` · `docs/development/` · `docs/project-status.md`
 Spec source: `MAXR_ONE_Staff_Management_HLD_LLD_Architect_Specification.pdf` (v1.0 approved baseline).
+
+## 16. Installed agent skills and tools
+
+Project skills live in `.claude/skills/` (committed, so they load in cloud sessions). Review any new skill before adding it; skills run with full agent permissions.
+
+| Skill | Source | Use for |
+|---|---|---|
+| `design-taste-frontend` | Leonxlnx/taste-skill (`skills-lock.json`) | Visual quality, dashboards/admin screens, anti-generic UI. **Brand tokens in §8 win over its palette suggestions.** |
+| `react-best-practices` | vercel-labs/agent-skills | React performance and patterns |
+| `composition-patterns` | vercel-labs/agent-skills | Component composition, avoiding boolean-prop sprawl |
+| `web-design-guidelines` | vercel-labs/agent-skills | UI/accessibility review |
+| `21st-ui` | 21st-dev/magic-mcp | Find/generate UI components via the 21st MCP |
+
+- `.mcp.json` registers the 21st MCP. It needs the `API_KEY_21ST` environment variable (set it in the cloud environment secrets; never commit the key). Generated components must be adapted to `components/ui` and the §8 tokens.
+- `VoltAgent/awesome-design-md` is a catalog of `DESIGN.md` examples, kept as reference only. When the TL picks a style, write our own `docs/design/DESIGN.md` from §8 instead of copying a brand's file.
