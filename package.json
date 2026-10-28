@@ -11,6 +11,7 @@
     "dev": "npm run dev --workspaces --if-present",
     "dev:api": "npm run dev --workspace=@maxr/api",
     "dev:web": "npm run dev --workspace=@maxr/web",
+    "dev:all": "npm run docker:up && npm run db:migrate && npm run dev",
     "build": "npm run build --workspace=@maxr/shared && npm run build --workspace=@maxr/api && npm run build --workspace=@maxr/web",
     "build:shared": "npm run build --workspace=@maxr/shared",
     "build:api": "npm run build --workspace=@maxr/api",
@@ -19,6 +20,12 @@
     "lint": "npm run lint --workspaces --if-present",
     "format:check": "prettier --check \"{apps,packages}/**/*.{ts,tsx,js,jsx,json,css}\" \"*.{json,cjs,js,yaml,yml}\" \"docs/architecture/decisions/**/*.md\"",
     "format": "prettier --write \"{apps,packages}/**/*.{ts,tsx,js,jsx,json,css}\" \"*.{json,cjs,js,yaml,yml}\" \"docs/architecture/decisions/**/*.md\"",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:status": "docker compose ps",
+    "db:migrate": "npm run build:api && npm run db:migrate --workspace=@maxr/api",
+    "db:seed": "npm run db:seed --workspace=@maxr/api",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
