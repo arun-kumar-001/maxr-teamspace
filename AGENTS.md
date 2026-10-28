@@ -130,7 +130,27 @@ Derived from the brand cover of the design PDF (sampled colors). **Confirm with 
 Rules:
 - Light theme is default; dark navy for shell. Support both via tokens. Font: Inter (matches the PDF), system fallback.
 - Status is never conveyed by color alone (icon/label too). Meet **WCAG 2.1 AA** (4.5:1 text contrast, visible focus, keyboard operable, labelled inputs, ARIA only when needed).
-- Mobile-first responsive; tables degrade to cards on small screens. 8px spacing scale; radius 8px cards, 6px inputs.
+- 8px spacing scale; radius 8px cards, 6px inputs.
+
+### Responsive and fluid layout (mandatory, every page) [SPEC T§3.1: responsive for desktop and mobile web]
+One codebase must work from a small phone to a large/ultrawide monitor. Design **mobile-first, then scale up**; never build a desktop-only or mobile-only screen.
+
+| Tier | Width | Layout expectations |
+|---|---|---|
+| Phone | 320–639px | Single column; sidebar becomes drawer or bottom nav; tables become cards/lists; full-width forms; 44×44px touch targets |
+| Tablet | 640–1023px | 1–2 columns; collapsed icon rail; tables with priority columns |
+| Laptop/desktop | 1024–1535px | Persistent sidebar; multi-column dashboards; full tables |
+| Large monitor | 1536–2559px | More columns/widgets (not stretched text); master-detail split panes; wider tables show more columns |
+| Ultrawide/4K | ≥2560px | Content grids keep growing; readable text/forms capped (≈70ch / ≈960px) and centered; no tiny UI or empty void |
+
+Rules:
+- Breakpoints live in tokens only (`xs 360 · sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536 · 3xl 1920 · 4xl 2560`); no per-component magic widths.
+- Use fluid primitives: CSS grid/flex, `minmax()`, `auto-fit/auto-fill`, `clamp()` for type and spacing, container queries for components, `rem`/`%`/`fr` not fixed `px` widths, `dvh` for full-height layouts.
+- No horizontal page scroll at any width (wide tables scroll inside their own container); no content clipped at 200% browser zoom or enlarged system text; honor safe-area insets and orientation change.
+- App shell: drawer/bottom nav (phone) → icon rail (tablet) → full sidebar (desktop+), with sticky header; modals become full-screen sheets on phone.
+- Data views: DataTable must define a card layout for phone and column priority for tablet; charts resize without overflow.
+- Hover-only interactions are forbidden (touch + keyboard parity). Images/media responsive with intrinsic aspect ratios.
+- **Verification (part of Definition of Done):** every new page is checked at 360×640, 390×844, 768×1024, 1024×768, 1366×768, 1440×900, 1920×1080, 2560×1440 and 3440×1440; critical flows run in Playwright at a phone, tablet and desktop viewport; UI PRs include screenshots at phone and desktop widths.
 - Every data view implements **loading, empty, error and forbidden** states, and every form shows inline validation plus a submit-in-progress state.
 - Reuse components from `components/ui` (Button, Input, Select, DataTable, Modal, Badge, StatusPill, EmptyState, Toast, FormField). Before creating a new component, search for an existing one. Do not add a second UI library.
 - Workflow state badges use one shared mapping: leave (Applied/Pending/Approved/Rejected/Cancelled), task (To Do/In Progress/In Review/Completed/Blocked).

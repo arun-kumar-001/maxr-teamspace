@@ -14,6 +14,7 @@ Each issue spans DB + backend + business logic + UI + tests; none is "UI only".
 - [ ] Migrations versioned, reversible where supported, indexes justified; no edits to others' tables/files.
 - [ ] Tests: unit (rules), integration (real PostgreSQL, role matrix incl. cross-scope denial), component/e2e for critical UI. CI green: typecheck, lint, tests, audit, secret scan.
 - [ ] UI has loading, empty, error, access-denied, validation and submitting states; WCAG 2.1 AA; uses shared tokens/components only.
+- [ ] **Responsive:** works from phone (320px) to ultrawide (3440px) per `AGENTS.md` §8 "Responsive and fluid layout": no horizontal page scroll, tables→cards on phone, layout uses the extra space on large monitors, checked at the 9 reference viewports; screenshots at phone and desktop attached to the PR.
 - [ ] Audit log entry for sensitive actions; no secrets/PII in logs.
 - [ ] Docs updated (API in OpenAPI/`docs/architecture`, `docs/project-status.md`); PR description lists risks and rollback.
 - [ ] Reviewed and approved by TL.
@@ -65,17 +66,18 @@ Wait points: D1-08 waits TL-11 + D-10; D1-12 waits D2-05; D2-04/07/08 wait D2-05
 - **AC:** sample module demonstrates all conventions; OpenAPI published.
 
 ### TL-08 · Design tokens — P0 · S
-- **Scope:** CSS variables/Tailwind theme from approved palette (D-22), typography, spacing, radius, status colors, dark shell; contrast check script.
-- **AC:** one source of tokens; no hex outside token file (lint rule); AA contrast verified.
+- **Scope:** CSS variables/Tailwind theme from approved palette (D-22), typography (fluid `clamp()` scale), spacing, radius, status colors, dark shell, **breakpoint tokens `xs 360 → 4xl 2560`**, container max-widths, contrast check script.
+- **AC:** one source of tokens; no hex outside token file (lint rule); AA contrast verified; breakpoints defined only here.
 - **Note:** palette is currently provisional.
 
 ### TL-09 · Shared UI components — P0 · L
 - **Scope:** Button, Input, Select, DataTable (pagination/sort), Modal, Badge/StatusPill (leave+task mappings), EmptyState, ErrorState, ForbiddenState, Toast, FormField, Skeleton, Tabs, DatePicker, FileUpload; docs page; component tests.
-- **AC:** keyboard/ARIA tested; used by app shell; Storybook or docs route.
+- **Responsive scope:** DataTable has phone card layout + tablet column priority; Modal becomes full-screen sheet on phone; forms stack on phone and use multi-column grids on desktop/large screens; page-layout primitives (`PageContainer`, `Grid`, `SplitPane`, `Stack`) handle fluid widths and ultrawide max-widths; touch targets ≥44px.
+- **AC:** keyboard/ARIA tested; used by app shell; Storybook or docs route; each component demonstrated at 360, 768, 1280, 1920 and 3440px with Playwright viewport screenshots.
 
 ### TL-10 · Application shell and four role views — P0 · L
-- **Scope:** login page, layout, role-based navigation registry (modules register `nav.ts`/`routes.ts`), route guards, 403/404/error pages, four dashboard shells (Admin, HR, Team Lead, Staff) with placeholder widgets, session handling, responsive layout.
-- **AC:** each seeded role sees only its nav; direct URL to forbidden route shows access-denied; backend still authoritative.
+- **Scope:** login page, layout, role-based navigation registry (modules register `nav.ts`/`routes.ts`), route guards, 403/404/error pages, four dashboard shells (Admin, HR, Team Lead, Staff) with placeholder widgets, session handling, fully responsive layout: bottom nav/drawer (phone) → icon rail (tablet) → full sidebar (desktop) → expanded multi-column dashboards on large/ultrawide monitors.
+- **AC:** every shell page and dashboard passes the 9-viewport check with no horizontal scroll; each seeded role sees only its nav; direct URL to forbidden route shows access-denied; backend still authoritative.
 - **Depends:** TL-05, TL-08, TL-09.
 
 ### TL-11 · Shared services: audit, notifications outbox, storage adapter — P0 · L
