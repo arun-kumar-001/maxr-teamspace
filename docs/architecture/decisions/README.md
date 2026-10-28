@@ -6,7 +6,7 @@ Every major decision is tracked using an Architecture Decision Record (ADR) to e
 
 ## Status Legend
 
-- **Approved**: Formally decided, aligned with the approved baseline specification and Technical Lead guidance.
+- **Approved**: Formally decided by the Technical Lead. Only the Technical Lead may set this status.
 - **Pending Approval**: Proposed decision requiring Technical Lead review and sign-off before downstream implementation.
 - **Superseded**: Replaced by a newer decision.
 
@@ -14,11 +14,11 @@ Every major decision is tracked using an Architecture Decision Record (ADR) to e
 
 | ID                                               | Title                                                    | Status           | Date       | Summary                                                                                                            |
 | ------------------------------------------------ | -------------------------------------------------------- | ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| [D-02](./D-02-monorepo-and-package-manager.md)   | Modular Monolith, Monorepo Structure & Package Tooling   | Approved         | 2026-10-28 | Modular monolith with `apps/web`, `apps/api`, `packages/shared`; workspace package management.                     |
-| [D-03](./D-03-backend-and-frontend-framework.md) | Backend (Express + TypeScript) & Frontend (React + Vite) | Approved         | 2026-10-28 | Express.js layered architecture (`routes -> service -> repository`) and React SPA with Tailwind CSS design tokens. |
-| [D-04](./D-04-database-and-migrations.md)        | PostgreSQL 16 & Plain SQL Migrations (No Prisma)         | Approved         | 2026-10-28 | PostgreSQL 16 with versioned plain SQL migrations; strict relational constraints; Prisma excluded.                 |
+| [D-02](./D-02-monorepo-and-package-manager.md)   | Modular Monolith, Monorepo Structure & Package Tooling   | Proposed         | 2026-10-28 | Modular monolith with `apps/web`, `apps/api`, `packages/shared`; workspace package management.                     |
+| [D-03](./D-03-backend-and-frontend-framework.md) | Backend (Express + TypeScript) & Frontend (React + Vite) | Proposed         | 2026-10-28 | Express.js layered architecture (`routes -> service -> repository`) and React SPA with Tailwind CSS design tokens. |
+| [D-04](./D-04-database-and-migrations.md)        | PostgreSQL 16 & Plain SQL Migrations (No Prisma)         | Proposed         | 2026-10-28 | PostgreSQL 16 with versioned plain SQL migrations; strict relational constraints; Prisma excluded.                 |
 | [D-05](./D-05-authentication-and-sessions.md)    | Authentication & Revocable Session Strategy              | Pending Approval | 2026-10-28 | Stateful sessions / revocable tokens in Redis/PostgreSQL via secure httpOnly cookies, Argon2id password hashing.   |
-| [D-09](./D-09-cicd-and-quality-gates.md)         | CI/CD Pipeline & Quality Gates                           | Approved         | 2026-10-28 | GitHub Actions CI enforcing strict TypeScript, ESLint, Prettier, Vitest, and migration validation.                 |
+| [D-09](./D-09-cicd-and-quality-gates.md)         | CI/CD Pipeline & Quality Gates                           | Proposed         | 2026-10-28 | GitHub Actions CI enforcing strict TypeScript, ESLint, Prettier, Vitest, and migration validation.                 |
 
 ---
 
