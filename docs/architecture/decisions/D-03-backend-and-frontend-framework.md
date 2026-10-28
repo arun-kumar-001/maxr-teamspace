@@ -1,7 +1,7 @@
 # ADR D-03: Backend & Frontend Framework Selection
 
-- **Status:** Approved
-- **Deciders:** Technical Lead (`arun-kumar-001`)
+- **Status:** Proposed (awaiting Technical Lead approval)
+- **Deciders:** Technical Lead (`arun-kumar-001`), pending
 - **Date:** 2026-10-28
 - **Context:** [Product Baseline §10 (D-03)](../../requirements/product-baseline.md#10-decision-register-needs-technical-lead-approval), [AGENTS.md §2, §4, §8](../../AGENTS.md)
 
