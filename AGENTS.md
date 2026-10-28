@@ -27,11 +27,14 @@ Identity documents, bank accounts and compensation need **explicit permission**.
 ### Module ownership / branches
 | Branch | Owner | Scope |
 |---|---|---|
-| `feature/global-setup` | Technical Lead | Foundation, rules, shared code, CI, integration |
-| `feature/employee-management` | Employee dev | Users & roles UI, employee directory, onboarding/offboarding, documents |
-| `feature/attendance-collaboration` | Ops/collab dev | Attendance, leave, tasks, meetings, expenses (separate issues, clear submodule ownership) |
+| `main` | Technical Lead (merges only) | Stable, reviewed releases |
+| `develop` | Technical Lead (merges only) | Integration branch; **every developer PR targets this** |
+| `global/<issue>` (short-lived) | Dev 1 `maxrindia29` (backend) / Dev 2 `maxrindia30-vb` (UI) | Foundation issues #3–#17, cut from `develop` |
+| `feature/employee-management` | Dev 1 `maxrindia29` | Employee Management, user/role admin, settings, expenses (issues #18–#32) |
+| `feature/attendance-collaboration` | Dev 2 `maxrindia30-vb` | Attendance, leave, approvals, notifications, tasks, meetings (issues #33–#48) |
 
-If there are three developers besides the TL, add a 4th branch rather than overloading one (e.g. split `attendance-leave` from `tasks-collaboration`).
+The Technical Lead reviews and merges developer PRs into `develop`, then raises the single PR `develop → main` at each milestone. If a third developer joins, add a fourth work branch rather than overloading one.
+Start with `docs/development/developer-onboarding.md`.
 
 ## 2. Verified technology stack
 
@@ -178,8 +181,9 @@ Bug fix = failing test first. Do not skip, disable or loosen tests to get green.
 
 ## 11. Git, commits and PRs
 
-- `main` = stable integration branch. **Never commit directly to `main`.** Never force-push shared branches, rewrite others' history, or delete branches.
-- Work on your assigned branch (see §1). Merge to `main` only via reviewed PR from the TL's integration process.
+- `main` = stable branch, `develop` = integration branch. **Never commit or push directly to `main` or `develop`.** Never force-push shared branches, rewrite others' history, or delete branches.
+- Flow: your branch → PR into `develop` → Technical Lead reviews and merges → Technical Lead raises `develop → main`. Developers never open PRs into `main`.
+- Work on your assigned branch (see §1), one PR per issue, linked with `Closes #<n>`. Merge `develop` into your branch before opening a PR (merge commits; do not rebase shared branches).
 - Agents: **do not commit, push, merge or deploy unless the user explicitly asks.** Do not open a PR unless asked.
 - Commits: Conventional Commits (`feat(leave): ...`, `fix(auth): ...`), small and focused, one concern each.
 - PR must include: linked issue, summary, screenshots for UI, test evidence, migration/rollback notes, security impact, docs updated.
@@ -187,7 +191,7 @@ Bug fix = failing test first. Do not skip, disable or loosen tests to get green.
 
 ## 12. Shared files: restricted
 
-Only the Technical Lead (branch `feature/global-setup`) changes these. Module developers request changes via an issue/PR to that branch:
+Changes need Technical Lead approval. Foundation issues #3–#17 may touch them only for the developer assigned to that issue. Feature work (issues #18–#48) must not edit them: open an issue or comment and wait. Files:
 `AGENTS.md`, `docs/architecture/**`, `docs/security/**`, root configs (tsconfig, eslint, prettier, docker, nginx), `.github/**` (CI/CD), `packages/shared/**`, auth/RBAC middleware, design tokens, `components/ui/**`, DB migrations that touch shared tables (`users`, `roles`, `employees`, `departments`).
 
 If a feature needs a change there, stop and flag it instead of editing it.
