@@ -1,0 +1,32 @@
+{
+  "name": "maxr-teamspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MAXR Teamspace - Modular Staff Management Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev --workspace=@maxr/api",
+    "dev:web": "npm run dev --workspace=@maxr/web",
+    "build": "npm run build --workspace=@maxr/shared && npm run build --workspace=@maxr/api && npm run build --workspace=@maxr/web",
+    "build:shared": "npm run build --workspace=@maxr/shared",
+    "build:api": "npm run build --workspace=@maxr/api",
+    "build:web": "npm run build --workspace=@maxr/web",
+    "typecheck": "npm run typecheck --workspace=@maxr/shared && npm run typecheck --workspace=@maxr/api && npm run typecheck --workspace=@maxr/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "format:check": "prettier --check \"{apps,packages}/**/*.{ts,tsx,js,jsx,json,css}\" \"*.{json,cjs,js,yaml,yml}\" \"docs/architecture/decisions/**/*.md\"",
+    "format": "prettier --write \"{apps,packages}/**/*.{ts,tsx,js,jsx,json,css}\" \"*.{json,cjs,js,yaml,yml}\" \"docs/architecture/decisions/**/*.md\"",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
