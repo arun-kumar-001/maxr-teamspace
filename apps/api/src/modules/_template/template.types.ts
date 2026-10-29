@@ -1,31 +1,13 @@
-/**
- * Template Module Types & Data Transfer Objects (DTOs)
- */
+import { z } from 'zod';
+import {
+  createTemplateSchema,
+  listTemplatesQuerySchema,
+  templateSchema,
+  updateTemplateSchema,
+} from './template.schemas';
 
-export interface TemplateEntity {
-  id: string;
-  name: string;
-  description: string | null;
-  scope: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateTemplateDto {
-  name: string;
-  description?: string;
-}
-
-export interface UpdateTemplateDto {
-  name?: string;
-  description?: string;
-  isActive?: boolean;
-}
-
-export interface TemplateFilterQuery {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  isActive?: boolean;
-}
+/** Domain entity and DTOs are derived from the Zod schemas, so types and validation cannot drift. */
+export type TemplateEntity = z.infer<typeof templateSchema>;
+export type CreateTemplateDto = z.infer<typeof createTemplateSchema>;
+export type UpdateTemplateDto = z.infer<typeof updateTemplateSchema>;
+export type TemplateListQuery = z.infer<typeof listTemplatesQuerySchema>;

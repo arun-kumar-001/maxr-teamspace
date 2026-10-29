@@ -1,68 +1,52 @@
-import { Request, Response, NextFunction } from 'express';
-import { ApiErrorEnvelope, ERROR_CODES, StandardErrorCode } from '@maxr/shared';
-import { RequestWithId } from './request-id';
+import { ApiErrorEnvelope, ERROR_CODES } from '@maxr/shared';
+import { NextFunction, Request, Response } from 'express';
+import { AppError } from '../http/app-error';
+import { mapDatabaseError } from '../http/db-errors';
+import { Logger, getLogger } from '../logging/logger';
 
-export class AppError extends Error {
-  public readonly statusCode: number;
-  public readonly code: StandardErrorCode | string;
-  public readonly details?: Array<{ field?: string; message: string; rule?: string }>;
+// Re-exported so existing imports from this module keep working.
+export { AppError };
 
-  constructor(
-    statusCode: number,
-    code: StandardErrorCode | string,
-    message: string,
-    details?: Array<{ field?: string; message: string; rule?: string }>,
-  ) {
-    super(message);
-    this.name = 'AppError';
-    this.statusCode = statusCode;
-    this.code = code;
-    this.details = details;
-    Object.setPrototypeOf(this, new.target.prototype);
+/** Errors raised by Express's body parser carry a `type`. */
+function fromBodyParser(err: unknown): AppError | null {
+  const type = (err as { type?: unknown } | null)?.type;
+  if (type === 'entity.too.large') {
+    return new AppError(413, ERROR_CODES.PAYLOAD_TOO_LARGE, 'The request body is too large');
   }
+  if (type === 'entity.parse.failed' || type === 'encoding.unsupported') {
+    return new AppError(400, ERROR_CODES.BAD_REQUEST, 'Malformed JSON in request body');
+  }
+  return null;
 }
 
-export function errorHandler(
-  err: Error | AppError,
-  req: Request,
-  res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _next: NextFunction,
-): void {
-  const reqWithId = req as RequestWithId;
-  const requestId = reqWithId.id;
+/**
+ * The single place where errors become HTTP responses. Known errors keep their status and
+ * message; anything unexpected becomes a generic 500 so internals never reach the client.
+ * Details of 5xx errors are logged with the request id for support.
+ */
+export function createErrorHandler(logger: Logger) {
+  return (err: unknown, req: Request, res: Response, _next: NextFunction): void => {
+    const appError = err instanceof AppError ? err : (fromBodyParser(err) ?? mapDatabaseError(err));
 
-  let statusCode = 500;
-  let code: StandardErrorCode | string = ERROR_CODES.INTERNAL_SERVER_ERROR;
-  let message = 'An unexpected internal server error occurred';
-  let details: Array<{ field?: string; message: string; rule?: string }> | undefined;
+    const statusCode = appError?.statusCode ?? 500;
+    const envelope: ApiErrorEnvelope = {
+      error: {
+        code: appError?.code ?? ERROR_CODES.INTERNAL_SERVER_ERROR,
+        message: appError?.message ?? 'An unexpected internal server error occurred',
+        ...(appError?.details ? { details: appError.details } : {}),
+        ...(req.id ? { requestId: req.id } : {}),
+      },
+    };
 
-  if (err instanceof AppError) {
-    statusCode = err.statusCode;
-    code = err.code;
-    message = err.message;
-    details = err.details;
-  } else if (err.name === 'SyntaxError' && 'status' in err) {
-    // Malformed JSON body
-    statusCode = 400;
-    code = ERROR_CODES.BAD_REQUEST;
-    message = 'Malformed JSON in request body';
-  }
-
-  const envelope: ApiErrorEnvelope = {
-    error: {
-      code,
-      message,
-      ...(details ? { details } : {}),
-      ...(requestId ? { requestId } : {}),
-    },
+    if (statusCode >= 500) {
+      logger.error('unhandled error', { requestId: req.id, method: req.method, err });
+    }
+    if (res.headersSent) {
+      return;
+    }
+    res.status(statusCode).json(envelope);
   };
-
-  // Log internal server errors (redacting PII)
-  if (statusCode >= 500) {
-    // eslint-disable-next-line no-console
-    console.error(`[Error] ${req.method} ${req.url} - RequestId: ${requestId} - ${err.message}`);
-  }
-
-  res.status(statusCode).json(envelope);
 }
+
+/** Default instance using the process-wide logger. */
+export const errorHandler = createErrorHandler(getLogger());

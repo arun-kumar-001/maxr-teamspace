@@ -1,66 +1,46 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import { idParamSchema } from '@maxr/shared';
+import { validated } from '../../http/validate';
 import { TemplateService } from './template.service';
-import { TemplateFilterQuery, CreateTemplateDto, UpdateTemplateDto } from './template.types';
+import {
+  createTemplateSchema,
+  listTemplatesQuerySchema,
+  updateTemplateSchema,
+} from './template.schemas';
 
+/** HTTP only: read validated input, call the service, shape the response. */
 export class TemplateController {
   constructor(private readonly service: TemplateService) {}
 
-  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const query: TemplateFilterQuery = {
-        page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
-        pageSize: req.query.pageSize ? parseInt(req.query.pageSize as string, 10) : 20,
-        search: req.query.search as string,
-        isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
-      };
+  // `actor` is set by the auth middleware (issue #7); `visibleOwnerIds` by the RBAC scope
+  // resolver (issue #8). Until they exist the sample runs unrestricted as "system".
+  private actorId(req: Request): string {
+    return req.actor?.id ?? 'system';
+  }
 
-      // In real modules, scopeFilter is populated by the RBAC middleware (TL-06)
-      const result = await this.service.list(query);
-      res.status(200).json(result);
-    } catch (err) {
-      next(err);
-    }
+  list = async (req: Request, res: Response): Promise<void> => {
+    const { query } = validated(req, { query: listTemplatesQuerySchema });
+    res.status(200).json(await this.service.list(query));
   };
 
-  getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      const result = await this.service.getById(id);
-      res.status(200).json({ data: result });
-    } catch (err) {
-      next(err);
-    }
+  getById = async (req: Request, res: Response): Promise<void> => {
+    const { params } = validated(req, { params: idParamSchema });
+    res.status(200).json({ data: await this.service.getById(params.id) });
   };
 
-  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const body = req.body as CreateTemplateDto;
-      const actorUserId = 'system'; // Replaced by req.user.id in real modules
-      const result = await this.service.create(body, actorUserId);
-      res.status(201).json({ data: result });
-    } catch (err) {
-      next(err);
-    }
+  create = async (req: Request, res: Response): Promise<void> => {
+    const { body } = validated(req, { body: createTemplateSchema });
+    res.status(201).json({ data: await this.service.create(body, this.actorId(req)) });
   };
 
-  update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      const body = req.body as UpdateTemplateDto;
-      const result = await this.service.update(id, body);
-      res.status(200).json({ data: result });
-    } catch (err) {
-      next(err);
-    }
+  update = async (req: Request, res: Response): Promise<void> => {
+    const { params, body } = validated(req, { params: idParamSchema, body: updateTemplateSchema });
+    res.status(200).json({ data: await this.service.update(params.id, body) });
   };
 
-  deactivate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      await this.service.deactivate(id);
-      res.status(200).json({ data: { message: `Template '${id}' successfully deactivated` } });
-    } catch (err) {
-      next(err);
-    }
+  deactivate = async (req: Request, res: Response): Promise<void> => {
+    const { params } = validated(req, { params: idParamSchema });
+    await this.service.deactivate(params.id);
+    res.status(200).json({ data: { id: params.id, isActive: false } });
   };
 }
