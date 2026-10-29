@@ -134,7 +134,7 @@ SOLID, DRY, KISS, YAGNI, separation of concerns.
 | `brand-red` | `#E5322D` **[approx., verify from logo]** | Logo mark only |
 
 Rules:
-- Shell: **floating dark teal sidebar** (24px radius, 16px from the window edges, collapses to an 88px icon rail), top bar on the page background, big greeting header. Light content area. No dark theme yet (decide before adding the theme toggle). `navy-*` tokens are legacy: never use them.
+- Shell: **floating dark teal sidebar** = the shared `Sidebar` component (Petalo style: solid teal active pill; 24px radius, 16px from the window edges, collapses to an 88px icon rail, `SidebarDrawer` on phone), top bar on the page background, big greeting header. Light content area. No dark theme yet (decide before adding the theme toggle). `navy-*` tokens are legacy: never use them.
 - Fonts: Outfit for greeting, titles and big numbers (`font-display`); Inter for UI text; system fallbacks.
 - Radius: controls 12px, tiles 16px, cards/sidebar/modals 24px, chips fully round. Cards are almost flat (`shadow-card`); selected items `shadow-raised`; primary buttons `shadow-primary`.
 - Status is never conveyed by color alone (icon/label too). Meet **WCAG 2.1 AA** (4.5:1 text contrast, visible focus, keyboard operable, labelled inputs, ARIA only when needed). Every new text/background pairing goes into `contrast.test.ts`.
@@ -160,7 +160,7 @@ Rules:
 - Hover-only interactions are forbidden (touch + keyboard parity). Images/media responsive with intrinsic aspect ratios.
 - **Verification (part of Definition of Done):** every new page is checked at 360×640, 390×844, 768×1024, 1024×768, 1366×768, 1440×900, 1920×1080, 2560×1440 and 3440×1440; critical flows run in Playwright at a phone, tablet and desktop viewport; UI PRs include screenshots at phone and desktop widths.
 - Every data view implements **loading, empty, error and forbidden** states, and every form shows inline validation plus a submit-in-progress state.
-- Reuse components from `components/ui` (Button, Input, Select, DataTable, Modal, Badge, StatusPill, EmptyState, Toast, FormField, StatCard, MetricStrip, DeltaChip, SegmentedControl, IconButton). Before creating a new component, search for an existing one. Do not add a second UI library.
+- Reuse components from `components/ui` (Button, Input, Select, DataTable, Modal, Badge, StatusPill, EmptyState, Toast, FormField, StatCard, MetricStrip, DeltaChip, SegmentedControl, IconButton, Sidebar, SidebarDrawer). Before creating a new component, search for an existing one. Do not add a second UI library.
 - Workflow state badges use one shared mapping: leave (Applied/Pending/Approved/Rejected/Cancelled), task (To Do/In Progress/In Review/Completed/Blocked).
 
 ## 9. Business rules from the spec (implement exactly; ask when unclear)
