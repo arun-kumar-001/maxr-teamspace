@@ -48,3 +48,6 @@ test-results/
 tmp/
 temp/
 
+
+# Local file storage (see docs/architecture/shared-services.md)
+uploads/

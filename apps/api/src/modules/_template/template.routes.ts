@@ -1,8 +1,9 @@
 import { idParamSchema } from '@maxr/shared';
 import { Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
-import { IdempotencyStore, InMemoryIdempotencyStore, idempotent } from '../../http/idempotency';
+import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
+import { PlatformServices } from '../../platform';
 import { TemplateController } from './template.controller';
 import { TemplateRepository } from './template.repository';
 import {
@@ -18,10 +19,13 @@ import { TemplateService } from './template.service';
  * Mounted under /api/v1/templates by routes/index.ts (non-production only).
  */
 export function createTemplateRouter(
-  idempotencyStore: IdempotencyStore = new InMemoryIdempotencyStore(),
+  idempotencyStore: IdempotencyStore,
+  platform: Pick<PlatformServices, 'audit' | 'events'>,
 ): Router {
   const router = Router();
-  const controller = new TemplateController(new TemplateService(new TemplateRepository()));
+  const controller = new TemplateController(
+    new TemplateService(new TemplateRepository(), platform),
+  );
 
   router.get('/', validate({ query: listTemplatesQuerySchema }), asyncHandler(controller.list));
   router.get('/:id', validate({ params: idParamSchema }), asyncHandler(controller.getById));

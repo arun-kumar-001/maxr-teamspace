@@ -97,7 +97,7 @@ Stack ADR; monorepo scaffold; Docker dev env; CI gates; DB migrations + base tab
 | D-07 | Mobile app | F1 optional | Out of MVP; responsive web only |
 | D-08 | Export formats | Text CSV/PDF; F1 PDF/Excel | CSV + PDF; Excel only if requested |
 | D-09 | CI/CD | Text GitHub Actions; F1 GitHub Actions / GitLab CI | GitHub Actions |
-| D-10 | Cantobo Server | Storage API, on-prem vs hosted, backup, signed-link mechanism unspecified | Ask infra owner; storage adapter interface hides it |
+| D-10 | Cantobo Server | Storage API, on-prem vs hosted, backup, signed-link mechanism unspecified | Ask infra owner; storage adapter interface hides it. Questions to ask are in `docs/architecture/shared-services.md` §8 |
 | D-11 | Team and scope model | "Team scope", "HR scope" undefined; reporting hierarchy `manager_id` only | Team = direct reports via `manager_id` (non-recursive); HR = all employees; confirm |
 | D-12 | Leave workflow | Applied vs Pending; cancel rules; Team Lead's/HR's own leave approver | Define transition table and no-self-approval rule |
 | D-13 | Attendance & shifts | No shift table; location semantics; late/overtime; timezone; correction fields | Add `shifts`, `attendance_corrections`; company timezone setting |
