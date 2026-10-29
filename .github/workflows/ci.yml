@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      # Fails if package-lock.json is out of sync with any package.json.
+      - name: Install (clean, lockfile-exact)
+        run: npm ci
+
+      # Builds packages/shared first; apps/api and apps/web depend on it.
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Format check
+        run: npm run format:check
+
+      # Non-blocking only until issue #52 (F2) fixes the ESLint setup. Remove
+      # `continue-on-error` in the PR that closes #52.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test
+        run: npm test --if-present
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      # Production dependencies: any high or critical finding blocks the merge.
+      - name: Dependency audit (production)
+        run: npm audit --omit=dev --audit-level=high
+
+      # Dev dependencies (e.g. vite): informational until issue #52 (F7) is done.
+      # Remove `continue-on-error` in the PR that closes #52.
+      - name: Dependency audit (all, informational)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+
+  database:
+    name: Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: maxr_teamspace
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d maxr_teamspace"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/maxr_teamspace
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # The migration runner is added by issue #4 (PR #56). Until it is merged
+      # these steps are skipped and the job passes; afterwards they run
+      # automatically on every PR.
+      - name: Migrations apply on a clean database
+        if: hashFiles('apps/api/src/db/migrator.ts') != ''
+        run: npm run db:migrate
+
+      - name: Migrations are idempotent (second run applies nothing)
+        if: hashFiles('apps/api/src/db/migrator.ts') != ''
+        run: npm run db:migrate --workspace=@maxr/api
+
+      - name: Dev seed runs twice without error
+        if: hashFiles('apps/api/src/db/seeder.ts') != ''
+        run: |
+          npm run db:seed
+          npm run db:seed
