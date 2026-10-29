@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { IdempotencyStore } from '../http/idempotency';
+import { createAttendanceRouter } from '../modules/attendance/attendance.routes';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
@@ -25,6 +26,9 @@ export function createApiRouter({
 
   // File downloads by signed link (see docs/architecture/shared-services.md).
   router.use('/files', createFilesRouter(platform.storage));
+
+  // Attendance and time tracking module (Issue #34, D2-02)
+  router.use('/attendance', createAttendanceRouter(idempotencyStore, platform));
 
   if (exposeDevRoutes) {
     router.use('/templates', createTemplateRouter(idempotencyStore, platform));
