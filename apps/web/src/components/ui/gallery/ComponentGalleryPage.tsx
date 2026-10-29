@@ -15,10 +15,58 @@ import {
   type SortDirection,
   Toast,
   Tabs,
+  StatCard,
+  SegmentedControl,
   PageContainer,
   Stack,
   Grid,
 } from '../index.js';
+
+// Simple outline icons for the samples (the icon library is still an open decision).
+function Icon({ path }: { path: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={path} />
+    </svg>
+  );
+}
+
+const ICONS = {
+  people:
+    'M16 19v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M20 19v-1a3 3 0 0 0-2-2.8M15.5 4.2a3 3 0 0 1 0 5.6',
+  clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M12 7v5l3 2',
+  calendar:
+    'M8 3v3M16 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1',
+  check: 'M20 6 9 17l-5-5',
+  tasks: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
+  pulse: 'M3 12h4l3-8 4 16 3-8h4',
+};
+
+// Sample numbers for the design reference only (labelled as such on screen).
+const SAMPLE_KPIS = [
+  { label: 'Active Employees', value: '124', caption: 'Across 6 departments', icon: ICONS.people },
+  { label: 'Present Today', value: '108', caption: 'Checked in by 10:00', icon: ICONS.clock },
+  { label: 'On Leave', value: '7', caption: 'Approved for today', icon: ICONS.calendar },
+  { label: 'Pending Approvals', value: '12', caption: 'Leave and corrections', icon: ICONS.check },
+  { label: 'Open Tasks', value: '46', caption: 'Due this week', icon: ICONS.tasks },
+  { label: 'Attendance Rate', value: '94.2%', caption: 'Last 30 days', icon: ICONS.pulse },
+];
+
+const SAMPLE_PIPELINE = [
+  { stage: 'Applied', count: 9, fill: 'bg-chart-1', ink: 'text-chart-ink-1' },
+  { stage: 'Pending', count: 12, fill: 'bg-chart-5', ink: 'text-chart-ink-5' },
+  { stage: 'Approved', count: 31, fill: 'bg-chart-6', ink: 'text-chart-ink-6' },
+  { stage: 'Rejected', count: 3, fill: 'bg-chart-7', ink: 'text-chart-ink-7' },
+  { stage: 'Cancelled', count: 2, fill: 'bg-chart-4', ink: 'text-chart-ink-4' },
+];
 
 interface EmployeeSample extends Record<string, unknown> {
   id: string;
@@ -63,6 +111,7 @@ export function ComponentGalleryPage() {
   const [activeTab, setActiveTab] = useState('buttons');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [range, setRange] = useState('7');
   const [sort, setSort] = useState<{ key: string; direction: SortDirection }>({
     key: 'name',
     direction: 'asc',
@@ -78,6 +127,7 @@ export function ComponentGalleryPage() {
     { id: 'status', label: 'Status & State Cards' },
     { id: 'table', label: 'DataTable & Modal' },
     { id: 'layout', label: 'Layout & Feedback' },
+    { id: 'dashboard', label: 'Dashboard Patterns' },
   ];
 
   return (
@@ -324,6 +374,88 @@ export function ComponentGalleryPage() {
                 <Skeleton variant="rectangular" height={100} />
               </div>
             </div>
+          </Stack>
+        )}
+        {activeTab === 'dashboard' && (
+          <Stack gap="6">
+            <div>
+              <Badge variant="neutral">Sample data for the design reference</Badge>
+            </div>
+
+            {/* Welcome panel */}
+            <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-7 rounded-panel border border-hero-border bg-gradient-to-r from-hero-from to-hero-to">
+              <div className="space-y-2 min-w-0">
+                <Badge variant="outline">MAXR Teamspace Workforce Overview</Badge>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-text">
+                  Welcome back, Admin
+                </h2>
+                <p className="text-sm text-text-muted">
+                  Company-wide attendance, leave and task activity.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <SegmentedControl
+                  ariaLabel="Date range"
+                  value={range}
+                  onChange={setRange}
+                  options={[
+                    { value: '7', label: '7 Days' },
+                    { value: '30', label: '30 Days' },
+                    { value: '90', label: '90 Days' },
+                  ]}
+                />
+                <Button variant="secondary">New Announcement</Button>
+              </div>
+            </section>
+
+            {/* KPI cards */}
+            <section className="space-y-4">
+              <div>
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-text">
+                  Today&apos;s Overview
+                </h2>
+                <p className="text-sm text-text-subtle">Priorities and daily workforce metrics</p>
+              </div>
+              <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
+                {SAMPLE_KPIS.map((kpi) => (
+                  <StatCard
+                    key={kpi.label}
+                    label={kpi.label}
+                    value={kpi.value}
+                    caption={kpi.caption}
+                    icon={<Icon path={kpi.icon} />}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* Pipeline */}
+            <section className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-text">Leave Requests Pipeline</h2>
+                  <p className="text-sm text-text-subtle">Requests by stage this month</p>
+                </div>
+                <Badge variant="primary">Total 57 requests</Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+                {SAMPLE_PIPELINE.map((item) => (
+                  <div
+                    key={item.stage}
+                    className="flex flex-col items-center gap-2 pt-4 px-3 pb-0 bg-surface-muted border border-border rounded-card overflow-hidden"
+                  >
+                    <p className="text-sm font-medium text-text-subtle">{item.stage}</p>
+                    <p className={`font-display text-2xl font-bold tabular-nums ${item.ink}`}>
+                      {item.count}
+                    </p>
+                    <span
+                      className={`block h-1 w-full rounded-full ${item.fill}`}
+                      aria-hidden="true"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
           </Stack>
         )}
       </div>

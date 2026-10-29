@@ -1,39 +1,53 @@
 /**
- * Design Tokens for MAXR Teamspace
- * Authoritative specification: AGENTS.md §8 (Design system and UI)
- *
- * Rules:
- * - Define once; never hardcode hex values in components.
- * - WCAG 2.1 AA compliant (minimum 4.5:1 text contrast).
- * - 8px spacing scale; radius 8px cards, 6px inputs.
+ * Design tokens for MAXR Teamspace: the MaxR Flow look.
+ * Mirrors src/styles/tokens.css (the CSS variables are the source the UI uses);
+ * this copy exists for tests, charts and anything that needs the raw values in TypeScript.
+ * Spec: docs/design/DESIGN.md and AGENTS.md section 8. Never hardcode hex values in components.
  */
 
 export const COLOR_TOKENS = {
-  // Dark Shell & Sidebar
-  navy950: '#0A1429',
-  navy900: '#0E2042',
-  navy800: '#1E2F50',
+  // Brand
+  primary: '#46C7B8', // MaxR Flow teal: fills, bars, borders, dots (not for body text)
+  primaryStrong: '#0D9488', // icons, focus ring
+  primaryDeep: '#0F766E', // solid primary buttons with white text
+  primaryDeeper: '#115E59', // primary button hover
+  primaryInk: '#0F766E', // teal text
+  primarySoft: '#E9F8F6', // active nav, icon chips, soft pills
+  primarySoftBorder: '#CCEFEB',
+  brandRed: '#E5322D', // logo "R" only
 
-  // Primary Brand Accent
-  teal500: '#14B8A6',
-  teal600: '#0D9488',
+  // Hero banner
+  heroFrom: '#FFFFFF',
+  heroTo: '#E3F4F4',
+  heroBorder: '#62D1C5',
 
-  // Brand Logo Mark Only (Not for UI semantics)
-  brandRed: '#E5322D',
-
-  // Light Theme Surfaces & Text
-  bg: '#F6F8FB',
+  // Neutrals
+  bg: '#F8FAFC',
   surface: '#FFFFFF',
-  text: '#0F172A',
+  surfaceMuted: '#FAFBFD',
+  border: '#EEF0F4',
+  borderStrong: '#E2E8F0',
+  text: '#1A2332',
   textMuted: '#475569',
-  border: '#E2E8F0',
+  textSubtle: '#64748B',
 
-  // Status Semantics
+  // Status semantics
   success: '#16A34A',
   warning: '#D97706',
   danger: '#DC2626',
   info: '#2563EB',
 } as const;
+
+/** Categorical palette for pipelines and charts, in display order. `fill` for bars, `ink` for numbers. */
+export const CHART_TOKENS = [
+  { name: 'blue', fill: '#3B82F6', ink: '#2563EB' },
+  { name: 'teal', fill: '#46C7B8', ink: '#0F766E' },
+  { name: 'pink', fill: '#EC4899', ink: '#DB2777' },
+  { name: 'purple', fill: '#8B5CF6', ink: '#7C3AED' },
+  { name: 'amber', fill: '#F59E0B', ink: '#B45309' },
+  { name: 'green', fill: '#10B981', ink: '#047857' },
+  { name: 'red', fill: '#EF4444', ink: '#DC2626' },
+] as const;
 
 export const SPACING_TOKENS = {
   0: '0px',
@@ -52,9 +66,9 @@ export const SPACING_TOKENS = {
 export const RADIUS_TOKENS = {
   none: '0px',
   sm: '4px',
-  input: '6px', // 6px inputs per AGENTS.md §8
-  card: '8px', // 8px cards per AGENTS.md §8
-  lg: '12px',
+  input: '10px', // inputs and small buttons
+  card: '16px', // cards, tables, tiles
+  panel: '20px', // hero / welcome panel
   full: '9999px',
 } as const;
 

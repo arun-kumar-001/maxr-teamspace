@@ -115,26 +115,28 @@ SOLID, DRY, KISS, YAGNI, separation of concerns.
 
 ## 8. Design system and UI
 
-Derived from the brand cover of the design PDF (sampled colors). **Confirm with the business owner / brand assets before treating as final.** Define them once as CSS variables / Tailwind theme tokens; never hardcode hex in components.
+The visual style is the **MaxR Flow look** (the company's existing product), adopted by the TL. Full spec: `docs/design/DESIGN.md`; values: `apps/web/src/styles/tokens.css` (single source, mirrored in `tokens.ts`). Use Tailwind token classes; never hardcode hex in components (a test enforces it).
 
 | Token | Hex | Use |
 |---|---|---|
-| `--navy-950` | `#0A1429` | App shell / dark surfaces, sidebar |
-| `--navy-900` | `#0E2042` | Dark panels, headers |
-| `--navy-800` | `#1E2F50` | Cards on dark, borders |
-| `--teal-500` (primary accent) | `#14B8A6` | Primary buttons, links, active nav, focus ring |
-| `--teal-600` | `#0D9488` | Primary hover/pressed |
-| `--brand-red` | `#E5322D` **[approx., verify from logo]** | Logo mark only, not UI semantics |
-| `--bg` | `#F6F8FB` | Light page background |
-| `--surface` | `#FFFFFF` | Cards, tables, forms |
-| `--text` / `--text-muted` | `#0F172A` / `#475569` | Body / secondary text |
-| `--border` | `#E2E8F0` | Dividers, inputs |
-| `--success` `--warning` `--danger` `--info` | `#16A34A` `#D97706` `#DC2626` `#2563EB` | Status semantics (approved, pending, rejected, info) |
+| `primary` | `#46C7B8` | MaxR Flow teal: fills, bars, borders, dots. **Never text, never white text on it** (2.07:1) |
+| `primary-strong` | `#0D9488` | Icons, focus ring |
+| `primary-deep` | `#0F766E` | Solid primary buttons, selected segment (white text) |
+| `primary-ink` | `#0F766E` | Teal text (active nav, links, pills) |
+| `primary-soft` | `#E9F8F6` | Active nav, icon chips, soft pills |
+| `bg` / `surface` / `surface-muted` | `#F8FAFC` / `#FFFFFF` / `#FAFBFD` | Page / cards, sidebar, header / tiles, row hover |
+| `border` / `border-strong` | `#EEF0F4` / `#E2E8F0` | Card lines / header line, inputs |
+| `text` / `text-muted` / `text-subtle` | `#1A2332` / `#475569` / `#64748B` | Headings, numbers / labels, body / captions |
+| `chart-1…7` + `chart-ink-1…7` | blue, teal, pink, purple, amber, green, red | Data only: fills for bars, ink shades for numbers |
+| `success` `warning` `danger` `info` | `#16A34A` `#D97706` `#DC2626` `#2563EB` | Status semantics (approved, pending, rejected, info) |
+| `brand-red` | `#E5322D` **[approx., verify from logo]** | Logo mark only, not UI semantics |
 
 Rules:
-- Light theme is default; dark navy for shell. Support both via tokens. Font: Inter (matches the PDF), system fallback.
-- Status is never conveyed by color alone (icon/label too). Meet **WCAG 2.1 AA** (4.5:1 text contrast, visible focus, keyboard operable, labelled inputs, ARIA only when needed).
-- 8px spacing scale; radius 8px cards, 6px inputs.
+- Light theme only for now; **light white sidebar and header** (no dark navy shell). Dark theme is not designed yet: add it only when requested. The `navy-*` tokens are legacy and must not be used in new code.
+- Fonts: Inter for text, Outfit for page/section titles and big numbers (`font-display`); system fallbacks.
+- Radius: inputs 10px, cards 16px, hero panel 20px, buttons/pills/segmented controls fully round. Cards: `border-border` + `shadow-card`.
+- Status is never conveyed by color alone (icon/label too). Meet **WCAG 2.1 AA** (4.5:1 text contrast, visible focus, keyboard operable, labelled inputs, ARIA only when needed). Every new text/background pairing goes into `contrast.test.ts`.
+- 8px spacing scale.
 
 ### Responsive and fluid layout (mandatory, every page) [SPEC T§3.1: responsive for desktop and mobile web]
 One codebase must work from a small phone to a large/ultrawide monitor. Design **mobile-first, then scale up**; never build a desktop-only or mobile-only screen.
@@ -156,7 +158,7 @@ Rules:
 - Hover-only interactions are forbidden (touch + keyboard parity). Images/media responsive with intrinsic aspect ratios.
 - **Verification (part of Definition of Done):** every new page is checked at 360×640, 390×844, 768×1024, 1024×768, 1366×768, 1440×900, 1920×1080, 2560×1440 and 3440×1440; critical flows run in Playwright at a phone, tablet and desktop viewport; UI PRs include screenshots at phone and desktop widths.
 - Every data view implements **loading, empty, error and forbidden** states, and every form shows inline validation plus a submit-in-progress state.
-- Reuse components from `components/ui` (Button, Input, Select, DataTable, Modal, Badge, StatusPill, EmptyState, Toast, FormField). Before creating a new component, search for an existing one. Do not add a second UI library.
+- Reuse components from `components/ui` (Button, Input, Select, DataTable, Modal, Badge, StatusPill, EmptyState, Toast, FormField, StatCard, SegmentedControl). Before creating a new component, search for an existing one. Do not add a second UI library.
 - Workflow state badges use one shared mapping: leave (Applied/Pending/Approved/Rejected/Cancelled), task (To Do/In Progress/In Review/Completed/Blocked).
 
 ## 9. Business rules from the spec (implement exactly; ask when unclear)
@@ -222,7 +224,7 @@ If a feature needs a change there, stop and flag it instead of editing it.
 8. Team model (a person in one team or many?) and "HR scope" boundaries not defined.
 9. SMS and calendar-sync providers not named.
 10. `AGENTS_UNIVERSAL.md` was referenced but not supplied in this session; its rules are not yet merged here.
-11. Brand palette is sampled from the PDF cover; no official brand guide was provided.
+11. Brand palette now follows the MaxR Flow product (screenshot supplied by the TL, sampled per pixel); official logo files and font names are still to be confirmed.
 
 ## 15. Reference docs (to be created)
 
@@ -235,11 +237,11 @@ Project skills live in `.claude/skills/` (committed, so they load in cloud sessi
 
 | Skill | Source | Use for |
 |---|---|---|
-| `design-taste-frontend` | Leonxlnx/taste-skill (`skills-lock.json`) | Visual quality, dashboards/admin screens, anti-generic UI. **Brand tokens in §8 win over its palette suggestions.** |
+| `design-taste-frontend` | Leonxlnx/taste-skill (`skills-lock.json`) | Visual quality, dashboards/admin screens, anti-generic UI. **`docs/design/DESIGN.md` and the §8 tokens win over its suggestions.** |
 | `react-best-practices` | vercel-labs/agent-skills | React performance and patterns |
 | `composition-patterns` | vercel-labs/agent-skills | Component composition, avoiding boolean-prop sprawl |
 | `web-design-guidelines` | vercel-labs/agent-skills | UI/accessibility review |
 | `21st-ui` | 21st-dev/magic-mcp | Find/generate UI components via the 21st MCP |
 
 - `.mcp.json` registers the 21st MCP. It needs the `API_KEY_21ST` environment variable (set it in the cloud environment secrets; never commit the key). Generated components must be adapted to `components/ui` and the §8 tokens.
-- `VoltAgent/awesome-design-md` is a catalog of `DESIGN.md` examples, kept as reference only. When the TL picks a style, write our own `docs/design/DESIGN.md` from §8 instead of copying a brand's file.
+- `VoltAgent/awesome-design-md` is a catalog of `DESIGN.md` examples, kept as reference only. Our own style is in `docs/design/DESIGN.md` (MaxR Flow look).

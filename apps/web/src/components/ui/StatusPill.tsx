@@ -44,8 +44,8 @@ const STATUS_MAP: Record<WorkflowStatus, StatusStyleConfig> = {
     dot: 'bg-slate-500',
   },
   'In Progress': {
-    container: 'bg-teal-50 text-teal-800 border-teal-200',
-    dot: 'bg-teal-600',
+    container: 'bg-primary-soft text-primary-ink border-primary-soft-border',
+    dot: 'bg-primary-strong',
   },
   'In Review': {
     container: 'bg-purple-50 text-purple-800 border-purple-200',
@@ -87,18 +87,19 @@ export interface BadgeProps {
 
 export function Badge({ children, variant = 'primary', className = '' }: BadgeProps) {
   const variantStyles: Record<BadgeVariant, string> = {
-    primary: 'bg-teal-500 text-white',
-    secondary: 'bg-navy-900 text-white',
-    outline: 'border border-border text-text bg-surface',
+    // Soft pill as "Total 282 In-Pipeline" in MaxR Flow. White on the status colours fails AA, so they are soft too.
+    primary: 'bg-primary-soft text-primary-ink',
+    secondary: 'bg-primary-deep text-white',
+    outline: 'border border-primary-soft-border text-primary-ink bg-surface',
     neutral: 'bg-slate-100 text-slate-700',
-    success: 'bg-success text-white',
-    warning: 'bg-warning text-white',
-    danger: 'bg-danger text-white',
+    success: 'bg-emerald-50 text-emerald-800',
+    warning: 'bg-amber-50 text-amber-800',
+    danger: 'bg-rose-50 text-rose-800',
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${variantStyles[variant]} ${className}`}
     >
       {children}
     </span>

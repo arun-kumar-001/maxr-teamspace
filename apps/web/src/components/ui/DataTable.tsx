@@ -51,7 +51,7 @@ export function DataTable<T extends Record<string, unknown>>({
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
-      <div className="w-full bg-surface border border-border rounded-card p-4 space-y-3">
+      <div className="w-full bg-surface border border-border rounded-card shadow-card p-4 space-y-3">
         <Skeleton variant="rectangular" height={40} />
         <Skeleton variant="rectangular" height={50} />
         <Skeleton variant="rectangular" height={50} />
@@ -68,7 +68,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div
-      className={`w-full flex flex-col bg-surface border border-border rounded-card overflow-hidden ${className}`}
+      className={`w-full flex flex-col bg-surface border border-border rounded-card shadow-card overflow-hidden ${className}`}
     >
       {/* Mobile Card Layout (Shown on phone: < 640px) */}
       <div className="block sm:hidden divide-y divide-border" data-testid="datatable-mobile-cards">
@@ -131,7 +131,7 @@ export function DataTable<T extends Record<string, unknown>>({
           </thead>
           <tbody className="divide-y divide-border text-text">
             {data.map((row) => (
-              <tr key={keyExtractor(row)} className="hover:bg-slate-50 transition-colors">
+              <tr key={keyExtractor(row)} className="hover:bg-surface-muted transition-colors">
                 {columns.map((col) => (
                   <td
                     key={col.key}

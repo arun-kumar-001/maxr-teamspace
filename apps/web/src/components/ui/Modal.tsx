@@ -84,7 +84,7 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-navy-950/60 backdrop-blur-sm transition-opacity"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-overlay backdrop-blur-sm transition-opacity"
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
@@ -96,7 +96,7 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-[16px] sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
+        className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-panel sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
       >
         {/* Mobile handle indicator */}
         <div

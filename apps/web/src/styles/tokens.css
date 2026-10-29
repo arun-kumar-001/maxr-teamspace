@@ -1,37 +1,65 @@
 /**
- * CSS Variables for MAXR Teamspace
- * Authoritative specification: AGENTS.md §8
+ * Design tokens for MAXR Teamspace: the MaxR Flow look (docs/design/DESIGN.md, AGENTS.md section 8).
+ * Values were sampled from the MaxR Flow product screenshot the Technical Lead supplied.
+ * Where a sampled colour fails WCAG 2.1 AA as text, a darker "ink" token is used for text instead.
  */
 
 :root {
-  /* Brand Shell */
-  --navy-950: #0a1429;
-  --navy-900: #0e2042;
-  --navy-800: #1e2f50;
+  /* Brand */
+  --primary: #46c7b8; /* MaxR Flow teal: fills, bars, borders, dots. Never body-size text (2.07:1). */
+  --primary-strong: #0d9488; /* icons, focus ring, 3:1+ non-text */
+  --primary-deep: #0f766e; /* solid primary buttons (white text 5.47:1) */
+  --primary-deeper: #115e59; /* primary button hover/pressed */
+  --primary-ink: #0f766e; /* teal text: active nav, links, pills (5.0:1 on --primary-soft) */
+  --primary-soft: #e9f8f6; /* active nav, icon chips, soft pills */
+  --primary-soft-border: #ccefeb;
+  --brand-red: #e5322d; /* logo "R" only [approx., verify from logo file] */
 
-  /* Primary Accent */
-  --teal-500: #14b8a6;
-  --teal-600: #0d9488;
+  /* Hero banner (welcome panel) */
+  --hero-from: #ffffff;
+  --hero-to: #e3f4f4;
+  --hero-border: #62d1c5;
 
-  /* Logo Accent Only */
-  --brand-red: #e5322d;
+  /* Neutrals */
+  --bg: #f8fafc; /* page background */
+  --surface: #ffffff; /* cards, sidebar, header */
+  --surface-muted: #fafbfd; /* tiles inside cards, table row hover */
+  --border: #eef0f4; /* card and divider lines */
+  --border-strong: #e2e8f0; /* header line, inputs, outlined buttons */
+  --text: #1a2332; /* headings and numbers */
+  --text-muted: #475569; /* labels, body copy */
+  --text-subtle: #64748b; /* captions, breadcrumbs, helper text (4.76:1 on white) */
+  --overlay: rgba(26, 35, 50, 0.55); /* modal backdrop */
 
-  /* Light Theme Surface Default */
-  --bg: #f6f8fb;
-  --surface: #ffffff;
-  --text: #0f172a;
-  --text-muted: #475569;
-  --border: #e2e8f0;
-
-  /* Status Semantics */
+  /* Status semantics (icons, borders; text uses Tailwind 700/800 shades in components) */
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
   --info: #2563eb;
 
-  /* Component Radiuses */
-  --radius-input: 6px;
-  --radius-card: 8px;
+  /* Categorical palette for pipelines and charts, in this order (sampled). */
+  --chart-1: #3b82f6; /* blue */
+  --chart-2: #46c7b8; /* teal */
+  --chart-3: #ec4899; /* pink */
+  --chart-4: #8b5cf6; /* purple */
+  --chart-5: #f59e0b; /* amber */
+  --chart-6: #10b981; /* green */
+  --chart-7: #ef4444; /* red */
+  /* Same hues dark enough for large numbers (3:1+) and small text where noted. */
+  --chart-ink-1: #2563eb;
+  --chart-ink-2: #0f766e;
+  --chart-ink-3: #db2777;
+  --chart-ink-4: #7c3aed;
+  --chart-ink-5: #b45309;
+  --chart-ink-6: #047857;
+  --chart-ink-7: #dc2626;
+
+  /* Shape */
+  --radius-input: 10px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.04);
+  --shadow-raised: 0 4px 12px rgba(16, 24, 40, 0.08);
 
   /* Fluid Typography */
   --font-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);
@@ -44,14 +72,9 @@
 
   /* Touch Target */
   --min-touch-target: 44px;
-}
 
-/* Dark Shell / Dark Theme Support */
-.dark,
-[data-theme='dark'] {
-  --bg: #0a1429;
-  --surface: #0e2042;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: #1e2f50;
+  /* Legacy navy (pre-MaxR Flow dark shell). Kept only so unmerged branches still build; do not use in new code. */
+  --navy-950: #0a1429;
+  --navy-900: #0e2042;
+  --navy-800: #1e2f50;
 }

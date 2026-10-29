@@ -1,7 +1,9 @@
 /** @type {import('tailwindcss').Config} */
+// Every colour comes from a CSS variable in src/styles/tokens.css (single source).
+const v = (name) => `var(--${name})`;
+
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  darkMode: 'class',
   theme: {
     screens: {
       xs: '360px',
@@ -15,48 +17,57 @@ export default {
     },
     extend: {
       colors: {
-        navy: {
-          950: '#0A1429', // App shell / dark surfaces, persistent sidebar
-          900: '#0E2042', // Dark panels, section headers
-          800: '#1E2F50', // Cards on dark, borders
+        primary: {
+          DEFAULT: v('primary'),
+          strong: v('primary-strong'),
+          deep: v('primary-deep'),
+          deeper: v('primary-deeper'),
+          ink: v('primary-ink'),
+          soft: v('primary-soft'),
+          'soft-border': v('primary-soft-border'),
         },
-        teal: {
-          500: '#14B8A6', // Primary buttons, active nav, focus ring
-          600: '#0D9488', // Primary hover / pressed
-        },
-        brand: {
-          red: '#E5322D', // Logo mark only
-        },
-        bg: 'var(--bg)',
-        surface: {
-          DEFAULT: 'var(--surface)',
-          muted: '#F6F8FB',
-        },
-        text: 'var(--text)',
-        'text-muted': 'var(--text-muted)',
-        border: 'var(--border)',
-        success: '#16A34A',
-        warning: '#D97706',
-        danger: '#DC2626',
-        info: '#2563EB',
-        status: {
-          success: '#16A34A',
-          warning: '#D97706',
-          danger: '#DC2626',
-          info: '#2563EB',
-        },
+        hero: { from: v('hero-from'), to: v('hero-to'), border: v('hero-border') },
+        brand: { red: v('brand-red') },
+        bg: v('bg'),
+        surface: { DEFAULT: v('surface'), muted: v('surface-muted') },
+        text: v('text'),
+        'text-muted': v('text-muted'),
+        'text-subtle': v('text-subtle'),
+        border: { DEFAULT: v('border'), strong: v('border-strong') },
+        overlay: v('overlay'),
+        success: v('success'),
+        warning: v('warning'),
+        danger: v('danger'),
+        info: v('info'),
+        chart: Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((n) => [n, v(`chart-${n}`)])),
+        'chart-ink': Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((n) => [n, v(`chart-ink-${n}`)])),
+        // Legacy: remove once the app shell (#12) uses the light sidebar.
+        navy: { 950: v('navy-950'), 900: v('navy-900'), 800: v('navy-800') },
       },
       borderRadius: {
-        input: '6px', // AGENTS.md §8: 6px inputs
-        card: '8px', // AGENTS.md §8: 8px cards
+        input: v('radius-input'),
+        card: v('radius-card'),
+        panel: v('radius-panel'),
+      },
+      boxShadow: {
+        card: v('shadow-card'),
+        raised: v('shadow-raised'),
       },
       maxWidth: {
-        prose: '70ch', // AGENTS.md §8: Readable text/forms capped (≈70ch / ≈960px)
+        prose: '70ch', // AGENTS.md §8: readable text/forms capped (≈70ch / ≈960px)
         form: '960px',
         dashboard: '1536px',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: [
+          'Outfit',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'sans-serif',
+        ],
       },
     },
   },
