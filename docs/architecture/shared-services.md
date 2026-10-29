@@ -44,6 +44,7 @@ Modules import **only** the interfaces (`AuditLogger`, `EventBus`, `Notification
 - `action` is `module.verb`, lower-case, for example `employee.deactivate`, `leave.approve`, `auth.login_failed`. `outcome` is `success | denied | failure`.
 - The entry gets a UUID and a UTC timestamp. `metadata` and `changes` pass through the redactor (by field name and by secrets inside text) and are capped at 8 KB; oversize is replaced by a marker, never truncated mid-value.
 - **Fail closed:** `record()` throws if the store fails, so a caller can abort the business action. `tryRecord()` logs and continues, for non-critical events.
+- **Atomic with the change:** `record(event, { transaction })` hands the open database transaction to the store. The SQL store (issue #6) must write the entry inside that transaction, so the audit entry and the data change commit or roll back together. Modules that change data must pass their transaction; the in-memory sample cannot show atomicity because it has no transaction.
 - **Append only:** the interface has no update or delete.
 - `audit.withContext({ actorId, actorRole, requestId })` returns a logger bound to the current request.
 - Stores: `LoggerAuditStore` (JSON line, `audit: true`), `InMemoryAuditStore` (tests). The SQL store arrives with #6.
@@ -110,5 +111,12 @@ Nothing in the report describes the Cantobo API. The storage interface is delibe
 5. Backups, retention and a maximum object size.
 Until then development and CI use the local-disk and in-memory adapters, and production refuses to start with a driver that is not implemented.
 
-## 9. Merge note for developers
+## 9. Results
+- **362 tests in 20 files, all passing** (`npm test`); 251 of them cover this issue. Contract suites run against the in-memory and local-disk storage adapters, the in-memory outbox and all three email adapters.
+- **Real sockets, no mocks:** `nodemailer` was exercised against a local SMTP receiver and `fetch` against a local HTTP server (headers, recipients, timeouts, generic errors).
+- **Mutation check:** 30 deliberate bugs were introduced one at a time (link signature, expiry, user binding, lifetime cap, MIME/extension spoofing, client file name in the key, scanner failing open or ignored, path traversal, inline display, missing `nosniff`, 403 instead of 404, unlocked outbox claims, endless retries, recipients in logs, header injection, recipient limit, dedupe, unredacted audit changes, swallowed audit failures, failing event handlers, events re-emitted, production without durable stores, `s3` accepted, SendGrid body in errors, unvalidated SMTP, world-readable files). Every one made a test fail.
+- **Compiled server:** starts in development; refuses to start in production without durable stores; refuses `STORAGE_DRIVER=s3` with the D-10 explanation.
+- **Found while testing:** a test showed the logger only hid secrets by field name; text such as `password=...` inside messages is now scrubbed (PR #59), and the audit logger gained the `transaction` option so audit and data commit together.
+
+## 10. Merge note for developers
 Dev 1: the SQL stores for audit and outbox belong with issue #6 (migration) using the contracts above; do not change the interfaces without asking. Dev 2: notifications for leave and attendance (#41) build on `NotificationService` and `EventBus`; do not call SMTP or SendGrid directly.
