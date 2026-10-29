@@ -1,5 +1,7 @@
 import { Pool, PoolConfig, QueryResult, QueryResultRow } from 'pg';
 import { config } from '../config/env';
+import { Logger, getLogger } from '../logging/logger';
+import { DependencyStatus } from './types';
 
 let pool: Pool | null = null;
 
@@ -17,8 +19,7 @@ export function getPool(): Pool {
     pool = new Pool(getPoolConfig());
 
     pool.on('error', (err) => {
-      // eslint-disable-next-line no-console
-      console.error('[PostgreSQL Pool Error]', err);
+      getLogger().error('postgres pool error', { err });
     });
   }
   return pool;
@@ -32,24 +33,15 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   return currentPool.query<T>(text, params);
 }
 
-export async function checkDatabaseHealth(): Promise<{
-  status: 'up' | 'down';
-  latencyMs: number;
-  error?: string;
-}> {
+export async function checkDatabaseHealth(logger: Logger = getLogger()): Promise<DependencyStatus> {
   const start = Date.now();
   try {
-    const currentPool = getPool();
-    await currentPool.query('SELECT 1 AS health_check');
-    const latencyMs = Date.now() - start;
-    return { status: 'up', latencyMs };
+    await getPool().query('SELECT 1 AS health_check');
+    return { status: 'up', latencyMs: Date.now() - start };
   } catch (err) {
-    const latencyMs = Date.now() - start;
-    return {
-      status: 'down',
-      latencyMs,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    // Details stay in the log; the health response only says "down".
+    logger.warn('database health check failed', { err });
+    return { status: 'down', latencyMs: Date.now() - start };
   }
 }
 

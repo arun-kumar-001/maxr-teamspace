@@ -85,10 +85,10 @@ export function loadAndValidateConfig(): EnvironmentConfig {
   const redisPort = parsePort(process.env.REDIS_PORT, 6379);
 
   const storageDriver = (process.env.STORAGE_DRIVER || 's3') as 's3' | 'local';
-  const s3Endpoint = process.env.S3_ENDPOINT || 'http://localhost:9000';
+  const s3Endpoint = process.env.S3_ENDPOINT || 'http://localhost:9090';
   const s3Bucket = process.env.S3_BUCKET || 'maxr-private-storage';
-  const s3AccessKey = process.env.S3_ACCESS_KEY || 'minioadmin';
-  const s3SecretKey = process.env.S3_SECRET_KEY || 'minioadmin';
+  const s3AccessKey = process.env.S3_ACCESS_KEY || 'local-access-key';
+  const s3SecretKey = process.env.S3_SECRET_KEY || 'local-secret-key';
 
   const smtpHost = process.env.SMTP_HOST || 'localhost';
   const smtpPort = parsePort(process.env.SMTP_PORT, 1025);

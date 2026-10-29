@@ -22,8 +22,8 @@ The local development infrastructure runs isolated in Docker containers:
 |---|---|---|---|---|---|
 | **PostgreSQL 16** | `maxr-postgres` | `5432` | `5432` | Primary database (`maxr_teamspace`) | `pg_isready -U postgres -d maxr_teamspace` |
 | **Redis 7** | `maxr-redis` | `6379` | `6379` | Session cache & rate-limiting | `redis-cli ping` |
-| **Mailpit** | `maxr-mailpit` | `1025` (SMTP), `8025` (Web UI) | `1025`, `8025` | Local transactional email testing & inbox | `nc -z localhost 1025` |
-| **S3 Storage Mock** | `maxr-storage` | `9000` | `9090` | S3-compatible private object storage (Adobe S3Mock) | `nc -z localhost 9090` |
+| **Mailpit** | `maxr-mailpit` | `1025` (SMTP), `8025` (Web UI) | `1025`, `8025` | Local transactional email testing & inbox | `/mailpit readyz` (built in) |
+| **S3 Storage Mock** | `maxr-storage` | `9090` | `9090` | S3-compatible private object storage (Adobe S3Mock) | none; open http://localhost:9090/ |
 
 Data persistence is guaranteed across container restarts using named Docker volumes: `postgres_data`, `redis_data`, `mailpit_data`, and `storage_data`.
 
@@ -36,7 +36,7 @@ Copy the safe template `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-*Note: `.env.example` contains safe local defaults (`postgres`/`postgres`, `minioadmin`/`minioadmin`). Never commit real secrets or production credentials.*
+*Note: `.env.example` contains safe local defaults (`postgres`/`postgres`; the S3 mock does not check credentials). Never commit real secrets or production credentials.*
 
 ### Step 2: Install Workspace Dependencies
 ```bash
@@ -117,7 +117,7 @@ curl http://localhost:4000/api/v1/health
 - **Frontend Web App:** [http://localhost:3000](http://localhost:3000)
 - **Backend API Health:** [http://localhost:4000/api/health](http://localhost:4000/api/health)
 - **Mailpit Email Web UI:** [http://localhost:8025](http://localhost:8025) *(view emails sent by notifications)*
-- **S3 Storage Mock Endpoint:** [http://localhost:9000](http://localhost:9000) *(S3 API endpoint)*
+- **S3 Storage Mock Endpoint:** [http://localhost:9090](http://localhost:9090) *(S3 API endpoint)*
 
 ---
 
@@ -142,7 +142,7 @@ curl http://localhost:4000/api/v1/health
 2. **Database Connection Refused:**
    - Wait 5-10 seconds for PostgreSQL container to complete initialization. Run `npm run docker:status` to ensure status is `(healthy)`.
 3. **S3 Storage Mock Access:**
-   - The local S3 mock accepts standard AWS S3 requests on port 9000 with initial bucket `maxr-private-storage`.
+   - The local S3 mock accepts standard AWS S3 requests on port 9090 with initial bucket `maxr-private-storage`.
 4. **PowerShell Script Policy:**
    - On Windows, if `npm` scripts report unauthorized script execution, run via `cmd /c npm ...` or set execution policy:
      ```powershell

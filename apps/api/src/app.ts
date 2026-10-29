@@ -1,6 +1,9 @@
 import cors from 'cors';
 import express, { Express } from 'express';
 import { config } from './config/env';
+import { checkDatabaseHealth } from './db/client';
+import { checkRedisHealth } from './db/redis';
+import { HealthDependencies, createHealthHandler } from './health/health';
 import { HttpConfig, loadHttpConfig } from './http/http-config';
 import { InMemoryIdempotencyStore } from './http/idempotency';
 import { createRateLimiter } from './http/rate-limit';
@@ -16,6 +19,8 @@ export interface AppOptions {
   http?: HttpConfig;
   /** Defaults to the validated NODE_ENV. */
   nodeEnv?: string;
+  /** Dependency probes for /api/v1/health; defaults to the real PostgreSQL and Redis checks. */
+  health?: HealthDependencies;
 }
 
 export function createApp(options: AppOptions = {}): Express {
@@ -49,16 +54,17 @@ export function createApp(options: AppOptions = {}): Express {
     }),
   );
 
-  // Health check endpoint
-  app.get('/api/v1/health', (_req, res) => {
-    res.status(200).json({
-      status: 'ok',
-      service: 'maxr-api',
-      version: '0.1.0',
-      environment: config.NODE_ENV,
-      timestamp: new Date().toISOString(),
-    });
-  });
+  // Health check endpoint (single route; rate limiter skips it)
+  app.get(
+    '/api/v1/health',
+    createHealthHandler(
+      options.health ?? {
+        checkDatabase: () => checkDatabaseHealth(logger),
+        checkRedis: () => checkRedisHealth(logger),
+      },
+      logger,
+    ),
+  );
 
   app.use(
     '/api/v1',

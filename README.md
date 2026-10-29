@@ -86,8 +86,8 @@ maxr-teamspace/
 |---|---|---|---|---|
 | **PostgreSQL 16** | `maxr-postgres` | `5432` | Authoritative relational database | `pg_isready -U postgres -d maxr_teamspace` |
 | **Redis 7** | `maxr-redis` | `6379` | Ephemeral cache & sessions | `redis-cli ping` |
-| **Mailpit** | `maxr-mailpit` | `1025` (SMTP), `8025` (Web UI) | Local email testing & inspection | `nc -z localhost 1025` |
-| **S3 Storage Mock** | `maxr-storage` | `9000` (HTTP) | S3-compatible private object storage | `nc -z localhost 9090` |
+| **Mailpit** | `maxr-mailpit` | `1025` (SMTP), `8025` (Web UI) | Local email testing & inspection | `/mailpit readyz` (built in) |
+| **S3 Storage Mock** | `maxr-storage` | `9090` (HTTP) | S3-compatible private object storage (Adobe S3Mock) | none; open http://localhost:9090/ |
 
 All services use named volumes (`postgres_data`, `redis_data`, `mailpit_data`, `storage_data`) for persistent data across container restarts.
 
@@ -186,7 +186,7 @@ curl http://localhost:4000/api/health
 - **Web Application:** [http://localhost:3000](http://localhost:3000)
 - **Backend API Health:** [http://localhost:4000/api/health](http://localhost:4000/api/health)
 - **Mailpit Email Web UI:** [http://localhost:8025](http://localhost:8025)
-- **S3 Storage Mock Endpoint:** [http://localhost:9000](http://localhost:9000)
+- **S3 Storage Mock Endpoint:** [http://localhost:9090](http://localhost:9090)
 
 ---
 

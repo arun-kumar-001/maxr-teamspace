@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-maxr_teamspace}
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -39,12 +39,12 @@ services:
       - maxr-network
 
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.32.0
     container_name: maxr-mailpit
     restart: unless-stopped
     ports:
-      - '${SMTP_PORT:-1025}:1025'
-      - '${MAILPIT_WEB_PORT:-8025}:8025'
+      - '127.0.0.1:${SMTP_PORT:-1025}:1025'
+      - '127.0.0.1:${MAILPIT_WEB_PORT:-8025}:8025'
     environment:
       MP_MAX_MESSAGES: 5000
       MP_DATABASE: /data/mailpit.db
@@ -53,7 +53,7 @@ services:
     volumes:
       - mailpit_data:/data
     healthcheck:
-      test: ['CMD-SHELL', 'nc -z localhost 1025 || exit 1']
+      test: ['CMD', '/mailpit', 'readyz']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -62,22 +62,18 @@ services:
       - maxr-network
 
   storage:
-    image: adobe/s3mock:latest
+    image: adobe/s3mock:5.2.3
     container_name: maxr-storage
     restart: unless-stopped
     ports:
-      - '${S3_PORT:-9090}:9090'
+      - '127.0.0.1:${S3_PORT:-9090}:9090'
     environment:
       initialBuckets: ${S3_BUCKET:-maxr-private-storage}
       debug: 'false'
     volumes:
       - storage_data:/data
-    healthcheck:
-      test: ['CMD-SHELL', 'nc -z localhost 9090 || exit 1']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+    # No container health check: the S3Mock image defines none and ships no guaranteed
+    # shell tools. Verify it by opening http://localhost:9090/ (lists buckets).
     networks:
       - maxr-network
 
