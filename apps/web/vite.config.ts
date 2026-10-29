@@ -11,8 +11,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@maxr/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
+      '@': path.resolve(import.meta.dirname, './src'),
+      '@maxr/shared': path.resolve(import.meta.dirname, '../../packages/shared/src/index.ts'),
     },
   },
   build: {
@@ -21,6 +21,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/__tests__/setup.ts'],
     environment: 'node',
   },
