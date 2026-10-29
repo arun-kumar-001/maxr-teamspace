@@ -1,103 +1,113 @@
-import {
-  TemplateEntity,
-  CreateTemplateDto,
-  UpdateTemplateDto,
-  TemplateFilterQuery,
-} from './template.types';
-import { PaginatedResponse } from '@maxr/shared';
+import { randomUUID } from 'crypto';
+import { SortSpec } from '../../http/pagination';
+import { CreateTemplateDto, TemplateEntity, UpdateTemplateDto } from './template.types';
+
+export interface TemplateFindManyParams {
+  offset: number;
+  limit: number;
+  sort: SortSpec;
+  search?: string;
+  isActive?: boolean;
+}
 
 /**
- * Template Repository Interface
- * Defines database access contracts. Implemented using parameterized SQL.
- * Never execute SQL in controllers or services.
+ * Database access contract. Real modules implement it with parameterised SQL, apply the
+ * scope filter inside the query (never after fetching) and use `toOffsetLimit()` / the
+ * `resolveSort()` column allow-list for paging and ordering.
+ *
+ * `visibleOwnerIds`: undefined = no restriction; otherwise only rows owned by these ids.
+ * It is supplied by the RBAC scope resolver (issue #8).
  */
 export interface ITemplateRepository {
-  findById(id: string, scopeFilter?: string[]): Promise<TemplateEntity | null>;
+  findById(id: string, visibleOwnerIds?: string[]): Promise<TemplateEntity | null>;
   findMany(
-    filter: TemplateFilterQuery,
-    scopeFilter?: string[],
-  ): Promise<PaginatedResponse<TemplateEntity>>;
-  create(dto: CreateTemplateDto, createdByUserId: string): Promise<TemplateEntity>;
+    params: TemplateFindManyParams,
+    visibleOwnerIds?: string[],
+  ): Promise<{ items: TemplateEntity[]; total: number }>;
+  create(dto: CreateTemplateDto, ownerId: string): Promise<TemplateEntity>;
   update(id: string, dto: UpdateTemplateDto): Promise<TemplateEntity | null>;
   softDelete(id: string): Promise<boolean>;
 }
 
-/**
- * In-Memory / SQL Template Repository Reference Implementation
- */
+/** PostgreSQL unique_violation, as the `pg` driver would raise it. */
+function uniqueViolation(): Error {
+  return Object.assign(
+    new Error('duplicate key value violates unique constraint "templates_name_key"'),
+    {
+      code: '23505',
+    },
+  );
+}
+
+/** In-memory reference implementation used by the sample module and its tests. */
 export class TemplateRepository implements ITemplateRepository {
-  private items: Map<string, TemplateEntity> = new Map();
+  private readonly items = new Map<string, TemplateEntity>();
 
-  async findById(id: string, scopeFilter?: string[]): Promise<TemplateEntity | null> {
+  private nameTaken(name: string, exceptId?: string): boolean {
+    const wanted = name.toLowerCase();
+    return [...this.items.values()].some(
+      (i) => i.id !== exceptId && i.name.toLowerCase() === wanted,
+    );
+  }
+
+  async findById(id: string, visibleOwnerIds?: string[]): Promise<TemplateEntity | null> {
     const item = this.items.get(id);
-    if (!item) return null;
-
-    // Apply scope filter at the repository layer (e.g. WHERE team_id IN (...))
-    if (scopeFilter && scopeFilter.length > 0 && !scopeFilter.includes(item.scope)) {
-      return null; // Out of scope -> return null so service maps to 404 (no existence leak)
+    if (!item) {
+      return null;
     }
-
+    // Out of scope looks exactly like "does not exist" (no existence leak).
+    if (visibleOwnerIds && !visibleOwnerIds.includes(item.ownerId)) {
+      return null;
+    }
     return item;
   }
 
-  async findMany(
-    filter: TemplateFilterQuery,
-    scopeFilter?: string[],
-  ): Promise<PaginatedResponse<TemplateEntity>> {
-    const page = filter.page && filter.page > 0 ? filter.page : 1;
-    const pageSize = filter.pageSize && filter.pageSize > 0 ? Math.min(filter.pageSize, 100) : 20;
-
-    let all = Array.from(this.items.values());
-
-    // Scope filter applied at repository level
-    if (scopeFilter && scopeFilter.length > 0) {
-      all = all.filter((i) => scopeFilter.includes(i.scope));
+  async findMany(params: TemplateFindManyParams, visibleOwnerIds?: string[]) {
+    let rows = [...this.items.values()];
+    if (visibleOwnerIds) {
+      rows = rows.filter((r) => visibleOwnerIds.includes(r.ownerId));
+    }
+    if (params.search) {
+      const q = params.search.toLowerCase();
+      rows = rows.filter((r) => r.name.toLowerCase().includes(q));
+    }
+    if (params.isActive !== undefined) {
+      rows = rows.filter((r) => r.isActive === params.isActive);
     }
 
-    if (filter.search) {
-      const q = filter.search.toLowerCase();
-      all = all.filter((i) => i.name.toLowerCase().includes(q));
-    }
+    const key = params.sort.column as 'name' | 'createdAt';
+    const direction = params.sort.order === 'asc' ? 1 : -1;
+    rows.sort((a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0) * direction);
 
-    if (filter.isActive !== undefined) {
-      all = all.filter((i) => i.isActive === filter.isActive);
-    }
-
-    const total = all.length;
-    const start = (page - 1) * pageSize;
-    const paged = all.slice(start, start + pageSize);
-
-    return {
-      data: paged,
-      meta: {
-        page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize) || 1,
-      },
-    };
+    return { items: rows.slice(params.offset, params.offset + params.limit), total: rows.length };
   }
 
-  async create(dto: CreateTemplateDto, createdByUserId: string): Promise<TemplateEntity> {
+  async create(dto: CreateTemplateDto, ownerId: string): Promise<TemplateEntity> {
+    if (this.nameTaken(dto.name)) {
+      throw uniqueViolation();
+    }
     const now = new Date().toISOString();
-    const id = `tpl_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const entity: TemplateEntity = {
-      id,
+      id: randomUUID(),
       name: dto.name,
-      description: dto.description || null,
-      scope: createdByUserId,
+      description: dto.description ?? null,
+      ownerId,
       isActive: true,
       createdAt: now,
       updatedAt: now,
     };
-    this.items.set(id, entity);
+    this.items.set(entity.id, entity);
     return entity;
   }
 
   async update(id: string, dto: UpdateTemplateDto): Promise<TemplateEntity | null> {
     const existing = this.items.get(id);
-    if (!existing) return null;
-
+    if (!existing) {
+      return null;
+    }
+    if (dto.name !== undefined && this.nameTaken(dto.name, id)) {
+      throw uniqueViolation();
+    }
     const updated: TemplateEntity = {
       ...existing,
       ...(dto.name !== undefined ? { name: dto.name } : {}),
@@ -111,13 +121,10 @@ export class TemplateRepository implements ITemplateRepository {
 
   async softDelete(id: string): Promise<boolean> {
     const existing = this.items.get(id);
-    if (!existing) return false;
-
-    this.items.set(id, {
-      ...existing,
-      isActive: false,
-      updatedAt: new Date().toISOString(),
-    });
+    if (!existing) {
+      return false;
+    }
+    this.items.set(id, { ...existing, isActive: false, updatedAt: new Date().toISOString() });
     return true;
   }
 }

@@ -8,10 +8,10 @@ Error envelope + `AppError`, request id middleware, 404 handler, `PaginatedRespo
 ## 2. Decisions
 | Topic | Decision | Reason |
 |---|---|---|
-| Validation | **Zod 3** schemas; primitives live in `packages/shared` so the web app can reuse them | `AGENTS.md` §2 proposal; one schema gives validation, TypeScript types and OpenAPI |
+| Validation | **Zod 4** schemas (>= 4.6.7); primitives live in `packages/shared` so the web app can reuse them | `AGENTS.md` §2 proposal; one schema gives validation, TypeScript types and OpenAPI. Zod 3 and `zod-to-openapi` <= 8 have a high-severity advisory (memory exhaustion on oversized collections), so they are not used |
 | Logging | Small in-house JSON logger behind a `Logger` interface, with a redaction utility. No new dependency | Redaction rules are ours; swapping to `pino` later changes one file |
 | Rate limiting | `express-rate-limit` v7 (in-memory store now; Redis store when Redis client lands in #56/#7) | Standard, maintained; avoids writing security code |
-| OpenAPI | `@asteasolutions/zod-to-openapi` generates OpenAPI 3.0 from the same Zod schemas | Spec cannot drift from validation |
+| OpenAPI | `@asteasolutions/zod-to-openapi` v9 generates OpenAPI 3.0 from the same Zod schemas. Components are named with Zod's native `.meta({ id })`; **do not use `extendZodWithOpenApi`/`.openapi()`** | Spec cannot drift from validation. In Zod 4 the extension only affects schemas created after it runs, so it makes the result depend on import order |
 | Idempotency | `Idempotency-Key` header middleware with a pluggable store (in-memory now, Redis later) | Required for check-in and approvals (`AGENTS.md` §5) |
 
 ## 3. Layout
@@ -85,5 +85,10 @@ request → trust proxy → request id → request logger → CORS → JSON body
 | TC-9-19 | Sample module end-to-end (create, list, get, update, deactivate) | all conventions respected |
 | TC-9-20 | Unknown route | 404 envelope |
 
-## 7. Out of scope here
-Authentication and authorization middleware (#7, #8), Redis-backed stores (after #56/#7), the health endpoint (#56), and the Express hardening items in #52 (`x-powered-by`, request-id format). Merge note for Dev 1: after this lands, run `git merge origin/develop`; conflicts are limited to `package.json`/`package-lock.json` (regenerate with `npm install`) and `app.ts` wiring.
+## 7. Implementation notes and results
+- Single hoisted Zod copy is required (`npm ls zod` must show one version, deduped). Two copies would break `instanceof` checks and the OpenAPI generator.
+- Test result: **84 tests, 9 files, all passing** (`npm test`). A mutation check (10 deliberate bugs in redaction, idempotency scoping, sort allow-list, page-size cap, error leakage, query logging, SQL leakage, production exposure, 5xx key release, rate limit) was caught by the tests every time.
+- The sample module and `/api/v1/openapi.json` are not mounted when `NODE_ENV=production` (covered by a test). This also closes the "demo route is mounted without auth" item (#52 F4).
+
+## 8. Out of scope here
+Authentication and authorization middleware (#7, #8), Redis-backed stores (after #56/#7), the health endpoint (#56), and the remaining Express hardening items in #52 (`x-powered-by`, request-id format). Merge note for Dev 1: after this lands, run `git merge origin/develop`; conflicts are limited to `package.json`/`package-lock.json` (regenerate with `npm install`) and `app.ts` wiring.
