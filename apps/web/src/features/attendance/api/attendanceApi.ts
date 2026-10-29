@@ -5,11 +5,31 @@ import {
   TodayAttendanceSummary,
 } from '../types/attendance';
 
+export interface AttendanceHistoryQuery {
+  employeeId?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface AttendanceHistoryResponse {
+  data: AttendanceRecord[];
+  meta: {
+    total: number;
+    page: number;
+    pageSize: number;
+  };
+}
+
 export interface AttendanceApiClient {
   getActiveSession(): Promise<AttendanceRecord | null>;
   getTodaySummary(): Promise<TodayAttendanceSummary>;
   checkIn(req?: CheckInRequest): Promise<AttendanceRecord>;
   checkOut(req?: CheckOutRequest): Promise<AttendanceRecord>;
+  getMyHistory(query?: AttendanceHistoryQuery): Promise<AttendanceHistoryResponse>;
+  listAttendance(query?: AttendanceHistoryQuery): Promise<AttendanceHistoryResponse>;
 }
 
 export class HttpAttendanceApi implements AttendanceApiClient {
@@ -65,6 +85,37 @@ export class HttpAttendanceApi implements AttendanceApiClient {
     }
     const json = await res.json();
     return json.data;
+  }
+
+  async getMyHistory(query: AttendanceHistoryQuery = {}): Promise<AttendanceHistoryResponse> {
+    const params = new URLSearchParams();
+    if (query.startDate) params.set('startDate', query.startDate);
+    if (query.endDate) params.set('endDate', query.endDate);
+    if (query.status) params.set('status', query.status);
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
+
+    const res = await fetch(`${this.baseUrl}/me?${params.toString()}`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch attendance history: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  async listAttendance(query: AttendanceHistoryQuery = {}): Promise<AttendanceHistoryResponse> {
+    const params = new URLSearchParams();
+    if (query.employeeId) params.set('employeeId', query.employeeId);
+    if (query.startDate) params.set('startDate', query.startDate);
+    if (query.endDate) params.set('endDate', query.endDate);
+    if (query.status) params.set('status', query.status);
+    if (query.page) params.set('page', String(query.page));
+    if (query.pageSize) params.set('pageSize', String(query.pageSize));
+
+    const res = await fetch(`${this.baseUrl}?${params.toString()}`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch attendance list: ${res.statusText}`);
+    }
+    return res.json();
   }
 }
 

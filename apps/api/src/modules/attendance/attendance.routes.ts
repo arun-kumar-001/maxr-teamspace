@@ -19,6 +19,12 @@ export function createAttendanceRouter(
 
   router.get('/active', asyncHandler(controller.getActive));
   router.get('/today', asyncHandler(controller.getToday));
+  router.get(
+    '/me',
+    validate({ query: listAttendanceQuerySchema }),
+    asyncHandler(controller.getMyHistory),
+  );
+  router.get('/', validate({ query: listAttendanceQuerySchema }), asyncHandler(controller.list));
   router.post(
     '/check-in',
     idempotent({ store: idempotencyStore }),

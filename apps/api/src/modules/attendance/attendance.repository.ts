@@ -6,6 +6,8 @@ export interface AttendanceFindManyParams {
   offset: number;
   limit: number;
   sort: SortSpec;
+  employeeId?: string;
+  employeeIds?: string[];
   startDate?: string;
   endDate?: string;
   status?: string;
@@ -30,6 +32,7 @@ export interface IAttendanceRepository {
     employeeId: string,
     params: AttendanceFindManyParams,
   ): Promise<{ items: AttendanceRecord[]; total: number }>;
+  findAll(params: AttendanceFindManyParams): Promise<{ items: AttendanceRecord[]; total: number }>;
 }
 
 export function uniqueViolation(constraint = 'idx_attendance_single_open_session'): Error {
@@ -121,12 +124,17 @@ export class AttendanceRepository implements IAttendanceRepository {
     return updated;
   }
 
-  async findMany(
-    employeeId: string,
+  async findAll(
     params: AttendanceFindManyParams,
   ): Promise<{ items: AttendanceRecord[]; total: number }> {
-    let rows = [...this.items.values()].filter((r) => r.employeeId === employeeId);
+    let rows = [...this.items.values()];
 
+    if (params.employeeId) {
+      rows = rows.filter((r) => r.employeeId === params.employeeId);
+    }
+    if (params.employeeIds && params.employeeIds.length > 0) {
+      rows = rows.filter((r) => params.employeeIds!.includes(r.employeeId));
+    }
     if (params.startDate) {
       rows = rows.filter((r) => r.workDate >= params.startDate!);
     }
@@ -148,5 +156,12 @@ export class AttendanceRepository implements IAttendanceRepository {
     const items = rows.slice(params.offset, params.offset + params.limit);
 
     return { items, total };
+  }
+
+  async findMany(
+    employeeId: string,
+    params: AttendanceFindManyParams,
+  ): Promise<{ items: AttendanceRecord[]; total: number }> {
+    return this.findAll({ ...params, employeeId });
   }
 }

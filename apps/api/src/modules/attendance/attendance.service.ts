@@ -194,4 +194,24 @@ export class AttendanceService {
     });
     return buildPage(items, total, query);
   }
+
+  async listAll(
+    query: ListAttendanceQuery,
+    scope?: { employeeIds?: string[] },
+  ): Promise<PaginatedResponse<AttendanceRecord>> {
+    const sort = resolveSort(query, SORTABLE_ATTENDANCE_FIELDS, {
+      column: 'checkInTime',
+      order: 'desc',
+    });
+    const { items, total } = await this.repository.findAll({
+      ...toOffsetLimit(query),
+      sort,
+      employeeId: query.employeeId,
+      employeeIds: scope?.employeeIds,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      status: query.status,
+    });
+    return buildPage(items, total, query);
+  }
 }
