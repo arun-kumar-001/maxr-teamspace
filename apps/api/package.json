@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
-    "openapi:generate": "npm run build && node dist/openapi/generate.js"
+    "openapi:generate": "npm run build && node dist/openapi/generate.js",
+    "test:db": "vitest run --config vitest.db.config.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^9.1.0",
