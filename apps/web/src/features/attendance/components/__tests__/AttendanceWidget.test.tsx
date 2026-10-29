@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AttendanceApiClient } from '../../api/attendanceApi';
 import { AttendanceRecord, TodayAttendanceSummary } from '../../types/attendance';
 import { AttendanceWidget } from '../AttendanceWidget';
 
 describe('TC-34-UI: AttendanceWidget Component', () => {
+  afterEach(() => {
+    cleanup();
+  });
   let mockApi: AttendanceApiClient;
   const sampleActiveSession: AttendanceRecord = {
     id: 'att-session-123',
@@ -37,6 +40,12 @@ describe('TC-34-UI: AttendanceWidget Component', () => {
         checkOutTime: new Date().toISOString(),
         durationMinutes: 60,
       }),
+      getMyHistory: vi
+        .fn()
+        .mockResolvedValue({ data: [], meta: { total: 0, page: 1, pageSize: 10 } }),
+      listAttendance: vi
+        .fn()
+        .mockResolvedValue({ data: [], meta: { total: 0, page: 1, pageSize: 10 } }),
     };
   });
 

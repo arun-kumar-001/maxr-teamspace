@@ -45,6 +45,8 @@ export const checkOutSchema = z
   .strict();
 
 export const listAttendanceQuerySchema = listQuerySchema({
+  employeeId: z.string().uuid().optional(),
+  teamId: z.string().uuid().optional(),
   startDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')

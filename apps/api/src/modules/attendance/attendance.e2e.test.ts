@@ -180,4 +180,74 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
     expect(call2.status).toBe(201);
     expect(call2.body.data.id).toBe(call1.body.data.id);
   });
+
+  describe('TC-35: Attendance Views and History (own, team, HR)', () => {
+    const staffId = 'a1111111-1111-4111-8111-111111111111';
+    const peerId = 'b2222222-2222-4222-8222-222222222222';
+    const leadId = 'c3333333-3333-4333-8333-333333333333';
+    const hrId = 'd4444444-4444-4444-8444-444444444444';
+
+    it('TC-35-01: staff can query own attendance history via GET /attendance/me', async () => {
+      const { app } = makeApp();
+
+      // Check in staff
+      await request(app)
+        .post('/api/v1/attendance/check-in')
+        .set('Idempotency-Key', nextKey())
+        .set('x-employee-id', staffId)
+        .send({ notes: 'Self history test' });
+
+      const res = await request(app).get('/api/v1/attendance/me').set('x-employee-id', staffId);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toBeInstanceOf(Array);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.body.data[0].employeeId).toBe(staffId);
+    });
+
+    it('TC-35-02: staff querying peer attendance is rejected with 403 FORBIDDEN', async () => {
+      const { app } = makeApp();
+
+      const res = await request(app)
+        .get(`/api/v1/attendance?employeeId=${peerId}`)
+        .set('x-employee-id', staffId)
+        .set('x-role', 'Staff');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+
+    it('TC-35-03: team lead can view team members attendance grid', async () => {
+      const { app } = makeApp();
+
+      // Check in peer
+      await request(app)
+        .post('/api/v1/attendance/check-in')
+        .set('Idempotency-Key', nextKey())
+        .set('x-employee-id', peerId)
+        .send({ notes: 'Team member check-in' });
+
+      const res = await request(app)
+        .get(`/api/v1/attendance?employeeId=${peerId}`)
+        .set('x-employee-id', leadId)
+        .set('x-role', 'Team Lead')
+        .set('x-team-employees', `${staffId},${peerId}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.some((r: { employeeId: string }) => r.employeeId === peerId)).toBe(true);
+    });
+
+    it('TC-35-04: HR manager can view company-wide attendance', async () => {
+      const { app } = makeApp();
+
+      const res = await request(app)
+        .get('/api/v1/attendance')
+        .set('x-employee-id', hrId)
+        .set('x-role', 'HR Manager');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toBeInstanceOf(Array);
+      expect(res.body.meta).toBeDefined();
+    });
+  });
 });
