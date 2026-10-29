@@ -1,8 +1,11 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { ROLES, ROLE_DISPLAY_NAMES } from '@maxr/shared';
 import { getPool, closePool } from './client';
+import { isDatabaseAvailableSync } from '../test/helpers';
 
-describe('Foundation Schema Constraints & Data Integrity (TL-04)', () => {
+const hasDatabase = isDatabaseAvailableSync();
+
+describe.skipIf(!hasDatabase)('Foundation Schema Constraints & Data Integrity (TL-04)', () => {
   const pool = getPool();
 
   afterAll(async () => {

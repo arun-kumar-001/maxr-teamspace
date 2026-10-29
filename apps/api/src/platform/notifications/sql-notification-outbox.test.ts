@@ -1,9 +1,12 @@
 import { afterAll, beforeEach, describe } from 'vitest';
 import { getPool, closePool } from '../../db/client';
+import { isDatabaseAvailableSync } from '../../test/helpers';
 import { describeOutboxContract } from '../contracts/outbox.contract';
 import { SqlNotificationOutbox } from './sql-notification-outbox';
 
-describe('SqlNotificationOutbox', () => {
+const hasDatabase = isDatabaseAvailableSync();
+
+describe.skipIf(!hasDatabase)('SqlNotificationOutbox', () => {
   const pool = getPool();
   const outbox = new SqlNotificationOutbox(pool);
 
