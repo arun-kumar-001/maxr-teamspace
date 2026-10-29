@@ -6,7 +6,7 @@ Keep this file short. Put detail in `docs/` and link to it.
 > **Status legend used below:** **[SPEC]** = stated in the approved design PDF (v1.0).
 > **[PROPOSED]** = Technical Lead recommendation, not yet decided (needs an ADR in `docs/architecture/decisions/`).
 > **[TBD]** = unknown, do not assume.
-> The repo currently contains only `README.md`. No application code exists yet. Never claim a feature exists without verifying it in the code.
+> The foundation is in `develop` (scaffold, CI, local environment, API conventions, shared services, UI tokens and components); no business feature exists yet. Never claim a feature exists without verifying it in the code.
 
 ## 1. Product context
 
@@ -48,9 +48,10 @@ Start with `docs/development/developer-onboarding.md`.
 | Edge | Nginx (TLS, rate limiting) | [SPEC] |
 | Delivery | Docker containers, GitHub Actions to Cantobo Server | [SPEC] |
 | Integrations | SMTP/SendGrid email, SMS, calendar sync, payroll export | [SPEC] |
-| Node framework, ORM/query layer, migrations tool, validation lib, UI kit, state/data-fetching lib, test runners, package manager, monorepo layout | **[TBD]** — decide via ADR before the first feature | — |
+| Package manager, monorepo layout, backend framework, React version | **Decided (TL):** npm workspaces with one `package-lock.json` (no pnpm), `apps/web` + `apps/api` + `packages/shared`, Express, React 18 + Vite + Tailwind 3, Node 22 | Issue #52, ADR D-02 |
+| ORM/query layer, migrations tool, validation lib, UI kit, state/data-fetching lib, test runners | **Proposed in ADRs D-02..D-09, awaiting TL approval** (in use now: Zod 4, Vitest 5, Testing Library). Do not swap them without an ADR | `docs/architecture/decisions/` |
 
-**[PROPOSED] defaults for the ADR** (TL to confirm): pnpm workspaces monorepo (`apps/web`, `apps/api`, `packages/shared`); Vite + React Router + TanStack Query; Tailwind + shadcn/ui-style primitives; Fastify or NestJS; Zod for validation shared with the web app; Prisma or Drizzle with SQL migrations; Vitest + Testing Library + Playwright; ESLint + Prettier; Conventional Commits.
+**[PROPOSED] defaults still open** (TL to confirm): TanStack Query for data fetching; shadcn/ui-style primitives on Tailwind; SQL migrations with a query layer (Prisma or Drizzle, or the current plain-SQL migrator); Playwright for E2E (issue #62); ESLint + Prettier; Conventional Commits.
 
 Until the ADR lands, do **not** add a framework or library "to get started". Do not commit a lockfile for a package manager that has not been chosen.
 
