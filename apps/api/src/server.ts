@@ -1,9 +1,16 @@
 import { createApp } from './app';
 import { config } from './config/env';
-import { createPlatform } from './platform';
+import { createPlatform, SqlAuditStore, SqlNotificationOutbox } from './platform';
+import { getPool } from './db/client';
 
 function startServer(): void {
-  const platform = createPlatform();
+  const pool = getPool();
+  const platform = createPlatform({
+    overrides: {
+      auditStore: new SqlAuditStore(pool),
+      outbox: new SqlNotificationOutbox(pool),
+    },
+  });
   const app = createApp({ platform });
   // Sends queued emails in the background; stopped on shutdown.
   platform.dispatcher.start(platform.config.outbox.pollIntervalMs);

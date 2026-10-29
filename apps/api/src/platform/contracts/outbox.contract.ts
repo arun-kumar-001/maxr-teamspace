@@ -1,5 +1,11 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { NotificationOutbox } from '../notifications/types';
+
+/** Real outbox ids are UUIDs; the tests keep readable names and map them to fixed UUIDs. */
+function uuidOf(name: string): string {
+  return `00000000-0000-4000-8000-${createHash('sha1').update(name).digest('hex').slice(0, 12)}`;
+}
 
 const payload = { to: ['a@example.com'], subject: 'Hello', text: 'Body' };
 const T0 = new Date('2026-10-29T10:00:00.000Z');
@@ -16,58 +22,58 @@ export function describeOutboxContract(
   describe(`notification outbox contract: ${name}`, () => {
     it('a new item is pending, due now, with zero attempts', async () => {
       const outbox = await create();
-      const item = await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
+      const item = await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
       expect(item).toMatchObject({
-        id: 'i1',
+        id: uuidOf('i1'),
         status: 'pending',
         attempts: 0,
         lockedUntil: null,
         sentAt: null,
       });
       expect(item.nextAttemptAt).toBe(T0.toISOString());
-      expect(await outbox.get('i1')).toMatchObject({ id: 'i1', status: 'pending' });
-      expect(await outbox.get('unknown')).toBeNull();
+      expect(await outbox.get(uuidOf('i1'))).toMatchObject({ id: uuidOf('i1'), status: 'pending' });
+      expect(await outbox.get(uuidOf('unknown'))).toBeNull();
     });
 
     it('the same dedupeKey returns the existing item instead of creating a second one', async () => {
       const outbox = await create();
       const first = await outbox.enqueue({
-        id: 'i1',
+        id: uuidOf('i1'),
         channel: 'email',
         payload,
         dedupeKey: 'leave:1:approved',
         now: T0,
       });
       const second = await outbox.enqueue({
-        id: 'i2',
+        id: uuidOf('i2'),
         channel: 'email',
         payload,
         dedupeKey: 'leave:1:approved',
         now: T0,
       });
       expect(second.id).toBe(first.id);
-      expect(await outbox.get('i2')).toBeNull();
+      expect(await outbox.get(uuidOf('i2'))).toBeNull();
       expect(await outbox.claimDue(10, T0, 60_000)).toHaveLength(1);
     });
 
     it('items without a dedupeKey are never merged', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
-      await outbox.enqueue({ id: 'i2', channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i2'), channel: 'email', payload, now: T0 });
       expect(await outbox.claimDue(10, T0, 60_000)).toHaveLength(2);
     });
 
     it('claiming marks items processing, locks them and counts the attempt', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
       const [claimed] = await outbox.claimDue(10, T0, 60_000);
-      expect(claimed).toMatchObject({ id: 'i1', status: 'processing', attempts: 1 });
+      expect(claimed).toMatchObject({ id: uuidOf('i1'), status: 'processing', attempts: 1 });
       expect(claimed?.lockedUntil).toBe(plus(60_000).toISOString());
     });
 
     it('an item that is locked cannot be claimed again until the lock expires (crash recovery)', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
       await outbox.claimDue(10, T0, 60_000);
       expect(await outbox.claimDue(10, plus(30_000), 60_000)).toHaveLength(0);
       const reclaimed = await outbox.claimDue(10, plus(60_001), 60_000);
@@ -78,7 +84,7 @@ export function describeOutboxContract(
     it('two workers claiming at the same moment never get the same item', async () => {
       const outbox = await create();
       for (let i = 0; i < 6; i++) {
-        await outbox.enqueue({ id: `i${i}`, channel: 'email', payload, now: T0 });
+        await outbox.enqueue({ id: uuidOf(`i${i}`), channel: 'email', payload, now: T0 });
       }
       const [a, b] = await Promise.all([
         outbox.claimDue(4, T0, 60_000),
@@ -91,19 +97,23 @@ export function describeOutboxContract(
 
     it('only items that are due are claimed, oldest first, up to the limit', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'later', channel: 'email', payload, now: plus(10_000) });
-      await outbox.enqueue({ id: 'first', channel: 'email', payload, now: T0 });
-      await outbox.enqueue({ id: 'second', channel: 'email', payload, now: plus(1_000) });
-      expect((await outbox.claimDue(1, plus(2_000), 60_000)).map((i) => i.id)).toEqual(['first']);
-      expect((await outbox.claimDue(10, plus(2_000), 60_000)).map((i) => i.id)).toEqual(['second']);
+      await outbox.enqueue({ id: uuidOf('later'), channel: 'email', payload, now: plus(10_000) });
+      await outbox.enqueue({ id: uuidOf('first'), channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('second'), channel: 'email', payload, now: plus(1_000) });
+      expect((await outbox.claimDue(1, plus(2_000), 60_000)).map((i) => i.id)).toEqual([
+        uuidOf('first'),
+      ]);
+      expect((await outbox.claimDue(10, plus(2_000), 60_000)).map((i) => i.id)).toEqual([
+        uuidOf('second'),
+      ]);
     });
 
     it('markSent finishes an item for good', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
       await outbox.claimDue(10, T0, 60_000);
-      await outbox.markSent('i1', plus(5));
-      expect(await outbox.get('i1')).toMatchObject({
+      await outbox.markSent(uuidOf('i1'), plus(5));
+      expect(await outbox.get(uuidOf('i1'))).toMatchObject({
         status: 'sent',
         lockedUntil: null,
         sentAt: plus(5).toISOString(),
@@ -113,10 +123,10 @@ export function describeOutboxContract(
 
     it('markFailed with a next time schedules a retry and keeps the error', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
       await outbox.claimDue(10, T0, 60_000);
-      await outbox.markFailed('i1', { error: 'boom', nextAttemptAt: plus(30_000) });
-      expect(await outbox.get('i1')).toMatchObject({
+      await outbox.markFailed(uuidOf('i1'), { error: 'boom', nextAttemptAt: plus(30_000) });
+      expect(await outbox.get(uuidOf('i1'))).toMatchObject({
         status: 'pending',
         lastError: 'boom',
         lockedUntil: null,
@@ -127,19 +137,19 @@ export function describeOutboxContract(
 
     it('markFailed without a next time gives up (dead) and the item is never claimed again', async () => {
       const outbox = await create();
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload, now: T0 });
       await outbox.claimDue(10, T0, 60_000);
-      await outbox.markFailed('i1', { error: 'final', nextAttemptAt: null });
-      expect(await outbox.get('i1')).toMatchObject({ status: 'dead', lastError: 'final' });
+      await outbox.markFailed(uuidOf('i1'), { error: 'final', nextAttemptAt: null });
+      expect(await outbox.get(uuidOf('i1'))).toMatchObject({ status: 'dead', lastError: 'final' });
       expect(await outbox.claimDue(10, plus(999_999_999), 60_000)).toHaveLength(0);
     });
 
     it('the stored payload is a copy: changing the original afterwards changes nothing', async () => {
       const outbox = await create();
       const original = { to: ['a@example.com'], subject: 'Hello', text: 'Body' };
-      await outbox.enqueue({ id: 'i1', channel: 'email', payload: original, now: T0 });
+      await outbox.enqueue({ id: uuidOf('i1'), channel: 'email', payload: original, now: T0 });
       original.subject = 'CHANGED';
-      expect((await outbox.get('i1'))?.payload.subject).toBe('Hello');
+      expect((await outbox.get(uuidOf('i1')))?.payload.subject).toBe('Hello');
     });
   });
 }
