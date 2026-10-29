@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { TemplatePage } from './features/_template/pages/TemplatePage';
+import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import { ROLES, Role, ROLE_DISPLAY_NAMES } from '@maxr/shared';
 
 interface HealthStatus {
@@ -129,11 +130,18 @@ export const App: React.FC = () => {
             >
               Template Demo
             </Link>
+            <Link
+              to="/components"
+              className="text-slate-600 hover:text-teal-600 font-medium pb-2 text-sm"
+            >
+              UI Components (TL-09)
+            </Link>
           </nav>
 
           <main>
             <Routes>
               <Route path="/" element={<TemplatePage />} />
+              <Route path="/components" element={<ComponentGalleryPage />} />
             </Routes>
           </main>
         </div>
