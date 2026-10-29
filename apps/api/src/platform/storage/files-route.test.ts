@@ -1,3 +1,4 @@
+import { testActor } from '../../test/fixtures';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { captureLogger, makeMiniApp } from '../../test/helpers';
@@ -24,7 +25,7 @@ function setup() {
     // Stand-in for the auth middleware of issue #7: the user comes from a test header.
     a.use((req, _res, next) => {
       const user = req.header('x-test-user');
-      if (user) req.actor = { id: user };
+      if (user) req.actor = testActor(user);
       next();
     });
     a.use('/api/v1/files', createFilesRouter(storage));

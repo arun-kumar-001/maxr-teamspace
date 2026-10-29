@@ -24,9 +24,9 @@ Anonymous internet user; authenticated Staff, Team Lead, HR Manager, Admin (mali
 |---|---|---|---|
 | T1 | **Broken access control / IDOR**: a user reads or edits another user's or team's record (E, I) | Deny by default; role **and** record scope applied inside repository queries; out-of-scope reads return 404; cross-scope tests per role (`AGENTS.md` §5, §7, §10) | Planned: RBAC engine #8; tests in every feature PR |
 | T2 | **Privilege escalation via mass assignment** (client sends `role`, `managerId`, `status`) (E) | Strict Zod schemas reject unknown keys; never trust client `userId`/role/team; allowed-field whitelists for `/employees/me` | Done: strict schemas in API conventions (#58); Planned: per-endpoint tests |
-| T3 | **Credential stuffing / brute force on login** (S) | Rate limit and lockout/backoff on `POST /auth/login`; generic failure message; Argon2id or bcrypt ≥ 12 | Done: rate-limit helper (#58); Planned: auth #7, decision D-05 |
-| T4 | **Stolen or fixed session** (S, E) | httpOnly+Secure+SameSite cookies, short-lived tokens, rotation on login, revoke all sessions on deactivation and password change | Decision D-05; Planned #7, #26 |
-| T5 | **CSRF** when cookie auth is used (T) | SameSite plus CSRF token for state-changing requests | Planned #7 |
+| T3 | **Credential stuffing / brute force on login** (S) | Rate limit and lockout/backoff on `POST /auth/login`; generic failure message; Argon2id or bcrypt ≥ 12 | Done: rate-limit helper (#58); Done: auth #7 (D-05 approved) |
+| T4 | **Stolen or fixed session** (S, E) | httpOnly+Secure+SameSite cookies, short-lived tokens, rotation on login, revoke all sessions on deactivation and password change | Done: #7; deactivation hook in #26 |
+| T5 | **CSRF** when cookie auth is used (T) | SameSite plus CSRF token for state-changing requests | Done: #7 (CSRF token and origin check) |
 | T6 | **Injection (SQL, header, log)** (T) | Parameterised queries only; validated `x-request-id`; output encoding; no `dangerouslySetInnerHTML` with user data | Done: DB error mapping, logger redaction; Planned: request-id validation (#52 F5) |
 | T7 | **XSS** (T, I) | React escaping, CSP header, no inline user HTML | Planned #16 (headers/CSP) |
 | T8 | **Malicious file upload** (T, D) | Type/size allow-list, content sniffing (PDF/PNG/JPEG), server-generated keys, sanitised filenames, fail-closed virus-scan hook | Done: storage service (#60); Planned: scanner integration #16 |
@@ -46,7 +46,7 @@ Anonymous internet user; authenticated Staff, Team Lead, HR Manager, Admin (mali
 | T22 | **Backup theft or untested restore** (I, D) | Encrypted backups, restore drill | Planned #17 |
 
 ## 5. Residual risks to accept explicitly (TL decision)
-1. Until D-05 closes, the auth design is unproven; T3-T5 stay open.
+1. Authentication (D-05) is implemented and tested, but it has not had an independent security review yet: do that before launch (#16).
 2. Until D-10 closes, storage encryption at rest and backups are unspecified.
 3. Payslip data source (D-16) is unknown, so its protection cannot be designed yet.
 4. Shared Admin accounts and MFA are not specified in the report (no MFA yet; recommend MFA for Admin and HR before launch).

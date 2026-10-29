@@ -5,6 +5,9 @@
     "node_modules",
     "src/**/*.test.ts",
     "src/platform/contracts/**",
+    "src/modules/auth/contracts/**",
+    "src/modules/auth/auth.testing.ts",
+    "src/modules/auth/auth.repository.memory.ts",
     "src/test/**"
   ]
 }
