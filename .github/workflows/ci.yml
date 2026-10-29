@@ -29,6 +29,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
+      # Catches lockfiles regenerated on Windows/macOS that dropped the Linux native packages.
+      - name: Lockfile has Linux native packages
+        run: node scripts/check-lockfile.mjs
+
       # Fails if package-lock.json is out of sync with any package.json.
       - name: Install (clean, lockfile-exact)
         run: npm ci
