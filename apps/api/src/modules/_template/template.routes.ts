@@ -1,24 +1,46 @@
+import { idParamSchema } from '@maxr/shared';
 import { Router } from 'express';
-import { TemplateRepository } from './template.repository';
-import { TemplateService } from './template.service';
+import { asyncHandler } from '../../http/async-handler';
+import { IdempotencyStore, InMemoryIdempotencyStore, idempotent } from '../../http/idempotency';
+import { validate } from '../../http/validate';
 import { TemplateController } from './template.controller';
+import { TemplateRepository } from './template.repository';
+import {
+  createTemplateSchema,
+  listTemplatesQuerySchema,
+  updateTemplateSchema,
+} from './template.schemas';
+import { TemplateService } from './template.service';
 
 /**
- * Creates and registers routes for the template module.
- * Path prefix: /api/v1/templates
+ * Route order for a real module (each step plugs in left to right):
+ *   authenticate (#7) -> requirePermission('module.action') (#8) -> validate -> [idempotent] -> controller
+ * Mounted under /api/v1/templates by routes/index.ts (non-production only).
  */
-export function createTemplateRouter(): Router {
+export function createTemplateRouter(
+  idempotencyStore: IdempotencyStore = new InMemoryIdempotencyStore(),
+): Router {
   const router = Router();
+  const controller = new TemplateController(new TemplateService(new TemplateRepository()));
 
-  const repository = new TemplateRepository();
-  const service = new TemplateService(repository);
-  const controller = new TemplateController(service);
-
-  router.get('/', controller.list);
-  router.post('/', controller.create);
-  router.get('/:id', controller.getById);
-  router.put('/:id', controller.update);
-  router.post('/:id/deactivate', controller.deactivate);
+  router.get('/', validate({ query: listTemplatesQuerySchema }), asyncHandler(controller.list));
+  router.get('/:id', validate({ params: idParamSchema }), asyncHandler(controller.getById));
+  router.post(
+    '/',
+    idempotent({ store: idempotencyStore }),
+    validate({ body: createTemplateSchema }),
+    asyncHandler(controller.create),
+  );
+  router.put(
+    '/:id',
+    validate({ params: idParamSchema, body: updateTemplateSchema }),
+    asyncHandler(controller.update),
+  );
+  router.post(
+    '/:id/deactivate',
+    validate({ params: idParamSchema }),
+    asyncHandler(controller.deactivate),
+  );
 
   return router;
 }
