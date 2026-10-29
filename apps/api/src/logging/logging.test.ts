@@ -1,8 +1,9 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import { at } from '../test/at';
 import { makeApp } from '../test/helpers';
 import { createLogger, parseLogLevel } from './logger';
-import { REDACTED, isSensitiveKey, redact } from './redact';
+import { REDACTED, isSensitiveKey, redact, scrubText } from './redact';
 
 describe('redaction (TC-9-14)', () => {
   it('redacts sensitive keys at any depth, in arrays, case and separator insensitive', () => {
@@ -17,22 +18,22 @@ describe('redaction (TC-9-14)', () => {
       headers: { Authorization: 'Bearer x', 'set-cookie': 'a=b', cookie: 'c=d' },
       salary: 100,
       ssn: '000-00-0000',
-    }) as Record<string, any>;
+    });
 
-    expect(out.user.name).toBe('Asha');
-    expect(out.user.Password).toBe(REDACTED);
-    expect(out.user.password_hash).toBe(REDACTED);
-    expect(out.user.profile.bankAccount).toBe(REDACTED);
-    expect(out.user.profile.iban).toBe(REDACTED);
-    expect(out.list[0].token).toBe(REDACTED);
-    expect(out.list[1].accessToken).toBe(REDACTED);
-    expect(out.headers).toEqual({
+    expect(at(out, 'user', 'name')).toBe('Asha');
+    expect(at(out, 'user', 'Password')).toBe(REDACTED);
+    expect(at(out, 'user', 'password_hash')).toBe(REDACTED);
+    expect(at(out, 'user', 'profile', 'bankAccount')).toBe(REDACTED);
+    expect(at(out, 'user', 'profile', 'iban')).toBe(REDACTED);
+    expect(at(out, 'list', '0', 'token')).toBe(REDACTED);
+    expect(at(out, 'list', '1', 'accessToken')).toBe(REDACTED);
+    expect(at(out, 'headers')).toEqual({
       Authorization: REDACTED,
       'set-cookie': REDACTED,
       cookie: REDACTED,
     });
-    expect(out.salary).toBe(REDACTED);
-    expect(out.ssn).toBe(REDACTED);
+    expect(at(out, 'salary')).toBe(REDACTED);
+    expect(at(out, 'ssn')).toBe(REDACTED);
   });
 
   it('does not redact harmless keys that merely contain short sensitive letters', () => {
@@ -51,11 +52,11 @@ describe('redaction (TC-9-14)', () => {
       when: new Date('2026-01-02T03:04:05Z'),
       big: 10n,
       err: new Error('boom'),
-    }) as Record<string, any>;
-    expect(out.a.self).toBe('[Circular]');
-    expect(out.when).toBe('2026-01-02T03:04:05.000Z');
-    expect(out.big).toBe('10');
-    expect(out.err.message).toBe('boom');
+    });
+    expect(at(out, 'a', 'self')).toBe('[Circular]');
+    expect(at(out, 'when')).toBe('2026-01-02T03:04:05.000Z');
+    expect(at(out, 'big')).toBe('10');
+    expect(at(out, 'err', 'message')).toBe('boom');
     let deep: Record<string, unknown> = { v: 1 };
     for (let i = 0; i < 20; i++) deep = { next: deep };
     expect(JSON.stringify(redact(deep))).toContain('[MaxDepth]');
@@ -63,6 +64,34 @@ describe('redaction (TC-9-14)', () => {
 
   it('truncates very long strings', () => {
     expect((redact('x'.repeat(5000)) as string).length).toBeLessThan(2100);
+  });
+});
+
+describe('redaction of secrets inside text (TC-9-14)', () => {
+  it.each([
+    ['connect failed password=hunter2 host=db', 'hunter2'],
+    ['login with token: abc123SECRET rejected', 'abc123SECRET'],
+    ['{"apiKey":"sk_live_999","ok":true}', 'sk_live_999'],
+    ['Authorization: Bearer eyJhbGciOi.payload.sig', 'eyJhbGciOi'],
+    ['connection to postgres://admin:s3cr3t@db.internal:5432/app failed', 's3cr3t'],
+    ['SESSION secret = topsecretvalue;', 'topsecretvalue'],
+  ])('scrubs %j', (text, secret) => {
+    const out = scrubText(text);
+    expect(out).not.toContain(secret);
+    expect(out).toContain('[REDACTED]');
+  });
+
+  it('keeps ordinary text readable', () => {
+    expect(scrubText('request completed in 12ms for /api/v1/templates')).toBe(
+      'request completed in 12ms for /api/v1/templates',
+    );
+    expect(scrubText('Unexpected token < in JSON')).toBe('Unexpected token < in JSON');
+  });
+
+  it('scrubs secrets inside error messages and stack traces and nested values', () => {
+    const err = new Error('db auth failed password=hunter2');
+    const out = redact({ err, nested: { msg: 'url postgres://u:pw123@h/db' } });
+    expect(JSON.stringify(out)).not.toMatch(/hunter2|pw123/);
   });
 });
 
