@@ -6,7 +6,7 @@ Internal web platform for workforce management: users & roles, employee director
 
 ## Architecture & Monorepo Structure
 
-The repository is organized as a **Modular Monolith** using npm / pnpm workspaces:
+The repository is organized as a **Modular Monolith** using npm workspaces:
 
 ```text
 maxr-teamspace/
@@ -58,7 +58,6 @@ maxr-teamspace/
 ├── .eslintrc.cjs               # Shared TypeScript ESLint configuration
 ├── .prettierrc                 # Code formatting configuration
 ├── package.json                # Root workspace orchestration
-├── pnpm-workspace.yaml         # pnpm workspace configuration
 ├── tsconfig.json               # Root strict TypeScript configuration
 └── AGENTS.md                   # Authoritative repository rules for developers & AI agents
 ```
@@ -95,8 +94,8 @@ All services use named volumes (`postgres_data`, `redis_data`, `mailpit_data`, `
 
 ## Prerequisites
 
-- **Node.js**: v18.0.0 or higher (`node -v` >= 18)
-- **Package Manager**: `npm` (v9+) or `pnpm` (v9+)
+- **Node.js**: v22.12.0 or higher (`node -v` >= 22.12)
+- **Package Manager**: `npm` (v10+, ships with Node 22); pnpm is not used
 - **Docker**: Docker Desktop / Engine running with Docker Compose v2+ (`docker compose version`)
 - **Git**: Installed and configured
 

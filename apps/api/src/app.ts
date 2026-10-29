@@ -33,6 +33,7 @@ export function createApp(options: AppOptions = {}): Express {
   const platform = options.platform ?? createPlatform({ logger });
 
   const app = express();
+  app.disable('x-powered-by');
 
   // Behind Nginx the client IP comes from X-Forwarded-For; rate limiting needs the right hop count.
   app.set('trust proxy', http.trustProxy);

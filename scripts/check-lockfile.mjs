@@ -3,7 +3,10 @@
 // and `npm ci` then installs a tree on which the build cannot run on ubuntu runners.
 import { readFileSync } from 'node:fs';
 
-const REQUIRED = ['node_modules/@rollup/rollup-linux-x64-gnu', 'node_modules/@esbuild/linux-x64'];
+const REQUIRED = [
+  'node_modules/@rolldown/binding-linux-x64-gnu',
+  'node_modules/@esbuild/linux-x64',
+];
 
 const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
 const missing = REQUIRED.filter((key) => !lock.packages?.[key]);
