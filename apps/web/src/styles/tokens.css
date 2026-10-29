@@ -5,29 +5,29 @@
 
 :root {
   /* Brand Shell */
-  --navy-950: #0A1429;
-  --navy-900: #0E2042;
-  --navy-800: #1E2F50;
+  --navy-950: #0a1429;
+  --navy-900: #0e2042;
+  --navy-800: #1e2f50;
 
   /* Primary Accent */
-  --teal-500: #14B8A6;
-  --teal-600: #0D9488;
+  --teal-500: #14b8a6;
+  --teal-600: #0d9488;
 
   /* Logo Accent Only */
-  --brand-red: #E5322D;
+  --brand-red: #e5322d;
 
   /* Light Theme Surface Default */
-  --bg: #F6F8FB;
-  --surface: #FFFFFF;
-  --text: #0F172A;
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --text: #0f172a;
   --text-muted: #475569;
-  --border: #E2E8F0;
+  --border: #e2e8f0;
 
   /* Status Semantics */
-  --success: #16A34A;
-  --warning: #D97706;
-  --danger: #DC2626;
-  --info: #2563EB;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
 
   /* Component Radiuses */
   --radius-input: 6px;
@@ -47,11 +47,11 @@
 }
 
 /* Dark Shell / Dark Theme Support */
-.dark, [data-theme='dark'] {
-  --bg: #0A1429;
-  --surface: #0E2042;
-  --text: #F8FAFC;
-  --text-muted: #94A3B8;
-  --border: #1E2F50;
+.dark,
+[data-theme='dark'] {
+  --bg: #0a1429;
+  --surface: #0e2042;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #1e2f50;
 }
-

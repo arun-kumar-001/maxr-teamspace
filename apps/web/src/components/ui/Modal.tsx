@@ -9,14 +9,7 @@ export interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  footer,
-  maxWidth = 'md',
-}: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md' }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -52,18 +45,17 @@ export function Modal({
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       {/* Background click to dismiss */}
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
       {/* Modal Dialog: Full-width sheet on mobile (<640px), Centered Card on desktop */}
       <div
         className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-[16px] sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
       >
         {/* Mobile handle indicator */}
-        <div className="sm:hidden w-10 h-1 bg-border rounded-full mx-auto my-2 shrink-0" aria-hidden="true" />
+        <div
+          className="sm:hidden w-10 h-1 bg-border rounded-full mx-auto my-2 shrink-0"
+          aria-hidden="true"
+        />
 
         {/* Header */}
         {title && (

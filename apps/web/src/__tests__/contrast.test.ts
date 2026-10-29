@@ -29,4 +29,3 @@ describe('TC-10-03: WCAG 2.1 AA Contrast Verification', () => {
     expect(getContrastRatio(white, COLOR_TOKENS.navy950)).toBeGreaterThanOrEqual(7.0);
   });
 });
-

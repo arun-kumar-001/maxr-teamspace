@@ -28,10 +28,34 @@ interface EmployeeSample extends Record<string, unknown> {
 }
 
 const SAMPLE_EMPLOYEES: EmployeeSample[] = [
-  { id: '1', name: 'Alice Smith', role: 'Engineering Lead', department: 'Technology', status: 'Approved' },
-  { id: '2', name: 'Bob Jones', role: 'HR Specialist', department: 'Human Resources', status: 'Approved' },
-  { id: '3', name: 'Carol White', role: 'Staff Designer', department: 'Product', status: 'Pending' },
-  { id: '4', name: 'David Lee', role: 'Support Analyst', department: 'Operations', status: 'Applied' },
+  {
+    id: '1',
+    name: 'Alice Smith',
+    role: 'Engineering Lead',
+    department: 'Technology',
+    status: 'Approved',
+  },
+  {
+    id: '2',
+    name: 'Bob Jones',
+    role: 'HR Specialist',
+    department: 'Human Resources',
+    status: 'Approved',
+  },
+  {
+    id: '3',
+    name: 'Carol White',
+    role: 'Staff Designer',
+    department: 'Product',
+    status: 'Pending',
+  },
+  {
+    id: '4',
+    name: 'David Lee',
+    role: 'Support Analyst',
+    department: 'Operations',
+    status: 'Applied',
+  },
 ];
 
 export function ComponentGalleryPage() {
@@ -52,7 +76,8 @@ export function ComponentGalleryPage() {
       <div>
         <h1 className="text-2xl font-bold text-text">Shared UI Component Library (TL-09)</h1>
         <p className="text-sm text-text-muted mt-1">
-          Accessible, mobile-first design system components conforming strictly to AGENTS.md §8 design tokens.
+          Accessible, mobile-first design system components conforming strictly to AGENTS.md §8
+          design tokens.
         </p>
       </div>
 
@@ -68,7 +93,9 @@ export function ComponentGalleryPage() {
               <Button variant="outline">Outline</Button>
               <Button variant="ghost">Ghost</Button>
               <Button variant="danger">Danger</Button>
-              <Button variant="primary" isLoading>Loading...</Button>
+              <Button variant="primary" isLoading>
+                Loading...
+              </Button>
             </div>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Button size="sm">Small (32px)</Button>
@@ -100,11 +127,24 @@ export function ComponentGalleryPage() {
               <Input id="fullName" placeholder="e.g. Jane Doe" />
             </FormField>
 
-            <FormField label="Work Email" htmlFor="email" required error="Please enter a valid work email.">
-              <Input id="email" defaultValue="invalid-email" error="Please enter a valid work email." />
+            <FormField
+              label="Work Email"
+              htmlFor="email"
+              required
+              error="Please enter a valid work email."
+            >
+              <Input
+                id="email"
+                defaultValue="invalid-email"
+                error="Please enter a valid work email."
+              />
             </FormField>
 
-            <FormField label="Department Role" htmlFor="department" helperText="Select employee primary assignment.">
+            <FormField
+              label="Department Role"
+              htmlFor="department"
+              helperText="Select employee primary assignment."
+            >
               <Select
                 id="department"
                 options={[
@@ -115,7 +155,9 @@ export function ComponentGalleryPage() {
               />
             </FormField>
 
-            <Button variant="primary" type="submit">Submit Form</Button>
+            <Button variant="primary" type="submit">
+              Submit Form
+            </Button>
           </form>
         </div>
       )}
@@ -123,7 +165,9 @@ export function ComponentGalleryPage() {
       {activeTab === 'status' && (
         <Stack gap="6">
           <div className="bg-surface p-6 rounded-card border border-border space-y-4">
-            <h2 className="text-lg font-semibold text-text">Leave Workflow Statuses (AGENTS.md §8)</h2>
+            <h2 className="text-lg font-semibold text-text">
+              Leave Workflow Statuses (AGENTS.md §8)
+            </h2>
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill status="Applied" />
               <StatusPill status="Pending" />
@@ -134,7 +178,9 @@ export function ComponentGalleryPage() {
           </div>
 
           <div className="bg-surface p-6 rounded-card border border-border space-y-4">
-            <h2 className="text-lg font-semibold text-text">Task Workflow Statuses (AGENTS.md §8)</h2>
+            <h2 className="text-lg font-semibold text-text">
+              Task Workflow Statuses (AGENTS.md §8)
+            </h2>
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill status="To Do" />
               <StatusPill status="In Progress" />
@@ -172,9 +218,13 @@ export function ComponentGalleryPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-text">Responsive DataTable</h2>
-                <p className="text-xs text-text-muted">Transforms into stacked cards on phones (&lt; 640px) and full table on desktop.</p>
+                <p className="text-xs text-text-muted">
+                  Transforms into stacked cards on phones (&lt; 640px) and full table on desktop.
+                </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={() => setIsModalOpen(true)}>Open Modal Sheet</Button>
+              <Button variant="secondary" size="sm" onClick={() => setIsModalOpen(true)}>
+                Open Modal Sheet
+              </Button>
             </div>
 
             <DataTable<EmployeeSample>
@@ -203,13 +253,18 @@ export function ComponentGalleryPage() {
             title="Employee Details"
             footer={
               <>
-                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                <Button variant="primary" onClick={() => setIsModalOpen(false)}>Save Changes</Button>
+                <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" onClick={() => setIsModalOpen(false)}>
+                  Save Changes
+                </Button>
               </>
             }
           >
             <p className="text-sm text-text-muted">
-              This modal dialog is centered on desktop displays and converts into a swipeable bottom sheet on mobile devices (&lt; 640px).
+              This modal dialog is centered on desktop displays and converts into a swipeable bottom
+              sheet on mobile devices (&lt; 640px).
             </p>
           </Modal>
         </Stack>
@@ -220,10 +275,30 @@ export function ComponentGalleryPage() {
           <div className="bg-surface p-6 rounded-card border border-border space-y-4">
             <h2 className="text-lg font-semibold text-text">Feedback Toasts</h2>
             <div className="flex flex-col gap-3">
-              <Toast variant="success" title="Profile Saved" message="Your changes have been updated successfully." onClose={() => {}} />
-              <Toast variant="warning" title="Pending Approval" message="Shift swap request requires manager review." onClose={() => {}} />
-              <Toast variant="danger" title="Validation Error" message="Mandatory national ID documents are missing." onClose={() => {}} />
-              <Toast variant="info" title="System Maintenance" message="Scheduled maintenance today at 11:00 PM UTC." onClose={() => {}} />
+              <Toast
+                variant="success"
+                title="Profile Saved"
+                message="Your changes have been updated successfully."
+                onClose={() => {}}
+              />
+              <Toast
+                variant="warning"
+                title="Pending Approval"
+                message="Shift swap request requires manager review."
+                onClose={() => {}}
+              />
+              <Toast
+                variant="danger"
+                title="Validation Error"
+                message="Mandatory national ID documents are missing."
+                onClose={() => {}}
+              />
+              <Toast
+                variant="info"
+                title="System Maintenance"
+                message="Scheduled maintenance today at 11:00 PM UTC."
+                onClose={() => {}}
+              />
             </div>
           </div>
 

@@ -35,16 +35,13 @@ export function Button({
   };
 
   const variantStyles: Record<ButtonVariant, string> = {
-    primary:
-      'bg-teal-500 text-white hover:bg-teal-600 focus-visible:ring-teal-500',
+    primary: 'bg-teal-500 text-white hover:bg-teal-600 focus-visible:ring-teal-500',
     secondary:
       'bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 focus-visible:ring-navy-900',
     outline:
       'border border-border bg-transparent text-text hover:bg-surface-muted focus-visible:ring-teal-500',
-    ghost:
-      'bg-transparent text-text hover:bg-surface-muted focus-visible:ring-teal-500',
-    danger:
-      'bg-danger text-white hover:opacity-90 active:opacity-100 focus-visible:ring-danger',
+    ghost: 'bg-transparent text-text hover:bg-surface-muted focus-visible:ring-teal-500',
+    danger: 'bg-danger text-white hover:opacity-90 active:opacity-100 focus-visible:ring-danger',
   };
 
   return (

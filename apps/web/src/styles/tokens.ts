@@ -38,22 +38,22 @@ export const COLOR_TOKENS = {
 export const SPACING_TOKENS = {
   0: '0px',
   1: '0.25rem', // 4px
-  2: '0.5rem',  // 8px (base unit)
+  2: '0.5rem', // 8px (base unit)
   3: '0.75rem', // 12px
-  4: '1rem',    // 16px
+  4: '1rem', // 16px
   5: '1.25rem', // 20px
-  6: '1.5rem',  // 24px
-  8: '2rem',    // 32px
+  6: '1.5rem', // 24px
+  8: '2rem', // 32px
   10: '2.5rem', // 40px
-  12: '3rem',   // 48px
-  16: '4rem',   // 64px
+  12: '3rem', // 48px
+  16: '4rem', // 64px
 } as const;
 
 export const RADIUS_TOKENS = {
   none: '0px',
   sm: '4px',
   input: '6px', // 6px inputs per AGENTS.md §8
-  card: '8px',  // 8px cards per AGENTS.md §8
+  card: '8px', // 8px cards per AGENTS.md §8
   lg: '12px',
   full: '9999px',
 } as const;
@@ -70,8 +70,7 @@ export const FLUID_TYPOGRAPHY = {
 } as const;
 
 export const CONTAINER_MAX_WIDTHS = {
-  prose: '70ch',        // Readable text/forms capped (≈70ch / ≈960px) per §8
+  prose: '70ch', // Readable text/forms capped (≈70ch / ≈960px) per §8
   form: '960px',
   dashboard: '1536px',
 } as const;
-

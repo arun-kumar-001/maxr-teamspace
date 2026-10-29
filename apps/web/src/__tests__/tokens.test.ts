@@ -27,8 +27,8 @@ describe('TC-10-01: Design Token Integrity', () => {
 
   it('should verify 8px base spacing scale', () => {
     expect(SPACING_TOKENS[2]).toBe('0.5rem'); // 8px
-    expect(SPACING_TOKENS[4]).toBe('1rem');   // 16px
-    expect(SPACING_TOKENS[8]).toBe('2rem');   // 32px
+    expect(SPACING_TOKENS[4]).toBe('1rem'); // 16px
+    expect(SPACING_TOKENS[8]).toBe('2rem'); // 32px
   });
 
   it('should define valid CSS clamp() functions for fluid typography', () => {

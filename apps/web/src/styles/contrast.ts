@@ -47,10 +47,9 @@ export function getContrastRatio(foregroundHex: string, backgroundHex: string): 
 export function meetsWcagAA(
   foregroundHex: string,
   backgroundHex: string,
-  type: 'normalText' | 'largeText' = 'normalText'
+  type: 'normalText' | 'largeText' = 'normalText',
 ): boolean {
   const ratio = getContrastRatio(foregroundHex, backgroundHex);
   const required = type === 'normalText' ? 4.5 : 3.0;
   return ratio >= required;
 }
-

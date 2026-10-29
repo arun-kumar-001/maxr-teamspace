@@ -71,12 +71,7 @@ export function ErrorState({
       data-testid="error-state"
     >
       <div className="w-12 h-12 mb-4 flex items-center justify-center rounded-full bg-rose-50 text-danger">
-        <svg
-          className="w-6 h-6 stroke-current"
-          fill="none"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" aria-hidden="true">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -118,12 +113,7 @@ export function ForbiddenState({
       data-testid="forbidden-state"
     >
       <div className="w-12 h-12 mb-4 flex items-center justify-center rounded-full bg-amber-50 text-warning">
-        <svg
-          className="w-6 h-6 stroke-current"
-          fill="none"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" aria-hidden="true">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

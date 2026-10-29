@@ -16,7 +16,11 @@ import { Stack, Grid } from '../LayoutPrimitives.js';
 describe('TC-11-01: Shared UI Component Suite', () => {
   describe('Button Component', () => {
     it('should render primary button with token utility classes and touch target', () => {
-      const html = renderToStaticMarkup(<Button variant="primary" size="md">Click Me</Button>);
+      const html = renderToStaticMarkup(
+        <Button variant="primary" size="md">
+          Click Me
+        </Button>,
+      );
       expect(html).toContain('bg-teal-500');
       expect(html).toContain('min-h-[44px]');
       expect(html).toContain('rounded-input');
@@ -66,7 +70,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
             { value: 'staff', label: 'Staff' },
           ]}
           error="Please select a role"
-        />
+        />,
       );
       expect(html).toContain('aria-invalid="true"');
       expect(html).toContain('border-danger');
@@ -81,7 +85,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
       const html = renderToStaticMarkup(
         <FormField label="Full Name" htmlFor="name" required error="Name is required">
           <Input id="name" />
-        </FormField>
+        </FormField>,
       );
       expect(html).toContain('Full Name');
       expect(html).toContain('*');
@@ -92,8 +96,20 @@ describe('TC-11-01: Shared UI Component Suite', () => {
   });
 
   describe('StatusPill Component — Workflow Mappings (AGENTS.md §8)', () => {
-    const leaveStatuses: LeaveStatus[] = ['Applied', 'Pending', 'Approved', 'Rejected', 'Cancelled'];
-    const taskStatuses: TaskStatus[] = ['To Do', 'In Progress', 'In Review', 'Completed', 'Blocked'];
+    const leaveStatuses: LeaveStatus[] = [
+      'Applied',
+      'Pending',
+      'Approved',
+      'Rejected',
+      'Cancelled',
+    ];
+    const taskStatuses: TaskStatus[] = [
+      'To Do',
+      'In Progress',
+      'In Review',
+      'Completed',
+      'Blocked',
+    ];
 
     it('should render all 5 mandatory Leave workflow statuses with semantic classes', () => {
       leaveStatuses.forEach((status) => {
@@ -126,7 +142,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
           description="You have no assigned tasks."
           actionLabel="Create Task"
           onAction={() => {}}
-        />
+        />,
       );
       expect(html).toContain('data-testid="empty-state"');
       expect(html).toContain('No tasks');
@@ -154,7 +170,9 @@ describe('TC-11-01: Shared UI Component Suite', () => {
       const proseHtml = renderToStaticMarkup(<PageContainer maxWidth="prose">Text</PageContainer>);
       expect(proseHtml).toContain('max-w-prose');
 
-      const dashboardHtml = renderToStaticMarkup(<PageContainer maxWidth="dashboard">Dashboard</PageContainer>);
+      const dashboardHtml = renderToStaticMarkup(
+        <PageContainer maxWidth="dashboard">Dashboard</PageContainer>,
+      );
       expect(dashboardHtml).toContain('max-w-dashboard');
     });
   });
@@ -183,7 +201,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
           columns={testCols}
           keyExtractor={(r) => r.id}
           emptyTitle="No Employees"
-        />
+        />,
       );
       expect(html).toContain('data-testid="empty-state"');
       expect(html).toContain('No Employees');
@@ -191,11 +209,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
 
     it('should render mobile card container and desktop table container', () => {
       const html = renderToStaticMarkup(
-        <DataTable<TestRow>
-          data={testData}
-          columns={testCols}
-          keyExtractor={(r) => r.id}
-        />
+        <DataTable<TestRow> data={testData} columns={testCols} keyExtractor={(r) => r.id} />,
       );
 
       // Mobile cards (block sm:hidden)
@@ -212,7 +226,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
       const html = renderToStaticMarkup(
         <Modal isOpen={true} onClose={() => {}} title="Edit Profile">
           <p>Modal body content</p>
-        </Modal>
+        </Modal>,
       );
       expect(html).toContain('role="dialog"');
       expect(html).toContain('aria-modal="true"');
@@ -224,7 +238,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
       const html = renderToStaticMarkup(
         <Modal isOpen={false} onClose={() => {}} title="Hidden">
           <p>Hidden content</p>
-        </Modal>
+        </Modal>,
       );
       expect(html).toBe('');
     });
@@ -233,7 +247,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
   describe('Toast & Tabs Components', () => {
     it('should render Toast with role="status"', () => {
       const html = renderToStaticMarkup(
-        <Toast variant="success" title="Success" message="Saved changes" />
+        <Toast variant="success" title="Success" message="Saved changes" />,
       );
       expect(html).toContain('role="status"');
       expect(html).toContain('Success');
@@ -249,7 +263,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
           ]}
           activeTab="tab1"
           onChange={() => {}}
-        />
+        />,
       );
       expect(html).toContain('role="tablist"');
       expect(html).toContain('role="tab"');
@@ -265,7 +279,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
         <Stack direction="row" gap="4">
           <div>Item 1</div>
           <div>Item 2</div>
-        </Stack>
+        </Stack>,
       );
       expect(html).toContain('flex-row');
       expect(html).toContain('gap-4');
@@ -275,7 +289,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
       const html = renderToStaticMarkup(
         <Grid cols="responsive-cards" gap="6">
           <div>Card 1</div>
-        </Grid>
+        </Grid>,
       );
       expect(html).toContain('grid');
       expect(html).toContain('grid-cols-1');

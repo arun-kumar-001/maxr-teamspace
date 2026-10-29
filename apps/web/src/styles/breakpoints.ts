@@ -8,11 +8,11 @@
  */
 
 export const BREAKPOINTS = {
-  xs: 360,   // Small Phone (320px - 639px tier)
-  sm: 640,   // Large Phone / Phablet
-  md: 768,   // Tablet Portrait
-  lg: 1024,  // Tablet Landscape / Laptop (Persistent sidebar starts)
-  xl: 1280,  // Standard Desktop
+  xs: 360, // Small Phone (320px - 639px tier)
+  sm: 640, // Large Phone / Phablet
+  md: 768, // Tablet Portrait
+  lg: 1024, // Tablet Landscape / Laptop (Persistent sidebar starts)
+  xl: 1280, // Standard Desktop
   '2xl': 1536, // Large Monitor (Multi-column dashboards)
   '3xl': 1920, // Full HD Desktop
   '4xl': 2560, // Ultrawide / 4K (Grid expansion, capped text)
@@ -45,4 +45,3 @@ export function getBreakpointForWidth(width: number): BreakpointKey {
   if (width < BREAKPOINTS['4xl']) return '3xl';
   return '4xl';
 }
-

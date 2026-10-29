@@ -27,7 +27,11 @@ export function FormField({
           className="text-xs font-semibold text-text tracking-wide uppercase select-none flex items-center gap-1"
         >
           {label}
-          {required && <span className="text-danger" aria-hidden="true">*</span>}
+          {required && (
+            <span className="text-danger" aria-hidden="true">
+              *
+            </span>
+          )}
         </label>
       )}
       <div className="w-full">{children}</div>

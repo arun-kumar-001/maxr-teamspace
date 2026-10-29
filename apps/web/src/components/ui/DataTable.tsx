@@ -54,7 +54,9 @@ export function DataTable<T extends Record<string, unknown>>({
   const totalPages = total ? Math.ceil(total / pageSize) : undefined;
 
   return (
-    <div className={`w-full flex flex-col bg-surface border border-border rounded-card overflow-hidden ${className}`}>
+    <div
+      className={`w-full flex flex-col bg-surface border border-border rounded-card overflow-hidden ${className}`}
+    >
       {/* Mobile Card Layout (Shown on phone: < 640px) */}
       <div className="block sm:hidden divide-y divide-border" data-testid="datatable-mobile-cards">
         {data.map((row) => (
@@ -79,9 +81,7 @@ export function DataTable<T extends Record<string, unknown>>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3.5 ${
-                    col.priority === 'low' ? 'hidden lg:table-cell' : ''
-                  }`}
+                  className={`px-4 py-3.5 ${col.priority === 'low' ? 'hidden lg:table-cell' : ''}`}
                 >
                   {col.header}
                 </th>

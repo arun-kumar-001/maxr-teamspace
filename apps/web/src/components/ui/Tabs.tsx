@@ -35,7 +35,11 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
 
   return (
     <div className={`border-b border-border ${className}`}>
-      <nav className="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs" role="tablist">
+      <nav
+        className="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto"
+        aria-label="Tabs"
+        role="tablist"
+      >
         {tabs.map((tab, idx) => {
           const isActive = tab.id === activeTab;
           return (
@@ -68,4 +72,3 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
     </div>
   );
 }
-

@@ -19,9 +19,7 @@ export function PageContainer({
   };
 
   return (
-    <div
-      className={`w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 ${maxStyles[maxWidth]} ${className}`}
-    >
+    <div className={`w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 ${maxStyles[maxWidth]} ${className}`}>
       {children}
     </div>
   );

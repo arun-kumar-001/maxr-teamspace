@@ -48,10 +48,10 @@ export default {
       },
       borderRadius: {
         input: '6px', // AGENTS.md §8: 6px inputs
-        card: '8px',  // AGENTS.md §8: 8px cards
+        card: '8px', // AGENTS.md §8: 8px cards
       },
       maxWidth: {
-        prose: '70ch',        // AGENTS.md §8: Readable text/forms capped (≈70ch / ≈960px)
+        prose: '70ch', // AGENTS.md §8: Readable text/forms capped (≈70ch / ≈960px)
         form: '960px',
         dashboard: '1536px',
       },

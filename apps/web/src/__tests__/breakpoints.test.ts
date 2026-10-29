@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  BREAKPOINTS,
-  REFERENCE_VIEWPORTS,
-  getBreakpointForWidth,
-} from '../styles/breakpoints.js';
+import { BREAKPOINTS, REFERENCE_VIEWPORTS, getBreakpointForWidth } from '../styles/breakpoints.js';
 
 describe('TC-10-02: Responsive Breakpoint Verification', () => {
   it('should define the 8 mandatory breakpoints from AGENTS.md §8', () => {

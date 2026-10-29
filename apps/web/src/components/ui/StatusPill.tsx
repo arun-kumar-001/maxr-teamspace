@@ -70,16 +70,14 @@ export function StatusPill({ status, size = 'md', className = '' }: StatusPillPr
       className={`inline-flex items-center gap-1.5 font-medium rounded-full border ${config.container} ${sizeClasses} ${className}`}
       role="status"
     >
-      <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dot}`}
-        aria-hidden="true"
-      />
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dot}`} aria-hidden="true" />
       <span>{status}</span>
     </span>
   );
 }
 
-export type BadgeVariant = 'primary' | 'secondary' | 'outline' | 'neutral' | 'success' | 'warning' | 'danger';
+export type BadgeVariant =
+  'primary' | 'secondary' | 'outline' | 'neutral' | 'success' | 'warning' | 'danger';
 
 export interface BadgeProps {
   children: React.ReactNode;

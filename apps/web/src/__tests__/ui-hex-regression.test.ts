@@ -28,4 +28,3 @@ describe('TC-11-02: Zero Hardcoded Hex Regression Test', () => {
     expect(violations).toEqual([]);
   });
 });
-
