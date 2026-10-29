@@ -19,6 +19,7 @@
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^9.1.0",
     "@maxr/shared": "*",
+    "@node-rs/argon2": "^2.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

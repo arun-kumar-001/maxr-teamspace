@@ -225,39 +225,40 @@ ON CONFLICT (LOWER(employee_code)) DO UPDATE SET
 
 
 -- 8. Sample Users (Linked 1:1 to Employees via users.employee_id)
--- Development password for all four seeded users: Password123! (bcrypt cost 12; verified). Development only: the seeder refuses production.
+-- Development password for all four seeded users: Password123! (Argon2id, the production parameters; login is tested against it). Development only: the seeder refuses production.
 -- Login (issue #7) checks this hash; its hashing library test also verifies the password.
 INSERT INTO users (id, employee_id, email, password_hash, is_active) VALUES
   (
     '60000000-0000-0000-0000-000000000001',
     '50000000-0000-0000-0000-000000000001',
     'admin@maxr.internal',
-    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
+    '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000002',
     '50000000-0000-0000-0000-000000000002',
     'hr@maxr.internal',
-    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
+    '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000003',
     '50000000-0000-0000-0000-000000000003',
     'teamlead@maxr.internal',
-    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
+    '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000004',
     '50000000-0000-0000-0000-000000000004',
     'staff@maxr.internal',
-    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
+    '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
     true
   )
 ON CONFLICT (employee_id) DO UPDATE SET
   email = EXCLUDED.email,
+  password_hash = EXCLUDED.password_hash, -- re-seeding resets the development password
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
 

@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 /** Small, valid-looking files for upload tests (only the first bytes matter to the type check). */
 export const pdf = (extra = ''): Buffer =>
   Buffer.concat([Buffer.from('%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n'), Buffer.from(extra)]);
@@ -15,3 +16,11 @@ export const jpeg = (): Buffer =>
 export const exe = (): Buffer => Buffer.concat([Buffer.from('MZ'), Buffer.alloc(64)]);
 
 export const html = (): Buffer => Buffer.from('<html><script>alert(1)</script></html>');
+
+/** A signed-in user for tests that set `req.actor` by hand. */
+export const testActor = (id: string): NonNullable<Request['actor']> => ({
+  id,
+  employeeId: id,
+  role: 'staff',
+  roles: ['staff'],
+});

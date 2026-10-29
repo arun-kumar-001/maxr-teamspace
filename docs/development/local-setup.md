@@ -66,7 +66,7 @@ npm run db:seed
 ```
 *Safety Note: The seeder contains a strict failsafe check that prevents execution if `NODE_ENV === 'production'`.*
 
-**Development users** (created by the seed, one per role, all with the same development-only password `Password123!`):
+**Development users** (created by the seed, one per role, all with the same development-only password `Password123!`, stored as an Argon2id hash):
 
 | Role | Email |
 |---|---|
@@ -75,7 +75,7 @@ npm run db:seed
 | Team Lead | `teamlead@maxr.internal` |
 | Staff | `staff@maxr.internal` |
 
-These accounts exist only after `npm run db:seed` and can never be created in production. The login screen arrives with issue #7.
+These accounts exist only after `npm run db:seed` and can never be created in production. They sign in through `POST /api/v1/auth/login` (see `docs/architecture/auth.md`); the web login screen comes with the app shell (#12). Re-running `npm run db:seed` resets their password to this value.
 
 ### Step 6: Start Application Servers
 Start both backend API and frontend web application:

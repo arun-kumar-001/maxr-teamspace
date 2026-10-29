@@ -48,6 +48,7 @@ describe('http config', () => {
     expect(loadHttpConfig({})).toEqual({
       trustProxy: 0,
       rateLimit: { windowMs: 60_000, max: 300 },
+      loginRateLimit: { windowMs: 900_000, max: 10 },
     });
   });
   it('reads values from the environment', () => {
@@ -56,6 +57,7 @@ describe('http config', () => {
     ).toEqual({
       trustProxy: 1,
       rateLimit: { windowMs: 5000, max: 9 },
+      loginRateLimit: { windowMs: 900_000, max: 10 },
     });
   });
   it.each([
