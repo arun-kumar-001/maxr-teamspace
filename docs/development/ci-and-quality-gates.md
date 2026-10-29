@@ -4,7 +4,7 @@ Every pull request into `develop` or `main` runs the workflow in `.github/workfl
 
 | Check | What it runs | Blocks the merge when |
 |---|---|---|
-| **Quality** | `npm ci`, `npm run build`, `npm run typecheck`, `npm run format:check`, `npm run lint`, `npm test` | any of these steps fails |
+| **Quality** | lockfile check (`npm run check:lockfile`), `npm ci`, `npm run build`, `npm run typecheck`, `npm run format:check`, `npm run lint`, `npm test` | any of these steps fails |
 | **Security** | `npm audit --omit=dev --audit-level=high`, secret scan (gitleaks over the full history) | a production dependency has a high or critical vulnerability, or a secret is found |
 | **Database** | PostgreSQL 16 and Redis 7 containers; `npm run db:migrate` twice (second run must apply nothing); `npm run db:seed` twice | a migration or seed fails on a clean database. The steps start automatically once the migration runner (issue #4) is merged |
 
