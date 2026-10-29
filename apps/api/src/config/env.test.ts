@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { loadAndValidateConfig } from './env';
 
@@ -33,7 +34,7 @@ describe('SESSION_SECRET production guard (#52 F6)', () => {
   });
 
   it('accepts a random 48 character secret', () => {
-    process.env.SESSION_SECRET = 'q8Zr2LkV9xT4mWb7NcYd1HsJf6GaP3eUo5RiXt0KvBnMzC2w';
+    process.env.SESSION_SECRET = randomBytes(24).toString('hex');
     expect(loadAndValidateConfig().SESSION_SECRET).toHaveLength(48);
   });
 
