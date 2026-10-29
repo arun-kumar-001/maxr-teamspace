@@ -16,42 +16,43 @@ export interface TabsProps {
 }
 
 export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
-  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-    let nextIndex = -1;
-    if (e.key === 'ArrowRight') {
-      nextIndex = (index + 1) % tabs.length;
-    } else if (e.key === 'ArrowLeft') {
-      nextIndex = (index - 1 + tabs.length) % tabs.length;
-    }
+  const enabled = tabs.filter((tab) => !tab.disabled);
 
-    if (nextIndex >= 0 && !tabs[nextIndex]?.disabled) {
-      e.preventDefault();
-      const targetTab = tabs[nextIndex];
-      if (targetTab) {
-        onChange(targetTab.id);
-      }
-    }
+  const handleKeyDown = (e: React.KeyboardEvent, tabId: string) => {
+    const current = enabled.findIndex((tab) => tab.id === tabId);
+    let next: TabItem | undefined;
+    if (e.key === 'ArrowRight') next = enabled[(current + 1) % enabled.length];
+    else if (e.key === 'ArrowLeft') next = enabled[(current - 1 + enabled.length) % enabled.length];
+    else if (e.key === 'Home') next = enabled[0];
+    else if (e.key === 'End') next = enabled[enabled.length - 1];
+    if (!next) return;
+
+    e.preventDefault();
+    onChange(next.id);
+    document.getElementById(`tab-${next.id}`)?.focus();
   };
 
   return (
     <div className={`border-b border-border ${className}`}>
-      <nav
+      <div
         className="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto"
         aria-label="Tabs"
         role="tablist"
       >
-        {tabs.map((tab, idx) => {
+        {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
             <button
               key={tab.id}
+              type="button"
               role="tab"
               aria-selected={isActive}
               aria-controls={`panel-${tab.id}`}
               id={`tab-${tab.id}`}
+              tabIndex={isActive ? 0 : -1}
               disabled={tab.disabled}
               onClick={() => onChange(tab.id)}
-              onKeyDown={(e) => handleKeyDown(e, idx)}
+              onKeyDown={(e) => handleKeyDown(e, tab.id)}
               className={`
                 flex items-center gap-2 py-3 px-3 sm:px-4 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors min-h-[44px]
                 ${
@@ -68,7 +69,29 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
             </button>
           );
         })}
-      </nav>
+      </div>
+    </div>
+  );
+}
+
+export interface TabPanelProps {
+  tabId: string;
+  activeTab: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+/** Content for one tab; only the active panel is rendered. Pairs with the ids used by `Tabs`. */
+export function TabPanel({ tabId, activeTab, children, className = '' }: TabPanelProps) {
+  if (tabId !== activeTab) return null;
+  return (
+    <div
+      role="tabpanel"
+      id={`panel-${tabId}`}
+      aria-labelledby={`tab-${tabId}`}
+      className={className}
+    >
+      {children}
     </div>
   );
 }

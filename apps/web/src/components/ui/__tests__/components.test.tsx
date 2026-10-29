@@ -201,6 +201,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
           columns={testCols}
           keyExtractor={(r) => r.id}
           emptyTitle="No Employees"
+          ariaLabel="Employees"
         />,
       );
       expect(html).toContain('data-testid="empty-state"');
@@ -209,7 +210,12 @@ describe('TC-11-01: Shared UI Component Suite', () => {
 
     it('should render mobile card container and desktop table container', () => {
       const html = renderToStaticMarkup(
-        <DataTable<TestRow> data={testData} columns={testCols} keyExtractor={(r) => r.id} />,
+        <DataTable<TestRow>
+          ariaLabel="Employees"
+          data={testData}
+          columns={testCols}
+          keyExtractor={(r) => r.id}
+        />,
       );
 
       // Mobile cards (block sm:hidden)

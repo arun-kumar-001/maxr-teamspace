@@ -7,7 +7,10 @@ export interface Column<T> {
   header: string;
   render?: (row: T) => React.ReactNode;
   priority?: 'high' | 'medium' | 'low'; // high = always shown; low = hidden on tablet
+  sortable?: boolean;
 }
+
+export type SortDirection = 'asc' | 'desc';
 
 export interface DataTableProps<T> {
   data: T[];
@@ -20,6 +23,12 @@ export interface DataTableProps<T> {
   pageSize?: number;
   total?: number;
   onPageChange?: (newPage: number) => void;
+  /** Accessible name of the table (required for screen readers). */
+  ariaLabel: string;
+  /** Sorting is controlled by the parent so the server can sort the whole result set. */
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  onSortChange?: (key: string, direction: SortDirection) => void;
   className?: string;
 }
 
@@ -34,6 +43,10 @@ export function DataTable<T extends Record<string, unknown>>({
   pageSize = 10,
   total,
   onPageChange,
+  ariaLabel,
+  sortKey,
+  sortDirection = 'asc',
+  onSortChange,
   className = '',
 }: DataTableProps<T>) {
   if (isLoading) {
@@ -75,17 +88,45 @@ export function DataTable<T extends Record<string, unknown>>({
 
       {/* Desktop & Tablet Table (Hidden on phone: >= 640px) */}
       <div className="hidden sm:block overflow-x-auto" data-testid="datatable-desktop-table">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm" aria-label={ariaLabel}>
           <thead className="bg-surface-muted border-b border-border text-xs font-semibold text-text-muted uppercase tracking-wider">
             <tr>
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className={`px-4 py-3.5 ${col.priority === 'low' ? 'hidden lg:table-cell' : ''}`}
-                >
-                  {col.header}
-                </th>
-              ))}
+              {columns.map((col) => {
+                const isSorted = col.sortable && sortKey === col.key;
+                const nextDirection: SortDirection =
+                  isSorted && sortDirection === 'asc' ? 'desc' : 'asc';
+                return (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    aria-sort={
+                      col.sortable
+                        ? isSorted
+                          ? sortDirection === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                        : undefined
+                    }
+                    className={`px-4 py-3.5 ${col.priority === 'low' ? 'hidden lg:table-cell' : ''}`}
+                  >
+                    {col.sortable && onSortChange ? (
+                      <button
+                        type="button"
+                        onClick={() => onSortChange(col.key, nextDirection)}
+                        className="inline-flex items-center gap-1 min-h-[44px] uppercase tracking-wider font-semibold"
+                      >
+                        {col.header}
+                        <span aria-hidden="true">
+                          {isSorted ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}
+                        </span>
+                      </button>
+                    ) : (
+                      col.header
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="divide-y divide-border text-text">

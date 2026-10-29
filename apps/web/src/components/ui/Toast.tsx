@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export type ToastVariant = 'success' | 'danger' | 'warning' | 'info';
 
@@ -8,10 +8,28 @@ export interface ToastProps {
   title: string;
   message?: string;
   onClose?: () => void;
+  /** Closes the toast after this many milliseconds; omit to keep it until dismissed. */
+  autoDismissMs?: number;
   className?: string;
 }
 
-export function Toast({ variant = 'info', title, message, onClose, className = '' }: ToastProps) {
+export function Toast({
+  variant = 'info',
+  title,
+  message,
+  onClose,
+  autoDismissMs,
+  className = '',
+}: ToastProps) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!autoDismissMs) return undefined;
+    const timer = setTimeout(() => onCloseRef.current?.(), autoDismissMs);
+    return () => clearTimeout(timer);
+  }, [autoDismissMs]);
+
   const variantStyles: Record<
     ToastVariant,
     { border: string; bg: string; icon: string; iconSvg: React.ReactNode }
@@ -90,7 +108,7 @@ export function Toast({ variant = 'info', title, message, onClose, className = '
       {onClose && (
         <button
           onClick={onClose}
-          className="shrink-0 p-1 rounded-input text-text-muted hover:bg-surface-muted hover:text-text min-h-[32px] min-w-[32px] flex items-center justify-center"
+          className="shrink-0 p-1 rounded-input text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Dismiss notification"
         >
           <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20" aria-hidden="true">

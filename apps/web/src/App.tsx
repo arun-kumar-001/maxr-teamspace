@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { TemplatePage } from './features/_template/pages/TemplatePage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
+
+// The gallery is a developer tool; it must not ship to production.
+const SHOW_GALLERY = import.meta.env.DEV;
 import { ROLES, Role, ROLE_DISPLAY_NAMES } from '@maxr/shared';
 
 interface HealthStatus {
@@ -130,18 +133,20 @@ export const App: React.FC = () => {
             >
               Template Demo
             </Link>
-            <Link
-              to="/components"
-              className="text-slate-600 hover:text-teal-600 font-medium pb-2 text-sm"
-            >
-              UI Components (TL-09)
-            </Link>
+            {SHOW_GALLERY && (
+              <Link
+                to="/components"
+                className="text-slate-600 hover:text-teal-600 font-medium pb-2 text-sm"
+              >
+                UI Components (TL-09)
+              </Link>
+            )}
           </nav>
 
           <main>
             <Routes>
               <Route path="/" element={<TemplatePage />} />
-              <Route path="/components" element={<ComponentGalleryPage />} />
+              {SHOW_GALLERY && <Route path="/components" element={<ComponentGalleryPage />} />}
             </Routes>
           </main>
         </div>
