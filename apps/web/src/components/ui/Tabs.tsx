@@ -57,8 +57,8 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
                 flex items-center gap-2 py-3 px-3 sm:px-4 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors min-h-[44px]
                 ${
                   isActive
-                    ? 'border-teal-500 text-teal-600'
-                    : 'border-transparent text-text-muted hover:text-text hover:border-slate-300'
+                    ? 'border-primary text-primary-ink'
+                    : 'border-transparent text-text-muted hover:text-text hover:border-border-strong'
                 }
                 ${tab.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               `}

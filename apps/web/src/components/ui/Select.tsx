@@ -41,7 +41,7 @@ export function Select({
             ${
               error
                 ? 'border-danger focus:border-danger focus:ring-1 focus:ring-danger'
-                : 'border-border focus:border-teal-500 focus:ring-1 focus:ring-teal-500'
+                : 'border-border-strong focus:border-primary-strong focus:ring-1 focus:ring-primary-strong'
             }
             disabled:bg-surface-muted disabled:text-text-muted disabled:cursor-not-allowed
             outline-none ${className}`}

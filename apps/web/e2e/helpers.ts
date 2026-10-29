@@ -46,6 +46,7 @@ export const GALLERY_TABS = [
   'Status & State Cards',
   'DataTable & Modal',
   'Layout & Feedback',
+  'Dashboard Patterns',
 ] as const;
 
 export async function openGallery(page: Page): Promise<void> {

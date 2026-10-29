@@ -21,7 +21,9 @@ test.describe('component gallery', () => {
     await expect(second).toHaveAttribute('aria-selected', 'true');
     await expect(first).toHaveAttribute('tabindex', '-1');
     await page.keyboard.press('End');
-    await expect(page.getByRole('tab', { name: GALLERY_TABS[4] })).toBeFocused();
+    await expect(
+      page.getByRole('tab', { name: GALLERY_TABS[GALLERY_TABS.length - 1] }),
+    ).toBeFocused();
     await page.keyboard.press('Home');
     await expect(first).toBeFocused();
   });

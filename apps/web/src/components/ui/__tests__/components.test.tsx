@@ -21,9 +21,9 @@ describe('TC-11-01: Shared UI Component Suite', () => {
           Click Me
         </Button>,
       );
-      expect(html).toContain('bg-teal-500');
+      expect(html).toContain('bg-primary-deep');
       expect(html).toContain('min-h-[44px]');
-      expect(html).toContain('rounded-input');
+      expect(html).toContain('rounded-full');
       expect(html).toContain('Click Me');
     });
 
@@ -129,7 +129,8 @@ describe('TC-11-01: Shared UI Component Suite', () => {
 
     it('should render Badge component with variants', () => {
       const html = renderToStaticMarkup(<Badge variant="primary">New</Badge>);
-      expect(html).toContain('bg-teal-500');
+      expect(html).toContain('bg-primary-soft');
+      expect(html).toContain('text-primary-ink');
       expect(html).toContain('New');
     });
   });

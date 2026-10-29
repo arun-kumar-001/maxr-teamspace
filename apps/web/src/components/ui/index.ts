@@ -11,3 +11,5 @@ export * from './Toast.js';
 export * from './Tabs.js';
 export * from './PageContainer.js';
 export * from './LayoutPrimitives.js';
+export * from './StatCard.js';
+export * from './SegmentedControl.js';
