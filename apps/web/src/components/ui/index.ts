@@ -13,3 +13,6 @@ export * from './PageContainer.js';
 export * from './LayoutPrimitives.js';
 export * from './StatCard.js';
 export * from './SegmentedControl.js';
+export * from './DeltaChip.js';
+export * from './MetricStrip.js';
+export * from './IconButton.js';

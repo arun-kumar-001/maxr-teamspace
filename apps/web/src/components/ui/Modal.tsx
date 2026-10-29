@@ -96,7 +96,7 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-panel sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
+        className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
       >
         {/* Mobile handle indicator */}
         <div

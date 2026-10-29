@@ -1,35 +1,52 @@
 /**
- * Design tokens for MAXR Teamspace: the MaxR Flow look.
+ * Design tokens for MAXR Teamspace: MaxR Flow colours and fonts in the reference dashboard layout.
  * Mirrors src/styles/tokens.css (the CSS variables are the source the UI uses);
  * this copy exists for tests, charts and anything that needs the raw values in TypeScript.
  * Spec: docs/design/DESIGN.md and AGENTS.md section 8. Never hardcode hex values in components.
  */
 
 export const COLOR_TOKENS = {
-  // Brand
-  primary: '#46C7B8', // MaxR Flow teal: fills, bars, borders, dots (not for body text)
+  // Brand (MaxR Flow)
+  primary: '#46C7B8', // indicators, dots, bars, progress, logo tile (never text)
   primaryStrong: '#0D9488', // icons, focus ring
   primaryDeep: '#0F766E', // solid primary buttons with white text
   primaryDeeper: '#115E59', // primary button hover
-  primaryInk: '#0F766E', // teal text
-  primarySoft: '#E9F8F6', // active nav, icon chips, soft pills
+  primaryInk: '#0F766E', // teal text and links
+  primarySoft: '#E9F8F6',
   primarySoftBorder: '#CCEFEB',
   brandRed: '#E5322D', // logo "R" only
 
-  // Hero banner
-  heroFrom: '#FFFFFF',
-  heroTo: '#E3F4F4',
-  heroBorder: '#62D1C5',
+  // Page and surfaces
+  bg: '#EEF2F1',
+  surface: '#FBFCFC',
+  surfaceRaised: '#FFFFFF',
+  surfaceMuted: '#F2F5F4',
+  track: '#E8EEEC',
+  border: '#E3E9E7',
+  borderStrong: '#D3DCD9',
+  text: '#13201E',
+  textMuted: '#4F5C5A',
+  textSubtle: '#5F6C6A',
 
-  // Neutrals
-  bg: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceMuted: '#FAFBFD',
-  border: '#EEF0F4',
-  borderStrong: '#E2E8F0',
-  text: '#1A2332',
-  textMuted: '#475569',
-  textSubtle: '#64748B',
+  // Floating dark sidebar
+  sidebarBg: '#0E2826',
+  sidebarRaised: '#1B3532',
+  sidebarBorder: '#26413E',
+  sidebarText: '#D5E2DF',
+  sidebarTextStrong: '#F2F7F6',
+  sidebarMuted: '#8AA29D',
+
+  // Change indicators
+  positiveSoft: '#DCF2EA',
+  positiveInk: '#047857',
+  negativeSoft: '#F9E3E1',
+  negativeInk: '#B42318',
+
+  // Pastel attention tiles
+  tilePeach: '#FFE0D4',
+  tileYellow: '#FBECC6',
+  tileBlue: '#DCEBFA',
+  tileGreen: '#D8F1E3',
 
   // Status semantics
   success: '#16A34A',
@@ -66,9 +83,10 @@ export const SPACING_TOKENS = {
 export const RADIUS_TOKENS = {
   none: '0px',
   sm: '4px',
-  input: '10px', // inputs and small buttons
-  card: '16px', // cards, tables, tiles
-  panel: '20px', // hero / welcome panel
+  input: '12px', // buttons, inputs, nav items, icon buttons
+  segment: '10px', // segmented control items
+  tile: '16px', // tiles inside cards, metric strip items
+  card: '24px', // cards, sidebar, modals
   full: '9999px',
 } as const;
 

@@ -23,7 +23,7 @@ describe('TC-11-01: Shared UI Component Suite', () => {
       );
       expect(html).toContain('bg-primary-deep');
       expect(html).toContain('min-h-[44px]');
-      expect(html).toContain('rounded-full');
+      expect(html).toContain('rounded-input');
       expect(html).toContain('Click Me');
     });
 
