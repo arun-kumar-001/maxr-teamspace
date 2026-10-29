@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
 
 jobs:
   quality:
@@ -28,6 +28,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+
+      # Catches lockfiles regenerated on Windows/macOS that dropped the Linux native packages.
+      - name: Lockfile has Linux native packages
+        run: node scripts/check-lockfile.mjs
 
       # Fails if package-lock.json is out of sync with any package.json.
       - name: Install (clean, lockfile-exact)
@@ -73,11 +77,9 @@ jobs:
       - name: Dependency audit (production)
         run: npm audit --omit=dev --audit-level=high
 
-      # Dev dependencies (e.g. vite): informational until issue #52 (F7) is done.
-      # Remove `continue-on-error` in the PR that closes #52.
-      - name: Dependency audit (all, informational)
+      # Dev dependencies too: build tooling runs on developer machines and in CI.
+      - name: Dependency audit (all)
         run: npm audit --audit-level=high
-        continue-on-error: true
 
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2

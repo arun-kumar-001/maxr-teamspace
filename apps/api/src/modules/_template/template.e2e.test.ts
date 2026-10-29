@@ -97,4 +97,63 @@ describe('sample module end to end (TC-9-19)', () => {
     expect((await request(app).get('/api/v1/templates?pageSize=101')).status).toBe(400);
     expect((await request(app).get('/api/v1/templates?page=0')).status).toBe(400);
   });
+
+  it('writes an audit entry for every successful write, with the request id, and none for reads', async () => {
+    const { app, auditStore } = makeApp();
+    const created = await create(app, { name: 'Audited' });
+    const id = created.body.data.id as string;
+    await request(app)
+      .put(`/api/v1/templates/${id}`)
+      .send({ description: 'secret text must not be logged' });
+    await request(app).post(`/api/v1/templates/${id}/deactivate`);
+    await request(app).get(`/api/v1/templates/${id}`);
+    await request(app).get('/api/v1/templates');
+
+    expect(auditStore.list().map((e) => [e.action, e.outcome])).toEqual([
+      ['template.create', 'success'],
+      ['template.update', 'success'],
+      ['template.deactivate', 'success'],
+    ]);
+    const [first, second] = auditStore.list();
+    expect(first).toMatchObject({
+      entityType: 'template',
+      entityId: id,
+      actorId: 'system',
+      requestId: created.headers['x-request-id'],
+    });
+    // Field names only, never the values.
+    expect(second?.changes).toEqual({ fields: ['description'] });
+    expect(JSON.stringify(auditStore.list())).not.toContain('secret text');
+  });
+
+  it('records a failed create as a failure entry, and still returns the real error', async () => {
+    const { app, auditStore } = makeApp();
+    await create(app, { name: 'Taken' });
+    const duplicate = await create(app, { name: 'taken' });
+    expect(duplicate.status).toBe(409);
+    expect(auditStore.list().map((e) => [e.action, e.outcome])).toEqual([
+      ['template.create', 'success'],
+      ['template.create', 'failure'],
+    ]);
+  });
+
+  it('announces template.created only after the create succeeded, and never for a failed create', async () => {
+    const { app, platform } = makeApp();
+    const seen: string[] = [];
+    platform.events.subscribe(
+      'template.created',
+      (event) => void seen.push((event.payload as { id: string }).id),
+    );
+    const ok = await create(app, { name: 'Announced' });
+    await create(app, { name: 'announced' }); // duplicate: fails
+    expect(seen).toEqual([ok.body.data.id]);
+  });
+
+  it('a failing audit store is never swallowed: the request fails with a generic 500', async () => {
+    const { app, auditStore } = makeApp();
+    auditStore.failNextWith(new Error('audit database down'));
+    const res = await create(app, { name: 'Unaudited' });
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(res.body)).not.toContain('audit database down');
+  });
 });

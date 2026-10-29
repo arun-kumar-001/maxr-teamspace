@@ -5,6 +5,9 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config();
 
+const PLACEHOLDER_SECRET_PATTERN =
+  /change-this|changeme|replace-me|placeholder|development-fallback|example/i;
+
 export interface EnvironmentConfig {
   NODE_ENV: 'development' | 'test' | 'production';
   PORT: number;
@@ -73,8 +76,16 @@ export function loadAndValidateConfig(): EnvironmentConfig {
       throw new Error('[Config Error] SESSION_SECRET is strictly required in production.');
     }
     sessionSecret = 'development-fallback-session-secret-min-32-chars-long';
-  } else if (sessionSecret.length < 32 && nodeEnv === 'production') {
-    throw new Error('[Config Error] SESSION_SECRET must be at least 32 characters in production.');
+  } else if (nodeEnv === 'production') {
+    if (sessionSecret.length < 32) {
+      throw new Error(
+        '[Config Error] SESSION_SECRET must be at least 32 characters in production.',
+      );
+    }
+    // The documented placeholders are long enough to pass the length check, so match them by content.
+    if (PLACEHOLDER_SECRET_PATTERN.test(sessionSecret)) {
+      throw new Error('[Config Error] SESSION_SECRET is a placeholder value; set a random secret.');
+    }
   }
 
   const sessionMaxAgeMs = parseInt(process.env.SESSION_MAX_AGE_MS || '86400000', 10);
@@ -84,7 +95,7 @@ export function loadAndValidateConfig(): EnvironmentConfig {
   const redisHost = process.env.REDIS_HOST || 'localhost';
   const redisPort = parsePort(process.env.REDIS_PORT, 6379);
 
-  const storageDriver = (process.env.STORAGE_DRIVER || 's3') as 's3' | 'local';
+  const storageDriver = (process.env.STORAGE_DRIVER || 'local') as 's3' | 'local';
   const s3Endpoint = process.env.S3_ENDPOINT || 'http://localhost:9090';
   const s3Bucket = process.env.S3_BUCKET || 'maxr-private-storage';
   const s3AccessKey = process.env.S3_ACCESS_KEY || 'local-access-key';

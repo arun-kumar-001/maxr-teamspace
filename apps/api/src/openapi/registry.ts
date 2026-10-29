@@ -39,6 +39,8 @@ export interface RouteDoc {
   body?: ZodTypeAny;
   /** Adds the required Idempotency-Key header. */
   idempotent?: boolean;
+  /** Extra documented responses, e.g. `{ 410: 'Link expired' }`. */
+  extraResponses?: Record<number, string>;
   success: { status: number; description: string; schema?: ZodTypeAny };
 }
 
@@ -91,6 +93,12 @@ export function registerRoute(doc: RouteDoc): void {
             422: errorResponse('Business rule violated'),
           }
         : {}),
+      ...Object.fromEntries(
+        Object.entries(doc.extraResponses ?? {}).map(([status, text]) => [
+          status,
+          errorResponse(text),
+        ]),
+      ),
       429: errorResponse('Rate limit exceeded'),
       500: errorResponse('Unexpected server error'),
     },

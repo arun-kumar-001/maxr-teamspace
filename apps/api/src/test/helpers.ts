@@ -2,6 +2,8 @@ import express, { Express } from 'express';
 import { createApp } from '../app';
 import { DependencyStatus } from '../db/types';
 import { HealthDependencies } from '../health/health';
+import { InMemoryAuditStore } from '../platform/audit/stores';
+import { Platform, createTestPlatform } from '../platform';
 import { HttpConfig } from '../http/http-config';
 import { Logger, createLogger } from '../logging/logger';
 import { createErrorHandler } from '../middleware/error-handler';
@@ -38,20 +40,32 @@ export function makeApp(
     nodeEnv?: string;
     logger?: Logger;
     health?: HealthDependencies;
+    platform?: Platform;
   } = {},
 ): {
   app: Express;
   lines: string[];
   records: () => Record<string, unknown>[];
+  platform: Platform;
+  auditStore: InMemoryAuditStore;
 } {
   const captured = captureLogger();
+  const testPlatform = createTestPlatform({ logger: captured.logger });
+  const platform = overrides.platform ?? testPlatform.platform;
   const app = createApp({
     logger: overrides.logger ?? captured.logger,
     http: overrides.http ?? generousHttp,
     nodeEnv: overrides.nodeEnv ?? 'test',
     health: overrides.health ?? healthyDeps,
+    platform,
   });
-  return { app, lines: captured.lines, records: captured.records };
+  return {
+    app,
+    lines: captured.lines,
+    records: captured.records,
+    platform,
+    auditStore: testPlatform.auditStore,
+  };
 }
 
 /** Minimal app with the standard chain, for tests that need custom routes. */

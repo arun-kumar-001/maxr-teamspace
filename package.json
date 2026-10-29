@@ -26,10 +26,11 @@
     "docker:status": "docker compose ps",
     "db:migrate": "npm run build:shared && npm run build:api && npm run db:migrate --workspace=@maxr/api",
     "db:seed": "npm run db:seed --workspace=@maxr/api",
+    "check:lockfile": "node scripts/check-lockfile.mjs",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
-    "@types/node": "^20.17.0",
+    "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.10.0",
     "eslint": "^8.57.1",
@@ -38,6 +39,6 @@
     "typescript": "^5.6.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   }
 }

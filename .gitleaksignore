@@ -1,0 +1,2 @@
+# False positive: a made-up example secret in a unit test (replaced by a runtime-generated value in the next commit).
+4da9b5165a37c3bf1f37d79d347b418711df4a06:apps/api/src/config/env.test.ts:generic-api-key:36

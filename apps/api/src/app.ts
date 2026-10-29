@@ -12,6 +12,7 @@ import { requestLogger } from './logging/request-logger';
 import { createErrorHandler } from './middleware/error-handler';
 import { notFoundHandler } from './middleware/not-found';
 import { requestIdMiddleware } from './middleware/request-id';
+import { Platform, createPlatform } from './platform';
 import { createApiRouter } from './routes';
 
 export interface AppOptions {
@@ -21,14 +22,18 @@ export interface AppOptions {
   nodeEnv?: string;
   /** Dependency probes for /api/v1/health; defaults to the real PostgreSQL and Redis checks. */
   health?: HealthDependencies;
+  /** Shared services (audit, events, notifications, storage). Defaults to the environment-configured ones. */
+  platform?: Platform;
 }
 
 export function createApp(options: AppOptions = {}): Express {
   const logger = options.logger ?? getLogger();
   const http = options.http ?? loadHttpConfig();
   const nodeEnv = options.nodeEnv ?? config.NODE_ENV;
+  const platform = options.platform ?? createPlatform({ logger });
 
   const app = express();
+  app.disable('x-powered-by');
 
   // Behind Nginx the client IP comes from X-Forwarded-For; rate limiting needs the right hop count.
   app.set('trust proxy', http.trustProxy);
@@ -70,6 +75,7 @@ export function createApp(options: AppOptions = {}): Express {
     '/api/v1',
     createApiRouter({
       idempotencyStore: new InMemoryIdempotencyStore(),
+      platform,
       exposeDevRoutes: nodeEnv !== 'production',
     }),
   );
