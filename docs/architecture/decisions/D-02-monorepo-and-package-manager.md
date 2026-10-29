@@ -34,8 +34,8 @@ Additionally, the repository requires clear boundaries between frontend, backend
    - `packages/shared`: Shared TypeScript domain models, API error envelopes, HTTP contracts, and utility types.
 
 3. **Workspace & Package Management:**
-   - Standard workspace configuration using `pnpm` workspaces (`pnpm-workspace.yaml`) with dual compatibility via root `package.json` `workspaces: ["apps/*", "packages/*"]`.
-   - Dependency hoisting and workspace protocols (`workspace:*`) for linking `packages/shared`.
+   - **npm workspaces** (Technical Lead decision on issue #52): root `package.json` `workspaces: ["apps/*", "packages/*"]`, one `package-lock.json`, no pnpm.
+   - `packages/shared` is linked with the version range `"*"` (not the pnpm `workspace:*` protocol).
 
 ## Consequences
 

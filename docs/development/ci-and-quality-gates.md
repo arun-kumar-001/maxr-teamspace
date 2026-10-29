@@ -5,7 +5,7 @@ Every pull request into `develop` or `main` runs the workflow in `.github/workfl
 | Check | What it runs | Blocks the merge when |
 |---|---|---|
 | **Quality** | lockfile check (`npm run check:lockfile`), `npm ci`, `npm run build`, `npm run typecheck`, `npm run format:check`, `npm run lint`, `npm test` | any of these steps fails |
-| **Security** | `npm audit --omit=dev --audit-level=high`, secret scan (gitleaks over the full history) | a production dependency has a high or critical vulnerability, or a secret is found |
+| **Security** | `npm audit --omit=dev --audit-level=high` and `npm audit --audit-level=high` (dev dependencies too), secret scan (gitleaks over the full history) | any dependency has a high or critical vulnerability, or a secret is found |
 | **Database** | PostgreSQL 16 and Redis 7 containers; `npm run db:migrate` twice (second run must apply nothing); `npm run db:seed` twice | a migration or seed fails on a clean database. The steps start automatically once the migration runner (issue #4) is merged |
 
 ## Run the same checks locally before you push
@@ -20,12 +20,8 @@ npm audit --omit=dev --audit-level=high
 ```
 Use `npm ci`, not `npm install`: it fails when `package-lock.json` is out of sync, exactly as CI does. If format check fails, run `npm run format`.
 
-## Temporary exception (tracked in issue #52)
-| Step | Why it is non-blocking now | When it becomes blocking |
-|---|---|---|
-| Audit of dev dependencies | `vite` has a high vulnerability (#52, F7) | In the PR that closes #52: delete `continue-on-error` on that step |
-
-Lint became blocking once the ESLint setup was fixed (PR with the local environment). Do not add new exceptions. Fix the failure instead.
+## Exceptions
+None. Lint and the audit of all dependencies (including dev) are blocking. Do not add exceptions; fix the failure instead.
 
 ## Technical Lead setup: branch protection (one-time)
 GitHub: **Settings → Branches → Add branch ruleset** (or classic rule) for `develop` and `main`:

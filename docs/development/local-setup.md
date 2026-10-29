@@ -7,8 +7,8 @@ This guide enables any developer to clone the repository and run MAXR Teamspace 
 ## 1. Prerequisites
 
 Before starting, ensure the following tools are installed on your machine:
-- **Node.js**: v18.0.0 or higher (`node -v` >= 18)
-- **Package Manager**: `npm` (v9+) or `pnpm` (v9+)
+- **Node.js**: v22.12.0 or higher (`node -v` >= 22.12)
+- **Package Manager**: `npm` (v10+, ships with Node 22); pnpm is not used
 - **Docker**: Docker Desktop / Engine running with Docker Compose v2+ (`docker compose version`)
 - **Git**: Installed and configured
 
