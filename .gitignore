@@ -13,6 +13,7 @@ build/
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.pem
 *.key
 *.cert
@@ -51,3 +52,6 @@ temp/
 
 # Local file storage (see docs/architecture/shared-services.md)
 uploads/
+
+# Playwright output
+e2e-output/

@@ -1,0 +1,14 @@
+.git
+.github
+.claude
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.env
+.env.*
+!.env.example
+uploads
+e2e-output
+docs
+*.md

@@ -145,3 +145,105 @@ jobs:
         run: |
           npm run db:seed
           npm run db:seed
+
+  # Deployment files are code too: build the images, test the Nginx config and boot the stack once.
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell scripts (shellcheck)
+        run: shellcheck -x -P SCRIPTDIR deploy/scripts/*.sh
+
+      - name: Production compose file is valid
+        run: |
+          cp deploy/.env.production.example deploy/.env.production
+          docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production config -q
+        env:
+          DB_PASSWORD: ci
+          REDIS_PASSWORD: ci
+
+      - name: Build API image
+        run: docker build -f deploy/Dockerfile.api -t maxr-api:ci .
+
+      - name: Build web image
+        run: docker build -f deploy/Dockerfile.web -t maxr-web:ci .
+
+      - name: Self-signed certificate (CI only)
+        run: |
+          mkdir certs
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj /CN=localhost \
+            -keyout certs/privkey.pem -out certs/fullchain.pem
+          chmod 644 certs/*.pem
+
+      - name: Nginx config test
+        run: docker run --rm --add-host api:127.0.0.1 -v "$PWD/certs:/etc/nginx/certs:ro" maxr-web:ci nginx -t
+
+      # The API refuses NODE_ENV=production until the SQL audit store (#6) exists, so the smoke test
+      # runs the image in development mode. The migrator is run with production settings.
+      - name: Smoke test (migrate, API, gateway)
+        run: |
+          set -euo pipefail
+          docker network create ci
+          docker run -d --name pg --network ci -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=app postgres:16-alpine
+          docker run -d --name rd --network ci redis:7-alpine
+          for i in $(seq 1 30); do docker exec pg pg_isready -U postgres -d app && break; sleep 2; done
+          DB=postgresql://postgres:postgres@pg:5432/app
+          docker run --rm --network ci -e NODE_ENV=production -e SESSION_SECRET="$(openssl rand -hex 24)" -e DATABASE_URL=$DB maxr-api:ci node apps/api/dist/db/migrator.js
+          docker run -d --name api --network ci -e NODE_ENV=development -e DATABASE_URL=$DB -e REDIS_URL=redis://rd:6379 -e TRUST_PROXY=1 maxr-api:ci
+          for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy ] && break; sleep 2; done
+          test "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy
+          docker run -d --name web --network ci -p 8080:8080 -p 8443:8443 -v "$PWD/certs:/etc/nginx/certs:ro" maxr-web:ci
+          for i in $(seq 1 15); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fsSk https://127.0.0.1:8443/api/v1/health
+          curl -fsSk https://127.0.0.1:8443/ | grep -q 'id="root"'
+          curl -sk -D - -o /dev/null https://127.0.0.1:8443/ | grep -i 'strict-transport-security'
+          curl -sk -D - -o /dev/null https://127.0.0.1:8443/ | grep -i 'content-security-policy'
+          curl -sk -D - -o /dev/null https://127.0.0.1:8443/api/v1/health | grep -i 'x-content-type-options'
+          curl -sI http://127.0.0.1:8080/ | grep -q '301'
+          ! curl -sk -D - -o /dev/null https://127.0.0.1:8443/api/v1/health | grep -i 'x-powered-by'
+
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          docker logs api || true
+          docker logs web || true
+
+  # Not a required check until it has been stable for a week (issue #62). Screenshots are uploaded on every run.
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build:shared
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Playwright tests (phone, tablet, desktop, 9 reference viewports)
+        run: npm run e2e
+
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots-and-report
+          path: |
+            e2e-output/screenshots
+            apps/web/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
