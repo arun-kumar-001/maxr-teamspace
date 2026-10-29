@@ -146,6 +146,10 @@ jobs:
           npm run db:seed
           npm run db:seed
 
+      # Tests named *.db.test.ts need this real, migrated and seeded database; the Quality job skips them.
+      - name: Database integration tests
+        run: npm run test:db
+
   # Deployment files are code too: build the images, test the Nginx config and boot the stack once.
   docker:
     name: Docker

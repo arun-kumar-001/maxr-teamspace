@@ -8,6 +8,8 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.test.ts'],
+    // Tests that need a real PostgreSQL run in the CI Database job: `npm run test:db` (vitest.db.config.ts).
+    exclude: ['src/**/*.db.test.ts', 'node_modules/**', 'dist/**'],
     environment: 'node',
     env: { NODE_ENV: 'test' },
   },
