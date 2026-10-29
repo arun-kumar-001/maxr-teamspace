@@ -1,5 +1,7 @@
 import express, { Express } from 'express';
 import { createApp } from '../app';
+import { DependencyStatus } from '../db/types';
+import { HealthDependencies } from '../health/health';
 import { HttpConfig } from '../http/http-config';
 import { Logger, createLogger } from '../logging/logger';
 import { createErrorHandler } from '../middleware/error-handler';
@@ -22,7 +24,22 @@ export function captureLogger() {
   };
 }
 
-export function makeApp(overrides: { http?: HttpConfig; nodeEnv?: string; logger?: Logger } = {}): {
+const up: DependencyStatus = { status: 'up', latencyMs: 1 };
+
+/** Healthy fake probes, so tests never open a real database or Redis connection. */
+export const healthyDeps: HealthDependencies = {
+  checkDatabase: async () => up,
+  checkRedis: async () => up,
+};
+
+export function makeApp(
+  overrides: {
+    http?: HttpConfig;
+    nodeEnv?: string;
+    logger?: Logger;
+    health?: HealthDependencies;
+  } = {},
+): {
   app: Express;
   lines: string[];
   records: () => Record<string, unknown>[];
@@ -32,6 +49,7 @@ export function makeApp(overrides: { http?: HttpConfig; nodeEnv?: string; logger
     logger: overrides.logger ?? captured.logger,
     http: overrides.http ?? generousHttp,
     nodeEnv: overrides.nodeEnv ?? 'test',
+    health: overrides.health ?? healthyDeps,
   });
   return { app, lines: captured.lines, records: captured.records };
 }

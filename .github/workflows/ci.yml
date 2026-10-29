@@ -43,11 +43,8 @@ jobs:
       - name: Format check
         run: npm run format:check
 
-      # Non-blocking only until issue #52 (F2) fixes the ESLint setup. Remove
-      # `continue-on-error` in the PR that closes #52.
       - name: Lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Test
         run: npm test --if-present
