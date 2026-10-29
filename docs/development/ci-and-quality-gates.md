@@ -1,12 +1,14 @@
 # CI and Quality Gates
 
-Every pull request into `develop` or `main` runs the workflow in `.github/workflows/ci.yml`. It has three required checks. **A PR can be merged only when all three are green.**
+Every pull request into `develop` or `main` runs the workflow in `.github/workflows/ci.yml`. It has four required checks (Quality, Security, Database, Docker) and one informational check (E2E). **A PR can be merged only when the four required checks are green.**
 
 | Check | What it runs | Blocks the merge when |
 |---|---|---|
 | **Quality** | lockfile check (`npm run check:lockfile`), `npm ci`, `npm run build`, `npm run typecheck`, `npm run format:check`, `npm run lint`, `npm test` | any of these steps fails |
 | **Security** | `npm audit --omit=dev --audit-level=high` and `npm audit --audit-level=high` (dev dependencies too), secret scan (gitleaks over the full history) | any dependency has a high or critical vulnerability, or a secret is found |
 | **Database** | PostgreSQL 16 and Redis 7 containers; `npm run db:migrate` twice (second run must apply nothing); `npm run db:seed` twice | a migration or seed fails on a clean database. The steps start automatically once the migration runner (issue #4) is merged |
+| **Docker** | shellcheck, production compose validity, API and web image builds, `nginx -t`, container smoke test | an image does not build or the stack does not answer |
+| **E2E** (informational) | Playwright at phone, tablet, desktop and the 9 reference viewports; uploads screenshots | not required yet; becomes required after a stable week (issue #62) |
 
 ## Run the same checks locally before you push
 ```bash
@@ -26,7 +28,7 @@ None. Lint and the audit of all dependencies (including dev) are blocking. Do no
 ## Technical Lead setup: branch protection (one-time)
 GitHub: **Settings → Branches → Add branch ruleset** (or classic rule) for `develop` and `main`:
 1. Require a pull request before merging, with **1 approval**.
-2. Require status checks to pass: `Quality`, `Security`, `Database`. Require branches to be up to date.
+2. Require status checks to pass: `Quality`, `Security`, `Database`, `Docker` (add `E2E` after a stable week). Require branches to be up to date.
 3. Block force pushes and deletion.
 4. (Optional) Require review from code owners, once `CODEOWNERS` exists (issue #14).
 
