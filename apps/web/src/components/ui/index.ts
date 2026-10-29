@@ -16,3 +16,4 @@ export * from './SegmentedControl.js';
 export * from './DeltaChip.js';
 export * from './MetricStrip.js';
 export * from './IconButton.js';
+export * from './Sidebar.js';

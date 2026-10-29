@@ -19,6 +19,9 @@ import {
   SegmentedControl,
   MetricStrip,
   IconButton,
+  Sidebar,
+  SidebarDrawer,
+  type SidebarGroup,
   PageContainer,
   Stack,
   Grid,
@@ -56,6 +59,16 @@ const ICONS = {
   plus: 'M12 5v14M5 12h14',
   download: 'M12 3v12M7 10l5 5 5-5M5 21h14',
   arrow: 'M7 17 17 7M8 7h9v9',
+  home: 'M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5',
+  briefcase: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16',
+  inbox: 'M4 13h4l1.5 3h5L16 13h4M5 5h14l1 8v6H4v-6z',
+  chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
+  settings:
+    'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9A1.7 1.7 0 0 0 10 4.9V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1',
+  help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01',
+  logo: 'M4 14l4-4 4 4 8-8',
+  menu: 'M4 6h16M4 12h16M4 18h16',
   hourglass: 'M6 2h12M6 22h12M6 2c0 6 6 6 6 10s-6 4-6 10M18 2c0 6-6 6-6 10s6 4 6 10',
 };
 
@@ -68,6 +81,54 @@ const SAMPLE_KPIS = [
   { label: 'Open Tasks', value: '46', caption: 'Due this week', icon: ICONS.tasks },
   { label: 'Attendance Rate', value: '94.2%', caption: 'Last 30 days', icon: ICONS.pulse },
 ];
+
+const SAMPLE_NAV: SidebarGroup[] = [
+  {
+    id: 'workforce',
+    label: 'Workforce',
+    items: [
+      { id: 'overview', label: 'Overview', icon: <Icon path={ICONS.home} /> },
+      { id: 'employees', label: 'Employees', icon: <Icon path={ICONS.people} /> },
+      {
+        id: 'attendance',
+        label: 'Attendance',
+        icon: <Icon path={ICONS.clock} />,
+        children: [
+          { id: 'attendance-mine', label: 'My attendance' },
+          { id: 'attendance-team', label: 'Team attendance' },
+          { id: 'attendance-corrections', label: 'Corrections', count: 2, countTone: 'attention' },
+        ],
+      },
+      {
+        id: 'leave',
+        label: 'Leave',
+        icon: <Icon path={ICONS.calendar} />,
+        count: 8,
+        countTone: 'attention',
+      },
+      { id: 'approvals', label: 'Approvals', icon: <Icon path={ICONS.inbox} />, count: 12 },
+      { id: 'tasks', label: 'Tasks', icon: <Icon path={ICONS.tasks} /> },
+      { id: 'meetings', label: 'Meetings', icon: <Icon path={ICONS.briefcase} /> },
+      { id: 'expenses', label: 'Expenses', icon: <Icon path={ICONS.receipt} /> },
+      { id: 'reports', label: 'Reports', icon: <Icon path={ICONS.chart} /> },
+    ],
+  },
+  {
+    id: 'support',
+    label: 'Support',
+    items: [
+      { id: 'settings', label: 'Settings', icon: <Icon path={ICONS.settings} /> },
+      { id: 'help', label: 'Help centre', icon: <Icon path={ICONS.help} /> },
+    ],
+  },
+];
+
+const SAMPLE_BRAND = {
+  name: 'MAXR Teamspace',
+  subtitle: 'Staff management',
+  logo: <Icon path={ICONS.logo} />,
+};
+const SAMPLE_USER = { name: 'Arun Kumar', role: 'Technical Lead', initials: 'AK' };
 
 const SAMPLE_METRICS = [
   {
@@ -188,6 +249,9 @@ export function ComponentGalleryPage() {
   const [page, setPage] = useState(1);
   const [range, setRange] = useState('30');
   const [metric, setMetric] = useState('attendance');
+  const [navActive, setNavActive] = useState('overview');
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [sort, setSort] = useState<{ key: string; direction: SortDirection }>({
     key: 'name',
     direction: 'asc',
@@ -204,6 +268,7 @@ export function ComponentGalleryPage() {
     { id: 'table', label: 'DataTable & Modal' },
     { id: 'layout', label: 'Layout & Feedback' },
     { id: 'dashboard', label: 'Dashboard Patterns' },
+    { id: 'navigation', label: 'Navigation' },
   ];
 
   return (
@@ -613,6 +678,81 @@ export function ComponentGalleryPage() {
                 ))}
               </div>
             </section>
+          </Stack>
+        )}
+        {activeTab === 'navigation' && (
+          <Stack gap="6">
+            <p className="max-w-prose text-sm text-text-muted">
+              Expanded sidebar (left, use the panel button to collapse it) and the icon rail used on
+              tablets (right). Hover or focus a rail icon for its label. On phones the same sidebar
+              opens as a drawer.
+            </p>
+            <div className="flex flex-wrap items-start gap-6">
+              <div className="h-[760px]">
+                <Sidebar
+                  brand={SAMPLE_BRAND}
+                  groups={SAMPLE_NAV}
+                  activeId={navActive}
+                  collapsed={navCollapsed}
+                  onCollapsedChange={setNavCollapsed}
+                  onNavigate={(id, e) => {
+                    e.preventDefault();
+                    setNavActive(id);
+                  }}
+                  user={SAMPLE_USER}
+                  onUserMenu={() => undefined}
+                  footer={
+                    <div className="p-4 rounded-tile bg-sidebar-raised space-y-2">
+                      <p className="text-sm text-sidebar-muted">October attendance</p>
+                      <p className="font-display text-2xl font-semibold text-sidebar-strong">
+                        94.2%
+                      </p>
+                      <span
+                        className="block h-1.5 rounded-full bg-sidebar-border overflow-hidden"
+                        aria-hidden="true"
+                      >
+                        <span className="block h-full w-[94%] rounded-full bg-primary" />
+                      </span>
+                    </div>
+                  }
+                />
+              </div>
+              <div className="h-[760px]">
+                <Sidebar
+                  brand={SAMPLE_BRAND}
+                  groups={SAMPLE_NAV}
+                  activeId={navActive}
+                  collapsed
+                  onNavigate={(id, e) => {
+                    e.preventDefault();
+                    setNavActive(id);
+                  }}
+                  user={SAMPLE_USER}
+                  onUserMenu={() => undefined}
+                />
+              </div>
+            </div>
+            <div>
+              <Button
+                variant="secondary"
+                leftIcon={<Icon path={ICONS.menu} />}
+                onClick={() => setDrawerOpen(true)}
+              >
+                Open phone drawer
+              </Button>
+            </div>
+            <SidebarDrawer
+              open={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              brand={SAMPLE_BRAND}
+              groups={SAMPLE_NAV}
+              activeId={navActive}
+              onNavigate={(id, e) => {
+                e.preventDefault();
+                setNavActive(id);
+              }}
+              user={SAMPLE_USER}
+            />
           </Stack>
         )}
       </div>

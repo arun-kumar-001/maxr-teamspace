@@ -36,6 +36,7 @@
   --sidebar-text: #d5e2df;
   --sidebar-text-strong: #f2f7f6; /* active item, product name */
   --sidebar-muted: #8aa29d; /* group labels, subtitles */
+  --sidebar-attention: #f5b73d; /* counts that need action (dark text on it) */
 
   /* Change indicators (delta chips) */
   --positive-soft: #dcf2ea;
@@ -84,6 +85,7 @@
   --shadow-card: 0 1px 2px rgba(19, 32, 30, 0.04);
   --shadow-raised: 0 1px 3px rgba(19, 32, 30, 0.1), 0 1px 2px rgba(19, 32, 30, 0.06);
   --shadow-primary: 0 8px 18px -6px rgba(15, 118, 110, 0.55);
+  --shadow-sidebar-active: 0 10px 24px -8px rgba(70, 199, 184, 0.6); /* glow under the active item */
 
   /* Fluid Typography */
   --font-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);

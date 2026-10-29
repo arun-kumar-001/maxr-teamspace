@@ -35,6 +35,7 @@ export const COLOR_TOKENS = {
   sidebarText: '#D5E2DF',
   sidebarTextStrong: '#F2F7F6',
   sidebarMuted: '#8AA29D',
+  sidebarAttention: '#F5B73D',
 
   // Change indicators
   positiveSoft: '#DCF2EA',

@@ -47,6 +47,7 @@ export const GALLERY_TABS = [
   'DataTable & Modal',
   'Layout & Feedback',
   'Dashboard Patterns',
+  'Navigation',
 ] as const;
 
 export async function openGallery(page: Page): Promise<void> {
