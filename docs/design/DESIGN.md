@@ -1,59 +1,65 @@
-# MAXR Teamspace Design: the MaxR Flow look
+# MAXR Teamspace Design
 
-**Status:** adopted by the Technical Lead. **Source:** a screenshot of the MaxR Flow dashboard (the company's existing product) supplied by the Technical Lead; colours were read from its pixels, not estimated. This file is the visual spec; `AGENTS.md` §8 holds the rules and `apps/web/src/styles/tokens.css` holds the values. Live examples: the component gallery (`/components` in the dev server), tab **Dashboard Patterns**.
+**Status:** adopted by the Technical Lead. **Colours and fonts:** MaxR Flow (the company's product). **Layout, shape and component style:** the dashboard references the TL chose: Ondra (`demo.codeandchill.store/ondra`), Petalo (`/petalo`) and Selvar (`/selvar`), with their neutrals tinted toward the MaxR Flow teal. All values were measured from screenshots (the sites themselves are blocked from the build environment). Values live in `apps/web/src/styles/tokens.css`; rules in `AGENTS.md` §8. Live examples: component gallery (`/components` in the dev server), tab **Dashboard Patterns**.
 
 ## 1. Character
-Light, airy and calm. White surfaces on a very light cool grey page, one fresh teal as the only brand colour, soft mint fills for "active" and "selected", rounded cards with almost invisible borders and shadows, bold geometric headings and large numbers. Colour beyond teal appears only as data (pipelines, charts, statuses).
+Calm, spacious, data-first. A dark teal sidebar floats on a light, slightly teal-grey page; near-white cards with very round corners hold the content; one teal accent marks what is active; colour beyond teal appears only as data (deltas, pipelines, charts) or as soft pastel "attention" tiles. Big friendly greeting, numbers set large.
 
 ## 2. Colour roles
 
-| Token | Value | Use | Never |
-|---|---|---|---|
-| `primary` | `#46C7B8` | Fills, progress bars, hero border, dots, chart series | Text of any size, white text on it (2.07:1) |
-| `primary-strong` | `#0D9488` | Icons, focus ring | Small text (3.74:1) |
-| `primary-deep` / `-deeper` | `#0F766E` / `#115E59` | Solid primary buttons and the selected segment (white text) | |
-| `primary-ink` | `#0F766E` | Teal text: active nav, links, soft pills | |
-| `primary-soft` / `-soft-border` | `#E9F8F6` / `#CCEFEB` | Active nav background, icon chips, soft pills | |
-| `bg` | `#F8FAFC` | Page background | |
-| `surface` / `surface-muted` | `#FFFFFF` / `#FAFBFD` | Cards, sidebar, header / tiles inside cards, row hover | |
-| `border` / `border-strong` | `#EEF0F4` / `#E2E8F0` | Card and divider lines / header line, inputs, outlined buttons | |
-| `text` / `text-muted` / `text-subtle` | `#1A2332` / `#475569` / `#64748B` | Headings and numbers / labels and body / captions and breadcrumbs | |
-| `hero-from` → `hero-to`, `hero-border` | `#FFFFFF` → `#E3F4F4`, `#62D1C5` | Welcome panel gradient and outline | |
-| `chart-1…7` (fill) | blue `#3B82F6`, teal `#46C7B8`, pink `#EC4899`, purple `#8B5CF6`, amber `#F59E0B`, green `#10B981`, red `#EF4444` | Bars, chart series, pipeline underlines, in this order | Text |
-| `chart-ink-1…7` | darker shades of the same hues | Numbers next to those bars (large bold text, 3:1+) | |
-| `success` `warning` `danger` `info` | unchanged | Status meaning; text uses the soft pill styles in `StatusPill`/`Badge` | |
-| `brand-red` | `#E5322D` | The "R" in the logo only (approximate, verify from the logo file) | UI meaning |
+| Token | Value | Use |
+|---|---|---|
+| `primary` | `#46C7B8` | Active indicator, live dots, bars, progress, logo tile. **Never text, never white on it** |
+| `primary-strong` | `#0D9488` | Icons, focus ring |
+| `primary-deep` / `-deeper` | `#0F766E` / `#115E59` | Solid primary buttons (white text) with `shadow-primary` |
+| `primary-ink` / `primary-soft` | `#0F766E` / `#E9F8F6` | Teal text and links / soft teal fills, icon squares |
+| `bg` | `#EEF2F1` | Page |
+| `surface` / `surface-raised` / `surface-muted` | `#FBFCFC` / `#FFFFFF` / `#F2F5F4` | Cards / selected tile, active segment, inputs, white buttons / metric strip, inner tiles |
+| `track` | `#E8EEEC` | Segmented control track |
+| `border` / `border-strong` | `#E3E9E7` / `#D3DCD9` | Card outlines / inputs, outlined buttons, pills |
+| `text` / `text-muted` / `text-subtle` | `#13201E` / `#4F5C5A` / `#5F6C6A` | Everything / secondary / captions and "vs" values |
+| `sidebar` (bg, raised, border) | `#0E2826`, `#1B3532`, `#26413E` | Floating sidebar, its active item and inner cards |
+| `sidebar-text` / `-strong` / `-muted` | `#D5E2DF` / `#F2F7F6` / `#8AA29D` | Items / active item and product name / group labels |
+| `positive-soft` + `positive-ink` | `#DCF2EA` + `#047857` | Good change chip |
+| `negative-soft` + `negative-ink` | `#F9E3E1` + `#B42318` | Bad change chip |
+| `tile-peach` `tile-yellow` `tile-blue` `tile-green` | `#FFE0D4` `#FBECC6` `#DCEBFA` `#D8F1E3` | Attention tiles (dark text) |
+| `chart-1…7` / `chart-ink-1…7` | blue, teal, pink, purple, amber, green, red (MaxR Flow) | Data fills / numbers next to them |
+| `success` `warning` `danger` `info` | unchanged | Status meaning (`StatusPill`, `Badge`) |
 
-**Accessibility rule (why there are two teals):** the MaxR Flow teal is light. Text and white-on-teal fail WCAG AA with it, so the brand teal is used for shapes and a deeper teal for anything that must be read. `contrast.test.ts` checks every text pairing the components use.
+Two teals on purpose: the MaxR Flow teal is too light for text (2.07:1), so shapes use it and text/buttons use the deep teal. `contrast.test.ts` checks every text pairing listed here.
 
 ## 3. Typography
-- **Outfit** (Google Fonts, 500–700) for page titles, section titles and big numbers (`font-display`); **Inter** for everything else. Outfit is a visual match to the reference, not a confirmed brand font: confirm with the MaxR Flow designer.
-- Scale: page title 28–32px bold; section title 22–24px bold; card title 18px semibold; label 14px semibold `text-muted`; body 14–16px; caption 12px `text-subtle`; KPI number 28–30px bold, `tabular-nums`.
-- Uppercase section labels in the sidebar ("NAVIGATION"): 11–12px, letter-spacing 0.08em, `text-subtle`.
+- **Outfit** for the greeting, page and card titles and every big number (`font-display`); **Inter** for UI text. Outfit is the visual match to MaxR Flow and the references; confirm with the MaxR Flow designer.
+- Greeting `text-greeting` (32–48px, medium, tight tracking). Card title 18px semibold. Body 14–16px. Captions 12px `text-subtle`. Numbers 28px semibold `tabular-nums`. Sidebar group labels 11–12px uppercase, tracking 0.08em.
 
-## 4. Shape, depth and spacing
-- Radius: inputs 10px (`rounded-input`), cards and tiles 16px (`rounded-card`), hero panel 20px (`rounded-panel`), buttons, segmented controls and pills fully round (`rounded-full`).
-- Cards: `bg-surface border border-border shadow-card`. Raised floating buttons (white pills): `shadow-raised`.
-- Spacing on the 8px scale: card padding 20–24px, gap between cards 16px, between sections 32px.
+## 4. Shape, depth, spacing
+- Radius: buttons, inputs, nav items, icon buttons **12px** (`rounded-input`); segments 10px inside a 14px track; tiles **16px** (`rounded-tile`); metric strip 20px; cards, sidebar, modals **24px** (`rounded-card`). Chips and badges fully round.
+- Depth: cards `border-border shadow-card` (almost flat); selected tile / active segment `shadow-raised`; primary button `shadow-primary` (teal glow).
+- Spacing on the 8px scale: card padding 20–24px; gaps 16px; sections 32px; page padding 24–32px.
 
-## 5. App shell (applies to issue #12)
+## 5. App shell (issue #12)
+
 | Part | Spec |
 |---|---|
-| Sidebar (desktop ≥1024px) | White `surface`, right border `border`, ~280px wide. Logo block at top (mark + "MAXR Teamspace" + small uppercase subtitle). "NAVIGATION" label with a collapse button. Items: outline icon + label, 44px tall, `rounded-input`; **active** = `bg-primary-soft text-primary-ink` + chevron; hover = `bg-surface-muted`. |
-| Tablet (640–1023px) | Same sidebar collapsed to an icon rail (tooltips, active item in `primary-soft`). |
-| Phone (<640px) | Drawer from the left with the same items, plus a bottom navigation bar for the 4–5 main items. |
-| Header | White, bottom border `border-strong`, ~80px on desktop. Left: breadcrumb (`text-subtle` › `text`). Right: round outlined icon buttons (notifications with a teal `primary` dot) and an account pill (avatar, name, role, chevron). Sticky. |
-| Page | `bg` background, content padding 24–32px, max width 1536px for dashboards (more columns on large monitors, never stretched text). |
+| Sidebar, desktop ≥1024px | Floating panel: `bg-sidebar rounded-card`, width `w-sidebar` (296px), `shell` (16px) from the top, left and bottom window edges, full height, scrolls inside. **Top:** logo tile (40px, `rounded-input`, `bg-primary`, dark icon), product name `sidebar-strong` + workspace subtitle `sidebar-muted`, collapse `IconButton` styled for dark. **Groups:** uppercase labels (`sidebar-muted`), items 44px, icon + label, optional count badge (`bg-sidebar-raised`), chevron for sub-menus. **Active item:** `bg-sidebar-raised border-sidebar-border text-sidebar-strong` plus a 4px `primary` bar just outside the panel's left edge. **Bottom:** an optional summary card (`bg-sidebar-raised`, progress bar in `primary`) and the user card (avatar, name, role, menu). |
+| Collapsed (button or tablet 640–1023px) | Rail `w-rail` (88px): logo tile, icons only, active item as a raised square, dots instead of counts, avatar at the bottom. Labels in tooltips that also appear on keyboard focus. |
+| Phone <640px | Sidebar becomes a drawer (same look, full height, `overlay` backdrop) opened from a top-bar menu button; a bottom navigation bar with 4–5 main items. |
+| Top bar | No background (sits on `bg`). Left: breadcrumb with a small icon (`text-muted` › `text`). Right: search pill (`surface-raised`, `rounded-card`, ⌘K hint), date-time pill with a live `primary` dot, `IconButton`s for theme and notifications (count badge), primary **New** button. On phone: search becomes an icon button; date pill hidden. |
+| Page header | Date line with a calendar icon, greeting headline, one narrative sentence with bold figures and an underlined `primary-ink` link; actions on the right (secondary "Export" + primary action), stacked below on phone. |
+| Content | Max width 1536px for dashboards; 12-column feel: main card ~2/3 + side card ~1/3 on large screens; more columns on ≥1920px, never stretched text. |
 
-## 6. Patterns (see the gallery)
-- **Welcome panel:** `rounded-panel border-hero-border` with the hero gradient; outlined soft pill on top, `font-display` title, `text-muted` subtitle; actions on the right (segmented control, secondary pill button), stacked under the text on phone.
-- **KPI cards:** `StatCard`: label + icon chip, big number, caption. Grid: 1–2 columns on phone, 3 on laptop, 6 on wide screens.
-- **Pipeline / stage tiles:** tile `surface-muted rounded-card`, centred stage label, number in `chart-ink-n`, 4px bar in `chart-n` at the bottom. Leave statuses use: Applied blue, Pending amber, Approved green, Rejected red, Cancelled purple.
-- **Segmented control:** `SegmentedControl` (radio group, keyboard arrows), selected segment `primary-deep`.
-- **Soft pill:** `Badge variant="primary"` ("Total 57 requests").
-- **Status:** `StatusPill` as before (always icon/dot plus label, never colour alone).
+## 6. Components and patterns
+- `Button`: primary (deep teal, glow), secondary (white with outline, "Export"), outline, ghost, danger; 44–48px tall, 12px radius.
+- `SegmentedControl`: grey track, raised white selected segment ("7 days / 30 days / 90 days").
+- `MetricStrip`: selectable KPI tiles that drive a chart; selected tile raised white. `StatCard`: stand-alone KPI card. Both use icon square + label, big number, `DeltaChip` + "vs …" comparison or a caption.
+- `DeltaChip`: arrow + sign + value, green or red; `isGood={false}` when a rise is bad (late check-ins, leave days, costs).
+- `IconButton`: 44px square-rounded white button with optional count badge or dot; always has `aria-label`.
+- **Attention tiles:** pastel `tile-*` card, white icon square, title, arrow, big number at the bottom, one-line caption; the whole tile is a link.
+- **Pipeline tiles (MaxR Flow):** stage label, `chart-ink` number, 4px `chart` bar.
+- **Charts:** current period as a filled teal area/line, previous period dashed `text-subtle`; event markers as small rings on the x-axis; grid lines `border`. Pick a chart library via ADR before the first real chart.
+- `StatusPill`, `Badge`, `DataTable`, `Modal`, `Toast`, state cards: unchanged behaviour, new shape and colours.
 
 ## 7. Not decided yet
-- **Dark theme:** the reference is light only, so there is no dark palette for now (`AGENTS.md` §8 previously asked for both). Add one only when requested.
-- **Icon library:** the reference uses thin outline icons (Lucide style). Choosing one (for example `lucide-react`) needs an ADR; until then use inline SVGs.
-- **Logo:** use the official MAXR / MaxR Flow logo files when supplied; do not redraw it.
+- **Dark theme:** the references have a theme toggle, but no dark design was supplied. The toggle can be shown once a dark palette is designed; until then leave it out of the shell.
+- **Icon library:** references use thin outline icons (Lucide style); choose via ADR (for example `lucide-react`). Inline SVGs until then.
+- **Logo files and font confirmation** from MaxR Flow.

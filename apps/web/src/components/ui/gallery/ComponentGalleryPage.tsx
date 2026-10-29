@@ -17,6 +17,8 @@ import {
   Tabs,
   StatCard,
   SegmentedControl,
+  MetricStrip,
+  IconButton,
   PageContainer,
   Stack,
   Grid,
@@ -48,6 +50,13 @@ const ICONS = {
   check: 'M20 6 9 17l-5-5',
   tasks: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
   pulse: 'M3 12h4l3-8 4 16 3-8h4',
+  search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16M21 21l-4.3-4.3',
+  moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8',
+  bell: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0',
+  plus: 'M12 5v14M5 12h14',
+  download: 'M12 3v12M7 10l5 5 5-5M5 21h14',
+  arrow: 'M7 17 17 7M8 7h9v9',
+  hourglass: 'M6 2h12M6 22h12M6 2c0 6 6 6 6 10s-6 4-6 10M18 2c0 6-6 6-6 10s6 4 6 10',
 };
 
 // Sample numbers for the design reference only (labelled as such on screen).
@@ -58,6 +67,72 @@ const SAMPLE_KPIS = [
   { label: 'Pending Approvals', value: '12', caption: 'Leave and corrections', icon: ICONS.check },
   { label: 'Open Tasks', value: '46', caption: 'Due this week', icon: ICONS.tasks },
   { label: 'Attendance Rate', value: '94.2%', caption: 'Last 30 days', icon: ICONS.pulse },
+];
+
+const SAMPLE_METRICS = [
+  {
+    id: 'attendance',
+    label: 'Attendance rate',
+    value: '94.2%',
+    icon: ICONS.pulse,
+    delta: { label: '+1.8%', direction: 'up' as const },
+    comparison: 'vs 92.4%',
+  },
+  {
+    id: 'hours',
+    label: 'Hours logged',
+    value: '18,406',
+    icon: ICONS.clock,
+    delta: { label: '+4.1%', direction: 'up' as const },
+    comparison: 'vs 17,680',
+  },
+  {
+    id: 'leave',
+    label: 'Leave days taken',
+    value: '86',
+    icon: ICONS.calendar,
+    delta: { label: '+6', direction: 'up' as const, isGood: false },
+    comparison: 'vs 80',
+  },
+  {
+    id: 'late',
+    label: 'Late check-ins',
+    value: '31',
+    icon: ICONS.hourglass,
+    delta: { label: '−12%', direction: 'down' as const, isGood: true },
+    comparison: 'vs 35',
+  },
+];
+
+const SAMPLE_TILES = [
+  {
+    title: 'Approvals due today',
+    value: '8',
+    caption: 'Next: leave request from Priya · 15:00',
+    bg: 'bg-tile-peach',
+    icon: ICONS.check,
+  },
+  {
+    title: 'Late check-ins today',
+    value: '3',
+    caption: 'Engineering 2 · Support 1',
+    bg: 'bg-tile-yellow',
+    icon: ICONS.hourglass,
+  },
+  {
+    title: 'On the floor now',
+    value: '108',
+    caption: 'of 124 active employees',
+    bg: 'bg-tile-blue',
+    icon: ICONS.people,
+  },
+  {
+    title: 'Payroll summary due',
+    value: '2 days',
+    caption: 'October attendance and leave',
+    bg: 'bg-tile-green',
+    icon: ICONS.calendar,
+  },
 ];
 
 const SAMPLE_PIPELINE = [
@@ -111,7 +186,8 @@ export function ComponentGalleryPage() {
   const [activeTab, setActiveTab] = useState('buttons');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [range, setRange] = useState('7');
+  const [range, setRange] = useState('30');
+  const [metric, setMetric] = useState('attendance');
   const [sort, setSort] = useState<{ key: string; direction: SortDirection }>({
     key: 'name',
     direction: 'asc',
@@ -377,56 +453,137 @@ export function ComponentGalleryPage() {
           </Stack>
         )}
         {activeTab === 'dashboard' && (
-          <Stack gap="6">
+          <Stack gap="8">
             <div>
               <Badge variant="neutral">Sample data for the design reference</Badge>
             </div>
 
-            {/* Welcome panel */}
-            <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-7 rounded-panel border border-hero-border bg-gradient-to-r from-hero-from to-hero-to">
-              <div className="space-y-2 min-w-0">
-                <Badge variant="outline">MAXR Teamspace Workforce Overview</Badge>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-text">
-                  Welcome back, Admin
+            {/* Top bar pieces (the shell itself is issue #12) */}
+            <section aria-label="Top bar elements" className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                className="flex items-center gap-3 min-h-[44px] w-full sm:w-auto sm:min-w-[340px] px-4 rounded-card bg-surface-raised border border-border text-sm text-text-subtle text-left"
+              >
+                <Icon path={ICONS.search} />
+                <span className="flex-1">Search employees, leave, tasks…</span>
+                <kbd className="px-1.5 py-0.5 rounded-md border border-border-strong text-xs font-sans text-text-muted">
+                  ⌘K
+                </kbd>
+              </button>
+              <span className="flex items-center gap-2 min-h-[44px] px-4 rounded-card bg-surface-raised border border-border text-sm font-medium text-text">
+                <span
+                  className="w-2 h-2 rounded-full bg-primary ring-4 ring-primary-soft"
+                  aria-hidden="true"
+                />
+                Thu, Oct 29 · 9:55 AM
+              </span>
+              <IconButton aria-label="Switch to dark theme" icon={<Icon path={ICONS.moon} />} />
+              <IconButton aria-label="Notifications" icon={<Icon path={ICONS.bell} />} count={3} />
+              <Button leftIcon={<Icon path={ICONS.plus} />}>New</Button>
+            </section>
+
+            {/* Greeting */}
+            <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+              <div className="space-y-3 min-w-0">
+                <p className="flex items-center gap-2 text-sm text-text-muted">
+                  <Icon path={ICONS.calendar} />
+                  Thursday, October 29
+                </p>
+                <h2 className="font-display text-greeting font-medium text-text">
+                  Good morning, Arun
                 </h2>
-                <p className="text-sm text-text-muted">
-                  Company-wide attendance, leave and task activity.
+                <p className="max-w-[60ch] text-base text-text-muted">
+                  Attendance is <strong className="font-semibold text-text">up 1.8%</strong> on the
+                  30 days before.{' '}
+                  <a
+                    href="#approvals"
+                    className="font-medium text-primary-ink underline underline-offset-4"
+                  >
+                    8 leave requests
+                  </a>{' '}
+                  are waiting for approval, and Engineering has 3 late check-ins today.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap gap-3">
+                <Button variant="secondary" size="lg" leftIcon={<Icon path={ICONS.download} />}>
+                  Export
+                </Button>
+                <Button size="lg" leftIcon={<Icon path={ICONS.plus} />}>
+                  Review approvals
+                </Button>
+              </div>
+            </section>
+
+            {/* Performance card with metric strip */}
+            <section className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-text">Workforce</h2>
+                  <p className="text-sm text-text-muted">Last 30 days against the 30 before</p>
+                </div>
                 <SegmentedControl
                   ariaLabel="Date range"
                   value={range}
                   onChange={setRange}
                   options={[
-                    { value: '7', label: '7 Days' },
-                    { value: '30', label: '30 Days' },
-                    { value: '90', label: '90 Days' },
+                    { value: '7', label: '7 days' },
+                    { value: '30', label: '30 days' },
+                    { value: '90', label: '90 days' },
                   ]}
                 />
-                <Button variant="secondary">New Announcement</Button>
               </div>
+              <MetricStrip
+                ariaLabel="Metric shown in the chart"
+                selected={metric}
+                onSelect={setMetric}
+                metrics={SAMPLE_METRICS.map((m) => ({ ...m, icon: <Icon path={m.icon} /> }))}
+              />
+            </section>
+
+            {/* Attention tiles */}
+            <section
+              aria-label="Needs attention"
+              className="grid grid-cols-1 xs:grid-cols-2 2xl:grid-cols-4 gap-4"
+            >
+              {SAMPLE_TILES.map((tile) => (
+                <a
+                  key={tile.title}
+                  href="#tile"
+                  className={`group flex flex-col justify-between gap-8 min-h-[200px] p-5 rounded-card text-text ${tile.bg} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-strong`}
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="flex items-center gap-3">
+                      <span
+                        className="w-10 h-10 rounded-input bg-surface-raised flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <Icon path={tile.icon} />
+                      </span>
+                      <span className="text-sm font-medium">{tile.title}</span>
+                    </span>
+                    <Icon path={ICONS.arrow} />
+                  </span>
+                  <span className="space-y-1">
+                    <span className="block font-display text-4xl font-semibold tabular-nums">
+                      {tile.value}
+                    </span>
+                    <span className="block text-sm text-text-muted truncate">{tile.caption}</span>
+                  </span>
+                </a>
+              ))}
             </section>
 
             {/* KPI cards */}
-            <section className="space-y-4">
-              <div>
-                <h2 className="font-display text-xl sm:text-2xl font-bold text-text">
-                  Today&apos;s Overview
-                </h2>
-                <p className="text-sm text-text-subtle">Priorities and daily workforce metrics</p>
-              </div>
-              <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
-                {SAMPLE_KPIS.map((kpi) => (
-                  <StatCard
-                    key={kpi.label}
-                    label={kpi.label}
-                    value={kpi.value}
-                    caption={kpi.caption}
-                    icon={<Icon path={kpi.icon} />}
-                  />
-                ))}
-              </div>
+            <section className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
+              {SAMPLE_KPIS.map((kpi) => (
+                <StatCard
+                  key={kpi.label}
+                  label={kpi.label}
+                  value={kpi.value}
+                  caption={kpi.caption}
+                  icon={<Icon path={kpi.icon} />}
+                />
+              ))}
             </section>
 
             {/* Pipeline */}
@@ -434,7 +591,7 @@ export function ComponentGalleryPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-text">Leave Requests Pipeline</h2>
-                  <p className="text-sm text-text-subtle">Requests by stage this month</p>
+                  <p className="text-sm text-text-muted">Requests by stage this month</p>
                 </div>
                 <Badge variant="primary">Total 57 requests</Badge>
               </div>
@@ -442,10 +599,10 @@ export function ComponentGalleryPage() {
                 {SAMPLE_PIPELINE.map((item) => (
                   <div
                     key={item.stage}
-                    className="flex flex-col items-center gap-2 pt-4 px-3 pb-0 bg-surface-muted border border-border rounded-card overflow-hidden"
+                    className="flex flex-col items-center gap-2 pt-4 px-3 pb-3 bg-surface-muted border border-border rounded-tile"
                   >
-                    <p className="text-sm font-medium text-text-subtle">{item.stage}</p>
-                    <p className={`font-display text-2xl font-bold tabular-nums ${item.ink}`}>
+                    <p className="text-sm font-medium text-text-muted">{item.stage}</p>
+                    <p className={`font-display text-2xl font-semibold tabular-nums ${item.ink}`}>
                       {item.count}
                     </p>
                     <span
