@@ -155,7 +155,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Shell scripts (shellcheck)
-        run: shellcheck deploy/scripts/*.sh
+        run: shellcheck -x deploy/scripts/*.sh
 
       - name: Production compose file is valid
         run: |

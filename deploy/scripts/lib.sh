@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Shared helpers for the backup scripts. Sourced, not executed.
 #
 # Two ways to reach PostgreSQL:
