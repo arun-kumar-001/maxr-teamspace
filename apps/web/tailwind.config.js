@@ -27,16 +27,33 @@ export default {
         brand: {
           red: '#E5322D', // Logo mark only
         },
+        bg: 'var(--bg)',
         surface: {
-          DEFAULT: '#FFFFFF',
+          DEFAULT: 'var(--surface)',
           muted: '#F6F8FB',
         },
+        text: 'var(--text)',
+        'text-muted': 'var(--text-muted)',
+        border: 'var(--border)',
+        success: '#16A34A',
+        warning: '#D97706',
+        danger: '#DC2626',
+        info: '#2563EB',
         status: {
           success: '#16A34A',
           warning: '#D97706',
           danger: '#DC2626',
           info: '#2563EB',
         },
+      },
+      borderRadius: {
+        input: '6px', // AGENTS.md §8: 6px inputs
+        card: '8px',  // AGENTS.md §8: 8px cards
+      },
+      maxWidth: {
+        prose: '70ch',        // AGENTS.md §8: Readable text/forms capped (≈70ch / ≈960px)
+        form: '960px',
+        dashboard: '1536px',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
