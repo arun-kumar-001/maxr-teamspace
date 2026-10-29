@@ -1,7 +1,5 @@
 import express, { Express } from 'express';
-import { spawnSync } from 'child_process';
 import { createApp } from '../app';
-import { config } from '../config/env';
 import { DependencyStatus } from '../db/types';
 import { HealthDependencies } from '../health/health';
 import { InMemoryAuditStore } from '../platform/audit/stores';
@@ -83,36 +81,3 @@ export function makeMiniApp(register: (app: Express) => void) {
 }
 
 export const uuid = '3f2b8c1e-5d4a-4b6f-9c0e-7a1d2e3f4a5b';
-
-let dbAvailableCache: boolean | null = null;
-
-/**
- * Synchronously checks whether PostgreSQL is reachable for integration tests.
- * Probes the port once with a short timeout (300ms) and caches the result.
- * Avoids top-level await so tests compile cleanly under CommonJS tsconfig.
- */
-export function isDatabaseAvailableSync(): boolean {
-  if (dbAvailableCache !== null) {
-    return dbAvailableCache;
-  }
-
-  try {
-    const parsed = new URL(config.DATABASE_URL);
-    const host = parsed.hostname || '127.0.0.1';
-    const port = parsed.port ? parseInt(parsed.port, 10) : 5432;
-
-    const probeCode =
-      'const net = require("net"); const s = new net.Socket(); s.setTimeout(300); ' +
-      's.on("connect", () => { s.destroy(); process.exit(0); }); ' +
-      's.on("error", () => { process.exit(1); }); ' +
-      's.on("timeout", () => { s.destroy(); process.exit(1); }); ' +
-      `s.connect(${port}, "${host}");`;
-
-    const res = spawnSync(process.execPath, ['-e', probeCode], { timeout: 1000 });
-    dbAvailableCache = res.status === 0;
-  } catch {
-    dbAvailableCache = false;
-  }
-
-  return dbAvailableCache;
-}

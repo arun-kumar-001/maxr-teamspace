@@ -225,35 +225,35 @@ ON CONFLICT (LOWER(employee_code)) DO UPDATE SET
 
 
 -- 8. Sample Users (Linked 1:1 to Employees via users.employee_id)
--- Default development password: Password123!
--- Argon2id/bcrypt placeholder hash for local development testing
+-- Development password for all four seeded users: Password123! (bcrypt cost 12; verified). Development only: the seeder refuses production.
+-- Login (issue #7) checks this hash; its hashing library test also verifies the password.
 INSERT INTO users (id, employee_id, email, password_hash, is_active) VALUES
   (
     '60000000-0000-0000-0000-000000000001',
     '50000000-0000-0000-0000-000000000001',
     'admin@maxr.internal',
-    '$2b$12$e8rO2z6F2s7WwFjY1bY1OeV7O2V4g4C.Q5kP0Zl5pE5M1pT3.Q5kO',
+    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000002',
     '50000000-0000-0000-0000-000000000002',
     'hr@maxr.internal',
-    '$2b$12$e8rO2z6F2s7WwFjY1bY1OeV7O2V4g4C.Q5kP0Zl5pE5M1pT3.Q5kO',
+    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000003',
     '50000000-0000-0000-0000-000000000003',
     'teamlead@maxr.internal',
-    '$2b$12$e8rO2z6F2s7WwFjY1bY1OeV7O2V4g4C.Q5kP0Zl5pE5M1pT3.Q5kO',
+    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000004',
     '50000000-0000-0000-0000-000000000004',
     'staff@maxr.internal',
-    '$2b$12$e8rO2z6F2s7WwFjY1bY1OeV7O2V4g4C.Q5kP0Zl5pE5M1pT3.Q5kO',
+    '$2b$12$96er1UTXX78f5iClAEWDjevzqY23k1WCI8VSYwRcHUJx7piozkqyK',
     true
   )
 ON CONFLICT (employee_id) DO UPDATE SET

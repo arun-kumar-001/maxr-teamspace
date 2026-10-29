@@ -3,9 +3,6 @@ import { ROLES, ROLE_DISPLAY_NAMES } from '@maxr/shared';
 import { runDevSeed } from './seeder';
 import { getPool, closePool } from './client';
 import { config } from '../config/env';
-import { isDatabaseAvailableSync } from '../test/helpers';
-
-const hasDatabase = isDatabaseAvailableSync();
 
 describe('Database Seeder (runDevSeed)', () => {
   it('refuses to execute when NODE_ENV is production (security violation guard)', async () => {
@@ -21,7 +18,7 @@ describe('Database Seeder (runDevSeed)', () => {
     }
   });
 
-  describe.skipIf(!hasDatabase)('Live Database Seed Execution (Integration)', () => {
+  describe('Live Database Seed Execution (Integration)', () => {
     const pool = getPool();
 
     afterAll(async () => {

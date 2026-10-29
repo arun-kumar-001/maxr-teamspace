@@ -2,13 +2,10 @@ import { randomUUID } from 'crypto';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getPool, closePool } from '../../db/client';
-import { isDatabaseAvailableSync } from '../../test/helpers';
 import { SqlAuditStore } from './sql-audit-store';
 import { AuditEntry } from './types';
 
-const hasDatabase = isDatabaseAvailableSync();
-
-describe.skipIf(!hasDatabase)('SqlAuditStore (Integration against PostgreSQL)', () => {
+describe('SqlAuditStore (Integration against PostgreSQL)', () => {
   const pool = getPool();
   const store = new SqlAuditStore(pool);
 

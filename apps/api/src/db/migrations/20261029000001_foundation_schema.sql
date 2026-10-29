@@ -109,8 +109,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Unique index on email (justification: login credential lookup)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users (LOWER(email));
--- Foreign key unique index on employee_id (justification: enforce 1:1 relationship and fast profile lookup)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_id_unique ON users (employee_id);
+-- employee_id is UNIQUE on the column itself (1:1 relationship; its index serves profile lookup)
 -- Index on is_active (justification: quick account status check during authentication)
 CREATE INDEX IF NOT EXISTS idx_users_is_active ON users (is_active);
 
@@ -217,7 +216,7 @@ REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM PUBLIC;
 -- 10. NOTIFICATION_OUTBOX
 -- Durable transactional message outbox (shared-services.md §4.3)
 CREATE TABLE IF NOT EXISTS notification_outbox (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   channel TEXT NOT NULL DEFAULT 'email',
   payload JSONB NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending', 'processing', 'sent', 'dead')),
