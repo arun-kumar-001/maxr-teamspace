@@ -65,3 +65,23 @@ Use the utilities in `rbac.testing.ts` (see `modules/_template/template.access.t
 ## Not covered here
 
 Per-field rules (sensitive fields need an explicit permission), the "no self-approval" rule (D-12) and field-level mass-assignment limits belong to the module that owns them. Permission denials are not audited yet; add that when the audit catalog for security events is agreed.
+
+## Keys for attendance, shifts and approvals
+
+Added for #33, #35 and #37 (migration `20261030000006`). Scope is what the repository filter enforces.
+
+| Route (suggested)                                                                 | Permission                                                           | Admin | HR  | Team Lead | Staff |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----- | --- | --------- | ----- |
+| `POST /attendance/check-in`, `check-out`; `GET /attendance/active`, `today`, `me` | `attendance.check_in`, `attendance.check_out`, `attendance.read_own` | own   | own | own       | own   |
+| `GET /attendance` (list others)                                                   | `attendance.list`                                                    | all   | all | team      | none  |
+| `GET /shifts`, `GET /shifts/{id}`                                                 | `shifts.list`                                                        | all   | all | all       | all   |
+| `GET /shifts/assignments/{employeeId}`                                            | `shifts.read_assignment`                                             | all   | all | team      | own   |
+| `POST /shifts`, `PUT /shifts/{id}`                                                | `shifts.create`, `shifts.update`                                     | all   | all | none      | none  |
+| `POST /shifts/assignments`                                                        | `shifts.assign`                                                      | all   | all | none      | none  |
+| `GET /shifts/policies`                                                            | `attendance_policies.read`                                           | all   | all | all       | all   |
+| `PUT /shifts/policies`                                                            | `attendance_policies.update`                                         | all   | all | none      | none  |
+| `GET /approvals`, `GET /approvals/{id}`                                           | `approvals.list`, `approvals.read`                                   | all   | all | team      | own   |
+| `POST /approvals`                                                                 | `approvals.create`                                                   | own   | own | own       | own   |
+| `POST /approvals/{id}/approve`, `reject`                                          | `approvals.decide`                                                   | all   | all | team      | none  |
+
+The requester of an approval is always the caller's own employee id. The "no self-approval" rule stays in the approvals service. Take any further key to the TL: this file and `permission-catalog.ts` are TL-approved.
