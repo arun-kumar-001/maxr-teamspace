@@ -1749,7 +1749,7 @@
         "tags": [
           "Reports"
         ],
-        "summary": "Download a report as CSV (audited; at most 10,000 rows)",
+        "summary": "Download a report as CSV (at most 10,000 rows) or PDF (at most 2,000 rows); audited",
         "description": "Required permission: `reports.export`",
         "parameters": [
           {
@@ -1766,7 +1766,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "csv"
+                "csv",
+                "pdf"
               ]
             },
             "required": false,
@@ -1776,7 +1777,7 @@
         ],
         "responses": {
           "200": {
-            "description": "CSV file (UTF-8 with BOM)"
+            "description": "CSV file (UTF-8 with BOM) or PDF file"
           },
           "400": {
             "description": "Validation failed or malformed request",
@@ -1819,7 +1820,7 @@
             }
           },
           "422": {
-            "description": "More than 10,000 rows: narrow the filters",
+            "description": "More rows than the format allows (CSV 10,000, PDF 2,000): narrow the filters",
             "content": {
               "application/json": {
                 "schema": {
@@ -1840,6 +1841,16 @@
           },
           "500": {
             "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The PDF took too long to render",
             "content": {
               "application/json": {
                 "schema": {
