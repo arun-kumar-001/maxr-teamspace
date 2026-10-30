@@ -15,6 +15,7 @@ import { notFoundHandler } from './middleware/not-found';
 import { requestIdMiddleware } from './middleware/request-id';
 import { Platform, createPlatform } from './platform';
 import { publicRoute } from './modules/rbac';
+import { ReportRegistry } from './modules/reports';
 import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
 import { createApiRouter } from './routes';
 import { getPool } from './db/client';
@@ -31,6 +32,8 @@ export interface AppOptions {
   platform?: Platform;
   /** Sign-in, sessions and the `authenticate` middleware. Defaults to PostgreSQL + Redis + Argon2id. */
   auth?: AuthServices;
+  /** Report definitions from the modules; defaults to none. */
+  reportRegistry?: ReportRegistry;
 }
 
 export function createApp(options: AppOptions = {}): Express {
@@ -95,6 +98,7 @@ export function createApp(options: AppOptions = {}): Express {
       idempotencyStore: new InMemoryIdempotencyStore(),
       platform,
       auth,
+      reportRegistry: options.reportRegistry,
       exposeDevRoutes: nodeEnv !== 'production',
     }),
   );

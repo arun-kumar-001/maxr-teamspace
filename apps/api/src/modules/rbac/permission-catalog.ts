@@ -148,6 +148,15 @@ export const PERMISSION_CATALOG = {
     description: 'Update status of task',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: OWN, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
   },
+
+  'reports.read': {
+    description: 'View reports the role may run',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
+  'reports.export': {
+    description: 'Export report results to CSV',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;
