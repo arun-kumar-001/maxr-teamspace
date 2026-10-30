@@ -1,7 +1,7 @@
 # ADR D-08: Report Export Formats & PDF Library
 
-- **Status:** Proposed (awaiting Technical Lead approval)
-- **Deciders:** Technical Lead (`arun-kumar-001`), pending
+- **Status:** Approved
+- **Deciders:** Technical Lead (`arun-kumar-001`), approved 2026-10-30
 - **Date:** 2026-10-30
 - **Context:** [Product Baseline §10 (D-08)](../../requirements/product-baseline.md#10-decision-register-needs-technical-lead-approval), [reports.md](../reports.md), issue #15, [AGENTS.md §2](../../../AGENTS.md)
 
@@ -37,7 +37,7 @@ Requirements that shape the choice:
 | jsPDF                                         | Rejected        | Browser-first; weak on complex scripts and long tables.                                                                                         |
 | External PDF service                          | Rejected        | Sends personal data to a third party; no basis in the spec.                                                                                     |
 
-## Decision (proposed)
+## Decision (approved 2026-10-30)
 
 Use **pdfmake `0.3.x`**, pinned to an exact version, for the PDF exporter, behind the existing `format` parameter of `GET /reports/{name}/export`.
 
@@ -78,8 +78,6 @@ Guardrails that come with the decision:
 3. Tests: Tamil sample renders (text extraction check), cap and 422, audit entry and fail-closed, permission and scope per role, no outbound URL or file access.
 4. Update `docs/architecture/reports.md`, OpenAPI and the decisions log.
 
-## Open questions for the Technical Lead
+## Approval notes
 
-- Approve pdfmake and the guardrails above?
-- Is a PDF row cap of 2,000 acceptable, or should large PDFs wait for the async export job infrastructure?
-- Are scripts other than Tamil and Latin needed?
+Approved by the Technical Lead on 2026-10-30 as written: pdfmake 0.3.x with the guardrails above and the 2,000-row PDF cap. Scripts: Latin and Tamil only; any other script needs its own spike first. PDF generation and the async export job infrastructure for larger exports remain separate work.
