@@ -27,6 +27,14 @@ module.exports = {
     ],
     'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
   },
+  overrides: [
+    {
+      // Plain CommonJS files run by Node directly (the PDF worker thread and its test fixture).
+      files: ['*.js'],
+      parserOptions: { sourceType: 'script' },
+      rules: { '@typescript-eslint/no-require-imports': 'off' },
+    },
+  ],
   ignorePatterns: [
     'node_modules/',
     'dist/',

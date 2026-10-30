@@ -3,7 +3,7 @@ import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
 import { createDepartmentRouter, createDesignationRouter } from '../modules/employees';
-import { ReportRegistry, createReports } from '../modules/reports';
+import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
@@ -15,6 +15,8 @@ export interface ApiRouterOptions {
   auth: AuthServices;
   /** Report definitions supplied by the modules; empty until a module registers one. */
   reportRegistry?: ReportRegistry;
+  /** Replaces the PDF renderer (tests). */
+  reportPdfExporter?: PdfExporter;
   /** Sample module and OpenAPI document are development aids: never exposed in production. */
   exposeDevRoutes: boolean;
 }
@@ -29,6 +31,7 @@ export function createApiRouter({
   platform,
   auth,
   reportRegistry,
+  reportPdfExporter,
   exposeDevRoutes,
 }: ApiRouterOptions): Router {
   const router = Router();
@@ -56,6 +59,7 @@ export function createApiRouter({
       audit: platform.audit,
       authenticate: auth.authenticate,
       registry: reportRegistry,
+      pdfExporter: reportPdfExporter,
     }).router,
   );
 
