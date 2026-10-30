@@ -147,6 +147,16 @@ export class DepartmentService {
     try {
       const ok = await this.repository.softDelete(id);
       if (!ok) {
+        if (await this.repository.hasActiveDesignations(id)) {
+          throw conflict('Cannot deactivate department with active designations');
+        }
+        if (await this.repository.hasActiveEmployees(id)) {
+          throw conflict('Cannot deactivate department with active employees');
+        }
+        const current = await this.repository.findById(id);
+        if (current && !current.isActive) {
+          throw unprocessable('Department is already inactive');
+        }
         throw notFound('Department not found');
       }
 

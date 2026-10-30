@@ -121,4 +121,62 @@ describe('PgDepartmentRepository (PostgreSQL Integration)', () => {
     await pool.query("UPDATE employees SET status = 'deactivated' WHERE id = $1", [empId]);
     expect(await repo.hasActiveEmployees(dept.id)).toBe(false);
   });
+
+  it('guarantees deterministic pagination across pages when sorting columns with duplicate values', async () => {
+    const prefix = `STABLE_${randomUUID().slice(0, 6)}`;
+    const d1 = await repo.create({ name: `${prefix} Shared Name`, code: `${prefix}_A` });
+    const d2 = await repo.create({ name: `${prefix} Shared Name`, code: `${prefix}_B` });
+    const d3 = await repo.create({ name: `${prefix} Shared Name`, code: `${prefix}_C` });
+    createdIds.push(d1.id, d2.id, d3.id);
+
+    const page1 = await repo.findMany({
+      offset: 0,
+      limit: 2,
+      sort: { column: 'name', order: 'asc' },
+      search: prefix,
+    });
+    const page2 = await repo.findMany({
+      offset: 2,
+      limit: 2,
+      sort: { column: 'name', order: 'asc' },
+      search: prefix,
+    });
+
+    expect(page1.total).toBe(3);
+    expect(page1.items.length).toBe(2);
+    expect(page2.items.length).toBe(1);
+
+    const page1Ids = page1.items.map((i) => i.id);
+    const page2Ids = page2.items.map((i) => i.id);
+
+    expect(page1Ids.includes(page2Ids[0]!)).toBe(false);
+    expect([...page1Ids, ...page2Ids].sort()).toEqual([d1.id, d2.id, d3.id].sort());
+  });
+
+  it('escapes % and _ wildcards in search queries', async () => {
+    const prefix = `ESC_${randomUUID().slice(0, 6)}`;
+    const d1 = await repo.create({ name: `${prefix} 100% Quality`, code: `${prefix}_PCT` });
+    const d2 = await repo.create({ name: `${prefix} 1000 Quality`, code: `${prefix}_NUM` });
+    const d3 = await repo.create({ name: `${prefix}_UnderScore`, code: `${prefix}_US` });
+    const d4 = await repo.create({ name: `${prefix}XUnderScore`, code: `${prefix}_XUS` });
+    createdIds.push(d1.id, d2.id, d3.id, d4.id);
+
+    const pctRes = await repo.findMany({
+      offset: 0,
+      limit: 10,
+      sort: { column: 'name', order: 'asc' },
+      search: `${prefix} 100%`,
+    });
+    expect(pctRes.total).toBe(1);
+    expect(pctRes.items[0]?.id).toBe(d1.id);
+
+    const usRes = await repo.findMany({
+      offset: 0,
+      limit: 10,
+      sort: { column: 'name', order: 'asc' },
+      search: `${prefix}_UnderScore`,
+    });
+    expect(usRes.total).toBe(1);
+    expect(usRes.items[0]?.id).toBe(d3.id);
+  });
 });

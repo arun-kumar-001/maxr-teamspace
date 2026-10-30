@@ -158,6 +158,13 @@ export class DesignationService {
     try {
       const ok = await this.repository.softDelete(id);
       if (!ok) {
+        if (await this.repository.hasActiveEmployees(id)) {
+          throw conflict('Cannot deactivate designation with active employees');
+        }
+        const current = await this.repository.findById(id);
+        if (current && !current.isActive) {
+          throw unprocessable('Designation is already inactive');
+        }
         throw notFound('Designation not found');
       }
 

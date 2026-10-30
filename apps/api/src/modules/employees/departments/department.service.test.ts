@@ -164,4 +164,25 @@ describe('DepartmentService (Unit Tests)', () => {
       message: 'Department not found',
     });
   });
+
+  it('guarantees deterministic pagination with stable sorting tie-breaker when names match', async () => {
+    const { service, ctx } = setup();
+    const d1 = await service.create({ name: 'Identical Name', code: 'ID_1' }, ctx);
+    const d2 = await service.create({ name: 'Identical Name', code: 'ID_2' }, ctx);
+    const d3 = await service.create({ name: 'Identical Name', code: 'ID_3' }, ctx);
+
+    const page1 = await service.list({ page: 1, pageSize: 2, sortBy: 'name', sortOrder: 'asc' });
+    const page2 = await service.list({ page: 2, pageSize: 2, sortBy: 'name', sortOrder: 'asc' });
+
+    expect(page1.data.length).toBe(2);
+    expect(page2.data.length).toBe(1);
+    expect(page1.meta.total).toBe(3);
+
+    const idsPage1 = page1.data.map((d) => d.id);
+    const idsPage2 = page2.data.map((d) => d.id);
+
+    expect(idsPage1.includes(idsPage2[0]!)).toBe(false);
+    const combined = [...idsPage1, ...idsPage2].sort();
+    expect(combined).toEqual([d1.id, d2.id, d3.id].sort());
+  });
 });

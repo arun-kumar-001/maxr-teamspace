@@ -46,6 +46,8 @@ const toEntity = (row: DepartmentRow): DepartmentEntity => ({
       : new Date(row.updated_at).toISOString(),
 });
 
+const escapeLikePattern = (input: string): string => input.replace(/([\\%_])/g, '\\$1');
+
 /** PostgreSQL implementation using the shared pool. */
 export class PgDepartmentRepository implements IDepartmentRepository {
   constructor(private readonly getPool: () => Pool) {}
@@ -77,8 +79,11 @@ export class PgDepartmentRepository implements IDepartmentRepository {
     const values: unknown[] = [];
 
     if (params.search) {
-      values.push(`%${params.search}%`);
-      conditions.push(`(name ILIKE $${values.length} OR code ILIKE $${values.length})`);
+      const escaped = escapeLikePattern(params.search);
+      values.push(`%${escaped}%`);
+      conditions.push(
+        `(name ILIKE $${values.length} ESCAPE '\\' OR code ILIKE $${values.length} ESCAPE '\\')`,
+      );
     }
 
     if (params.isActive !== undefined) {
@@ -110,7 +115,7 @@ export class PgDepartmentRepository implements IDepartmentRepository {
       `SELECT id, name, code, is_active, created_at, updated_at
          FROM departments
         ${whereClause}
-        ORDER BY ${sortCol} ${sortDir}
+        ORDER BY ${sortCol} ${sortDir}, id ASC
         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
       dataValues,
     );
@@ -165,7 +170,16 @@ export class PgDepartmentRepository implements IDepartmentRepository {
     const res = await this.getPool().query(
       `UPDATE departments
           SET is_active = false, updated_at = NOW()
-        WHERE id = $1 AND is_active = true`,
+        WHERE id = $1
+          AND is_active = true
+          AND NOT EXISTS (
+            SELECT 1 FROM designations
+             WHERE department_id = $1 AND is_active = true
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM employees
+             WHERE department_id = $1 AND status != 'deactivated'
+          )`,
       [id],
     );
     return (res.rowCount ?? 0) > 0;
@@ -231,7 +245,11 @@ export class MemoryDepartmentRepository implements IDepartmentRepository {
 
     const key = params.sort.column as 'name' | 'code' | 'createdAt';
     const direction = params.sort.order === 'asc' ? 1 : -1;
-    rows.sort((a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0) * direction);
+    rows.sort((a, b) => {
+      if (a[key] < b[key]) return -1 * direction;
+      if (a[key] > b[key]) return 1 * direction;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
 
     return {
       items: rows.slice(params.offset, params.offset + params.limit),
@@ -293,6 +311,9 @@ export class MemoryDepartmentRepository implements IDepartmentRepository {
   async softDelete(id: string): Promise<boolean> {
     const existing = this.items.get(id);
     if (!existing || !existing.isActive) {
+      return false;
+    }
+    if (this.activeDesignationCheck(id) || this.activeEmployeeCheck(id)) {
       return false;
     }
     this.items.set(id, { ...existing, isActive: false, updatedAt: new Date().toISOString() });

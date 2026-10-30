@@ -173,4 +173,45 @@ describe('DesignationService (Unit Tests)', () => {
       message: 'Designation not found',
     });
   });
+
+  it('guarantees deterministic pagination with stable sorting tie-breaker when levels match', async () => {
+    const { service, deptId, ctx } = setup();
+    const d1 = await service.create(
+      { departmentId: deptId, title: 'Same Level A', code: 'SL_A', level: 3 },
+      ctx,
+    );
+    const d2 = await service.create(
+      { departmentId: deptId, title: 'Same Level B', code: 'SL_B', level: 3 },
+      ctx,
+    );
+    const d3 = await service.create(
+      { departmentId: deptId, title: 'Same Level C', code: 'SL_C', level: 3 },
+      ctx,
+    );
+
+    const page1 = await service.list({
+      page: 1,
+      pageSize: 2,
+      sortBy: 'level',
+      sortOrder: 'asc',
+      departmentId: deptId,
+    });
+    const page2 = await service.list({
+      page: 2,
+      pageSize: 2,
+      sortBy: 'level',
+      sortOrder: 'asc',
+      departmentId: deptId,
+    });
+
+    expect(page1.data.length).toBe(2);
+    expect(page2.data.length).toBe(1);
+    expect(page1.meta.total).toBe(3);
+
+    const idsPage1 = page1.data.map((d) => d.id);
+    const idsPage2 = page2.data.map((d) => d.id);
+
+    expect(idsPage1.includes(idsPage2[0]!)).toBe(false);
+    expect([...idsPage1, ...idsPage2].sort()).toEqual([d1.id, d2.id, d3.id].sort());
+  });
 });

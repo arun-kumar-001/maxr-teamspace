@@ -159,4 +159,97 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     expect(await desigRepo.isDepartmentActive(deptId)).toBe(true);
     expect(await desigRepo.isDepartmentActive(randomUUID())).toBe(false);
   });
+
+  it('guarantees deterministic pagination across pages when sorting by duplicate level or title', async () => {
+    const prefix = `STABLE_DSG_${randomUUID().slice(0, 6)}`;
+    const d1 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix} Common Title`,
+      code: `${prefix}_1`,
+      level: 3,
+    });
+    const d2 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix} Common Title`,
+      code: `${prefix}_2`,
+      level: 3,
+    });
+    const d3 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix} Common Title`,
+      code: `${prefix}_3`,
+      level: 3,
+    });
+    createdDesigIds.push(d1.id, d2.id, d3.id);
+
+    const page1 = await desigRepo.findMany({
+      offset: 0,
+      limit: 2,
+      sort: { column: 'level', order: 'asc' },
+      search: prefix,
+    });
+    const page2 = await desigRepo.findMany({
+      offset: 2,
+      limit: 2,
+      sort: { column: 'level', order: 'asc' },
+      search: prefix,
+    });
+
+    expect(page1.total).toBe(3);
+    expect(page1.items.length).toBe(2);
+    expect(page2.items.length).toBe(1);
+
+    const page1Ids = page1.items.map((i) => i.id);
+    const page2Ids = page2.items.map((i) => i.id);
+
+    expect(page1Ids.includes(page2Ids[0]!)).toBe(false);
+    expect([...page1Ids, ...page2Ids].sort()).toEqual([d1.id, d2.id, d3.id].sort());
+  });
+
+  it('escapes % and _ wildcards in search queries', async () => {
+    const prefix = `ESC_DSG_${randomUUID().slice(0, 6)}`;
+    const d1 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix} 50% Effort`,
+      code: `${prefix}_PCT`,
+      level: 1,
+    });
+    const d2 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix} 500 Effort`,
+      code: `${prefix}_NUM`,
+      level: 1,
+    });
+    const d3 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix}_UnderscoreTitle`,
+      code: `${prefix}_US`,
+      level: 1,
+    });
+    const d4 = await desigRepo.create({
+      departmentId: deptId,
+      title: `${prefix}XUnderscoreTitle`,
+      code: `${prefix}_XUS`,
+      level: 1,
+    });
+    createdDesigIds.push(d1.id, d2.id, d3.id, d4.id);
+
+    const pctRes = await desigRepo.findMany({
+      offset: 0,
+      limit: 10,
+      sort: { column: 'title', order: 'asc' },
+      search: `${prefix} 50%`,
+    });
+    expect(pctRes.total).toBe(1);
+    expect(pctRes.items[0]?.id).toBe(d1.id);
+
+    const usRes = await desigRepo.findMany({
+      offset: 0,
+      limit: 10,
+      sort: { column: 'title', order: 'asc' },
+      search: `${prefix}_Underscore`,
+    });
+    expect(usRes.total).toBe(1);
+    expect(usRes.items[0]?.id).toBe(d3.id);
+  });
 });

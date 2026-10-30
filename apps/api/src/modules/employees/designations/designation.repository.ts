@@ -53,6 +53,8 @@ const toEntity = (row: DesignationRow): DesignationEntity => ({
       : new Date(row.updated_at).toISOString(),
 });
 
+const escapeLikePattern = (input: string): string => input.replace(/([\\%_])/g, '\\$1');
+
 export class PgDesignationRepository implements IDesignationRepository {
   constructor(private readonly getPool: () => Pool) {}
 
@@ -88,8 +90,11 @@ export class PgDesignationRepository implements IDesignationRepository {
     }
 
     if (params.search) {
-      values.push(`%${params.search}%`);
-      conditions.push(`(title ILIKE $${values.length} OR code ILIKE $${values.length})`);
+      const escaped = escapeLikePattern(params.search);
+      values.push(`%${escaped}%`);
+      conditions.push(
+        `(title ILIKE $${values.length} ESCAPE '\\' OR code ILIKE $${values.length} ESCAPE '\\')`,
+      );
     }
 
     if (params.isActive !== undefined) {
@@ -122,7 +127,7 @@ export class PgDesignationRepository implements IDesignationRepository {
       `SELECT id, department_id, title, code, level, is_active, created_at, updated_at
          FROM designations
         ${whereClause}
-        ORDER BY ${sortCol} ${sortDir}
+        ORDER BY ${sortCol} ${sortDir}, id ASC
         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
       dataValues,
     );
@@ -185,7 +190,12 @@ export class PgDesignationRepository implements IDesignationRepository {
     const res = await this.getPool().query(
       `UPDATE designations
           SET is_active = false, updated_at = NOW()
-        WHERE id = $1 AND is_active = true`,
+        WHERE id = $1
+          AND is_active = true
+          AND NOT EXISTS (
+            SELECT 1 FROM employees
+             WHERE designation_id = $1 AND status != 'deactivated'
+          )`,
       [id],
     );
     return (res.rowCount ?? 0) > 0;
@@ -253,7 +263,11 @@ export class MemoryDesignationRepository implements IDesignationRepository {
 
     const key = params.sort.column as 'title' | 'code' | 'level' | 'createdAt';
     const direction = params.sort.order === 'asc' ? 1 : -1;
-    rows.sort((a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0) * direction);
+    rows.sort((a, b) => {
+      if (a[key] < b[key]) return -1 * direction;
+      if (a[key] > b[key]) return 1 * direction;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
 
     return {
       items: rows.slice(params.offset, params.offset + params.limit),
@@ -319,6 +333,9 @@ export class MemoryDesignationRepository implements IDesignationRepository {
   async softDelete(id: string): Promise<boolean> {
     const existing = this.items.get(id);
     if (!existing || !existing.isActive) {
+      return false;
+    }
+    if (this.activeEmployeeCheck(id)) {
       return false;
     }
     this.items.set(id, { ...existing, isActive: false, updatedAt: new Date().toISOString() });
