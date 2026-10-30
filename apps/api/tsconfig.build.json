@@ -8,6 +8,7 @@
     "src/modules/auth/contracts/**",
     "src/modules/auth/auth.testing.ts",
     "src/modules/auth/auth.repository.memory.ts",
+    "src/modules/attendance/attendance.repository.memory.ts",
     "src/modules/rbac/rbac.testing.ts",
     "src/test/**"
   ]

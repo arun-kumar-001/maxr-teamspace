@@ -7,7 +7,7 @@ import { requestIdMiddleware } from '../../middleware/request-id';
 import { createTestPlatform } from '../../platform';
 import { createTestAuth } from '../auth/auth.testing';
 import { signInAs } from '../rbac/rbac.testing';
-import { AttendanceRepository } from './attendance.repository';
+import { InMemoryAttendanceRepository } from './attendance.repository.memory';
 import { createAttendanceRouter } from './attendance.routes';
 import { AttendanceService } from './attendance.service';
 
@@ -16,7 +16,7 @@ async function setup(isEmployeeActive: (id: string) => boolean = () => true) {
     logger: createLogger({ level: 'silent', write: () => undefined }),
   });
   const kit = createTestAuth(platform.audit);
-  const repo = new AttendanceRepository();
+  const repo = new InMemoryAttendanceRepository();
   const service = new AttendanceService(repo, platform.audit, isEmployeeActive);
 
   const app = express();

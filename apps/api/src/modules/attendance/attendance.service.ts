@@ -23,8 +23,8 @@ export class AttendanceService {
   constructor(
     private readonly repo: IAttendanceRepository,
     private readonly audit?: AuditLogger,
-    private readonly isEmployeeActive: (employeeId: string) => Promise<boolean> | boolean = () =>
-      true,
+    private readonly isEmployeeActive: (employeeId: string) => Promise<boolean> | boolean = (id) =>
+      repo.isEmployeeActive(id),
   ) {}
 
   async getActiveSession(employeeId: string): Promise<AttendanceRecord | null> {

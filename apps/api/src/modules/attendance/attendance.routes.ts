@@ -1,9 +1,11 @@
 import { RequestHandler, Router } from 'express';
+import type { Pool } from 'pg';
+import { getPool } from '../../db/client';
 import { asyncHandler } from '../../http/async-handler';
 import { validate } from '../../http/validate';
 import { requirePermission } from '../rbac';
 import { AttendanceController } from './attendance.controller';
-import { AttendanceRepository, IAttendanceRepository } from './attendance.repository';
+import { IAttendanceRepository, PgAttendanceRepository } from './attendance.repository';
 import { AttendanceService } from './attendance.service';
 import { AuditLogger } from '../../platform/audit/types';
 import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
@@ -13,11 +15,12 @@ export interface AttendanceRouterOptions {
   audit?: AuditLogger;
   repository?: IAttendanceRepository;
   service?: AttendanceService;
+  getPool?: () => Pool;
 }
 
 export function createAttendanceRouter(options: AttendanceRouterOptions): Router {
   const router = Router();
-  const repo = options.repository ?? new AttendanceRepository();
+  const repo = options.repository ?? new PgAttendanceRepository(options.getPool ?? getPool);
   const service = options.service ?? new AttendanceService(repo, options.audit);
   const controller = new AttendanceController(service);
 

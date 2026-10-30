@@ -9,7 +9,7 @@ import { requestIdMiddleware } from '../../middleware/request-id';
 import { createTestPlatform } from '../../platform';
 import { createTestAuth } from '../auth/auth.testing';
 import { ALL_ROLES, SignedIn, signInAs } from '../rbac/rbac.testing';
-import { AttendanceRepository } from './attendance.repository';
+import { InMemoryAttendanceRepository } from './attendance.repository.memory';
 import { createAttendanceRouter } from './attendance.routes';
 import { AttendanceService } from './attendance.service';
 
@@ -27,7 +27,7 @@ async function setup() {
   // Manager mapping: Staff reports to Team Lead, everyone else has no manager.
   const managerOf = (employeeId: string) =>
     employeeId === users.staff.employeeId ? users.team_lead.employeeId : null;
-  const repo = new AttendanceRepository(managerOf);
+  const repo = new InMemoryAttendanceRepository(managerOf);
   const service = new AttendanceService(repo, platform.audit);
 
   const app = express();

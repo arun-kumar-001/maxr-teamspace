@@ -1,7 +1,13 @@
-import { randomUUID } from 'crypto';
+import type { Pool } from 'pg';
+import { conflict, forbidden, notFound } from '../../http/errors';
 import { SortSpec } from '../../http/pagination';
-import { ScopeFilter, scopeAllows } from '../rbac';
-import { AttendanceLocation, AttendanceRecord, CheckInDto } from './attendance.types';
+import { ScopeFilter, scopeToSql } from '../rbac/scope';
+import {
+  AttendanceLocation,
+  AttendanceRecord,
+  AttendanceStatus,
+  CheckInDto,
+} from './attendance.types';
 
 export interface AttendanceFindManyParams {
   offset: number;
@@ -33,141 +39,236 @@ export interface IAttendanceRepository {
     scope: ScopeFilter,
   ): Promise<{ items: AttendanceRecord[]; total: number }>;
   findById(id: string, scope: ScopeFilter): Promise<AttendanceRecord | null>;
+  isEmployeeActive(employeeId: string): Promise<boolean>;
 }
 
-export function uniqueViolation(constraint = 'idx_attendance_single_open_session'): Error {
-  return Object.assign(
-    new Error(`duplicate key value violates unique constraint "${constraint}"`),
-    { code: '23505', constraint },
-  );
+interface AttendanceRow {
+  id: string;
+  employee_id: string;
+  work_date: Date | string;
+  check_in_time: Date | string;
+  check_out_time: Date | string | null;
+  duration_minutes: number | null;
+  status: string;
+  location: unknown;
+  notes: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
 }
+
+function formatDate(val: Date | string): string {
+  if (val instanceof Date) {
+    return val.toISOString().slice(0, 10);
+  }
+  return typeof val === 'string' ? val.slice(0, 10) : String(val);
+}
+
+function formatIso(val: Date | string | null): string | null {
+  if (!val) return null;
+  if (val instanceof Date) return val.toISOString();
+  return new Date(val).toISOString();
+}
+
+function toRecord(row: AttendanceRow): AttendanceRecord {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    workDate: formatDate(row.work_date),
+    checkInTime: formatIso(row.check_in_time)!,
+    checkOutTime: formatIso(row.check_out_time),
+    durationMinutes: row.duration_minutes,
+    status: row.status as AttendanceStatus,
+    location: (row.location as AttendanceLocation) ?? null,
+    notes: row.notes ?? null,
+    createdAt: formatIso(row.created_at)!,
+    updatedAt: formatIso(row.updated_at)!,
+  };
+}
+
+const ATTENDANCE_SORT_COLUMNS: Record<string, string> = {
+  workDate: 'a.work_date',
+  checkInTime: 'a.check_in_time',
+  checkOutTime: 'a.check_out_time',
+  status: 'a.status',
+  createdAt: 'a.created_at',
+};
 
 /**
- * In-memory reference repository for attendance operations.
- * Enforces the partial unique index guarantee (at most one open session per employee)
- * and full RBAC record scoping using `scopeAllows`.
+ * PostgreSQL repository for attendance records.
+ * Uses parameterised SQL, enforces the partial unique index guarantee (at most one open session per employee),
+ * and delegates scoping directly to `scopeToSql(filter, 'a.employee_id', n)`.
  */
-export class AttendanceRepository implements IAttendanceRepository {
-  private readonly items = new Map<string, AttendanceRecord>();
+export class PgAttendanceRepository implements IAttendanceRepository {
+  constructor(private readonly getPool: () => Pool) {}
 
-  /** `managerOf` returns the manager employee ID for a given employee ID. */
-  constructor(private readonly managerOf: (employeeId: string) => string | null = () => null) {}
-
-  private inScope(item: AttendanceRecord, scope: ScopeFilter): boolean {
-    return scopeAllows(scope, item.employeeId, this.managerOf(item.employeeId));
+  async isEmployeeActive(employeeId: string): Promise<boolean> {
+    const res = await this.getPool().query<{ status: string }>(
+      `SELECT status FROM employees WHERE id = $1`,
+      [employeeId],
+    );
+    if (!res.rows[0]) return false;
+    return res.rows[0].status === 'active';
   }
 
   async findActiveSession(employeeId: string): Promise<AttendanceRecord | null> {
-    for (const record of this.items.values()) {
-      if (record.employeeId === employeeId && record.checkOutTime === null) {
-        return record;
-      }
-    }
-    return null;
+    const res = await this.getPool().query<AttendanceRow>(
+      `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
+              a.duration_minutes, a.status, a.location, a.notes, a.created_at, a.updated_at
+         FROM attendance_records a
+        WHERE a.employee_id = $1 AND a.check_out_time IS NULL
+        ORDER BY a.check_in_time DESC
+        LIMIT 1`,
+      [employeeId],
+    );
+    return res.rows[0] ? toRecord(res.rows[0]) : null;
   }
 
   async findTodaySessions(employeeId: string, workDate: string): Promise<AttendanceRecord[]> {
-    const results: AttendanceRecord[] = [];
-    for (const record of this.items.values()) {
-      if (record.employeeId === employeeId && record.workDate === workDate) {
-        results.push(record);
-      }
-    }
-    return results.sort((a, b) => a.checkInTime.localeCompare(b.checkInTime));
+    const res = await this.getPool().query<AttendanceRow>(
+      `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
+              a.duration_minutes, a.status, a.location, a.notes, a.created_at, a.updated_at
+         FROM attendance_records a
+        WHERE a.employee_id = $1 AND a.work_date = $2
+        ORDER BY a.check_in_time ASC`,
+      [employeeId, workDate],
+    );
+    return res.rows.map(toRecord);
   }
 
   async createCheckIn(
     employeeId: string,
     workDate: string,
     dto: CheckInDto,
-    checkInTime = new Date().toISOString(),
+    checkInTime?: string,
   ): Promise<AttendanceRecord> {
-    // Enforce partial unique index: at most one open session per employee
-    const active = await this.findActiveSession(employeeId);
-    if (active) {
-      throw uniqueViolation();
+    const active = await this.isEmployeeActive(employeeId);
+    if (!active) {
+      throw forbidden('Deactivated employee cannot perform attendance check-in');
     }
 
-    const now = new Date().toISOString();
-    const record: AttendanceRecord = {
-      id: randomUUID(),
-      employeeId,
-      workDate,
-      checkInTime,
-      checkOutTime: null,
-      durationMinutes: null,
-      status: 'PRESENT',
-      location: (dto.location as AttendanceLocation) ?? null,
-      notes: dto.notes ?? null,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.items.set(record.id, record);
-    return record;
+    try {
+      const res = await this.getPool().query<AttendanceRow>(
+        `INSERT INTO attendance_records (
+           employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes
+         ) VALUES (
+           $1, $2, COALESCE($3, NOW()), NULL, NULL, 'PRESENT', $4, $5
+         ) RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes, created_at, updated_at`,
+        [
+          employeeId,
+          workDate,
+          checkInTime ?? null,
+          dto.location ? JSON.stringify(dto.location) : null,
+          dto.notes ?? null,
+        ],
+      );
+      return toRecord(res.rows[0]!);
+    } catch (err: unknown) {
+      const pgErr = err as { code?: string; constraint?: string };
+      if (pgErr.code === '23505') {
+        throw conflict('An open attendance session already exists. Please check out first.');
+      }
+      if (pgErr.code === '23503') {
+        throw notFound('Employee not found');
+      }
+      throw err;
+    }
   }
 
   async createCheckOut(
     sessionId: string,
-    checkOutTime = new Date().toISOString(),
+    checkOutTime: string,
     durationMinutes: number,
     notes?: string,
   ): Promise<AttendanceRecord | null> {
-    const existing = this.items.get(sessionId);
-    if (!existing || existing.checkOutTime !== null) {
-      return null;
-    }
-
-    const updated: AttendanceRecord = {
-      ...existing,
-      checkOutTime,
-      durationMinutes,
-      notes: notes ?? existing.notes,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.items.set(sessionId, updated);
-    return updated;
-  }
-
-  async findById(id: string, scope: ScopeFilter): Promise<AttendanceRecord | null> {
-    const record = this.items.get(id);
-    if (!record || !this.inScope(record, scope)) {
-      return null;
-    }
-    return record;
+    const res = await this.getPool().query<AttendanceRow>(
+      `UPDATE attendance_records
+          SET check_out_time = $2,
+              duration_minutes = $3,
+              notes = COALESCE($4, notes),
+              updated_at = NOW()
+        WHERE id = $1 AND check_out_time IS NULL
+        RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes, created_at, updated_at`,
+      [sessionId, checkOutTime, durationMinutes, notes ?? null],
+    );
+    return res.rows[0] ? toRecord(res.rows[0]) : null;
   }
 
   async findMany(
     params: AttendanceFindManyParams,
     scope: ScopeFilter,
   ): Promise<{ items: AttendanceRecord[]; total: number }> {
-    let rows = [...this.items.values()].filter((r) => this.inScope(r, scope));
+    const conditions: string[] = [];
+    const values: unknown[] = [];
+    let paramIndex = 1;
 
     if (params.employeeId) {
-      rows = rows.filter((r) => r.employeeId === params.employeeId);
+      conditions.push(`a.employee_id = $${paramIndex++}`);
+      values.push(params.employeeId);
     }
     if (params.startDate) {
-      rows = rows.filter((r) => r.workDate >= params.startDate!);
+      conditions.push(`a.work_date >= $${paramIndex++}`);
+      values.push(params.startDate);
     }
     if (params.endDate) {
-      rows = rows.filter((r) => r.workDate <= params.endDate!);
+      conditions.push(`a.work_date <= $${paramIndex++}`);
+      values.push(params.endDate);
     }
     if (params.status) {
-      rows = rows.filter((r) => r.status === params.status);
+      conditions.push(`a.status = $${paramIndex++}`);
+      values.push(params.status);
     }
 
-    const direction = params.sort.order === 'asc' ? 1 : -1;
-    rows.sort((a, b) => {
-      const aVal = a[params.sort.column as keyof AttendanceRecord] ?? '';
-      const bVal = b[params.sort.column as keyof AttendanceRecord] ?? '';
-      return (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) * direction;
-    });
+    const { clause: scopeClause, values: scopeValues } = scopeToSql(
+      scope,
+      'a.employee_id',
+      paramIndex,
+    );
+    conditions.push(scopeClause);
+    for (const v of scopeValues) {
+      values.push(v);
+      paramIndex++;
+    }
 
-    const total = rows.length;
-    const items = rows.slice(params.offset, params.offset + params.limit);
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    return { items, total };
+    const countRes = await this.getPool().query<{ count: string }>(
+      `SELECT COUNT(*)::text as count FROM attendance_records a ${whereClause}`,
+      values,
+    );
+    const total = parseInt(countRes.rows[0]?.count ?? '0', 10);
+
+    const sortCol = ATTENDANCE_SORT_COLUMNS[params.sort.column] ?? 'a.work_date';
+    const sortDir = params.sort.order === 'asc' ? 'ASC' : 'DESC';
+
+    const limitParam = paramIndex++;
+    const offsetParam = paramIndex++;
+    const queryValues = [...values, params.limit, params.offset];
+
+    const itemsRes = await this.getPool().query<AttendanceRow>(
+      `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
+              a.duration_minutes, a.status, a.location, a.notes, a.created_at, a.updated_at
+         FROM attendance_records a
+        ${whereClause}
+        ORDER BY ${sortCol} ${sortDir}, a.check_in_time ${sortDir}
+        LIMIT $${limitParam} OFFSET $${offsetParam}`,
+      queryValues,
+    );
+
+    return {
+      items: itemsRes.rows.map(toRecord),
+      total,
+    };
+  }
+
+  async findById(id: string, scope: ScopeFilter): Promise<AttendanceRecord | null> {
+    const { clause: scopeClause, values: scopeValues } = scopeToSql(scope, 'a.employee_id', 2);
+    const res = await this.getPool().query<AttendanceRow>(
+      `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
+              a.duration_minutes, a.status, a.location, a.notes, a.created_at, a.updated_at
+         FROM attendance_records a
+        WHERE a.id = $1 AND ${scopeClause}`,
+      [id, ...scopeValues],
+    );
+    return res.rows[0] ? toRecord(res.rows[0]) : null;
   }
 }
-
