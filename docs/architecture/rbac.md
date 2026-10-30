@@ -43,7 +43,7 @@ For a single record outside the scope the repository returns nothing and the ser
 | Scope       | Filter                                            | Meaning                                                                                                                        |
 | ----------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `own`       | `column = caller's employee id`                   | The caller's records                                                                                                           |
-| `team`      | `column IN (employees whose manager_id = caller)` | Direct reports, not recursive, **not the caller** (decision D-23, D-11)                                                        |
+| `team`      | `column IN (employees whose manager_id = caller)` | Direct reports, not recursive, **not the caller** (decisions D-26, D-11)                                                       |
 | `hr`, `all` | none                                              | Every employee's records. HR and Admin differ in which **permissions** they hold (audit logs, security), not in the row filter |
 | none        | `FALSE`                                           | Anything unknown or missing narrows to nothing; it never widens                                                                |
 
