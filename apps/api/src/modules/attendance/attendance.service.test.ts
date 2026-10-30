@@ -41,7 +41,7 @@ describe('AttendanceService (Company Timezone & Service Rules)', () => {
       new Date(),
     );
     expect(record.workDate).toBe(nowTokyo);
-    expect(record.status).toBe('PRESENT');
+    expect(record.status).toBe('present');
   });
 
   it('queries today summary using company timezone', async () => {

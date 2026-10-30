@@ -12,7 +12,7 @@ const AttendanceRecordSchema = z
     checkInTime: z.string().datetime(),
     checkOutTime: z.string().datetime().nullable(),
     durationMinutes: z.number().int().nullable(),
-    status: z.enum(['PRESENT', 'ABSENT', 'HALF_DAY', 'LATE', 'ON_LEAVE', 'HOLIDAY', 'WEEKEND']),
+    status: z.enum(['present', 'absent', 'half_day', 'late', 'on_leave', 'holiday', 'weekend']),
     location: z
       .object({
         latitude: z.number().optional(),

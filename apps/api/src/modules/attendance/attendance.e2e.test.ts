@@ -55,7 +55,7 @@ describe('attendance module end to end lifecycle (Issue #34)', () => {
     });
     expect(checkInRes.status).toBe(201);
     expect(checkInRes.body.data.id).toBeDefined();
-    expect(checkInRes.body.data.status).toBe('PRESENT');
+    expect(checkInRes.body.data.status).toBe('present');
     expect(checkInRes.body.data.checkOutTime).toBeNull();
 
     // 3. Active session now exists

@@ -34,7 +34,7 @@ export const listAttendanceQuerySchema = listQuerySchema({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format')
     .optional(),
   status: z
-    .enum(['PRESENT', 'ABSENT', 'HALF_DAY', 'LATE', 'ON_LEAVE', 'HOLIDAY', 'WEEKEND'])
+    .enum(['present', 'absent', 'half_day', 'late', 'on_leave', 'holiday', 'weekend'])
     .optional(),
 });
 

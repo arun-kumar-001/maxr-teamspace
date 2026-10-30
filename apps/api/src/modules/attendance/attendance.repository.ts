@@ -151,7 +151,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
         `INSERT INTO attendance_records (
            employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes
          ) VALUES (
-           $1, $2, COALESCE($3, NOW()), NULL, NULL, 'PRESENT', $4, $5
+           $1, $2, COALESCE($3, NOW()), NULL, NULL, 'present', $4, $5
          ) RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes, created_at, updated_at`,
         [
           employeeId,

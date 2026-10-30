@@ -70,9 +70,7 @@ describe('local disk adapter (TC-13-33)', () => {
       const files = (await fs.readdir(path.join(dir, 'receipts/2026/10'))).sort();
       expect(files).toEqual(['abc.bin', 'abc.meta.json']);
       const mode = (await fs.stat(path.join(dir, 'receipts/2026/10/abc.bin'))).mode & 0o777;
-      if (process.platform !== 'win32') {
-        expect(mode).toBe(0o600);
-      }
+      expect(mode).toBe(0o600);
       // Nothing was created next to the root (no traversal).
       expect((await fs.readdir(path.dirname(dir))).filter((n) => n.startsWith('outside'))).toEqual(
         [],

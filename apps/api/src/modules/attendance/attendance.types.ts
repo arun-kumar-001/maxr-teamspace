@@ -1,5 +1,5 @@
 export type AttendanceStatus =
-  'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LATE' | 'ON_LEAVE' | 'HOLIDAY' | 'WEEKEND';
+  'present' | 'absent' | 'half_day' | 'late' | 'on_leave' | 'holiday' | 'weekend';
 
 export interface AttendanceLocation {
   latitude?: number;

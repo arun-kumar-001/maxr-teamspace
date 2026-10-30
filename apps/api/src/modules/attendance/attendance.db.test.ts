@@ -83,7 +83,7 @@ describe('PgAttendanceRepository (PostgreSQL Integration - Issue #34)', () => {
     createdRecordIds.push(firstSession.id);
     expect(firstSession.id).toBeDefined();
     expect(firstSession.checkOutTime).toBeNull();
-    expect(firstSession.status).toBe('PRESENT');
+    expect(firstSession.status).toBe('present');
 
     // 2. Concurrent second check-in while previous session is open returns 409 Conflict
     await expect(

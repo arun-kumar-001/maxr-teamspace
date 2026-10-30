@@ -83,7 +83,7 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       checkInTime,
       checkOutTime: null,
       durationMinutes: null,
-      status: 'PRESENT',
+      status: 'present',
       location: (dto.location as AttendanceLocation) ?? null,
       notes: dto.notes ?? null,
       createdAt: now,

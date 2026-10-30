@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
   check_in_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   check_out_time TIMESTAMPTZ,
   duration_minutes INT,
-  status VARCHAR(50) NOT NULL DEFAULT 'PRESENT' CHECK (status IN ('PRESENT', 'ABSENT', 'HALF_DAY', 'LATE', 'ON_LEAVE', 'HOLIDAY', 'WEEKEND')),
+  status VARCHAR(50) NOT NULL DEFAULT 'present' CHECK (status IN ('present', 'absent', 'half_day', 'late', 'on_leave', 'holiday', 'weekend')),
   location JSONB,
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
