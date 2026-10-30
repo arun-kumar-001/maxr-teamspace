@@ -12,6 +12,7 @@ import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createApprovals } from '../modules/approvals';
 import { createEmployeeCreation } from '../modules/employees/creation';
+import { createEmployeeDeactivation } from '../modules/employees/deactivation';
 import { createEmployeeDetail } from '../modules/employees/detail';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { createAuditLogs } from '../modules/audit-logs';
@@ -95,6 +96,14 @@ export function createApiRouter({
   router.use(
     '/employees',
     createEmployeeDetail({ platform, authenticate: auth.authenticate }).router,
+  );
+  router.use(
+    '/employees',
+    createEmployeeDeactivation({
+      platform,
+      authenticate: auth.authenticate,
+      sessions: auth.sessions,
+    }).router,
   );
   router.use(
     '/reports',
