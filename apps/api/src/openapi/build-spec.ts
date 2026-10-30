@@ -1,6 +1,7 @@
 import { generateDocument } from './registry';
 // Each module registers its routes by being imported here.
 import '../modules/_template/template.openapi';
+import '../modules/audit-logs/audit-log.openapi';
 import '../modules/auth/auth.openapi';
 import '../modules/attendance/attendance.openapi';
 import '../modules/reports/report.openapi';

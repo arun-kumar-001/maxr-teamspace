@@ -6,6 +6,7 @@ import { createAttendanceRouter } from '../modules/attendance';
 import { createDepartmentRouter, createDesignationRouter } from '../modules/employees';
 import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
+import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
@@ -39,6 +40,7 @@ export function createApiRouter({
   const router = Router();
 
   router.use('/auth', auth.router);
+  router.use('/audit-logs', createAuditLogs({ authenticate: auth.authenticate }).router);
   const settings = createSettings({ platform, authenticate: auth.authenticate });
   router.use('/settings', settings.router);
   router.use(
