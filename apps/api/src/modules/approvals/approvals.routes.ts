@@ -4,6 +4,7 @@ import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
 import { PlatformServices } from '../../platform';
+import { authenticatedOnly } from '../rbac';
 import { ApprovalsController } from './approvals.controller';
 import { ApprovalsRepository, IApprovalsRepository } from './approvals.repository';
 import {
@@ -26,22 +27,35 @@ export function createApprovalsRouter(
     new ApprovalsService(repository ?? new ApprovalsRepository(), platform),
   );
 
-  router.get('/', validate({ query: listApprovalsQuerySchema }), asyncHandler(controller.list));
-  router.get('/:id', validate({ params: idParamSchema }), asyncHandler(controller.getById));
+  router.get(
+    '/',
+    authenticatedOnly(),
+    validate({ query: listApprovalsQuerySchema }),
+    asyncHandler(controller.list),
+  );
+  router.get(
+    '/:id',
+    authenticatedOnly(),
+    validate({ params: idParamSchema }),
+    asyncHandler(controller.getById),
+  );
   router.post(
     '/',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ body: createApprovalSchema }),
     asyncHandler(controller.create),
   );
   router.post(
     '/:id/approve',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ params: idParamSchema, body: decisionSchema }),
     asyncHandler(controller.approve),
   );
   router.post(
     '/:id/reject',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ params: idParamSchema, body: decisionSchema }),
     asyncHandler(controller.reject),

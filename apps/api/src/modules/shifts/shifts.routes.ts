@@ -4,6 +4,7 @@ import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
 import { PlatformServices } from '../../platform';
+import { authenticatedOnly } from '../rbac';
 import { ShiftsController } from './shifts.controller';
 import { IShiftsRepository, ShiftsRepository } from './shifts.repository';
 import {
@@ -28,29 +29,47 @@ export function createShiftsRouter(
     new ShiftsService(repository ?? new ShiftsRepository(), platform),
   );
 
-  router.get('/policies', asyncHandler(controller.getPolicy));
+  router.get('/policies', authenticatedOnly(), asyncHandler(controller.getPolicy));
   router.put(
     '/policies',
+    authenticatedOnly(),
     validate({ body: updateAttendancePolicySchema }),
     asyncHandler(controller.updatePolicy),
   );
-  router.get('/assignments/:employeeId', asyncHandler(controller.listEmployeeShifts));
+  router.get(
+    '/assignments/:employeeId',
+    authenticatedOnly(),
+    asyncHandler(controller.listEmployeeShifts),
+  );
   router.post(
     '/assignments',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ body: assignEmployeeShiftSchema }),
     asyncHandler(controller.assignShift),
   );
-  router.get('/', validate({ query: listShiftsQuerySchema }), asyncHandler(controller.listShifts));
-  router.get('/:id', validate({ params: idParamSchema }), asyncHandler(controller.getShiftById));
+  router.get(
+    '/',
+    authenticatedOnly(),
+    validate({ query: listShiftsQuerySchema }),
+    asyncHandler(controller.listShifts),
+  );
+  router.get(
+    '/:id',
+    authenticatedOnly(),
+    validate({ params: idParamSchema }),
+    asyncHandler(controller.getShiftById),
+  );
   router.post(
     '/',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ body: createShiftSchema }),
     asyncHandler(controller.createShift),
   );
   router.put(
     '/:id',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ params: idParamSchema, body: updateShiftSchema }),
     asyncHandler(controller.updateShift),

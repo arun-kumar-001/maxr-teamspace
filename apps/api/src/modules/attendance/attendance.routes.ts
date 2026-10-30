@@ -3,6 +3,7 @@ import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
 import { PlatformServices } from '../../platform';
+import { authenticatedOnly } from '../rbac';
 import { AttendanceController } from './attendance.controller';
 import { AttendanceRepository, IAttendanceRepository } from './attendance.repository';
 import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
@@ -21,28 +22,37 @@ export function createAttendanceRouter(
     new AttendanceService(repository ?? new AttendanceRepository(), platform),
   );
 
-  router.get('/active', asyncHandler(controller.getActive));
-  router.get('/today', asyncHandler(controller.getToday));
+  router.get('/active', authenticatedOnly(), asyncHandler(controller.getActive));
+  router.get('/today', authenticatedOnly(), asyncHandler(controller.getToday));
   router.get(
     '/me',
+    authenticatedOnly(),
     validate({ query: listAttendanceQuerySchema }),
     asyncHandler(controller.getMyHistory),
   );
-  router.get('/', validate({ query: listAttendanceQuerySchema }), asyncHandler(controller.list));
+  router.get(
+    '/',
+    authenticatedOnly(),
+    validate({ query: listAttendanceQuerySchema }),
+    asyncHandler(controller.list),
+  );
   router.post(
     '/check-in',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ body: checkInSchema }),
     asyncHandler(controller.checkIn),
   );
   router.post(
     '/check-out',
+    authenticatedOnly(),
     idempotent({ store: idempotencyStore }),
     validate({ body: checkOutSchema }),
     asyncHandler(controller.checkOut),
   );
   router.get(
     '/history',
+    authenticatedOnly(),
     validate({ query: listAttendanceQuerySchema }),
     asyncHandler(controller.listHistory),
   );
