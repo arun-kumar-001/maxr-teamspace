@@ -1,12 +1,7 @@
 import type { Role } from '@maxr/shared';
 import type { Pool, PoolClient } from 'pg';
-import {
-  CreateEmployeeDto,
-  CreatedEmployee,
-  CreationTx,
-  ExistingIdentity,
-  ReferenceRows,
-} from './creation.types';
+import { CreateEmployeeDto, CreatedEmployee, CreationTx, ExistingIdentity } from './creation.types';
+import { ReferenceRows, lockReferenceRows } from '../references';
 
 export interface IEmployeeCreationRepository {
   transaction<T>(work: (tx: CreationTx) => Promise<T>): Promise<T>;
@@ -50,31 +45,11 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
     }
   }
 
-  async lockReferences(
+  lockReferences(
     tx: CreationTx,
     ids: { departmentId: string; designationId: string; managerId?: string },
   ): Promise<ReferenceRows> {
-    const department = await tx.query<{ is_active: boolean }>(
-      `SELECT is_active FROM departments WHERE id = $1 FOR SHARE`,
-      [ids.departmentId],
-    );
-    const designation = await tx.query<{ is_active: boolean; department_id: string }>(
-      `SELECT is_active, department_id FROM designations WHERE id = $1 FOR SHARE`,
-      [ids.designationId],
-    );
-    const manager = ids.managerId
-      ? await tx.query<{ status: string }>(`SELECT status FROM employees WHERE id = $1 FOR SHARE`, [
-          ids.managerId,
-        ])
-      : null;
-    const d = department.rows[0];
-    const g = designation.rows[0];
-    const m = manager?.rows[0];
-    return {
-      department: d ? { isActive: d.is_active } : null,
-      designation: g ? { isActive: g.is_active, departmentId: g.department_id } : null,
-      manager: m ? { status: m.status } : null,
-    };
+    return lockReferenceRows(tx, ids);
   }
 
   async findExisting(tx: CreationTx, code: string, email: string): Promise<ExistingIdentity> {

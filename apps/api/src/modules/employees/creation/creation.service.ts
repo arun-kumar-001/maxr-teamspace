@@ -6,7 +6,8 @@ import type { PlatformServices } from '../../../platform';
 import { EventCollector } from '../../../platform/events/event-bus';
 import type { PasswordHasher } from '../../auth/password-hasher';
 import { IEmployeeCreationRepository } from './creation.repository';
-import { CreateEmployeeDto, CreatedEmployee, ReferenceRows } from './creation.types';
+import { referenceProblems } from '../references';
+import { CreateEmployeeDto, CreatedEmployee } from './creation.types';
 
 type Deps = Pick<PlatformServices, 'audit' | 'events' | 'notifications'>;
 
@@ -19,30 +20,6 @@ export interface CreationCaller {
 
 /** Roles that widen access. Handing them out is an Admin decision, not an HR one. */
 const ADMIN_ONLY_ROLES: readonly Role[] = [ROLES.ADMIN, ROLES.HR_MANAGER];
-
-function referenceProblems(dto: CreateEmployeeDto, refs: ReferenceRows) {
-  const problems: Array<{ field: string; message: string }> = [];
-  if (!refs.department) problems.push({ field: 'departmentId', message: 'Department not found' });
-  else if (!refs.department.isActive)
-    problems.push({ field: 'departmentId', message: 'Department is not active' });
-
-  if (!refs.designation)
-    problems.push({ field: 'designationId', message: 'Designation not found' });
-  else if (!refs.designation.isActive)
-    problems.push({ field: 'designationId', message: 'Designation is not active' });
-  else if (refs.designation.departmentId !== dto.departmentId)
-    problems.push({
-      field: 'designationId',
-      message: 'Designation does not belong to the department',
-    });
-
-  if (dto.managerId) {
-    if (!refs.manager) problems.push({ field: 'managerId', message: 'Manager not found' });
-    else if (refs.manager.status !== 'active')
-      problems.push({ field: 'managerId', message: 'Manager is not an active employee' });
-  }
-  return problems;
-}
 
 export class EmployeeCreationService {
   constructor(
