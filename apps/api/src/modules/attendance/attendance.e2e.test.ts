@@ -17,7 +17,7 @@ async function setup(isEmployeeActive: (id: string) => boolean = () => true) {
   });
   const kit = createTestAuth(platform.audit);
   const repo = new InMemoryAttendanceRepository();
-  const service = new AttendanceService(repo, platform.audit, isEmployeeActive);
+  const service = new AttendanceService(repo, platform.audit, undefined, isEmployeeActive);
 
   const app = express();
   app.use(requestIdMiddleware);

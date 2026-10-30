@@ -12,6 +12,8 @@ import {
 import { IAttendanceRepository } from './attendance.repository';
 import { AttendanceRecord, TodayAttendanceSummary } from './attendance.types';
 
+import { CompanySettingsReader } from '../settings';
+
 export interface RequestContext {
   actorId: string;
   actorRole: string;
@@ -19,20 +21,42 @@ export interface RequestContext {
   requestId?: string;
 }
 
+const DEFAULT_SETTINGS_READER: CompanySettingsReader = {
+  getBasic: async () => ({
+    companyName: 'MAXR Teamspace',
+    timezone: 'UTC',
+    workWeek: {
+      start: 'Monday',
+      end: 'Friday',
+      days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
+  }),
+};
+
 export class AttendanceService {
+  private readonly settingsReader: CompanySettingsReader;
+
   constructor(
     private readonly repo: IAttendanceRepository,
     private readonly audit?: AuditLogger,
+    settingsReader?: CompanySettingsReader,
     private readonly isEmployeeActive: (employeeId: string) => Promise<boolean> | boolean = (id) =>
       repo.isEmployeeActive(id),
-  ) {}
+  ) {
+    this.settingsReader = settingsReader ?? DEFAULT_SETTINGS_READER;
+  }
+
+  private async getWorkDate(date = new Date()): Promise<string> {
+    const { timezone } = await this.settingsReader.getBasic();
+    return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(date);
+  }
 
   async getActiveSession(employeeId: string): Promise<AttendanceRecord | null> {
     return this.repo.findActiveSession(employeeId);
   }
 
   async getTodaySummary(employeeId: string): Promise<TodayAttendanceSummary> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = await this.getWorkDate();
     const sessions = await this.repo.findTodaySessions(employeeId, today);
     const activeSession = sessions.find((s) => s.checkOutTime === null) ?? null;
 
@@ -71,7 +95,7 @@ export class AttendanceService {
 
     const now = new Date();
     const nowIso = now.toISOString();
-    const workDate = nowIso.slice(0, 10);
+    const workDate = await this.getWorkDate(now);
 
     const record = await this.repo.createCheckIn(employeeId, workDate, dto, nowIso);
 

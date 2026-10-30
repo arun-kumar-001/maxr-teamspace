@@ -39,12 +39,14 @@ export function createApiRouter({
   const router = Router();
 
   router.use('/auth', auth.router);
-  router.use('/settings', createSettings({ platform, authenticate: auth.authenticate }).router);
+  const settings = createSettings({ platform, authenticate: auth.authenticate });
+  router.use('/settings', settings.router);
   router.use(
     '/attendance',
     createAttendanceRouter({
       authenticate: auth.authenticate,
       audit: platform.audit,
+      settingsReader: settings.reader,
     }),
   );
   router.use(

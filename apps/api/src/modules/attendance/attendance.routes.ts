@@ -8,6 +8,7 @@ import { AttendanceController } from './attendance.controller';
 import { IAttendanceRepository, PgAttendanceRepository } from './attendance.repository';
 import { AttendanceService } from './attendance.service';
 import { AuditLogger } from '../../platform/audit/types';
+import { CompanySettingsReader } from '../settings';
 import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
 
 export interface AttendanceRouterOptions {
@@ -15,13 +16,15 @@ export interface AttendanceRouterOptions {
   audit?: AuditLogger;
   repository?: IAttendanceRepository;
   service?: AttendanceService;
+  settingsReader?: CompanySettingsReader;
   getPool?: () => Pool;
 }
 
 export function createAttendanceRouter(options: AttendanceRouterOptions): Router {
   const router = Router();
   const repo = options.repository ?? new PgAttendanceRepository(options.getPool ?? getPool);
-  const service = options.service ?? new AttendanceService(repo, options.audit);
+  const service =
+    options.service ?? new AttendanceService(repo, options.audit, options.settingsReader);
   const controller = new AttendanceController(service);
 
   router.use(options.authenticate);
