@@ -6,6 +6,7 @@ import '../modules/auth/auth.openapi';
 import '../modules/reports/report.openapi';
 import '../modules/approvals/approvals.openapi';
 import '../modules/employees/creation/creation.openapi';
+import '../modules/employees/detail/detail.openapi';
 import '../modules/settings/settings.openapi';
 import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';

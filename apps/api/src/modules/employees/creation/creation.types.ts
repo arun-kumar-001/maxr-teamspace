@@ -38,12 +38,7 @@ export interface CreatedEmployee {
   createdAt: string;
 }
 
-/** The rows a new employee points at, read under a share lock so they cannot be deactivated mid-create. */
-export interface ReferenceRows {
-  department: { isActive: boolean } | null;
-  designation: { isActive: boolean; departmentId: string } | null;
-  manager: { status: string } | null;
-}
+export type { ReferenceRows } from '../references';
 
 export interface ExistingIdentity {
   employeeCode: boolean;
