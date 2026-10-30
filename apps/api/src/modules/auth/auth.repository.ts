@@ -54,20 +54,6 @@ export class PgAuthRepository implements AuthRepository {
     return res.rows[0] ? toUser(res.rows[0]) : null;
   }
 
-  async getPermissionKeys(roleKeys: string[]): Promise<string[]> {
-    if (roleKeys.length === 0) return [];
-    const res = await this.getPool().query<{ key: string }>(
-      `SELECT DISTINCT p.key
-         FROM permissions p
-         JOIN role_permissions rp ON rp.permission_id = p.id
-         JOIN roles r ON r.id = rp.role_id
-        WHERE r.key = ANY($1::text[])
-        ORDER BY p.key`,
-      [roleKeys],
-    );
-    return res.rows.map((row) => row.key);
-  }
-
   async recordLoginAttempt(attempt: {
     identifier: string;
     ip: string;

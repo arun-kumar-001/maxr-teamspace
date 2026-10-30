@@ -42,13 +42,6 @@ describe('PgAuthRepository (real PostgreSQL, seeded development users)', () => {
     expect(await repo.findUserByEmail('nobody@maxr.internal')).toBeNull();
   });
 
-  it('lists the permission keys of a role (and nothing for an unknown role)', async () => {
-    const keys = await repo.getPermissionKeys(['admin']);
-    expect(Array.isArray(keys)).toBe(true);
-    expect(await repo.getPermissionKeys(['no_such_role'])).toEqual([]);
-    expect(await repo.getPermissionKeys([])).toEqual([]);
-  });
-
   it('counts recent failures per identifier and resets them after a success', async () => {
     const id = unique();
     const since = new Date(Date.now() - 60_000);

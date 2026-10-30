@@ -78,10 +78,6 @@ export function createTestAuth(
     users[role] = user;
     repo.users.set(user.id, user);
   });
-  repo.permissionsByRole = {
-    admin: ['employee.read', 'employee.create'],
-    staff: ['employee.read_own'],
-  };
 
   const auth = createAuth({
     config,

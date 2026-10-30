@@ -15,6 +15,8 @@ declare module 'express-serve-static-core' {
       role: Role;
       roles: Role[];
     };
+    /** The decision of `requirePermission` for this request (permission, scope, repository filter). */
+    access?: import('../modules/rbac/require-permission').AccessDecision;
     /** The live session behind `actor`. */
     session?: { tokenHash: string; csrfToken: string };
   }

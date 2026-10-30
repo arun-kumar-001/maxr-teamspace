@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuditLogger } from '../../platform';
+import { permissionsForRoles } from '../rbac';
 import { makeApp } from '../../test/helpers';
 import { TEST_PASSWORD, createTestAuth, testAuthConfig, testHasher } from './auth.testing';
 
@@ -35,7 +36,7 @@ describe('POST /auth/login', () => {
       role: 'admin',
       roles: ['admin'],
     });
-    expect(res.body.data.user.permissions).toEqual(['employee.create', 'employee.read']);
+    expect(res.body.data.user.permissions).toEqual(permissionsForRoles(['admin']));
     expect(res.body.data.csrfToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
 
     const cookie = cookieOf(res);

@@ -23,8 +23,6 @@ export interface FailureWindow {
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<AuthUser | null>;
   findUserById(id: string): Promise<AuthUser | null>;
-  /** Permission keys granted to the given role keys (`module.action`). */
-  getPermissionKeys(roleKeys: string[]): Promise<string[]>;
   recordLoginAttempt(attempt: { identifier: string; ip: string; success: boolean }): Promise<void>;
   /** Failed attempts for an identifier since `since`, not counting any before its last success. */
   recentFailures(identifier: string, since: Date): Promise<FailureWindow>;
@@ -40,7 +38,7 @@ export interface Profile {
   lastName: string;
   role: Role;
   roles: Role[];
-  /** For showing or hiding UI only; the server checks permissions on every request (#8). */
+  /** For showing or hiding UI only; the server checks permissions on every request (modules/rbac). */
   permissions: string[];
 }
 

@@ -4,6 +4,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { asyncHandler } from './async-handler';
 import { InMemoryIdempotencyStore, idempotent } from './idempotency';
+import { agentAs } from '../modules/rbac/rbac.testing';
 import { makeApp, makeMiniApp } from '../test/helpers';
 
 const KEY = 'order-key-0001';
@@ -186,19 +187,20 @@ describe('idempotency (TC-9-09 .. TC-9-12)', () => {
 
 describe('sample module create is idempotent end to end', () => {
   it('creating twice with the same key yields one record', async () => {
-    const { app } = makeApp();
-    const a = await request(app)
+    const { app, authKit } = makeApp();
+    const api = await agentAs(app, authKit, 'admin');
+    const a = await api
       .post('/api/v1/templates')
       .set('Idempotency-Key', KEY)
       .send({ name: 'Once' });
-    const b = await request(app)
+    const b = await api
       .post('/api/v1/templates')
       .set('Idempotency-Key', KEY)
       .send({ name: 'Once' });
     expect(a.status).toBe(201);
     expect(b.status).toBe(201);
     expect(b.body.data.id).toBe(a.body.data.id);
-    const list = await request(app).get('/api/v1/templates');
+    const list = await api.get('/api/v1/templates');
     expect(list.body.meta.total).toBe(1);
   });
 });

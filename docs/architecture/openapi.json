@@ -190,7 +190,7 @@
           "Template (sample module)"
         ],
         "summary": "List templates (paginated)",
-        "description": "Required permission: `template.read`",
+        "description": "Required permission: `employees.list`",
         "parameters": [
           {
             "schema": {
@@ -361,7 +361,7 @@
           "Template (sample module)"
         ],
         "summary": "Create a template (idempotent)",
-        "description": "Required permission: `template.create`",
+        "description": "Required permission: `employees.create`",
         "parameters": [
           {
             "schema": {
@@ -498,7 +498,7 @@
           "Template (sample module)"
         ],
         "summary": "Get one template",
-        "description": "Required permission: `template.read`",
+        "description": "Required permission: `employees.read`",
         "parameters": [
           {
             "schema": {
@@ -596,7 +596,7 @@
           "Template (sample module)"
         ],
         "summary": "Update a template",
-        "description": "Required permission: `template.update`",
+        "description": "Required permission: `employees.update`",
         "parameters": [
           {
             "schema": {
@@ -741,7 +741,7 @@
           "Template (sample module)"
         ],
         "summary": "Deactivate a template",
-        "description": "Required permission: `template.deactivate`",
+        "description": "Required permission: `employees.deactivate`",
         "parameters": [
           {
             "schema": {
@@ -877,7 +877,7 @@
           "Auth"
         ],
         "summary": "Sign in with email and password",
-        "description": "Required permission: `public`",
+        "description": "Access: Public",
         "requestBody": {
           "required": true,
           "content": {
@@ -995,7 +995,7 @@
           "Auth"
         ],
         "summary": "The signed-in user, their role and permissions, and the CSRF token",
-        "description": "Required permission: `authenticated`",
+        "description": "Access: Any signed-in user",
         "responses": {
           "200": {
             "description": "The current session",
@@ -1066,7 +1066,7 @@
           "Auth"
         ],
         "summary": "End the current session",
-        "description": "Required permission: `authenticated`",
+        "description": "Required permission: `auth.logout`",
         "responses": {
           "204": {
             "description": "Signed out; the cookie is cleared"
@@ -1150,7 +1150,7 @@
           "Auth"
         ],
         "summary": "Change the password; all other sessions of the user end",
-        "description": "Required permission: `authenticated`",
+        "description": "Access: Any signed-in user",
         "requestBody": {
           "required": true,
           "content": {
@@ -1261,7 +1261,7 @@
           "Files"
         ],
         "summary": "Download a file with a signed, short-lived link",
-        "description": "Required permission: `link issued after the module authorization check`",
+        "description": "Access: Signed link, issued after the module authorization check",
         "parameters": [
           {
             "schema": {
