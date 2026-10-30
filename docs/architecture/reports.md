@@ -10,7 +10,7 @@ Issue #15. Modules supply report definitions; the framework supplies the routes,
 | `GET /api/v1/reports/{name}`        | `reports.read`   | Paginated JSON preview (`page`, `pageSize`, plus the report's filters) |
 | `GET /api/v1/reports/{name}/export` | `reports.export` | CSV download (`format=csv`, plus the same filters), audited            |
 
-Admin and HR Manager reach reports with company scope, Team Lead with team scope (D-24), Staff not at all.
+Admin and HR Manager reach reports with company scope, Team Lead with team scope (D-27), Staff not at all.
 
 ## Writing a report
 
