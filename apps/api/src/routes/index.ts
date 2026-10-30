@@ -2,7 +2,11 @@ import { Router } from 'express';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
-import { createDepartmentRouter, createDesignationRouter } from '../modules/employees';
+import {
+  createDepartmentRouter,
+  createDesignationRouter,
+  createEmployeeDirectoryRouter,
+} from '../modules/employees';
 import { ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { Platform } from '../platform';
@@ -47,6 +51,12 @@ export function createApiRouter({
     createDesignationRouter({
       idempotencyStore,
       platform,
+      authenticate: auth.authenticate,
+    }),
+  );
+  router.use(
+    '/employees',
+    createEmployeeDirectoryRouter({
       authenticate: auth.authenticate,
     }),
   );

@@ -5,6 +5,7 @@ import '../modules/auth/auth.openapi';
 import '../modules/reports/report.openapi';
 import '../modules/employees/departments/department.openapi';
 import '../modules/employees/designations/designation.openapi';
+import '../modules/employees/directory/directory.openapi';
 import '../platform/storage/files.openapi';
 
 export function buildOpenApiDocument() {

@@ -14,6 +14,8 @@ import { MemoryDepartmentRepository } from './departments/department.repository'
 import { createDepartmentRouter } from './departments/department.routes';
 import { MemoryDesignationRepository } from './designations/designation.repository';
 import { createDesignationRouter } from './designations/designation.routes';
+import { MemoryEmployeeDirectoryRepository } from './directory/directory.repository';
+import { createEmployeeDirectoryRouter } from './directory/directory.routes';
 
 async function setup() {
   const { platform } = createTestPlatform({
@@ -22,6 +24,7 @@ async function setup() {
   const kit = createTestAuth(platform.audit);
   const deptRepo = new MemoryDepartmentRepository();
   const desigRepo = new MemoryDesignationRepository();
+  const dirRepo = new MemoryEmployeeDirectoryRepository();
   const idempotencyStore = new InMemoryIdempotencyStore();
 
   const app = express();
@@ -46,6 +49,13 @@ async function setup() {
       repository: desigRepo,
     }),
   );
+  app.use(
+    '/api/v1/employees',
+    createEmployeeDirectoryRouter({
+      authenticate: kit.auth.authenticate,
+      repository: dirRepo,
+    }),
+  );
   app.use(notFoundHandler);
   app.use(createErrorHandler(createLogger({ level: 'silent', write: () => undefined })));
 
@@ -62,7 +72,7 @@ async function setup() {
     level: 1,
   });
 
-  return { app, as, initialDept, initialDesig, deptRepo, desigRepo };
+  return { app, as, initialDept, initialDesig, deptRepo, desigRepo, dirRepo };
 }
 
 describe('Departments & Designations RBAC Access Matrix', () => {
@@ -79,6 +89,7 @@ describe('Departments & Designations RBAC Access Matrix', () => {
       ['post', '/api/v1/designations'],
       ['put', `/api/v1/designations/${initialDesig.id}`],
       ['post', `/api/v1/designations/${initialDesig.id}/deactivate`],
+      ['get', '/api/v1/employees'],
     ] as const;
 
     for (const [method, path] of unauthenticated) {
@@ -223,6 +234,21 @@ describe('Departments & Designations RBAC Access Matrix', () => {
         level: 1,
       });
       const res = await as[role].post(`/api/v1/designations/${freshDesig.id}/deactivate`);
+      expect(res.status).toBe(status);
+    },
+  );
+
+  const LIST_EMPLOYEES: Array<[Role, number]> = [
+    ['admin', 200],
+    ['hr_manager', 200],
+    ['team_lead', 200],
+    ['staff', 403],
+  ];
+  it.each(LIST_EMPLOYEES)(
+    '%s listing employee directory gets %i (employees.list)',
+    async (role, status) => {
+      const { as } = await setup();
+      const res = await as[role].get('/api/v1/employees');
       expect(res.status).toBe(status);
     },
   );
