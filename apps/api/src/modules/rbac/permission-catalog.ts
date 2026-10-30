@@ -157,6 +157,51 @@ export const PERMISSION_CATALOG = {
     description: 'Export report results to CSV',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
   },
+
+  'attendance.list': {
+    description: 'List attendance records within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
+
+  'shifts.list': { description: 'View shift definitions', grants: everyone(ALL) },
+  'shifts.read_assignment': {
+    description: 'View the shifts assigned to an employee',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
+  },
+  'shifts.create': {
+    description: 'Create shift definitions',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'shifts.update': {
+    description: 'Update shift definitions',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'shifts.assign': {
+    description: 'Assign shifts to employees',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'attendance_policies.read': {
+    description: 'View attendance policy',
+    grants: everyone(ALL),
+  },
+  'attendance_policies.update': {
+    description: 'Update attendance policy',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
+  'approvals.list': {
+    description: 'List approval requests within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
+  },
+  'approvals.read': {
+    description: 'View an approval request',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
+  },
+  'approvals.create': { description: 'Submit an approval request', grants: everyone(OWN) },
+  'approvals.decide': {
+    description: 'Approve or reject an approval request',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;
