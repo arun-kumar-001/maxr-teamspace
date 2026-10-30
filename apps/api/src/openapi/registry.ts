@@ -1,4 +1,5 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
+import type { PermissionKey } from '../modules/rbac/permission-catalog';
 import { ZodObject, ZodRawShape, ZodTypeAny, z } from 'zod';
 
 // Schemas are named and described with Zod 4's native `.meta({ id, example, ... })`.
@@ -32,8 +33,10 @@ export interface RouteDoc {
   path: string;
   tags: string[];
   summary: string;
-  /** Permission required once RBAC lands (issue #8), shown in the description. */
-  permission?: string;
+  /** Permission the route requires (modules/rbac catalog), shown in the description. */
+  permission?: PermissionKey;
+  /** For routes without a permission: who may call it, for example `Public`. */
+  access?: string;
   params?: ZodObject<ZodRawShape>;
   query?: ZodObject<ZodRawShape>;
   body?: ZodTypeAny;
@@ -67,7 +70,11 @@ export function registerRoute(doc: RouteDoc): void {
     path: doc.path,
     tags: doc.tags,
     summary: doc.summary,
-    description: doc.permission ? `Required permission: \`${doc.permission}\`` : undefined,
+    description: doc.permission
+      ? `Required permission: \`${doc.permission}\``
+      : doc.access
+        ? `Access: ${doc.access}`
+        : undefined,
     request: {
       params: doc.params,
       query: doc.query,

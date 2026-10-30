@@ -2,6 +2,7 @@ import { ERROR_CODES, ROLES, type Role } from '@maxr/shared';
 import { AppError } from '../../http/app-error';
 import { forbidden, unauthorized, unprocessable } from '../../http/errors';
 import type { AuditLogger } from '../../platform';
+import { permissionsForRoles } from '../rbac';
 import { AuthConfig } from './auth-config';
 import { AuthRepository, AuthUser, Profile, RequestMeta } from './auth.types';
 import { PasswordHasher } from './password-hasher';
@@ -210,7 +211,7 @@ export class AuthService {
       lastName: user.lastName,
       role: roles[0] as Role,
       roles,
-      permissions: await this.repo.getPermissionKeys(roles),
+      permissions: permissionsForRoles(roles),
     };
   }
 }

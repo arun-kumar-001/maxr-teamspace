@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { SortSpec } from '../../http/pagination';
+import { ScopeFilter, scopeAllows } from '../rbac';
 import { CreateTemplateDto, TemplateEntity, UpdateTemplateDto } from './template.types';
 
 export interface TemplateFindManyParams {
@@ -15,14 +16,14 @@ export interface TemplateFindManyParams {
  * scope filter inside the query (never after fetching) and use `toOffsetLimit()` / the
  * `resolveSort()` column allow-list for paging and ordering.
  *
- * `visibleOwnerIds`: undefined = no restriction; otherwise only rows owned by these ids.
- * It is supplied by the RBAC scope resolver (issue #8).
+ * `scope` is required on every read: it comes from `requirePermission` (modules/rbac) and a SQL
+ * repository turns it into a WHERE condition with `scopeToSql`. The owner is an employee id.
  */
 export interface ITemplateRepository {
-  findById(id: string, visibleOwnerIds?: string[]): Promise<TemplateEntity | null>;
+  findById(id: string, scope: ScopeFilter): Promise<TemplateEntity | null>;
   findMany(
     params: TemplateFindManyParams,
-    visibleOwnerIds?: string[],
+    scope: ScopeFilter,
   ): Promise<{ items: TemplateEntity[]; total: number }>;
   create(dto: CreateTemplateDto, ownerId: string): Promise<TemplateEntity>;
   update(id: string, dto: UpdateTemplateDto): Promise<TemplateEntity | null>;
@@ -43,6 +44,13 @@ function uniqueViolation(): Error {
 export class TemplateRepository implements ITemplateRepository {
   private readonly items = new Map<string, TemplateEntity>();
 
+  /** `managerOf` stands in for the employees table's manager_id when the scope is a team. */
+  constructor(private readonly managerOf: (employeeId: string) => string | null = () => null) {}
+
+  private inScope(item: TemplateEntity, scope: ScopeFilter): boolean {
+    return scopeAllows(scope, item.ownerId, this.managerOf(item.ownerId));
+  }
+
   private nameTaken(name: string, exceptId?: string): boolean {
     const wanted = name.toLowerCase();
     return [...this.items.values()].some(
@@ -50,23 +58,14 @@ export class TemplateRepository implements ITemplateRepository {
     );
   }
 
-  async findById(id: string, visibleOwnerIds?: string[]): Promise<TemplateEntity | null> {
+  async findById(id: string, scope: ScopeFilter): Promise<TemplateEntity | null> {
     const item = this.items.get(id);
-    if (!item) {
-      return null;
-    }
     // Out of scope looks exactly like "does not exist" (no existence leak).
-    if (visibleOwnerIds && !visibleOwnerIds.includes(item.ownerId)) {
-      return null;
-    }
-    return item;
+    return item && this.inScope(item, scope) ? item : null;
   }
 
-  async findMany(params: TemplateFindManyParams, visibleOwnerIds?: string[]) {
-    let rows = [...this.items.values()];
-    if (visibleOwnerIds) {
-      rows = rows.filter((r) => visibleOwnerIds.includes(r.ownerId));
-    }
+  async findMany(params: TemplateFindManyParams, scope: ScopeFilter) {
+    let rows = [...this.items.values()].filter((r) => this.inScope(r, scope));
     if (params.search) {
       const q = params.search.toLowerCase();
       rows = rows.filter((r) => r.name.toLowerCase().includes(q));

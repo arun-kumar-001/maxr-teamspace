@@ -5,6 +5,7 @@ import { checkDatabaseHealth } from './db/client';
 import { checkRedisHealth } from './db/redis';
 import { HealthDependencies, createHealthHandler } from './health/health';
 import { HttpConfig, loadHttpConfig } from './http/http-config';
+import { securityHeaders } from './http/security-headers';
 import { InMemoryIdempotencyStore } from './http/idempotency';
 import { createRateLimiter } from './http/rate-limit';
 import { Logger, getLogger } from './logging/logger';
@@ -13,6 +14,8 @@ import { createErrorHandler } from './middleware/error-handler';
 import { notFoundHandler } from './middleware/not-found';
 import { requestIdMiddleware } from './middleware/request-id';
 import { Platform, createPlatform } from './platform';
+import { publicRoute } from './modules/rbac';
+import { ReportRegistry } from './modules/reports';
 import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
 import { createApiRouter } from './routes';
 import { getPool } from './db/client';
@@ -29,6 +32,8 @@ export interface AppOptions {
   platform?: Platform;
   /** Sign-in, sessions and the `authenticate` middleware. Defaults to PostgreSQL + Redis + Argon2id. */
   auth?: AuthServices;
+  /** Report definitions from the modules; defaults to none. */
+  reportRegistry?: ReportRegistry;
 }
 
 export function createApp(options: AppOptions = {}): Express {
@@ -55,6 +60,7 @@ export function createApp(options: AppOptions = {}): Express {
   // Request id first so every later log line and error carries it.
   app.use(requestIdMiddleware);
   app.use(requestLogger(logger));
+  app.use(securityHeaders({ hsts: nodeEnv === 'production' }));
 
   // Security & Core Middleware
   app.use(
@@ -76,6 +82,7 @@ export function createApp(options: AppOptions = {}): Express {
   // Health check endpoint (single route; rate limiter skips it)
   app.get(
     '/api/v1/health',
+    publicRoute(),
     createHealthHandler(
       options.health ?? {
         checkDatabase: () => checkDatabaseHealth(logger),
@@ -91,6 +98,7 @@ export function createApp(options: AppOptions = {}): Express {
       idempotencyStore: new InMemoryIdempotencyStore(),
       platform,
       auth,
+      reportRegistry: options.reportRegistry,
       exposeDevRoutes: nodeEnv !== 'production',
     }),
   );

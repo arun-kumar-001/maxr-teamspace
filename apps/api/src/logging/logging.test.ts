@@ -1,6 +1,6 @@
-import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { at } from '../test/at';
+import { agentAs } from '../modules/rbac/rbac.testing';
 import { makeApp } from '../test/helpers';
 import { createLogger, parseLogLevel } from './logger';
 import { REDACTED, isSensitiveKey, redact, scrubText } from './redact';
@@ -136,8 +136,10 @@ describe('logger', () => {
 
 describe('request logging (TC-9-15)', () => {
   it('logs method, path, status and duration but never the query string or body', async () => {
-    const { app, lines, records } = makeApp();
-    await request(app)
+    const { app, lines, records, authKit } = makeApp();
+    const api = await agentAs(app, authKit, 'admin');
+    lines.length = 0;
+    await api
       .post('/api/v1/templates?token=SECRETQUERY&email=a@b.com')
       .set('Idempotency-Key', 'log-key-0001')
       .set('Authorization', 'Bearer SECRETHEADER')
@@ -151,10 +153,13 @@ describe('request logging (TC-9-15)', () => {
   });
 
   it('uses info for 2xx, warn for 4xx and error for 5xx', async () => {
-    const { app, records } = makeApp();
-    await request(app).get('/api/v1/templates');
-    await request(app).get('/api/v1/templates/nope');
+    const { app, records, authKit } = makeApp();
+    const api = await agentAs(app, authKit, 'admin');
+    const before = records().length;
+    await api.get('/api/v1/templates');
+    await api.get('/api/v1/templates/nope');
     const levels = records()
+      .slice(before)
       .filter((r) => r.msg === 'request completed')
       .map((r) => r.level);
     expect(levels).toEqual(['info', 'warn']);

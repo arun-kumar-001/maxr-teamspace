@@ -12,7 +12,7 @@ Decision record: [D-05](decisions/D-05-authentication-and-sessions.md). Code: `a
 
 - Use `fetch(url, { credentials: 'include' })`. The browser sends the cookie; JavaScript never sees it.
 - Keep `csrfToken` **in memory** (not `localStorage`) and send it as `X-CSRF-Token` on every `POST`, `PUT` and `DELETE`. After a page reload, get it again from `GET /auth/me`.
-- `permissions` is only for showing or hiding UI. The server checks permissions on every request (#8).
+- `permissions` is only for showing or hiding UI. The server checks permissions on every request (`requirePermission`, see [rbac.md](rbac.md)). The list is computed from the code catalog, not read from the database.
 
 ## For module authors (backend)
 ```ts
@@ -24,7 +24,7 @@ const { id, employeeId, role, roles } = req.actor!;
 ```
 - **Never** read the user, employee, role or team from a header, body or query string. `req.actor` is set only by `authenticate`.
 - `authenticate` also checks the CSRF token and browser origin for POST, PUT and DELETE.
-- Permission checks (`requirePermission`) and record-scope filters arrive with issue #8 and plug in right after `authenticate`.
+- Permission checks (`requirePermission`) and record-scope filters sit right after `authenticate`; see [rbac.md](rbac.md).
 - To end a user's sessions (deactivation, security incident): `auth.sessions.revokeAllForUser(userId)`.
 - Audit actions written by this module: `auth.login`, `auth.login_failed` (with a `reason`), `auth.logout`, `auth.password_changed`, `auth.password_change_failed`. Passwords, tokens and CSRF tokens are never logged.
 

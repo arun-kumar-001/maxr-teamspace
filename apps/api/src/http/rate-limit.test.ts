@@ -6,12 +6,13 @@ import { loadHttpConfig } from './http-config';
 describe('rate limiting (TC-9-16)', () => {
   const tight = { trustProxy: 0, rateLimit: { windowMs: 60_000, max: 3 } };
 
+  // Any route counts against the limit; /auth/me answers 401 without a session, which is enough here.
   it('answers 429 with the standard envelope, a request id and Retry-After once the limit is exceeded', async () => {
     const { app } = makeApp({ http: tight });
     for (let i = 0; i < 3; i++) {
-      expect((await request(app).get('/api/v1/templates')).status).toBe(200);
+      expect((await request(app).get('/api/v1/auth/me')).status).toBe(401);
     }
-    const res = await request(app).get('/api/v1/templates');
+    const res = await request(app).get('/api/v1/auth/me');
     expect(res.status).toBe(429);
     expect(res.body.error.code).toBe('RATE_LIMITED');
     expect(res.body.error.requestId).toBe(res.headers['x-request-id']);
@@ -28,17 +29,17 @@ describe('rate limiting (TC-9-16)', () => {
 
   it('counts per client IP when behind a trusted proxy', async () => {
     const { app } = makeApp({ http: { trustProxy: 1, rateLimit: { windowMs: 60_000, max: 2 } } });
-    const hit = (ip: string) => request(app).get('/api/v1/templates').set('X-Forwarded-For', ip);
-    expect((await hit('10.0.0.1')).status).toBe(200);
-    expect((await hit('10.0.0.1')).status).toBe(200);
+    const hit = (ip: string) => request(app).get('/api/v1/auth/me').set('X-Forwarded-For', ip);
+    expect((await hit('10.0.0.1')).status).toBe(401);
+    expect((await hit('10.0.0.1')).status).toBe(401);
     expect((await hit('10.0.0.1')).status).toBe(429);
-    expect((await hit('10.0.0.2')).status).toBe(200);
+    expect((await hit('10.0.0.2')).status).toBe(401);
   });
 
   it('every error carries the envelope even when logging is silent', async () => {
     const { app } = makeApp({ http: tight });
-    for (let i = 0; i < 4; i++) await request(app).get('/api/v1/templates');
-    const res = await request(app).get('/api/v1/templates');
+    for (let i = 0; i < 4; i++) await request(app).get('/api/v1/auth/me');
+    const res = await request(app).get('/api/v1/auth/me');
     expect(Object.keys(res.body)).toEqual(['error']);
   });
 });
