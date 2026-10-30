@@ -26,7 +26,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
     if (success) {
       if (onSuccess) onSuccess();
     } else {
-      setError('Invalid credentials. For quick demo, select a role below.');
+      setError('Invalid credentials. Check your work email and password.');
     }
   };
 
@@ -36,26 +36,26 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center px-4 py-8 bg-surface-muted sm:px-6 lg:px-8">
+    <div className="min-h-screen w-full flex flex-col justify-center items-center px-4 py-8 bg-bg sm:px-6 lg:px-8">
       {/* Brand Identity */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-navy-950 shadow-md mb-3 border border-navy-800">
-          <span className="text-xl font-black text-teal-500 tracking-tighter">M</span>
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-card bg-primary text-sidebar font-display font-bold shadow-card mb-3">
+          <span className="text-xl font-black">M</span>
           <span className="text-xl font-black text-brand-red">1</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-text sm:text-3xl font-display">
           MAXR Teamspace
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-text-muted">
           Staff Management &amp; Internal Workforce Platform
         </p>
       </div>
 
       {/* Main Card */}
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl shadow-sm p-6 sm:p-8">
+      <div className="w-full max-w-md bg-surface border border-border rounded-card shadow-card p-6 sm:p-8">
         {error && (
           <div
-            className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600 font-medium"
+            className="mb-6 p-3 rounded-input bg-negative-soft border border-negative-ink/20 text-sm text-negative-ink font-medium"
             role="alert"
           >
             {error}
@@ -90,7 +90,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full"
+              className="w-full min-h-[44px]"
               isLoading={isLoading}
             >
               Sign In to Teamspace
@@ -98,25 +98,27 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           </div>
         </form>
 
-        {/* Development Quick Role Switcher */}
-        <div className="mt-8 pt-6 border-t border-slate-200">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 text-center">
-            Development Quick Role Switcher
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {Object.values(ROLES).map((role) => (
-              <button
-                key={role}
-                type="button"
-                onClick={() => handleQuickRoleSelect(role)}
-                className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100 hover:border-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[44px]"
-                data-testid={`quick-login-${role}`}
-              >
-                {ROLE_DISPLAY_NAMES[role]}
-              </button>
-            ))}
+        {/* Development Quick Role Switcher (Hidden in production per B1) */}
+        {import.meta.env.DEV && (
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
+              Development Quick Role Switcher
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.values(ROLES).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => handleQuickRoleSelect(role)}
+                  className="px-3 py-2 text-xs font-medium rounded-input border border-border bg-surface-muted text-text hover:bg-surface-raised hover:border-border-strong transition-colors focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
+                  data-testid={`quick-login-${role}`}
+                >
+                  {ROLE_DISPLAY_NAMES[role]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

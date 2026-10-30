@@ -119,16 +119,7 @@ function AppRoutes() {
       />
 
       {/* Shared UI Components Gallery (Dev only) */}
-      {SHOW_GALLERY && (
-        <Route
-          path="/components"
-          element={
-            <ShellLayout>
-              <ComponentGalleryPage />
-            </ShellLayout>
-          }
-        />
-      )}
+      {SHOW_GALLERY && <Route path="/components" element={<ComponentGalleryPage />} />}
 
       {/* 404 Catch-All */}
       <Route

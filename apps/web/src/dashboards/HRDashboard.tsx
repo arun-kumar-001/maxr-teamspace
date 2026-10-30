@@ -1,21 +1,26 @@
-import { Button, StatusPill } from '../components/ui';
+import { Button, Badge, StatusPill } from '../components/ui';
 
 export function HRDashboard() {
   return (
     <div className="space-y-6" data-testid="hr-dashboard">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">HR Management Overview</h1>
-          <p className="text-xs sm:text-sm text-slate-600">
+      {/* Top Banner with Sample Data Badge (B2 Fix) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-text font-display">
+              HR Management Overview
+            </h1>
+            <Badge variant="neutral">Sample data</Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-text-muted">
             Workforce headcount, onboarding pipeline, and leave policy status
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="min-h-[44px]">
             Workforce Report
           </Button>
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" className="min-h-[44px]">
             Onboard Employee
           </Button>
         </div>
@@ -23,46 +28,53 @@ export function HRDashboard() {
 
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Total Headcount
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">124</p>
-          <p className="mt-1 text-xs text-emerald-600 font-medium">+4 new this month</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">124</p>
+          <p className="mt-1 text-xs text-positive-ink font-medium">+4 new this month</p>
         </div>
 
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Onboarding Pipeline
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-amber-600">3</p>
-          <p className="mt-1 text-xs text-slate-600">Pending 4-step checklist</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-warning font-display">3</p>
+          <p className="mt-1 text-xs text-text-muted">Pending 4-step checklist</p>
         </div>
 
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             On Leave Today
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-blue-600">6</p>
-          <p className="mt-1 text-xs text-slate-600">Approved leaves</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-primary-ink font-display">
+            6
+          </p>
+          <p className="mt-1 text-xs text-text-muted">Approved leaves</p>
         </div>
 
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Retention Rate
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-emerald-600">98.2%</p>
-          <p className="mt-1 text-xs text-slate-600">YTD workforce health</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-positive-ink font-display">
+            98.2%
+          </p>
+          <p className="mt-1 text-xs text-text-muted">YTD workforce health</p>
         </div>
       </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Onboarding Checklist Summary (4-step per AGENTS.md §9) */}
-        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-slate-900">
-            4-Step Onboarding Pipeline (AGENTS.md §9)
-          </h2>
+        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-text font-display">
+              4-Step Onboarding Pipeline (AGENTS.md §9)
+            </h2>
+            <Badge variant="neutral">Sample data</Badge>
+          </div>
           <div className="space-y-3">
             {[
               {
@@ -86,11 +98,11 @@ export function HRDashboard() {
             ].map((candidate, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between text-xs py-2 border-b border-slate-100"
+                className="flex items-center justify-between text-xs py-2 border-b border-border"
               >
                 <div>
-                  <p className="font-semibold text-slate-900">{candidate.candidate}</p>
-                  <p className="text-[11px] text-slate-600">
+                  <p className="font-semibold text-text">{candidate.candidate}</p>
+                  <p className="text-[11px] text-text-muted">
                     {candidate.role} &middot; {candidate.step}
                   </p>
                 </div>
@@ -101,22 +113,29 @@ export function HRDashboard() {
         </div>
 
         {/* Department Distribution */}
-        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-slate-900">Department Distribution</h2>
+        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-text font-display">Department Distribution</h2>
+            <Badge variant="neutral">Sample data</Badge>
+          </div>
           <div className="space-y-3">
             {[
-              { dept: 'Engineering', count: 68 },
-              { dept: 'Product & Design', count: 24 },
-              { dept: 'Operations & Finance', count: 18 },
-              { dept: 'People & HR', count: 8 },
-              { dept: 'Marketing', count: 6 },
-            ].map((d) => (
+              { name: 'Engineering', count: 62, budget: 'On track' },
+              { name: 'Product & Design', count: 18, budget: 'On track' },
+              { name: 'Human Resources', count: 12, budget: 'Optimal' },
+              { name: 'Operations & Support', count: 32, budget: 'On track' },
+            ].map((dept) => (
               <div
-                key={d.dept}
-                className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100"
+                key={dept.name}
+                className="flex items-center justify-between text-xs py-2 border-b border-border"
               >
-                <span className="font-medium text-slate-900">{d.dept}</span>
-                <span className="font-semibold text-slate-600">{d.count} staff</span>
+                <div>
+                  <p className="font-semibold text-text">{dept.name}</p>
+                  <p className="text-[11px] text-text-muted">{dept.count} team members</p>
+                </div>
+                <span className="text-[11px] font-medium text-positive-ink bg-positive-soft px-2 py-0.5 rounded-full">
+                  {dept.budget}
+                </span>
               </div>
             ))}
           </div>
