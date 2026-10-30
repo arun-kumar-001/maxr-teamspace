@@ -88,29 +88,30 @@ describe('TC-37: Approvals Engine Module E2E', () => {
 
   it('TC-37-02: self-approval is rejected with 422 UNPROCESSABLE_ENTITY (AGENTS.md §9)', async () => {
     const { app, authKit } = makeApp();
-    const staffSession = await signIn(app, 'staff@maxr.test');
-    const staffEmployeeId = authKit.users.staff.employeeId;
+    const leadSession = await signIn(app, 'team_lead@maxr.test');
+    const leadEmployeeId = authKit.users.team_lead.employeeId;
 
+    // Team lead creates an approval request (they hold approvals.create)
     const createRes = await request(app)
       .post('/api/v1/approvals')
-      .set('Cookie', staffSession.cookie)
+      .set('Cookie', leadSession.cookie)
       .set('Origin', ORIGIN)
-      .set('x-csrf-token', staffSession.csrf)
+      .set('x-csrf-token', leadSession.csrf)
       .set('Idempotency-Key', nextKey())
       .send({
         subjectType: 'ATTENDANCE_CORRECTION',
         subjectId: leaveSubjectId,
-        requesterId: staffEmployeeId,
+        requesterId: leadEmployeeId,
       });
 
     const approvalId = createRes.body.data.id;
 
-    // Attempt to approve own request
+    // Team lead attempts to approve own request (holds approvals.decide, but blocked by self-approval rule)
     const selfApproveRes = await request(app)
       .post(`/api/v1/approvals/${approvalId}/approve`)
-      .set('Cookie', staffSession.cookie)
+      .set('Cookie', leadSession.cookie)
       .set('Origin', ORIGIN)
-      .set('x-csrf-token', staffSession.csrf)
+      .set('x-csrf-token', leadSession.csrf)
       .set('Idempotency-Key', nextKey())
       .send({ comment: 'Self approving' });
 

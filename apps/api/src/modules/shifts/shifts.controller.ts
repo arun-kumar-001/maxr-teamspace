@@ -30,13 +30,6 @@ export class ShiftsController {
     };
   }
 
-  private checkHrOrAdmin(req: Request): void {
-    const actor = this.getActor(req);
-    if (actor.role !== ROLES.HR_MANAGER && actor.role !== ROLES.ADMIN) {
-      throw forbidden('Only HR Manager or Admin can perform this configuration');
-    }
-  }
-
   listShifts = async (req: Request, res: Response): Promise<void> => {
     this.getActor(req);
     const { query } = validated(req, { query: listShiftsQuerySchema });
@@ -51,14 +44,12 @@ export class ShiftsController {
   };
 
   createShift = async (req: Request, res: Response): Promise<void> => {
-    this.checkHrOrAdmin(req);
     const { body } = validated(req, { body: createShiftSchema });
     const created = await this.service.createShift(body, this.context(req));
     res.status(201).json({ data: created });
   };
 
   updateShift = async (req: Request, res: Response): Promise<void> => {
-    this.checkHrOrAdmin(req);
     const { body } = validated(req, { body: updateShiftSchema });
     const updated = await this.service.updateShift(
       req.params.id as string,
@@ -69,7 +60,6 @@ export class ShiftsController {
   };
 
   assignShift = async (req: Request, res: Response): Promise<void> => {
-    this.checkHrOrAdmin(req);
     const { body } = validated(req, { body: assignEmployeeShiftSchema });
     const assigned = await this.service.assignEmployeeShift(body, this.context(req));
     res.status(201).json({ data: assigned });
@@ -79,14 +69,6 @@ export class ShiftsController {
     const actor = this.getActor(req);
     const employeeId =
       (req.params.employeeId as string) || (req.query.employeeId as string) || actor.employeeId;
-    if (
-      employeeId !== actor.employeeId &&
-      actor.role !== ROLES.HR_MANAGER &&
-      actor.role !== ROLES.ADMIN &&
-      actor.role !== ROLES.TEAM_LEAD
-    ) {
-      throw forbidden();
-    }
     const shifts = await this.service.getEmployeeShifts(employeeId);
     res.status(200).json({ data: shifts });
   };
@@ -98,7 +80,6 @@ export class ShiftsController {
   };
 
   updatePolicy = async (req: Request, res: Response): Promise<void> => {
-    this.checkHrOrAdmin(req);
     const { body } = validated(req, { body: updateAttendancePolicySchema });
     const updated = await this.service.updateAttendancePolicy(body, this.context(req));
     res.status(200).json({ data: updated });

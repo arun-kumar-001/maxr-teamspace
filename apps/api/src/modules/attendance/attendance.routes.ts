@@ -3,7 +3,7 @@ import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
 import { PlatformServices } from '../../platform';
-import { authenticatedOnly } from '../rbac';
+import { requirePermission } from '../rbac';
 import { AttendanceController } from './attendance.controller';
 import { AttendanceRepository, IAttendanceRepository } from './attendance.repository';
 import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
@@ -22,37 +22,45 @@ export function createAttendanceRouter(
     new AttendanceService(repository ?? new AttendanceRepository(), platform),
   );
 
-  router.get('/active', authenticatedOnly(), asyncHandler(controller.getActive));
-  router.get('/today', authenticatedOnly(), asyncHandler(controller.getToday));
+  router.get(
+    '/active',
+    requirePermission('attendance.read_own'),
+    asyncHandler(controller.getActive),
+  );
+  router.get(
+    '/today',
+    requirePermission('attendance.read_own'),
+    asyncHandler(controller.getToday),
+  );
   router.get(
     '/me',
-    authenticatedOnly(),
+    requirePermission('attendance.read_own'),
     validate({ query: listAttendanceQuerySchema }),
     asyncHandler(controller.getMyHistory),
   );
   router.get(
     '/',
-    authenticatedOnly(),
+    requirePermission('attendance.list'),
     validate({ query: listAttendanceQuerySchema }),
     asyncHandler(controller.list),
   );
   router.post(
     '/check-in',
-    authenticatedOnly(),
+    requirePermission('attendance.check_in'),
     idempotent({ store: idempotencyStore }),
     validate({ body: checkInSchema }),
     asyncHandler(controller.checkIn),
   );
   router.post(
     '/check-out',
-    authenticatedOnly(),
+    requirePermission('attendance.check_out'),
     idempotent({ store: idempotencyStore }),
     validate({ body: checkOutSchema }),
     asyncHandler(controller.checkOut),
   );
   router.get(
     '/history',
-    authenticatedOnly(),
+    requirePermission('attendance.read_own'),
     validate({ query: listAttendanceQuerySchema }),
     asyncHandler(controller.listHistory),
   );

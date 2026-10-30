@@ -45,9 +45,11 @@ export class ApprovalsController {
   create = async (req: Request, res: Response): Promise<void> => {
     const actor = this.getActor(req);
     const { body } = validated(req, { body: createApprovalSchema });
-    // Requester defaults to caller employeeId if not explicitly provided
-    const requesterId = body.requesterId ?? actor.employeeId;
-    const created = await this.service.create({ ...body, requesterId }, this.context(req));
+    // Requester is ALWAYS the authenticated actor's employeeId (never client-supplied)
+    const created = await this.service.create(
+      { ...body, requesterId: actor.employeeId },
+      this.context(req),
+    );
     res.status(201).json({ data: created });
   };
 
