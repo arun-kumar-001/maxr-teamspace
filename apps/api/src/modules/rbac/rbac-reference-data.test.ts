@@ -4,10 +4,14 @@ import { ROLES, type Role } from '@maxr/shared';
 import { describe, expect, it } from 'vitest';
 import { PERMISSION_CATALOG, PERMISSION_KEYS, grantFor } from './permission-catalog';
 
-const sql = fs.readFileSync(
-  path.resolve(__dirname, '../../db/migrations/20261030000001_rbac_reference_data.sql'),
-  'utf8',
-);
+const MIGRATIONS_DIR = path.resolve(__dirname, '../../db/migrations');
+/** Every RBAC reference-data migration, in order: later ones add permissions. */
+const sql = fs
+  .readdirSync(MIGRATIONS_DIR)
+  .filter((f) => f.includes('_rbac_') && f.endsWith('.sql'))
+  .sort()
+  .map((f) => fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8'))
+  .join('\n');
 
 const ROLE_IDS: Record<Role, string> = {
   admin: '10000000-0000-0000-0000-000000000001',
@@ -16,26 +20,18 @@ const ROLE_IDS: Record<Role, string> = {
   staff: '10000000-0000-0000-0000-000000000004',
 };
 
-const section = (from: string, to?: string): string => {
-  const start = sql.indexOf(from);
-  expect(start, `${from} not found`).toBeGreaterThan(-1);
-  return sql.slice(start, to ? sql.indexOf(to, start) : undefined);
-};
-
-describe('migration 20261030000001 matches the permission catalog', () => {
+describe('RBAC reference-data migrations match the permission catalog', () => {
   it('declares exactly the four fixed roles', () => {
-    const roles = section('INSERT INTO roles', 'INSERT INTO permissions');
-    const keys = [...roles.matchAll(/'(1000[0-9a-f-]+)', '([a-z_]+)'/g)].map((m) => m[2]);
+    const keys = [...sql.matchAll(/\('(1000[0-9a-f-]+)', '([a-z_]+)', '/g)].map((m) => m[2]);
     expect(keys.sort()).toEqual(Object.values(ROLES).sort());
     for (const [role, id] of Object.entries(ROLE_IDS)) {
-      expect(roles).toContain(`'${id}', '${role}'`);
+      expect(sql).toContain(`'${id}', '${role}'`);
     }
   });
 
   it('declares exactly the catalog permissions with their descriptions', () => {
-    const perms = section('INSERT INTO permissions', 'INSERT INTO role_permissions');
     const rows = [
-      ...perms.matchAll(/\('2000[0-9a-f-]+', '([a-z_.]+)', '([a-z_]+)', '([a-z_]+)', '([^']*)'\)/g),
+      ...sql.matchAll(/\('2000[0-9a-f-]+', '([a-z_.]+)', '([a-z_]+)', '([a-z_]+)', '([^']*)'\)/g),
     ];
     expect(rows.map((r) => r[1]).sort()).toEqual([...PERMISSION_KEYS].sort());
     for (const [, key, module, action, description] of rows) {
@@ -49,16 +45,26 @@ describe('migration 20261030000001 matches the permission catalog', () => {
   it.each(Object.values(ROLES))(
     'maps %s to exactly the permissions the catalog grants it',
     (role) => {
-      const mappings = section('-- 3. Role Permissions');
-      const marker = `SELECT '${ROLE_IDS[role]}', id FROM permissions`;
-      const start = mappings.indexOf(marker);
-      expect(start, `no mapping for ${role}`).toBeGreaterThan(-1);
-      const block = mappings.slice(start, mappings.indexOf('ON CONFLICT', start));
-      const inSql = block.includes('WHERE key IN')
-        ? [...block.slice(block.indexOf('WHERE')).matchAll(/'([a-z_.]+)'/g)].map((m) => m[1])
-        : [...PERMISSION_KEYS]; // no WHERE: every permission
+      const blocks = [
+        ...sql.matchAll(
+          new RegExp(
+            `SELECT '${ROLE_IDS[role]}', id FROM permissions\\s*(WHERE key IN \\(([^)]*)\\))?\\s*ON CONFLICT`,
+            'g',
+          ),
+        ),
+      ];
+      expect(blocks.length, `no mapping for ${role}`).toBeGreaterThan(0);
+      // A block without WHERE grants every permission that exists when it runs.
+      const inSql = new Set<string>();
+      for (const block of blocks) {
+        if (block[2] === undefined) {
+          PERMISSION_KEYS.forEach((k) => inSql.add(k));
+        } else {
+          [...block[2].matchAll(/'([a-z_.]+)'/g)].forEach((m) => inSql.add(m[1] as string));
+        }
+      }
       const inCatalog = PERMISSION_KEYS.filter((k) => grantFor(role, k) !== null);
-      expect(inSql.sort()).toEqual(inCatalog.sort());
+      expect([...inSql].sort()).toEqual(inCatalog.sort());
     },
   );
 });

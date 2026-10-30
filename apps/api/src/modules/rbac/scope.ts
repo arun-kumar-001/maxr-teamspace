@@ -9,16 +9,20 @@ const SCOPE_RANK: Record<RecordScope, number> = {
   [RECORD_SCOPES.ALL]: 3,
 };
 
-/** The widest scope any of `roles` holds for `key`; null (deny) when none holds it. */
-export function resolveScope(roles: readonly Role[], key: PermissionKey): RecordScope | null {
+/** The widest of several scopes; null entries (denied) are ignored, all-null gives null. */
+export function widestScope(scopes: Array<RecordScope | null>): RecordScope | null {
   let best: RecordScope | null = null;
-  for (const role of roles) {
-    const scope = grantFor(role, key);
+  for (const scope of scopes) {
     if (scope && (best === null || SCOPE_RANK[scope] > SCOPE_RANK[best])) {
       best = scope;
     }
   }
   return best;
+}
+
+/** The widest scope any of `roles` holds for `key`; null (deny) when none holds it. */
+export function resolveScope(roles: readonly Role[], key: PermissionKey): RecordScope | null {
+  return widestScope(roles.map((role) => grantFor(role, key)));
 }
 
 /**
