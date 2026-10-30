@@ -1,37 +1,91 @@
 /**
- * CSS Variables for MAXR Teamspace
- * Authoritative specification: AGENTS.md §8
+ * Design tokens for MAXR Teamspace (docs/design/DESIGN.md, AGENTS.md section 8).
+ * Colours and fonts: MaxR Flow (teal brand). Layout, shape and component style: the dashboard
+ * references the Technical Lead chose (Ondra, Petalo, Selvar), with their neutrals tinted toward
+ * the MaxR Flow teal. Values were sampled from screenshots; every text pairing is checked in contrast.test.ts.
  */
 
 :root {
-  /* Brand Shell */
-  --navy-950: #0a1429;
-  --navy-900: #0e2042;
-  --navy-800: #1e2f50;
+  /* Brand (MaxR Flow) */
+  --primary: #46c7b8; /* teal: indicators, dots, bars, progress, logo tile. Never text (2.07:1). */
+  --primary-strong: #0d9488; /* icons, focus ring */
+  --primary-deep: #0f766e; /* solid primary buttons, white text 5.47:1 */
+  --primary-deeper: #115e59; /* primary button hover */
+  --primary-ink: #0f766e; /* teal text and links */
+  --primary-soft: #e9f8f6; /* soft teal fills, icon chips */
+  --primary-soft-border: #ccefeb;
+  --brand-red: #e5322d; /* logo "R" only [approx., verify from logo] */
 
-  /* Primary Accent */
-  --teal-500: #14b8a6;
-  --teal-600: #0d9488;
+  /* Page and surfaces (light, teal-tinted neutrals) */
+  --bg: #eef2f1; /* page behind everything */
+  --surface: #fbfcfc; /* cards */
+  --surface-raised: #ffffff; /* selected tile, active segment, inputs, white buttons */
+  --surface-muted: #f2f5f4; /* metric strip, tiles inside cards, row hover */
+  --track: #e8eeec; /* segmented control track */
+  --border: #e3e9e7; /* card outlines, dividers */
+  --border-strong: #d3dcd9; /* inputs, outlined buttons, pills */
+  --text: #13201e; /* headings, numbers, body */
+  --text-muted: #4f5c5a; /* secondary text, labels */
+  --text-subtle: #5f6c6a; /* captions, "vs" comparisons, breadcrumbs */
+  --overlay: rgba(14, 40, 38, 0.55); /* modal backdrop */
 
-  /* Logo Accent Only */
-  --brand-red: #e5322d;
+  /* Floating dark sidebar */
+  --sidebar-bg: #0e2826;
+  --sidebar-raised: #1b3532; /* active item, cards inside the sidebar */
+  --sidebar-border: #26413e;
+  --sidebar-text: #d5e2df;
+  --sidebar-text-strong: #f2f7f6; /* active item, product name */
+  --sidebar-muted: #8aa29d; /* group labels, subtitles */
+  --sidebar-attention: #f5b73d; /* counts that need action (dark text on it) */
 
-  /* Light Theme Surface Default */
-  --bg: #f6f8fb;
-  --surface: #ffffff;
-  --text: #0f172a;
-  --text-muted: #475569;
-  --border: #e2e8f0;
+  /* Change indicators (delta chips) */
+  --positive-soft: #dcf2ea;
+  --positive-ink: #047857;
+  --negative-soft: #f9e3e1;
+  --negative-ink: #b42318;
 
-  /* Status Semantics */
+  /* Pastel attention tiles (dark text on all) */
+  --tile-peach: #ffe0d4;
+  --tile-yellow: #fbecc6;
+  --tile-blue: #dcebfa;
+  --tile-green: #d8f1e3;
+
+  /* Status semantics */
   --success: #16a34a;
   --warning: #d97706;
   --danger: #dc2626;
   --info: #2563eb;
 
-  /* Component Radiuses */
-  --radius-input: 6px;
-  --radius-card: 8px;
+  /* Categorical palette for pipelines and charts (MaxR Flow), fill then ink */
+  --chart-1: #3b82f6;
+  --chart-2: #46c7b8;
+  --chart-3: #ec4899;
+  --chart-4: #8b5cf6;
+  --chart-5: #f59e0b;
+  --chart-6: #10b981;
+  --chart-7: #ef4444;
+  --chart-ink-1: #2563eb;
+  --chart-ink-2: #0f766e;
+  --chart-ink-3: #db2777;
+  --chart-ink-4: #7c3aed;
+  --chart-ink-5: #b45309;
+  --chart-ink-6: #047857;
+  --chart-ink-7: #dc2626;
+
+  /* Shape (measured on the references) */
+  --radius-input: 12px; /* buttons, inputs, nav items, icon buttons */
+  --radius-tile: 16px; /* tiles inside cards, metric strip items */
+  --radius-card: 24px; /* cards, sidebar, modals */
+  --radius-segment: 10px; /* segmented control items (track uses 14px) */
+  --sidebar-width: 296px;
+  --sidebar-rail-width: 88px;
+  --shell-gap: 16px; /* distance of the floating sidebar from the window edges */
+
+  /* Depth */
+  --shadow-card: 0 1px 2px rgba(19, 32, 30, 0.04);
+  --shadow-raised: 0 1px 3px rgba(19, 32, 30, 0.1), 0 1px 2px rgba(19, 32, 30, 0.06);
+  --shadow-primary: 0 8px 18px -6px rgba(15, 118, 110, 0.55);
+  --shadow-sidebar-active: 0 10px 24px -8px rgba(70, 199, 184, 0.6); /* glow under the active item */
 
   /* Fluid Typography */
   --font-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);
@@ -41,17 +95,18 @@
   --font-xl: clamp(1.125rem, 1rem + 0.6vw, 1.35rem);
   --font-2xl: clamp(1.35rem, 1.2rem + 0.8vw, 1.75rem);
   --font-3xl: clamp(1.75rem, 1.5rem + 1.2vw, 2.25rem);
+  --font-greeting: clamp(2rem, 1.4rem + 2.2vw, 3rem); /* "Good morning, …" headline */
 
   /* Touch Target */
   --min-touch-target: 44px;
+
+  /* Legacy navy (pre-MaxR Flow dark shell). Kept only so unmerged branches still build; do not use. */
+  --navy-950: #0a1429;
+  --navy-900: #0e2042;
+  --navy-800: #1e2f50;
 }
 
-/* Dark Shell / Dark Theme Support */
-.dark,
-[data-theme='dark'] {
-  --bg: #0a1429;
-  --surface: #0e2042;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: #1e2f50;
+body {
+  background: var(--bg);
+  color: var(--text);
 }

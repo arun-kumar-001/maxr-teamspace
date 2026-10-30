@@ -137,3 +137,5 @@ export type { EventBus, DomainEvent } from './events/event-bus';
 export type { NotificationService } from './notifications/notification-service';
 export type { StorageService } from './storage/storage-service';
 export { EventCollector } from './events/event-bus';
+export { SqlAuditStore } from './audit/sql-audit-store';
+export { SqlNotificationOutbox } from './notifications/sql-notification-outbox';

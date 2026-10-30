@@ -1,3 +1,4 @@
+import { testActor } from '../test/fixtures';
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
@@ -16,7 +17,7 @@ function counterApp(options: { delayMs?: number; failFirst?: boolean } = {}) {
       // Test auth stand-in: the actor comes from a header.
       (req, _res, next) => {
         const user = req.header('x-test-user');
-        if (user) req.actor = { id: user };
+        if (user) req.actor = testActor(user);
         next();
       },
       idempotent({ store }),

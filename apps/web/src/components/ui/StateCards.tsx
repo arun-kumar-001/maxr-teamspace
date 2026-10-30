@@ -20,10 +20,10 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-border rounded-card ${className}`}
+      className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-border rounded-card shadow-card ${className}`}
       data-testid="empty-state"
     >
-      <div className="w-12 h-12 mb-4 flex items-center justify-center rounded-full bg-surface-muted text-text-muted">
+      <div className="w-12 h-12 mb-4 flex items-center justify-center rounded-full bg-primary-soft text-primary-strong">
         {icon || (
           <svg
             className="w-6 h-6 stroke-current"
@@ -66,7 +66,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-rose-200 rounded-card ${className}`}
+      className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-rose-200 rounded-card shadow-card ${className}`}
       role="alert"
       data-testid="error-state"
     >
@@ -108,7 +108,7 @@ export function ForbiddenState({
 }: ForbiddenStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-border rounded-card ${className}`}
+      className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-border rounded-card shadow-card ${className}`}
       role="alert"
       data-testid="forbidden-state"
     >

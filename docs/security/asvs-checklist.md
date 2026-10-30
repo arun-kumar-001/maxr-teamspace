@@ -5,14 +5,14 @@ Status: **Done** (code/test exists in `develop`), **Planned** (owner issue), **D
 | ASVS | Requirement (short) | Status | Evidence / owner |
 |---|---|---|---|
 | V1.1 | Threat model and secure design documented | Done | `threat-model.md` |
-| V2.1 | Password policy (length ≥ 12, no composition rules, breached check optional) | Decision | D-05; #7 |
-| V2.4 | Passwords hashed with Argon2id / bcrypt ≥ 12 | Planned | #7 |
-| V2.2 | Anti-automation on login (rate limit, lockout) | Planned | #7; limiter exists (#58) |
+| V2.1 | Password policy (length ≥ 12, no composition rules, breached check optional) | Done | 12-128 characters, weak-list denylist (`auth.service.ts`); breached-password check planned in #16 |
+| V2.4 | Passwords hashed with Argon2id / bcrypt ≥ 12 | Done | Argon2id 64 MiB/3/1 (`password-hasher.ts`, tested) |
+| V2.2 | Anti-automation on login (rate limit, lockout) | Done | Per-IP limiter and per-account lockout with `Retry-After` (auth tests) |
 | V2.8 | MFA for privileged roles | Decision | Not in report; recommend for Admin and HR |
-| V3.2 | New session token on login; invalidated on logout | Planned | #7 |
-| V3.3 | Session timeout, idle and absolute | Decision | D-05 |
-| V3.4 | Cookies: httpOnly, Secure, SameSite | Planned | #7 |
-| V3.7 | Deactivation / password change ends all sessions | Planned | #26, #7 |
+| V3.2 | New session token on login; invalidated on logout | Done | Fresh random token per login; logout revokes it |
+| V3.3 | Session timeout, idle and absolute | Done | 2 h idle, 24 h absolute (D-05) |
+| V3.4 | Cookies: httpOnly, Secure, SameSite | Done | `HttpOnly`, `SameSite=Lax`, `Secure` enforced in production |
+| V3.7 | Deactivation / password change ends all sessions | Done / Planned | Password change and inactive-account check done (#7); the deactivation endpoint calls `revokeAllForUser` in #26 |
 | V4.1 | Access control enforced on a trusted server layer | Planned | #8; every endpoint |
 | V4.2 | IDOR protection, record-scope in queries | Planned | #8; per-module cross-scope tests |
 | V4.3 | Admin interfaces protected | Planned | #27 |

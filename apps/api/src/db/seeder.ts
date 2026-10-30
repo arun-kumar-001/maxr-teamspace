@@ -18,6 +18,9 @@ export async function runDevSeed(): Promise<void> {
     // Locate dev_seed.sql
     let seedFilePath = path.resolve(__dirname, 'seeds/dev_seed.sql');
     if (!fs.existsSync(seedFilePath)) {
+      seedFilePath = path.resolve(__dirname, '../../src/db/seeds/dev_seed.sql');
+    }
+    if (!fs.existsSync(seedFilePath)) {
       seedFilePath = path.resolve(process.cwd(), 'apps/api/src/db/seeds/dev_seed.sql');
     }
     if (!fs.existsSync(seedFilePath)) {

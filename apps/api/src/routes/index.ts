@@ -4,6 +4,7 @@ import { createApprovalsRouter } from '../modules/approvals/approvals.routes';
 import { createAttendanceRouter } from '../modules/attendance/attendance.routes';
 import { createShiftsRouter } from '../modules/shifts/shifts.routes';
 import { createTemplateRouter } from '../modules/_template/template.routes';
+import { AuthServices } from '../modules/auth';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
 import { buildOpenApiDocument } from '../openapi/build-spec';
@@ -11,20 +12,24 @@ import { buildOpenApiDocument } from '../openapi/build-spec';
 export interface ApiRouterOptions {
   idempotencyStore: IdempotencyStore;
   platform: Platform;
+  auth: AuthServices;
   /** Sample module and OpenAPI document are development aids: never exposed in production. */
   exposeDevRoutes: boolean;
 }
 
 /**
  * The single /api/v1 router. Every module is mounted here, so the surface of the API can be
- * read in one place. Authentication and authorization are applied per module router (#7, #8).
+ * read in one place. Authentication (`auth.authenticate`, #7) and authorization (#8) are applied per module router.
  */
 export function createApiRouter({
   idempotencyStore,
   platform,
+  auth,
   exposeDevRoutes,
 }: ApiRouterOptions): Router {
   const router = Router();
+
+  router.use('/auth', auth.router);
 
   // File downloads by signed link (see docs/architecture/shared-services.md).
   router.use('/files', createFilesRouter(platform.storage));

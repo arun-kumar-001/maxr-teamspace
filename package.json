@@ -27,7 +27,10 @@
     "db:migrate": "npm run build:shared && npm run build:api && npm run db:migrate --workspace=@maxr/api",
     "db:seed": "npm run db:seed --workspace=@maxr/api",
     "check:lockfile": "node scripts/check-lockfile.mjs",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "e2e": "npm run e2e --workspace=@maxr/web",
+    "screenshots": "npm run screenshots --workspace=@maxr/web",
+    "test:db": "npm run test:db --workspace=@maxr/api"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
