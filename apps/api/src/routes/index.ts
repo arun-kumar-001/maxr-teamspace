@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getPool } from '../db/client';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
@@ -11,6 +12,8 @@ import {
 import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createApprovals } from '../modules/approvals';
+import { createEmployeeCreation } from '../modules/employees/creation';
+import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
 import { createUsers } from '../modules/users';
@@ -57,6 +60,12 @@ export function createApiRouter({
       settingsReader: settings.reader,
     }),
   );
+
+  // A registry passed in (tests) is used as given; the default app gets the employee reports.
+  const registry = reportRegistry ?? new ReportRegistry();
+  if (!reportRegistry) {
+    registerEmployeeReports(registry, { getPool, settings: settings.reader });
+  }
   router.use('/approvals', createApprovals({ platform, authenticate: auth.authenticate }).router);
   const users = createUsers({ platform, authenticate: auth.authenticate });
   router.use('/users', users.usersRouter);
@@ -85,11 +94,19 @@ export function createApiRouter({
     }),
   );
   router.use(
+    '/employees',
+    createEmployeeCreation({
+      platform,
+      authenticate: auth.authenticate,
+      idempotencyStore,
+    }).router,
+  );
+  router.use(
     '/reports',
     createReports({
       audit: platform.audit,
       authenticate: auth.authenticate,
-      registry: reportRegistry,
+      registry,
       pdfExporter: reportPdfExporter,
     }).router,
   );
