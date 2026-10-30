@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { forbidden } from '../../http/errors';
+import { ROLES } from '@maxr/shared';
+import { forbidden, unauthorized } from '../../http/errors';
 import { validated } from '../../http/validate';
 import {
   assignEmployeeShiftSchema,
@@ -13,28 +14,38 @@ import { RequestContext, ShiftsService } from './shifts.service';
 export class ShiftsController {
   constructor(private readonly service: ShiftsService) {}
 
+  private getActor(req: Request) {
+    if (!req.actor) {
+      throw unauthorized();
+    }
+    return req.actor;
+  }
+
   private context(req: Request): RequestContext {
+    const actor = this.getActor(req);
     return {
-      actorId: req.actor?.id ?? 'system',
+      actorId: actor.id,
+      actorRole: actor.role,
       requestId: req.id,
     };
   }
 
   private checkHrOrAdmin(req: Request): void {
-    const actorRole = (req.actor as { id: string; role?: string } | undefined)?.role;
-    const role = (req.headers['x-role'] as string) || actorRole;
-    if (role && role !== 'HR Manager' && role !== 'Admin') {
+    const actor = this.getActor(req);
+    if (actor.role !== ROLES.HR_MANAGER && actor.role !== ROLES.ADMIN) {
       throw forbidden('Only HR Manager or Admin can perform this configuration');
     }
   }
 
   listShifts = async (req: Request, res: Response): Promise<void> => {
+    this.getActor(req);
     const { query } = validated(req, { query: listShiftsQuerySchema });
     const page = await this.service.listShifts(query);
     res.status(200).json(page);
   };
 
   getShiftById = async (req: Request, res: Response): Promise<void> => {
+    this.getActor(req);
     const shift = await this.service.getShiftById(req.params.id as string);
     res.status(200).json({ data: shift });
   };
@@ -60,21 +71,28 @@ export class ShiftsController {
   assignShift = async (req: Request, res: Response): Promise<void> => {
     this.checkHrOrAdmin(req);
     const { body } = validated(req, { body: assignEmployeeShiftSchema });
-    const assignment = await this.service.assignEmployeeShift(body, this.context(req));
-    res.status(201).json({ data: assignment });
+    const assigned = await this.service.assignEmployeeShift(body, this.context(req));
+    res.status(201).json({ data: assigned });
   };
 
-  getEmployeeShifts = async (req: Request, res: Response): Promise<void> => {
-    const employeeId = req.params.employeeId || req.actor?.id;
-    if (!employeeId) {
-      res.status(200).json({ data: [] });
-      return;
+  listEmployeeShifts = async (req: Request, res: Response): Promise<void> => {
+    const actor = this.getActor(req);
+    const employeeId =
+      (req.params.employeeId as string) || (req.query.employeeId as string) || actor.employeeId;
+    if (
+      employeeId !== actor.employeeId &&
+      actor.role !== ROLES.HR_MANAGER &&
+      actor.role !== ROLES.ADMIN &&
+      actor.role !== ROLES.TEAM_LEAD
+    ) {
+      throw forbidden();
     }
-    const assignments = await this.service.getEmployeeShifts(employeeId);
-    res.status(200).json({ data: assignments });
+    const shifts = await this.service.getEmployeeShifts(employeeId);
+    res.status(200).json({ data: shifts });
   };
 
-  getPolicy = async (_req: Request, res: Response): Promise<void> => {
+  getPolicy = async (req: Request, res: Response): Promise<void> => {
+    this.getActor(req);
     const policy = await this.service.getAttendancePolicy();
     res.status(200).json({ data: policy });
   };

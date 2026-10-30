@@ -1,11 +1,11 @@
 import { idParamSchema } from '@maxr/shared';
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
 import { PlatformServices } from '../../platform';
 import { ShiftsController } from './shifts.controller';
-import { ShiftsRepository } from './shifts.repository';
+import { IShiftsRepository, ShiftsRepository } from './shifts.repository';
 import {
   assignEmployeeShiftSchema,
   createShiftSchema,
@@ -18,9 +18,15 @@ import { ShiftsService } from './shifts.service';
 export function createShiftsRouter(
   idempotencyStore: IdempotencyStore,
   platform: Pick<PlatformServices, 'audit' | 'events'>,
+  authenticate: RequestHandler,
+  repository?: IShiftsRepository,
 ): Router {
   const router = Router();
-  const controller = new ShiftsController(new ShiftsService(new ShiftsRepository(), platform));
+  router.use(authenticate);
+
+  const controller = new ShiftsController(
+    new ShiftsService(repository ?? new ShiftsRepository(), platform),
+  );
 
   router.get('/policies', asyncHandler(controller.getPolicy));
   router.put(
@@ -28,7 +34,7 @@ export function createShiftsRouter(
     validate({ body: updateAttendancePolicySchema }),
     asyncHandler(controller.updatePolicy),
   );
-  router.get('/assignments/:employeeId', asyncHandler(controller.getEmployeeShifts));
+  router.get('/assignments/:employeeId', asyncHandler(controller.listEmployeeShifts));
   router.post(
     '/assignments',
     idempotent({ store: idempotencyStore }),

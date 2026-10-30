@@ -2,70 +2,105 @@ import crypto from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { makeApp } from '../../test/helpers';
+import { TEST_PASSWORD } from '../auth/auth.testing';
 
 let keyCounter = 0;
 const nextKey = () => `appr-key-${++keyCounter}-${Date.now()}`;
 
+const ORIGIN = 'http://localhost:3000';
+
+const cookieOf = (res: request.Response): string => {
+  const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+  return raw?.find((c) => c.startsWith('maxr_session=')) ?? '';
+};
+const cookieValue = (setCookie: string): string => setCookie.split(';')[0] ?? '';
+
+async function signIn(
+  app: Parameters<typeof request>[0],
+  email = 'staff@maxr.test',
+  password = TEST_PASSWORD,
+) {
+  const res = await request(app)
+    .post('/api/v1/auth/login')
+    .set('Origin', ORIGIN)
+    .send({ email, password });
+  return { res, cookie: cookieValue(cookieOf(res)), csrf: res.body?.data?.csrfToken as string };
+}
+
 describe('TC-37: Approvals Engine Module E2E', () => {
-  const requesterId = crypto.randomUUID();
-  const approverId = crypto.randomUUID();
   const leaveSubjectId = crypto.randomUUID();
 
   it('TC-37-01: creates approval request and successfully approves with comment', async () => {
-    const { app } = makeApp();
+    const { app, authKit } = makeApp();
+    const staffSession = await signIn(app, 'staff@maxr.test');
+    const leadSession = await signIn(app, 'team_lead@maxr.test');
+    const staffEmployeeId = authKit.users.staff.employeeId;
+    const leadEmployeeId = authKit.users.team_lead.employeeId;
 
     // 1. Create approval request
     const createRes = await request(app)
       .post('/api/v1/approvals')
+      .set('Cookie', staffSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', staffSession.csrf)
       .set('Idempotency-Key', nextKey())
       .send({
         subjectType: 'LEAVE',
         subjectId: leaveSubjectId,
-        requesterId,
+        requesterId: staffEmployeeId,
       });
 
     expect(createRes.status).toBe(201);
     expect(createRes.body.data).toMatchObject({
       subjectType: 'LEAVE',
       subjectId: leaveSubjectId,
-      requesterId,
+      requesterId: staffEmployeeId,
       status: 'PENDING',
       approverId: null,
     });
     const approvalId = createRes.body.data.id;
 
     // 2. Query list
-    const listRes = await request(app).get('/api/v1/approvals?status=PENDING');
+    const listRes = await request(app)
+      .get('/api/v1/approvals?status=PENDING')
+      .set('Cookie', leadSession.cookie);
     expect(listRes.status).toBe(200);
     expect(listRes.body.data.some((a: { id: string }) => a.id === approvalId)).toBe(true);
 
     // 3. Approve as approver
     const approveRes = await request(app)
       .post(`/api/v1/approvals/${approvalId}/approve`)
+      .set('Cookie', leadSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', leadSession.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-approver-id', approverId)
       .send({ comment: 'Approved for annual leave' });
 
     expect(approveRes.status).toBe(200);
     expect(approveRes.body.data).toMatchObject({
       id: approvalId,
       status: 'APPROVED',
-      approverId,
+      approverId: leadEmployeeId,
       comment: 'Approved for annual leave',
     });
     expect(approveRes.body.data.decidedAt).not.toBeNull();
   });
 
   it('TC-37-02: self-approval is rejected with 422 UNPROCESSABLE_ENTITY (AGENTS.md §9)', async () => {
-    const { app } = makeApp();
+    const { app, authKit } = makeApp();
+    const staffSession = await signIn(app, 'staff@maxr.test');
+    const staffEmployeeId = authKit.users.staff.employeeId;
 
     const createRes = await request(app)
       .post('/api/v1/approvals')
+      .set('Cookie', staffSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', staffSession.csrf)
       .set('Idempotency-Key', nextKey())
       .send({
         subjectType: 'ATTENDANCE_CORRECTION',
         subjectId: leaveSubjectId,
-        requesterId,
+        requesterId: staffEmployeeId,
       });
 
     const approvalId = createRes.body.data.id;
@@ -73,8 +108,10 @@ describe('TC-37: Approvals Engine Module E2E', () => {
     // Attempt to approve own request
     const selfApproveRes = await request(app)
       .post(`/api/v1/approvals/${approvalId}/approve`)
+      .set('Cookie', staffSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', staffSession.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-approver-id', requesterId)
       .send({ comment: 'Self approving' });
 
     expect(selfApproveRes.status).toBe(422);
@@ -83,15 +120,21 @@ describe('TC-37: Approvals Engine Module E2E', () => {
   });
 
   it('TC-37-03: already decided request cannot be approved again (409 CONFLICT)', async () => {
-    const { app } = makeApp();
+    const { app, authKit } = makeApp();
+    const staffSession = await signIn(app, 'staff@maxr.test');
+    const leadSession = await signIn(app, 'team_lead@maxr.test');
+    const staffEmployeeId = authKit.users.staff.employeeId;
 
     const createRes = await request(app)
       .post('/api/v1/approvals')
+      .set('Cookie', staffSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', staffSession.csrf)
       .set('Idempotency-Key', nextKey())
       .send({
         subjectType: 'EXPENSE',
         subjectId: leaveSubjectId,
-        requesterId,
+        requesterId: staffEmployeeId,
       });
 
     const approvalId = createRes.body.data.id;
@@ -99,47 +142,60 @@ describe('TC-37: Approvals Engine Module E2E', () => {
     // First approve
     await request(app)
       .post(`/api/v1/approvals/${approvalId}/approve`)
+      .set('Cookie', leadSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', leadSession.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-approver-id', approverId)
-      .send();
+      .send({ comment: 'Initial approval' });
 
-    // Second approve attempt
+    // Second approve should fail with 409
     const secondApprove = await request(app)
       .post(`/api/v1/approvals/${approvalId}/approve`)
+      .set('Cookie', leadSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', leadSession.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-approver-id', approverId)
-      .send();
+      .send({ comment: 'Duplicate approval attempt' });
 
     expect(secondApprove.status).toBe(409);
     expect(secondApprove.body.error.code).toBe('CONFLICT');
   });
 
   it('TC-37-04: rejects request with comment', async () => {
-    const { app } = makeApp();
+    const { app, authKit } = makeApp();
+    const staffSession = await signIn(app, 'staff@maxr.test');
+    const leadSession = await signIn(app, 'team_lead@maxr.test');
+    const staffEmployeeId = authKit.users.staff.employeeId;
+    const leadEmployeeId = authKit.users.team_lead.employeeId;
 
     const createRes = await request(app)
       .post('/api/v1/approvals')
+      .set('Cookie', staffSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', staffSession.csrf)
       .set('Idempotency-Key', nextKey())
       .send({
         subjectType: 'LEAVE',
         subjectId: leaveSubjectId,
-        requesterId,
+        requesterId: staffEmployeeId,
       });
 
     const approvalId = createRes.body.data.id;
 
     const rejectRes = await request(app)
       .post(`/api/v1/approvals/${approvalId}/reject`)
+      .set('Cookie', leadSession.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', leadSession.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-approver-id', approverId)
-      .send({ comment: 'Insufficient notice' });
+      .send({ comment: 'Conflict with team deliverables' });
 
     expect(rejectRes.status).toBe(200);
     expect(rejectRes.body.data).toMatchObject({
       id: approvalId,
       status: 'REJECTED',
-      approverId,
-      comment: 'Insufficient notice',
+      approverId: leadEmployeeId,
+      comment: 'Conflict with team deliverables',
     });
   });
 });

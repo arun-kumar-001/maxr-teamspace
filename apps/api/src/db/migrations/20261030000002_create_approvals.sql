@@ -5,11 +5,11 @@
 
 CREATE TABLE IF NOT EXISTS approvals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  subject_type VARCHAR(50) NOT NULL,
+  subject_type VARCHAR(50) NOT NULL CHECK (subject_type IN ('LEAVE', 'ATTENDANCE_CORRECTION', 'EXPENSE')),
   subject_id UUID NOT NULL,
-  requester_id UUID NOT NULL,
-  approver_id UUID,
-  status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+  requester_id UUID NOT NULL REFERENCES employees(id) ON DELETE RESTRICT,
+  approver_id UUID REFERENCES employees(id) ON DELETE RESTRICT,
+  status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
   comment TEXT,
   decided_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

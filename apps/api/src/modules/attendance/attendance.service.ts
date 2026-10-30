@@ -15,6 +15,7 @@ import {
 
 export interface RequestContext {
   actorId: string;
+  actorRole?: string;
   requestId?: string;
 }
 
@@ -213,5 +214,9 @@ export class AttendanceService {
       status: query.status,
     });
     return buildPage(items, total, query);
+  }
+
+  async getTeamMemberIds(managerEmployeeId: string): Promise<string[]> {
+    return this.repository.findTeamMemberIds(managerEmployeeId);
   }
 }

@@ -33,6 +33,7 @@ export interface IAttendanceRepository {
     params: AttendanceFindManyParams,
   ): Promise<{ items: AttendanceRecord[]; total: number }>;
   findAll(params: AttendanceFindManyParams): Promise<{ items: AttendanceRecord[]; total: number }>;
+  findTeamMemberIds(managerEmployeeId: string): Promise<string[]>;
 }
 
 export function uniqueViolation(constraint = 'idx_attendance_single_open_session'): Error {
@@ -163,5 +164,16 @@ export class AttendanceRepository implements IAttendanceRepository {
     params: AttendanceFindManyParams,
   ): Promise<{ items: AttendanceRecord[]; total: number }> {
     return this.findAll({ ...params, employeeId });
+  }
+
+  private readonly teamHierarchy = new Map<string, string[]>();
+
+  setTeamHierarchy(managerEmployeeId: string, directReportIds: string[]): void {
+    this.teamHierarchy.set(managerEmployeeId, directReportIds);
+  }
+
+  async findTeamMemberIds(managerEmployeeId: string): Promise<string[]> {
+    const directReports = this.teamHierarchy.get(managerEmployeeId) ?? [];
+    return [managerEmployeeId, ...directReports];
   }
 }

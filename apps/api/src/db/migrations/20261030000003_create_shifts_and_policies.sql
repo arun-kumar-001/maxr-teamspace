@@ -17,7 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_shifts_code ON shifts(code);
 
 CREATE TABLE IF NOT EXISTS employee_shifts (
   id UUID PRIMARY KEY,
-  employee_id UUID NOT NULL,
+  employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE RESTRICT,
   shift_id UUID NOT NULL REFERENCES shifts(id),
   effective_from DATE NOT NULL,
   effective_to DATE,

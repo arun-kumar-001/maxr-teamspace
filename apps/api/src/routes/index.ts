@@ -35,13 +35,13 @@ export function createApiRouter({
   router.use('/files', createFilesRouter(platform.storage));
 
   // Attendance and time tracking module (Issue #34, D2-02; Issue #35, D2-03)
-  router.use('/attendance', createAttendanceRouter(idempotencyStore, platform));
+  router.use('/attendance', createAttendanceRouter(idempotencyStore, platform, auth.authenticate));
 
   // Shifts and Attendance Policies (Issue #33, D2-01)
-  router.use('/shifts', createShiftsRouter(idempotencyStore, platform));
+  router.use('/shifts', createShiftsRouter(idempotencyStore, platform, auth.authenticate));
 
   // Approvals Engine (Issue #37, D2-05)
-  router.use('/approvals', createApprovalsRouter(idempotencyStore, platform));
+  router.use('/approvals', createApprovalsRouter(idempotencyStore, platform, auth.authenticate));
 
   if (exposeDevRoutes) {
     router.use('/templates', createTemplateRouter(idempotencyStore, platform));

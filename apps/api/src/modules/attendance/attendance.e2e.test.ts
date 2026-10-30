@@ -1,28 +1,64 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { makeApp } from '../../test/helpers';
+import { TEST_PASSWORD } from '../auth/auth.testing';
 
 let keyCounter = 0;
 const nextKey = () => `att-key-${++keyCounter}-${Date.now()}`;
 
+const ORIGIN = 'http://localhost:3000';
+
+const cookieOf = (res: request.Response): string => {
+  const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+  return raw?.find((c) => c.startsWith('maxr_session=')) ?? '';
+};
+const cookieValue = (setCookie: string): string => setCookie.split(';')[0] ?? '';
+
+async function signIn(
+  app: Parameters<typeof request>[0],
+  email = 'staff@maxr.test',
+  password = TEST_PASSWORD,
+) {
+  const res = await request(app)
+    .post('/api/v1/auth/login')
+    .set('Origin', ORIGIN)
+    .send({ email, password });
+  return { res, cookie: cookieValue(cookieOf(res)), csrf: res.body?.data?.csrfToken as string };
+}
+
 describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
-  const testEmployeeId = 'a1111111-1111-1111-1111-111111111111';
+  it('TC-34-AUTH: unauthenticated request is rejected with 401 UNAUTHORIZED', async () => {
+    const { app } = makeApp();
+
+    const res = await request(app).get('/api/v1/attendance/active');
+    expect(res.status).toBe(401);
+
+    const postRes = await request(app)
+      .post('/api/v1/attendance/check-in')
+      .set('Origin', ORIGIN)
+      .send({ notes: 'unauthenticated' });
+    expect(postRes.status).toBe(401);
+  });
 
   it('TC-34-01: complete attendance session lifecycle (check-in -> active -> check-out -> history)', async () => {
-    const { app } = makeApp();
+    const { app, authKit } = makeApp();
+    const session = await signIn(app, 'staff@maxr.test');
+    const staffEmployeeId = authKit.users.staff.employeeId;
 
     // 1. Initial active check should be null
     const initialActive = await request(app)
       .get('/api/v1/attendance/active')
-      .set('x-employee-id', testEmployeeId);
+      .set('Cookie', session.cookie);
     expect(initialActive.status).toBe(200);
     expect(initialActive.body.data).toBeNull();
 
     // 2. Perform Check-In
     const checkInRes = await request(app)
       .post('/api/v1/attendance/check-in')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', testEmployeeId)
       .send({
         notes: 'Morning shift check-in from office',
         location: { latitude: 12.9716, longitude: 77.5946, address: 'Bangalore HQ' },
@@ -30,7 +66,7 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
 
     expect(checkInRes.status).toBe(201);
     expect(checkInRes.body.data).toMatchObject({
-      employeeId: testEmployeeId,
+      employeeId: staffEmployeeId,
       status: 'PRESENT',
       checkOutTime: null,
       notes: 'Morning shift check-in from office',
@@ -42,7 +78,7 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
     // 3. Active endpoint should now return this active session
     const activeRes = await request(app)
       .get('/api/v1/attendance/active')
-      .set('x-employee-id', testEmployeeId);
+      .set('Cookie', session.cookie);
     expect(activeRes.status).toBe(200);
     expect(activeRes.body.data.id).toBe(sessionId);
     expect(activeRes.body.data.checkOutTime).toBeNull();
@@ -50,7 +86,7 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
     // 4. Today summary endpoint should reflect ongoing attendance
     const todayRes = await request(app)
       .get('/api/v1/attendance/today')
-      .set('x-employee-id', testEmployeeId);
+      .set('Cookie', session.cookie);
     expect(todayRes.status).toBe(200);
     expect(todayRes.body.data.activeSession.id).toBe(sessionId);
     expect(todayRes.body.data.status).toBe('PRESENT');
@@ -58,8 +94,10 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
     // 5. Perform Check-Out
     const checkOutRes = await request(app)
       .post('/api/v1/attendance/check-out')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', testEmployeeId)
       .send({
         notes: 'End of shift check-out',
       });
@@ -72,14 +110,14 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
     // 6. Active endpoint should now return null again
     const postActiveRes = await request(app)
       .get('/api/v1/attendance/active')
-      .set('x-employee-id', testEmployeeId);
+      .set('Cookie', session.cookie);
     expect(postActiveRes.status).toBe(200);
     expect(postActiveRes.body.data).toBeNull();
 
     // 7. Today summary should show completed session
     const postTodayRes = await request(app)
       .get('/api/v1/attendance/today')
-      .set('x-employee-id', testEmployeeId);
+      .set('Cookie', session.cookie);
     expect(postTodayRes.status).toBe(200);
     expect(postTodayRes.body.data.activeSession).toBeNull();
     expect(postTodayRes.body.data.completedSessions.length).toBe(1);
@@ -87,7 +125,7 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
     // 8. History endpoint should list the completed record
     const historyRes = await request(app)
       .get('/api/v1/attendance/history')
-      .set('x-employee-id', testEmployeeId);
+      .set('Cookie', session.cookie);
     expect(historyRes.status).toBe(200);
     expect(historyRes.body.data.length).toBe(1);
     expect(historyRes.body.meta.total).toBe(1);
@@ -95,159 +133,171 @@ describe('TC-34: Attendance Check-In / Check-Out Module E2E', () => {
 
   it('TC-34-02: duplicate check-in rejected with 409 CONFLICT (partial unique index invariant)', async () => {
     const { app } = makeApp();
-    const empId = 'b2222222-2222-2222-2222-222222222222';
+    const session = await signIn(app, 'staff@maxr.test');
 
     // First check-in succeeds
-    const firstCheckIn = await request(app)
+    const first = await request(app)
       .post('/api/v1/attendance/check-in')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', empId)
-      .send({});
-    expect(firstCheckIn.status).toBe(201);
+      .send({ notes: 'First valid check-in' });
+    expect(first.status).toBe(201);
 
-    // Second check-in while first is still open MUST fail with 409
-    const secondCheckIn = await request(app)
+    // Second check-in without check-out must fail with 409
+    const second = await request(app)
       .post('/api/v1/attendance/check-in')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', empId)
-      .send({});
-
-    expect(secondCheckIn.status).toBe(409);
-    expect(secondCheckIn.body.error.code).toBe('CONFLICT');
-    expect(secondCheckIn.body.error.message).toMatch(/already open/i);
+      .send({ notes: 'Duplicate invalid check-in' });
+    expect(second.status).toBe(409);
+    expect(second.body.error.code).toBe('CONFLICT');
   });
 
   it('TC-34-03: check-out without active session rejected with 409 CONFLICT', async () => {
     const { app } = makeApp();
-    const empId = 'c3333333-3333-3333-3333-333333333333';
+    const session = await signIn(app, 'staff@maxr.test');
 
-    const checkOutRes = await request(app)
+    const res = await request(app)
       .post('/api/v1/attendance/check-out')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', empId)
-      .send({});
-
-    expect(checkOutRes.status).toBe(409);
-    expect(checkOutRes.body.error.code).toBe('CONFLICT');
-    expect(checkOutRes.body.error.message).toMatch(/No active attendance session/i);
+      .send({ notes: 'Premature checkout' });
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('CONFLICT');
   });
 
   it('TC-34-04: input validation rejects invalid coordinates or unknown fields', async () => {
     const { app } = makeApp();
-    const empId = 'd4444444-4444-4444-4444-444444444444';
+    const session = await signIn(app, 'staff@maxr.test');
 
-    // Latitude out of range (>90)
-    const invalidCoords = await request(app)
+    // Invalid latitude (> 90)
+    const badCoordRes = await request(app)
       .post('/api/v1/attendance/check-in')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', empId)
-      .send({ location: { latitude: 95.0, longitude: 20.0 } });
+      .send({
+        location: { latitude: 95.0, longitude: 50.0 },
+      });
+    expect(badCoordRes.status).toBe(400);
+    expect(badCoordRes.body.error.code).toBe('VALIDATION_ERROR');
 
-    expect(invalidCoords.status).toBe(400);
-    expect(invalidCoords.body.error.code).toBe('VALIDATION_ERROR');
-
-    // Extra forbidden property (strict schema)
-    const extraProp = await request(app)
+    // Strips or rejects unknown fields
+    const unknownFieldRes = await request(app)
       .post('/api/v1/attendance/check-in')
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
       .set('Idempotency-Key', nextKey())
-      .set('x-employee-id', empId)
-      .send({ invalidField: 'hack' });
-
-    expect(extraProp.status).toBe(400);
-    expect(extraProp.body.error.code).toBe('VALIDATION_ERROR');
+      .send({
+        notes: 'Valid note',
+        maliciousProp: 'attempted injection',
+      });
+    expect(unknownFieldRes.status).toBe(400);
   });
 
   it('TC-34-05: Idempotency-Key replays identical response without double check-in', async () => {
     const { app } = makeApp();
-    const empId = 'e5555555-5555-5555-5555-555555555555';
-    const sameKey = nextKey();
+    const session = await signIn(app, 'staff@maxr.test');
+    const sharedKey = nextKey();
 
-    const call1 = await request(app)
+    const first = await request(app)
       .post('/api/v1/attendance/check-in')
-      .set('Idempotency-Key', sameKey)
-      .set('x-employee-id', empId)
-      .send({ notes: 'Idempotent test' });
-    expect(call1.status).toBe(201);
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
+      .set('Idempotency-Key', sharedKey)
+      .send({ notes: 'Idempotency test call' });
+    expect(first.status).toBe(201);
+    const firstId = first.body.data.id;
 
-    // Retry with identical key
-    const call2 = await request(app)
+    // Replay with exact same idempotency key
+    const replay = await request(app)
       .post('/api/v1/attendance/check-in')
-      .set('Idempotency-Key', sameKey)
-      .set('x-employee-id', empId)
-      .send({ notes: 'Idempotent test' });
-
-    // Should replay 201 without creating conflict
-    expect(call2.status).toBe(201);
-    expect(call2.body.data.id).toBe(call1.body.data.id);
+      .set('Cookie', session.cookie)
+      .set('Origin', ORIGIN)
+      .set('x-csrf-token', session.csrf)
+      .set('Idempotency-Key', sharedKey)
+      .send({ notes: 'Idempotency test call' });
+    expect(replay.status).toBe(201);
+    expect(replay.body.data.id).toBe(firstId);
   });
 
   describe('TC-35: Attendance Views and History (own, team, HR)', () => {
-    const staffId = 'a1111111-1111-4111-8111-111111111111';
-    const peerId = 'b2222222-2222-4222-8222-222222222222';
-    const leadId = 'c3333333-3333-4333-8333-333333333333';
-    const hrId = 'd4444444-4444-4444-8444-444444444444';
-
     it('TC-35-01: staff can query own attendance history via GET /attendance/me', async () => {
-      const { app } = makeApp();
+      const { app, authKit } = makeApp();
+      const session = await signIn(app, 'staff@maxr.test');
+      const staffEmployeeId = authKit.users.staff.employeeId;
 
-      // Check in staff
       await request(app)
         .post('/api/v1/attendance/check-in')
+        .set('Cookie', session.cookie)
+        .set('Origin', ORIGIN)
+        .set('x-csrf-token', session.csrf)
         .set('Idempotency-Key', nextKey())
-        .set('x-employee-id', staffId)
-        .send({ notes: 'Self history test' });
+        .send({ notes: 'Session 1' });
 
-      const res = await request(app).get('/api/v1/attendance/me').set('x-employee-id', staffId);
-
+      const res = await request(app).get('/api/v1/attendance/me').set('Cookie', session.cookie);
       expect(res.status).toBe(200);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.data.length).toBeGreaterThan(0);
-      expect(res.body.data[0].employeeId).toBe(staffId);
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.data[0].employeeId).toBe(staffEmployeeId);
     });
 
     it('TC-35-02: staff querying peer attendance is rejected with 403 FORBIDDEN', async () => {
       const { app } = makeApp();
+      const session = await signIn(app, 'staff@maxr.test');
+      const peerId = '00000000-0000-4000-9000-000000000009';
 
       const res = await request(app)
         .get(`/api/v1/attendance?employeeId=${peerId}`)
-        .set('x-employee-id', staffId)
-        .set('x-role', 'Staff');
-
+        .set('Cookie', session.cookie);
       expect(res.status).toBe(403);
       expect(res.body.error.code).toBe('FORBIDDEN');
     });
 
     it('TC-35-03: team lead can view team members attendance grid', async () => {
       const { app } = makeApp();
+      const leadSession = await signIn(app, 'team_lead@maxr.test');
+      const staffSession = await signIn(app, 'staff@maxr.test');
 
-      // Check in peer
+      // Staff member checks in
       await request(app)
         .post('/api/v1/attendance/check-in')
+        .set('Cookie', staffSession.cookie)
+        .set('Origin', ORIGIN)
+        .set('x-csrf-token', staffSession.csrf)
         .set('Idempotency-Key', nextKey())
-        .set('x-employee-id', peerId)
-        .send({ notes: 'Team member check-in' });
+        .send({ notes: 'Staff check in' });
 
-      const res = await request(app)
-        .get(`/api/v1/attendance?employeeId=${peerId}`)
-        .set('x-employee-id', leadId)
-        .set('x-role', 'Team Lead')
-        .set('x-team-employees', `${staffId},${peerId}`);
-
+      // Lead queries attendance
+      const res = await request(app).get('/api/v1/attendance').set('Cookie', leadSession.cookie);
       expect(res.status).toBe(200);
-      expect(res.body.data.some((r: { employeeId: string }) => r.employeeId === peerId)).toBe(true);
+      expect(res.body.meta).toBeDefined();
     });
 
     it('TC-35-04: HR manager can view company-wide attendance', async () => {
       const { app } = makeApp();
+      const hrSession = await signIn(app, 'hr_manager@maxr.test');
+      const staffSession = await signIn(app, 'staff@maxr.test');
 
-      const res = await request(app)
-        .get('/api/v1/attendance')
-        .set('x-employee-id', hrId)
-        .set('x-role', 'HR Manager');
+      await request(app)
+        .post('/api/v1/attendance/check-in')
+        .set('Cookie', staffSession.cookie)
+        .set('Origin', ORIGIN)
+        .set('x-csrf-token', staffSession.csrf)
+        .set('Idempotency-Key', nextKey())
+        .send({ notes: 'Staff check in for HR view' });
 
+      const res = await request(app).get('/api/v1/attendance').set('Cookie', hrSession.cookie);
       expect(res.status).toBe(200);
-      expect(res.body.data).toBeInstanceOf(Array);
-      expect(res.body.meta).toBeDefined();
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

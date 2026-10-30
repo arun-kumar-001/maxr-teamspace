@@ -1,11 +1,11 @@
 import { idParamSchema } from '@maxr/shared';
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate } from '../../http/validate';
 import { PlatformServices } from '../../platform';
 import { ApprovalsController } from './approvals.controller';
-import { ApprovalsRepository } from './approvals.repository';
+import { ApprovalsRepository, IApprovalsRepository } from './approvals.repository';
 import {
   createApprovalSchema,
   decisionSchema,
@@ -16,10 +16,14 @@ import { ApprovalsService } from './approvals.service';
 export function createApprovalsRouter(
   idempotencyStore: IdempotencyStore,
   platform: Pick<PlatformServices, 'audit' | 'events'>,
+  authenticate: RequestHandler,
+  repository?: IApprovalsRepository,
 ): Router {
   const router = Router();
+  router.use(authenticate);
+
   const controller = new ApprovalsController(
-    new ApprovalsService(new ApprovalsRepository(), platform),
+    new ApprovalsService(repository ?? new ApprovalsRepository(), platform),
   );
 
   router.get('/', validate({ query: listApprovalsQuerySchema }), asyncHandler(controller.list));

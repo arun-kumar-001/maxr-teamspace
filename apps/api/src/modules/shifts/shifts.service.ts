@@ -18,6 +18,7 @@ import {
 
 export interface RequestContext {
   actorId: string;
+  actorRole?: string;
   requestId?: string;
 }
 
