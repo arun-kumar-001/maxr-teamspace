@@ -7,6 +7,7 @@ import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
+import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
 import { buildOpenApiDocument } from '../openapi/build-spec';
@@ -41,6 +42,10 @@ export function createApiRouter({
   router.use('/auth', auth.router);
   router.use('/audit-logs', createAuditLogs({ authenticate: auth.authenticate }).router);
   router.use('/settings', createSettings({ platform, authenticate: auth.authenticate }).router);
+  const users = createUsers({ platform, authenticate: auth.authenticate });
+  router.use('/users', users.usersRouter);
+  router.use('/roles', users.rolesRouter);
+  router.use('/permissions', users.permissionsRouter);
   router.use(
     '/departments',
     createDepartmentRouter({

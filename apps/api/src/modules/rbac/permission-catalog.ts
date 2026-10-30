@@ -40,7 +40,7 @@ export const PERMISSION_CATALOG = {
   },
   'users.assign_role': {
     description: 'Assign roles to user accounts',
-    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+    grants: { [ADMIN]: ALL },
   },
   'roles.list': { description: 'List system roles', grants: { [ADMIN]: ALL } },
   'permissions.list': { description: 'List system permissions', grants: { [ADMIN]: ALL } },
