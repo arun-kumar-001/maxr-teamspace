@@ -4,6 +4,7 @@ import '../modules/_template/template.openapi';
 import '../modules/auth/auth.openapi';
 import '../modules/attendance/attendance.openapi';
 import '../modules/reports/report.openapi';
+import '../modules/settings/settings.openapi';
 import '../modules/employees/departments/department.openapi';
 import '../modules/employees/designations/designation.openapi';
 import '../platform/storage/files.openapi';
