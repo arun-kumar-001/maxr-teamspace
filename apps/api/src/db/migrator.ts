@@ -14,6 +14,11 @@ export function getMigrationsDir(): string {
   if (fs.existsSync(srcPath)) {
     return srcPath;
   }
+  // Check relative src directory from compiled dist/db
+  const relativeSrcPath = path.resolve(__dirname, '../../src/db/migrations');
+  if (fs.existsSync(relativeSrcPath)) {
+    return relativeSrcPath;
+  }
   const rootSrcPath = path.resolve(process.cwd(), 'apps/api/src/db/migrations');
   if (fs.existsSync(rootSrcPath)) {
     return rootSrcPath;

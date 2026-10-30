@@ -109,7 +109,7 @@ Stack ADR; monorepo scaffold; Docker dev env; CI gates; DB migrations + base tab
 | D-19 | Offboarding | Named, never defined | Mirror onboarding checklist; define items |
 | D-20 | Onboarding checklist | Items and per-step owners (IT/Admin role?) | Define items; IT step owned by Admin |
 | D-21 | RBAC style | `permissions(module, action, scope)` implies data-driven | Seeded permission catalog; roles fixed at 4 in MVP; admin edits assignments only |
-| D-22 | Missing inputs | `AGENTS_UNIVERSAL.md` and **MAXR Flow color palette** were not supplied | Provide both; palette in `AGENTS.md` §8 is **sampled from the report cover, provisional** |
+| D-22 | Missing inputs | `AGENTS_UNIVERSAL.md` not supplied; MAXR Flow palette **now supplied** (product screenshot, sampled per pixel into `docs/design/DESIGN.md`) | Still needed: `AGENTS_UNIVERSAL.md`, official logo files, confirmed font names |
 | D-23 | HR delegated deactivation | Figure: "Super Admin (HR Manager if delegated)" | Model as explicit permission `employee.deactivate` grantable to HR |
 | D-24 | Expense and task owner assignment between developers | Brief assigns Dev 2 attendance→collaboration; expenses/reports unassigned | Expenses + company settings → Dev 1 (after P3); reports framework → TL |
 | D-25 | Data protection / retention | PII, ID docs, bank data; no policy stated | TL to confirm legal basis and retention before P3 |

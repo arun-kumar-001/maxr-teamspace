@@ -5,6 +5,7 @@ import { checkDatabaseHealth } from './db/client';
 import { checkRedisHealth } from './db/redis';
 import { HealthDependencies, createHealthHandler } from './health/health';
 import { HttpConfig, loadHttpConfig } from './http/http-config';
+import { securityHeaders } from './http/security-headers';
 import { InMemoryIdempotencyStore } from './http/idempotency';
 import { createRateLimiter } from './http/rate-limit';
 import { Logger, getLogger } from './logging/logger';
@@ -13,7 +14,12 @@ import { createErrorHandler } from './middleware/error-handler';
 import { notFoundHandler } from './middleware/not-found';
 import { requestIdMiddleware } from './middleware/request-id';
 import { Platform, createPlatform } from './platform';
+import { publicRoute } from './modules/rbac';
+import { ReportRegistry } from './modules/reports';
+import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
 import { createApiRouter } from './routes';
+import { getPool } from './db/client';
+import { getRedisClient } from './db/redis';
 
 export interface AppOptions {
   logger?: Logger;
@@ -24,6 +30,10 @@ export interface AppOptions {
   health?: HealthDependencies;
   /** Shared services (audit, events, notifications, storage). Defaults to the environment-configured ones. */
   platform?: Platform;
+  /** Sign-in, sessions and the `authenticate` middleware. Defaults to PostgreSQL + Redis + Argon2id. */
+  auth?: AuthServices;
+  /** Report definitions from the modules; defaults to none. */
+  reportRegistry?: ReportRegistry;
 }
 
 export function createApp(options: AppOptions = {}): Express {
@@ -31,6 +41,15 @@ export function createApp(options: AppOptions = {}): Express {
   const http = options.http ?? loadHttpConfig();
   const nodeEnv = options.nodeEnv ?? config.NODE_ENV;
   const platform = options.platform ?? createPlatform({ logger });
+  const auth =
+    options.auth ??
+    createAuth({
+      config: loadAuthConfig(process.env, nodeEnv, config.CORS_ORIGIN),
+      audit: platform.audit,
+      loginRateLimiter: createRateLimiter(http.loginRateLimit),
+      getPool,
+      getRedis: getRedisClient,
+    });
 
   const app = express();
   app.disable('x-powered-by');
@@ -41,6 +60,7 @@ export function createApp(options: AppOptions = {}): Express {
   // Request id first so every later log line and error carries it.
   app.use(requestIdMiddleware);
   app.use(requestLogger(logger));
+  app.use(securityHeaders({ hsts: nodeEnv === 'production' }));
 
   // Security & Core Middleware
   app.use(
@@ -48,7 +68,7 @@ export function createApp(options: AppOptions = {}): Express {
       origin: config.CORS_ORIGIN,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'Idempotency-Key'],
+      allowedHeaders: ['Content-Type', 'X-Request-Id', 'Idempotency-Key', 'X-CSRF-Token'],
     }),
   );
   app.use(express.json({ limit: '1mb' }));
@@ -62,6 +82,7 @@ export function createApp(options: AppOptions = {}): Express {
   // Health check endpoint (single route; rate limiter skips it)
   app.get(
     '/api/v1/health',
+    publicRoute(),
     createHealthHandler(
       options.health ?? {
         checkDatabase: () => checkDatabaseHealth(logger),
@@ -76,6 +97,8 @@ export function createApp(options: AppOptions = {}): Express {
     createApiRouter({
       idempotencyStore: new InMemoryIdempotencyStore(),
       platform,
+      auth,
+      reportRegistry: options.reportRegistry,
       exposeDevRoutes: nodeEnv !== 'production',
     }),
   );

@@ -3,6 +3,7 @@ import { notFound, unprocessable } from '../../http/errors';
 import { buildPage, resolveSort, toOffsetLimit } from '../../http/pagination';
 import { PlatformServices } from '../../platform';
 import { EventCollector } from '../../platform/events/event-bus';
+import { ScopeFilter } from '../rbac';
 import { SORTABLE_FIELDS } from './template.schemas';
 import { ITemplateRepository } from './template.repository';
 import {
@@ -20,6 +21,8 @@ import {
 /** Who is doing this and for which request. Built from the HTTP request by the controller. */
 export interface RequestContext {
   actorId: string;
+  /** The new record's owner: scope rules compare owners with employee ids, not user ids. */
+  employeeId: string;
   requestId?: string;
 }
 
@@ -33,18 +36,18 @@ export class TemplateService {
 
   async list(
     query: TemplateListQuery,
-    visibleOwnerIds?: string[],
+    scope: ScopeFilter,
   ): Promise<PaginatedResponse<TemplateEntity>> {
     const sort = resolveSort(query, SORTABLE_FIELDS, { column: 'createdAt', order: 'desc' });
     const { items, total } = await this.repository.findMany(
       { ...toOffsetLimit(query), sort, search: query.search, isActive: query.isActive },
-      visibleOwnerIds,
+      scope,
     );
     return buildPage(items, total, query);
   }
 
-  async getById(id: string, visibleOwnerIds?: string[]): Promise<TemplateEntity> {
-    const item = await this.repository.findById(id, visibleOwnerIds);
+  async getById(id: string, scope: ScopeFilter): Promise<TemplateEntity> {
+    const item = await this.repository.findById(id, scope);
     if (!item) {
       // 404 (not 403) for out-of-scope records, per AGENTS.md §5.
       throw notFound('Template not found');
@@ -60,7 +63,7 @@ export class TemplateService {
     const audit = this.platform.audit.withContext(ctx);
     const events = new EventCollector();
     try {
-      const created = await this.repository.create(dto, ctx.actorId); // <- transaction commits here
+      const created = await this.repository.create(dto, ctx.employeeId); // <- transaction commits here
       await audit.record({
         action: 'template.create',
         outcome: 'success',
@@ -91,9 +94,9 @@ export class TemplateService {
     id: string,
     dto: UpdateTemplateDto,
     ctx: RequestContext,
-    visibleOwnerIds?: string[],
+    scope: ScopeFilter,
   ): Promise<TemplateEntity> {
-    await this.getById(id, visibleOwnerIds);
+    await this.getById(id, scope);
     const updated = await this.repository.update(id, dto);
     if (!updated) {
       throw notFound('Template not found');
@@ -109,8 +112,8 @@ export class TemplateService {
     return updated;
   }
 
-  async deactivate(id: string, ctx: RequestContext, visibleOwnerIds?: string[]): Promise<void> {
-    const item = await this.getById(id, visibleOwnerIds);
+  async deactivate(id: string, ctx: RequestContext, scope: ScopeFilter): Promise<void> {
+    const item = await this.getById(id, scope);
     if (!item.isActive) {
       // Example of a business-rule violation: 422, not 400.
       throw unprocessable('Template is already inactive');

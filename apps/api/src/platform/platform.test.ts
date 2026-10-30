@@ -1,3 +1,4 @@
+import { testActor } from '../test/fixtures';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
@@ -217,7 +218,7 @@ describe('everything together, using only fakes (TC-13-36)', () => {
     const link = await storage.createDownloadLink(file.key, { subject: 'emp-1' });
     const { app } = makeMiniApp((a) => {
       a.use((req, _res, next) => {
-        req.actor = { id: 'emp-1' };
+        req.actor = testActor('emp-1');
         next();
       });
       a.use('/api/v1/files', createFilesRouter(storage));

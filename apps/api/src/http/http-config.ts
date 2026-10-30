@@ -2,6 +2,8 @@ export interface HttpConfig {
   /** Number of reverse-proxy hops to trust for `req.ip` (0 locally, 1 behind Nginx). */
   trustProxy: number;
   rateLimit: { windowMs: number; max: number };
+  /** Per-IP limit for POST /auth/login (the per-account lockout is separate). */
+  loginRateLimit: { windowMs: number; max: number };
 }
 
 function readInt(name: string, raw: string | undefined, fallback: number, min: number): number {
@@ -21,6 +23,15 @@ export function loadHttpConfig(env: NodeJS.ProcessEnv = process.env): HttpConfig
     rateLimit: {
       windowMs: readInt('RATE_LIMIT_WINDOW_MS', env.RATE_LIMIT_WINDOW_MS, 60_000, 1000),
       max: readInt('RATE_LIMIT_MAX', env.RATE_LIMIT_MAX, 300, 1),
+    },
+    loginRateLimit: {
+      windowMs: readInt(
+        'LOGIN_RATE_LIMIT_WINDOW_MS',
+        env.LOGIN_RATE_LIMIT_WINDOW_MS,
+        900_000,
+        1000,
+      ),
+      max: readInt('LOGIN_RATE_LIMIT_MAX', env.LOGIN_RATE_LIMIT_MAX, 10, 1),
     },
   };
 }

@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import { parseCorsOrigin } from '../http/cors-origin';
 
 // Load .env from root or apps/api if present
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -59,7 +60,10 @@ export function loadAndValidateConfig(): EnvironmentConfig {
 
   const port = parsePort(process.env.PORT, 4000);
   const host = process.env.HOST || '0.0.0.0';
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+  if (nodeEnv === 'production' && !process.env.CORS_ORIGIN) {
+    throw new Error('[Config Error] CORS_ORIGIN is strictly required in production.');
+  }
+  const corsOrigin = parseCorsOrigin(process.env.CORS_ORIGIN || 'http://localhost:3000', nodeEnv);
 
   // In production, DATABASE_URL and SESSION_SECRET are strictly required
   let databaseUrl = process.env.DATABASE_URL;

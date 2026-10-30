@@ -4,6 +4,7 @@ import { AppError } from '../../http/app-error';
 import { asyncHandler } from '../../http/async-handler';
 import { notFound } from '../../http/errors';
 import { validate, validated } from '../../http/validate';
+import { publicRoute } from '../../modules/rbac';
 import { contentDisposition } from './filename';
 import { StorageService } from './storage-service';
 
@@ -20,6 +21,7 @@ export function createFilesRouter(storage: StorageService): Router {
 
   router.get(
     '/download',
+    publicRoute(),
     validate({ query: querySchema }),
     asyncHandler(async (req, res) => {
       const { query } = validated(req, { query: querySchema });

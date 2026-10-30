@@ -28,11 +28,11 @@ apps/api/src/modules/_template/  sample module using every convention
 ## 4. Request lifecycle
 ```
 request → trust proxy → request id → request logger → CORS → JSON body (1 MB)
-        → global rate limit → /api/v1 router → [authenticate → authorize]*(#7/#8)
+        → global rate limit → /api/v1 router → [authenticate → requirePermission]
         → validate(params, query, body) → [idempotency] → controller → service → repository
         → notFound → errorHandler (single place that maps every error to the envelope)
 ```
-`*` arrives with issues #7 and #8; the sample module marks where they plug in.
+Every route declares its access rule; see [rbac.md](rbac.md).
 
 ## 5. Contracts
 **Errors** (extends the existing envelope; never leaks stack traces or internals):
