@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
+import { createAttendanceRouter } from '../modules/attendance';
 import { ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { Platform } from '../platform';
@@ -33,6 +34,13 @@ export function createApiRouter({
   const router = Router();
 
   router.use('/auth', auth.router);
+  router.use(
+    '/attendance',
+    createAttendanceRouter({
+      authenticate: auth.authenticate,
+      audit: platform.audit,
+    }),
+  );
   router.use(
     '/reports',
     createReports({
