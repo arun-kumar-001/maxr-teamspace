@@ -9,6 +9,7 @@
     "src/modules/auth/auth.testing.ts",
     "src/**/*.fixture.js",
     "src/modules/auth/auth.repository.memory.ts",
+    "src/modules/settings/settings.repository.memory.ts",
     "src/modules/rbac/rbac.testing.ts",
     "src/test/**"
   ]

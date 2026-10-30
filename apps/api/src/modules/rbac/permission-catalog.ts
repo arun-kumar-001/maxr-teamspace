@@ -202,6 +202,19 @@ export const PERMISSION_CATALOG = {
     description: 'Approve or reject an approval request',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
   },
+
+  'settings.read': {
+    description: 'View all company settings',
+    grants: { [ADMIN]: ALL },
+  },
+  'settings.read_basic': {
+    description: 'View company name, timezone and work week',
+    grants: everyone(ALL),
+  },
+  'settings.update': {
+    description: 'Change company settings',
+    grants: { [ADMIN]: ALL },
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;
