@@ -170,3 +170,4 @@ export class AttendanceRepository implements IAttendanceRepository {
     return { items, total };
   }
 }
+
