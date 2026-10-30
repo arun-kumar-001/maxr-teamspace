@@ -10,6 +10,7 @@ import {
 } from '../modules/employees';
 import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
+import { createApprovals } from '../modules/approvals';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
 import { createUsers } from '../modules/users';
@@ -56,6 +57,7 @@ export function createApiRouter({
       settingsReader: settings.reader,
     }),
   );
+  router.use('/approvals', createApprovals({ platform, authenticate: auth.authenticate }).router);
   const users = createUsers({ platform, authenticate: auth.authenticate });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);

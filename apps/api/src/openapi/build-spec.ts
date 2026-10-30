@@ -5,6 +5,7 @@ import '../modules/audit-logs/audit-log.openapi';
 import '../modules/auth/auth.openapi';
 import '../modules/attendance/attendance.openapi';
 import '../modules/reports/report.openapi';
+import '../modules/approvals/approvals.openapi';
 import '../modules/settings/settings.openapi';
 import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';
