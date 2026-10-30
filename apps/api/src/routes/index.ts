@@ -3,6 +3,7 @@ import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
 import { createAttendanceRouter } from '../modules/attendance';
+import { createDepartmentRouter, createDesignationRouter } from '../modules/employees';
 import { ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { Platform } from '../platform';
@@ -39,6 +40,22 @@ export function createApiRouter({
     createAttendanceRouter({
       authenticate: auth.authenticate,
       audit: platform.audit,
+    }),
+  );
+  router.use(
+    '/departments',
+    createDepartmentRouter({
+      idempotencyStore,
+      platform,
+      authenticate: auth.authenticate,
+    }),
+  );
+  router.use(
+    '/designations',
+    createDesignationRouter({
+      idempotencyStore,
+      platform,
+      authenticate: auth.authenticate,
     }),
   );
   router.use(

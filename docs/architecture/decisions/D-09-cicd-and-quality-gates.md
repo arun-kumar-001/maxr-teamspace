@@ -1,7 +1,7 @@
 # ADR D-09: CI/CD Pipeline & Quality Gates
 
-- **Status:** Proposed (awaiting Technical Lead approval)
-- **Deciders:** Technical Lead (`arun-kumar-001`), pending
+- **Status:** Approved
+- **Deciders:** Technical Lead (`arun-kumar-001`), approved 2026-10-30
 - **Date:** 2026-10-28
 - **Context:** [Product Baseline §10 (D-09)](../../requirements/product-baseline.md#10-decision-register-needs-technical-lead-approval), [AGENTS.md §10, §11](../../AGENTS.md)
 

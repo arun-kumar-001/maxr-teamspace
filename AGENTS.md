@@ -15,43 +15,47 @@ Internal web platform for workforce management: users/roles, employee directory,
 **Out of scope** (do not build): Sales CRM, direct payroll processing (only attendance/leave summaries and read-only payslips), speculative employee fields not provided by the business owner. [SPEC]
 
 ### Roles (deny by default) [SPEC]
-| Role | Scope | Notes |
-|---|---|---|
-| Admin | Company-wide | Users, roles, security, company config, audit logs |
-| HR Manager | HR scope | Employees, onboarding/offboarding, leave/attendance policy, HR reports |
-| Team Lead | Own team only | Team attendance, leave approval, task assignment, team reports |
-| Staff / Employee | Own records only | Own profile, check-in/out, leave, own tasks, payslips |
+
+| Role             | Scope            | Notes                                                                  |
+| ---------------- | ---------------- | ---------------------------------------------------------------------- |
+| Admin            | Company-wide     | Users, roles, security, company config, audit logs                     |
+| HR Manager       | HR scope         | Employees, onboarding/offboarding, leave/attendance policy, HR reports |
+| Team Lead        | Own team only    | Team attendance, leave approval, task assignment, team reports         |
+| Staff / Employee | Own records only | Own profile, check-in/out, leave, own tasks, payslips                  |
 
 Identity documents, bank accounts and compensation need **explicit permission**.
 
 ### Module ownership / branches
-| Branch | Owner | Scope |
-|---|---|---|
-| `main` | Technical Lead (merges only) | Stable, reviewed releases |
-| `develop` | Technical Lead (merges only) | Integration branch; **every developer PR targets this** |
-| `global/<issue>` (short-lived) | Dev 1 `maxrindia29` (backend) / Dev 2 `maxrindia30-vb` (UI) | Foundation issues #3–#17, cut from `develop` |
-| `feature/employee-management` | Dev 1 `maxrindia29` | Employee Management, user/role admin, settings, expenses (issues #18–#32) |
-| `feature/attendance-collaboration` | Dev 2 `maxrindia30-vb` | Attendance, leave, approvals, notifications, tasks, meetings (issues #33–#48) |
+
+| Branch                             | Owner                                                       | Scope                                                                         |
+| ---------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `main`                             | Technical Lead (merges only)                                | Stable, reviewed releases                                                     |
+| `develop`                          | Technical Lead (merges only)                                | Integration branch; **every developer PR targets this**                       |
+| `global/<issue>` (short-lived)     | Dev 1 `maxrindia29` (backend) / Dev 2 `maxrindia30-vb` (UI) | Foundation issues #3–#17, cut from `develop`                                  |
+| `feature/employee-management`      | Dev 1 `maxrindia29`                                         | Employee Management, user/role admin, settings, expenses (issues #18–#32)     |
+| `feature/attendance-collaboration` | Dev 2 `maxrindia30-vb`                                      | Attendance, leave, approvals, notifications, tasks, meetings (issues #33–#48) |
 
 The Technical Lead reviews and merges developer PRs into `develop`, then raises the single PR `develop → main` at each milestone. If a third developer joins, add a fourth work branch rather than overloading one.
 Start with `docs/development/developer-onboarding.md`.
 
 ## 2. Verified technology stack
 
-| Layer | Choice | Source |
-|---|---|---|
-| Frontend | React + TypeScript, responsive (desktop + mobile web) | [SPEC] |
-| Backend | Node.js, modular layered services under `/api/v1/*` | [SPEC] |
-| Database | PostgreSQL 16 | [SPEC] |
-| Cache | Redis (temporary caching only, never source of truth) | [SPEC] |
-| File storage | Cantobo Server encrypted private storage, signed links | [SPEC] |
-| Edge | Nginx (TLS, rate limiting) | [SPEC] |
-| Delivery | Docker containers, GitHub Actions to Cantobo Server | [SPEC] |
-| Integrations | SMTP/SendGrid email, SMS, calendar sync, payroll export | [SPEC] |
-| Package manager, monorepo layout, backend framework, React version | **Decided (TL):** npm workspaces with one `package-lock.json` (no pnpm), `apps/web` + `apps/api` + `packages/shared`, Express, React 18 + Vite + Tailwind 3, Node 22 | Issue #52, ADR D-02 |
-| ORM/query layer, migrations tool, validation lib, UI kit, state/data-fetching lib, test runners | **Proposed in ADRs D-02..D-09, awaiting TL approval** (in use now: Zod 4, Vitest 5, Testing Library). Do not swap them without an ADR | `docs/architecture/decisions/` |
+| Layer                                                              | Choice                                                                                                                                                               | Source                                                        |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Frontend                                                           | React + TypeScript, responsive (desktop + mobile web)                                                                                                                | [SPEC]                                                        |
+| Backend                                                            | Node.js, modular layered services under `/api/v1/*`                                                                                                                  | [SPEC]                                                        |
+| Database                                                           | PostgreSQL 16                                                                                                                                                        | [SPEC]                                                        |
+| Cache                                                              | Redis (temporary caching only, never source of truth)                                                                                                                | [SPEC]                                                        |
+| File storage                                                       | Cantobo Server encrypted private storage, signed links                                                                                                               | [SPEC]                                                        |
+| Edge                                                               | Nginx (TLS, rate limiting)                                                                                                                                           | [SPEC]                                                        |
+| Delivery                                                           | Docker containers, GitHub Actions to Cantobo Server                                                                                                                  | [SPEC]                                                        |
+| Integrations                                                       | SMTP/SendGrid email, SMS, calendar sync, payroll export                                                                                                              | [SPEC]                                                        |
+| Package manager, monorepo layout, backend framework, React version | **Decided (TL):** npm workspaces with one `package-lock.json` (no pnpm), `apps/web` + `apps/api` + `packages/shared`, Express, React 18 + Vite + Tailwind 3, Node 22 | Issue #52, ADR D-02                                           |
+| ORM/query layer and migrations                                     | **Decided (TL):** PostgreSQL 16 with plain versioned SQL migrations and parameterised queries; no Prisma or Drizzle (ADR D-04)                                       | `docs/architecture/decisions/D-04-database-and-migrations.md` |
+| Validation lib, test runners, lint/format, CI                      | **Decided (TL):** Zod 4, Vitest 5 with Testing Library, ESLint + Prettier, GitHub Actions quality gates (ADR D-03, D-09)                                             | `docs/architecture/decisions/`                                |
+| UI kit, state/data-fetching lib                                    | **Proposed, awaiting TL approval** (shadcn/ui-style primitives on Tailwind; TanStack Query). Do not swap or add a second UI library without an ADR                   | `docs/architecture/decisions/`                                |
 
-**[PROPOSED] defaults still open** (TL to confirm): TanStack Query for data fetching; shadcn/ui-style primitives on Tailwind; SQL migrations with a query layer (Prisma or Drizzle, or the current plain-SQL migrator); Playwright for E2E (issue #62); ESLint + Prettier; Conventional Commits.
+**[PROPOSED] defaults still open** (TL to confirm): TanStack Query for data fetching; shadcn/ui-style primitives on Tailwind; Playwright for E2E (issue #62); Conventional Commits.
 
 Until the ADR lands, do **not** add a framework or library "to get started". Do not commit a lockfile for a package manager that has not been chosen.
 
@@ -69,13 +73,15 @@ Until the ADR lands, do **not** add a framework or library "to get started". Do 
 ## 4. Clean code principles
 
 SOLID, DRY, KISS, YAGNI, separation of concerns.
+
 - Small functions, one reason to change; prefer composition over inheritance.
 - Strict TypeScript (`strict: true`, no `any`, no `@ts-ignore` without a linked reason).
 - Make illegal states unrepresentable: model workflows with explicit state enums + transition tables, not free-form strings.
 - No dead code, no commented-out code, no speculative abstractions, no TODO without an issue link.
-- Comments explain *why*, not *what*. Match surrounding code style and density.
+- Comments explain _why_, not _what_. Match surrounding code style and density.
 
 ### Naming & structure
+
 - Files/folders: `kebab-case`. React components `PascalCase.tsx`. Variables/functions `camelCase`. Types/classes `PascalCase`. Constants `UPPER_SNAKE_CASE`.
 - DB: `snake_case`, plural tables (`leave_requests`), `id` UUID PK, FK `<entity>_id`, `created_at`/`updated_at` `timestamptz`.
 - API: `kebab-case` plural nouns (`/leave-requests`), JSON `camelCase`.
@@ -117,23 +123,24 @@ SOLID, DRY, KISS, YAGNI, separation of concerns.
 
 **Colours and fonts: MaxR Flow** (the company's product). **Layout, shape and component style:** the TL's dashboard references (Ondra, Petalo, Selvar). Full spec: `docs/design/DESIGN.md`; values: `apps/web/src/styles/tokens.css` (single source, mirrored in `tokens.ts`, kept in sync by a test). Use Tailwind token classes; never hardcode hex in components (a test enforces it).
 
-| Token | Hex | Use |
-|---|---|---|
-| `primary` | `#46C7B8` | MaxR Flow teal: active indicator, dots, bars, logo tile. **Never text, never white text on it** |
-| `primary-strong` | `#0D9488` | Icons, focus ring |
-| `primary-deep` / `primary-ink` | `#0F766E` | Solid primary buttons (white text) / teal text and links |
-| `primary-soft` | `#E9F8F6` | Soft teal fills, icon squares |
-| `bg` / `surface` / `surface-raised` / `surface-muted` | `#EEF2F1` / `#FBFCFC` / `#FFFFFF` / `#F2F5F4` | Page / cards / selected tiles, inputs, white buttons / strips and inner tiles |
-| `border` / `border-strong` | `#E3E9E7` / `#D3DCD9` | Card outlines / inputs, outlined buttons |
-| `text` / `text-muted` / `text-subtle` | `#13201E` / `#4F5C5A` / `#5F6C6A` | Body and numbers / secondary / captions |
-| `sidebar-*` | `#0E2826` bg, `#1B3532` raised | Floating dark teal sidebar |
-| `positive-*` / `negative-*` | soft + ink pairs | Change chips (`DeltaChip`) |
-| `tile-peach/yellow/blue/green` | pastels | Attention tiles |
-| `chart-1…7` + `chart-ink-1…7` | blue, teal, pink, purple, amber, green, red | Data only |
-| `success` `warning` `danger` `info` | `#16A34A` `#D97706` `#DC2626` `#2563EB` | Status semantics (approved, pending, rejected, info) |
-| `brand-red` | `#E5322D` **[approx., verify from logo]** | Logo mark only |
+| Token                                                 | Hex                                           | Use                                                                                             |
+| ----------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `primary`                                             | `#46C7B8`                                     | MaxR Flow teal: active indicator, dots, bars, logo tile. **Never text, never white text on it** |
+| `primary-strong`                                      | `#0D9488`                                     | Icons, focus ring                                                                               |
+| `primary-deep` / `primary-ink`                        | `#0F766E`                                     | Solid primary buttons (white text) / teal text and links                                        |
+| `primary-soft`                                        | `#E9F8F6`                                     | Soft teal fills, icon squares                                                                   |
+| `bg` / `surface` / `surface-raised` / `surface-muted` | `#EEF2F1` / `#FBFCFC` / `#FFFFFF` / `#F2F5F4` | Page / cards / selected tiles, inputs, white buttons / strips and inner tiles                   |
+| `border` / `border-strong`                            | `#E3E9E7` / `#D3DCD9`                         | Card outlines / inputs, outlined buttons                                                        |
+| `text` / `text-muted` / `text-subtle`                 | `#13201E` / `#4F5C5A` / `#5F6C6A`             | Body and numbers / secondary / captions                                                         |
+| `sidebar-*`                                           | `#0E2826` bg, `#1B3532` raised                | Floating dark teal sidebar                                                                      |
+| `positive-*` / `negative-*`                           | soft + ink pairs                              | Change chips (`DeltaChip`)                                                                      |
+| `tile-peach/yellow/blue/green`                        | pastels                                       | Attention tiles                                                                                 |
+| `chart-1…7` + `chart-ink-1…7`                         | blue, teal, pink, purple, amber, green, red   | Data only                                                                                       |
+| `success` `warning` `danger` `info`                   | `#16A34A` `#D97706` `#DC2626` `#2563EB`       | Status semantics (approved, pending, rejected, info)                                            |
+| `brand-red`                                           | `#E5322D` **[approx., verify from logo]**     | Logo mark only                                                                                  |
 
 Rules:
+
 - Shell: **floating dark teal sidebar** = the shared `Sidebar` component (Petalo style: solid teal active pill; 24px radius, 16px from the window edges, collapses to an 88px icon rail, `SidebarDrawer` on phone), top bar on the page background, big greeting header. Light content area. No dark theme yet (decide before adding the theme toggle). `navy-*` tokens are legacy: never use them.
 - Fonts: Outfit for greeting, titles and big numbers (`font-display`); Inter for UI text; system fallbacks.
 - Radius: controls 12px, tiles 16px, cards/sidebar/modals 24px, chips fully round. Cards are almost flat (`shadow-card`); selected items `shadow-raised`; primary buttons `shadow-primary`.
@@ -141,17 +148,19 @@ Rules:
 - 8px spacing scale.
 
 ### Responsive and fluid layout (mandatory, every page) [SPEC T§3.1: responsive for desktop and mobile web]
+
 One codebase must work from a small phone to a large/ultrawide monitor. Design **mobile-first, then scale up**; never build a desktop-only or mobile-only screen.
 
-| Tier | Width | Layout expectations |
-|---|---|---|
-| Phone | 320–639px | Single column; sidebar becomes drawer or bottom nav; tables become cards/lists; full-width forms; 44×44px touch targets |
-| Tablet | 640–1023px | 1–2 columns; collapsed icon rail; tables with priority columns |
-| Laptop/desktop | 1024–1535px | Persistent sidebar; multi-column dashboards; full tables |
-| Large monitor | 1536–2559px | More columns/widgets (not stretched text); master-detail split panes; wider tables show more columns |
-| Ultrawide/4K | ≥2560px | Content grids keep growing; readable text/forms capped (≈70ch / ≈960px) and centered; no tiny UI or empty void |
+| Tier           | Width       | Layout expectations                                                                                                     |
+| -------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Phone          | 320–639px   | Single column; sidebar becomes drawer or bottom nav; tables become cards/lists; full-width forms; 44×44px touch targets |
+| Tablet         | 640–1023px  | 1–2 columns; collapsed icon rail; tables with priority columns                                                          |
+| Laptop/desktop | 1024–1535px | Persistent sidebar; multi-column dashboards; full tables                                                                |
+| Large monitor  | 1536–2559px | More columns/widgets (not stretched text); master-detail split panes; wider tables show more columns                    |
+| Ultrawide/4K   | ≥2560px     | Content grids keep growing; readable text/forms capped (≈70ch / ≈960px) and centered; no tiny UI or empty void          |
 
 Rules:
+
 - Breakpoints live in tokens only (`xs 360 · sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536 · 3xl 1920 · 4xl 2560`); no per-component magic widths.
 - Use fluid primitives: CSS grid/flex, `minmax()`, `auto-fit/auto-fill`, `clamp()` for type and spacing, container queries for components, `rem`/`%`/`fr` not fixed `px` widths, `dvh` for full-height layouts.
 - No horizontal page scroll at any width (wide tables scroll inside their own container); no content clipped at 200% browser zoom or enlarged system text; honor safe-area insets and orientation change.
@@ -175,6 +184,7 @@ Rules:
 ## 10. Testing and quality gates
 
 Every PR must pass, and agents must run locally before declaring done:
+
 1. Typecheck, lint, format check.
 2. Unit tests for services/business rules (state transitions, balance math, scope filters).
 3. Integration tests for API endpoints against a real PostgreSQL (migrations applied), including **authorization tests per role** and **cross-scope denial** (Team Lead A cannot read Team B).
@@ -204,11 +214,13 @@ If a feature needs a change there, stop and flag it instead of editing it.
 ## 13. Required workflow for every task
 
 **Before coding**
+
 1. Read this file, the linked issue, and the relevant `docs/requirements` + `docs/architecture` pages.
 2. Inspect existing code for reusable components/services; check `git status` and current branch.
 3. Confirm the task is in your module's scope and not in §1 out-of-scope. List assumptions; ask if a business rule is ambiguous.
 
 **After coding**
+
 1. Run the quality gates in §10 and paste results in the PR.
 2. Self-review the diff for: missing authz/scope check, unvalidated input, N+1 queries, missing states (loading/empty/error), hardcoded colors/secrets, leaked PII in logs.
 3. Update docs (`docs/project-status.md`, API docs) and `.env.example` if config changed.
@@ -237,13 +249,13 @@ Spec source: `MAXR_ONE_Staff_Management_HLD_LLD_Architect_Specification.pdf` (v1
 
 Project skills live in `.claude/skills/` (committed, so they load in cloud sessions). Review any new skill before adding it; skills run with full agent permissions.
 
-| Skill | Source | Use for |
-|---|---|---|
+| Skill                   | Source                                    | Use for                                                                                                                            |
+| ----------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `design-taste-frontend` | Leonxlnx/taste-skill (`skills-lock.json`) | Visual quality, dashboards/admin screens, anti-generic UI. **`docs/design/DESIGN.md` and the §8 tokens win over its suggestions.** |
-| `react-best-practices` | vercel-labs/agent-skills | React performance and patterns |
-| `composition-patterns` | vercel-labs/agent-skills | Component composition, avoiding boolean-prop sprawl |
-| `web-design-guidelines` | vercel-labs/agent-skills | UI/accessibility review |
-| `21st-ui` | 21st-dev/magic-mcp | Find/generate UI components via the 21st MCP |
+| `react-best-practices`  | vercel-labs/agent-skills                  | React performance and patterns                                                                                                     |
+| `composition-patterns`  | vercel-labs/agent-skills                  | Component composition, avoiding boolean-prop sprawl                                                                                |
+| `web-design-guidelines` | vercel-labs/agent-skills                  | UI/accessibility review                                                                                                            |
+| `21st-ui`               | 21st-dev/magic-mcp                        | Find/generate UI components via the 21st MCP                                                                                       |
 
 - `.mcp.json` registers the 21st MCP. It needs the `API_KEY_21ST` environment variable (set it in the cloud environment secrets; never commit the key). Generated components must be adapted to `components/ui` and the §8 tokens.
 - `VoltAgent/awesome-design-md` is a catalog of `DESIGN.md` examples, kept as reference only. Our own style is in `docs/design/DESIGN.md` (MaxR Flow colours in the reference dashboard layout).
