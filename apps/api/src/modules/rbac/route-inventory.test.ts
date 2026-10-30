@@ -13,6 +13,12 @@ const PUBLIC = [
   'GET /api/v1/openapi.json', // development only: not mounted when NODE_ENV=production
 ];
 
+/**
+ * Routes any signed-in user may call without a permission: a user's own session and password
+ * only. Everything else needs `requirePermission`. Adding a route here is a TL decision.
+ */
+const AUTHENTICATED_ONLY = ['GET /api/v1/auth/me', 'POST /api/v1/auth/change-password'];
+
 describe('route inventory (every route declares its access rule)', () => {
   const routes = listRoutes(makeApp().app);
   const label = (r: { method: string; path: string }) => `${r.method} ${r.path}`;
@@ -40,6 +46,11 @@ describe('route inventory (every route declares its access rule)', () => {
   it('only the reviewed routes are public', () => {
     const publicRoutes = routes.filter((r) => r.access[0]?.type === 'public').map(label);
     expect(publicRoutes.sort()).toEqual([...PUBLIC].sort());
+  });
+
+  it('only the reviewed routes use authenticatedOnly (everything else needs a permission)', () => {
+    const lazy = routes.filter((r) => r.access[0]?.type === 'authenticated').map(label);
+    expect(lazy.sort()).toEqual([...AUTHENTICATED_ONLY].sort());
   });
 
   it('the sample module and the OpenAPI document are not mounted in production', () => {
