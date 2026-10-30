@@ -51,7 +51,7 @@ A user with several roles gets the widest scope per permission.
 
 ## Route markers and the CI check
 
-Every route carries exactly one of `requirePermission(...)`, `publicRoute()` or `authenticatedOnly()` (any signed-in user, for own session and password). `route-inventory.test.ts` lists every registered route and fails when one has none, and keeps the set of public routes an explicit reviewed list: health, login, signed file download, and the OpenAPI document (development only).
+Every route carries exactly one of `requirePermission(...)`, `publicRoute()` or `authenticatedOnly()` (any signed-in user, for own session and password). `route-inventory.test.ts` lists every registered route and fails when one has none, and keeps both the public routes and the `authenticatedOnly()` routes (own session and password: `/auth/me`, `/auth/change-password`) as explicit reviewed lists; adding to either is a TL decision: health, login, signed file download, and the OpenAPI document (development only).
 
 ## Tests every module writes
 
