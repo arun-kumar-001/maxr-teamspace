@@ -13,6 +13,7 @@ import { createErrorHandler } from './middleware/error-handler';
 import { notFoundHandler } from './middleware/not-found';
 import { requestIdMiddleware } from './middleware/request-id';
 import { Platform, createPlatform } from './platform';
+import { publicRoute } from './modules/rbac';
 import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
 import { createApiRouter } from './routes';
 import { getPool } from './db/client';
@@ -76,6 +77,7 @@ export function createApp(options: AppOptions = {}): Express {
   // Health check endpoint (single route; rate limiter skips it)
   app.get(
     '/api/v1/health',
+    publicRoute(),
     createHealthHandler(
       options.health ?? {
         checkDatabase: () => checkDatabaseHealth(logger),

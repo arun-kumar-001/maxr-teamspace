@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
+import { publicRoute } from '../modules/rbac';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
 import { buildOpenApiDocument } from '../openapi/build-spec';
@@ -16,7 +17,8 @@ export interface ApiRouterOptions {
 
 /**
  * The single /api/v1 router. Every module is mounted here, so the surface of the API can be
- * read in one place. Authentication (`auth.authenticate`, #7) and authorization (#8) are applied per module router.
+ * read in one place. Authentication (`auth.authenticate`) and authorization (`requirePermission`) are applied per route;
+ * a test lists every route and fails when one declares neither a permission nor an explicit public/authenticated marker.
  */
 export function createApiRouter({
   idempotencyStore,
@@ -32,8 +34,8 @@ export function createApiRouter({
   router.use('/files', createFilesRouter(platform.storage));
 
   if (exposeDevRoutes) {
-    router.use('/templates', createTemplateRouter(idempotencyStore, platform));
-    router.get('/openapi.json', (_req, res) => {
+    router.use('/templates', createTemplateRouter(idempotencyStore, platform, auth.authenticate));
+    router.get('/openapi.json', publicRoute(), (_req, res) => {
       res.status(200).json(buildOpenApiDocument());
     });
   }

@@ -8,7 +8,7 @@ registerRoute({
   path: '/auth/login',
   tags,
   summary: 'Sign in with email and password',
-  permission: 'public',
+  access: 'Public',
   body: loginSchema,
   extraResponses: {
     429: 'Too many failed attempts for this account or from this address (see Retry-After)',
@@ -26,7 +26,7 @@ registerRoute({
   path: '/auth/me',
   tags,
   summary: 'The signed-in user, their role and permissions, and the CSRF token',
-  permission: 'authenticated',
+  access: 'Any signed-in user',
   success: { status: 200, description: 'The current session', schema: sessionResponseSchema },
 });
 
@@ -35,7 +35,7 @@ registerRoute({
   path: '/auth/logout',
   tags,
   summary: 'End the current session',
-  permission: 'authenticated',
+  permission: 'auth.logout',
   success: { status: 204, description: 'Signed out; the cookie is cleared' },
 });
 
@@ -44,7 +44,7 @@ registerRoute({
   path: '/auth/change-password',
   tags,
   summary: 'Change the password; all other sessions of the user end',
-  permission: 'authenticated',
+  access: 'Any signed-in user',
   body: changePasswordSchema,
   extraResponses: {
     403: 'The current password is wrong',

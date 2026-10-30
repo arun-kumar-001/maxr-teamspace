@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { idParamSchema } from '@maxr/shared';
 import { validated } from '../../http/validate';
+import { accessFor } from '../rbac';
 import { RequestContext, TemplateService } from './template.service';
 import {
   createTemplateSchema,
@@ -12,20 +13,23 @@ import {
 export class TemplateController {
   constructor(private readonly service: TemplateService) {}
 
-  // `actor` is set by the auth middleware (issue #7); `visibleOwnerIds` by the RBAC scope
-  // resolver (issue #8). Until they exist the sample runs unrestricted as "system".
+  // `req.actor` comes from `authenticate`, `accessFor(req).filter` from `requirePermission`.
   private context(req: Request): RequestContext {
-    return { actorId: req.actor?.id ?? 'system', requestId: req.id };
+    const { actor } = req;
+    if (!actor) {
+      throw new Error('authenticate() did not run before this handler');
+    }
+    return { actorId: actor.id, employeeId: actor.employeeId, requestId: req.id };
   }
 
   list = async (req: Request, res: Response): Promise<void> => {
     const { query } = validated(req, { query: listTemplatesQuerySchema });
-    res.status(200).json(await this.service.list(query));
+    res.status(200).json(await this.service.list(query, accessFor(req).filter));
   };
 
   getById = async (req: Request, res: Response): Promise<void> => {
     const { params } = validated(req, { params: idParamSchema });
-    res.status(200).json({ data: await this.service.getById(params.id) });
+    res.status(200).json({ data: await this.service.getById(params.id, accessFor(req).filter) });
   };
 
   create = async (req: Request, res: Response): Promise<void> => {
@@ -35,12 +39,14 @@ export class TemplateController {
 
   update = async (req: Request, res: Response): Promise<void> => {
     const { params, body } = validated(req, { params: idParamSchema, body: updateTemplateSchema });
-    res.status(200).json({ data: await this.service.update(params.id, body, this.context(req)) });
+    res.status(200).json({
+      data: await this.service.update(params.id, body, this.context(req), accessFor(req).filter),
+    });
   };
 
   deactivate = async (req: Request, res: Response): Promise<void> => {
     const { params } = validated(req, { params: idParamSchema });
-    await this.service.deactivate(params.id, this.context(req));
+    await this.service.deactivate(params.id, this.context(req), accessFor(req).filter);
     res.status(200).json({ data: { id: params.id, isActive: false } });
   };
 }

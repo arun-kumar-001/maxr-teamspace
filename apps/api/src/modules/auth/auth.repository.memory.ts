@@ -12,7 +12,6 @@ export class InMemoryAuthRepository implements AuthRepository {
   readonly users = new Map<string, AuthUser>();
   readonly attempts: Attempt[] = [];
   readonly lastLogin = new Map<string, Date>();
-  permissionsByRole: Record<string, string[]> = {};
 
   /** `ready` lets a test kit finish hashing its users' passwords before the first lookup. */
   constructor(
@@ -29,10 +28,6 @@ export class InMemoryAuthRepository implements AuthRepository {
   async findUserById(id: string): Promise<AuthUser | null> {
     await this.ready;
     return this.users.get(id) ?? null;
-  }
-
-  async getPermissionKeys(roleKeys: string[]): Promise<string[]> {
-    return [...new Set(roleKeys.flatMap((role) => this.permissionsByRole[role] ?? []))].sort();
   }
 
   async recordLoginAttempt(attempt: {
