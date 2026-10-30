@@ -10,7 +10,6 @@ export interface IEmployeeDirectoryRepository {
   findMany(
     params: EmployeeDirectoryFindManyParams,
   ): Promise<{ items: EmployeeDirectoryItem[]; total: number }>;
-  findById(id: string): Promise<EmployeeDirectoryItem | null>;
 }
 
 interface EmployeeDirectoryRow {
@@ -202,40 +201,6 @@ export class PgEmployeeDirectoryRepository implements IEmployeeDirectoryReposito
       total,
     };
   }
-
-  async findById(id: string): Promise<EmployeeDirectoryItem | null> {
-    const res = await this.getPool().query<EmployeeDirectoryRow>(
-      `SELECT
-         e.id,
-         e.employee_code,
-         e.first_name,
-         e.last_name,
-         e.email,
-         e.phone,
-         e.status,
-         e.joining_date,
-         e.created_at,
-         e.updated_at,
-         d.id AS dept_id,
-         d.name AS dept_name,
-         d.code AS dept_code,
-         des.id AS desig_id,
-         des.title AS desig_title,
-         des.code AS desig_code,
-         des.level AS desig_level,
-         m.id AS manager_id,
-         m.first_name AS manager_first_name,
-         m.last_name AS manager_last_name,
-         m.employee_code AS manager_employee_code
-        FROM employees e
-        JOIN departments d ON e.department_id = d.id
-        JOIN designations des ON e.designation_id = des.id
-        LEFT JOIN employees m ON e.manager_id = m.id
-       WHERE e.id = $1`,
-      [id],
-    );
-    return res.rows[0] ? toEntity(res.rows[0]) : null;
-  }
 }
 
 export class MemoryEmployeeDirectoryRepository implements IEmployeeDirectoryRepository {
@@ -243,10 +208,6 @@ export class MemoryEmployeeDirectoryRepository implements IEmployeeDirectoryRepo
 
   add(item: EmployeeDirectoryItem): void {
     this.items.set(item.id, item);
-  }
-
-  async findById(id: string): Promise<EmployeeDirectoryItem | null> {
-    return this.items.get(id) ?? null;
   }
 
   async findMany(

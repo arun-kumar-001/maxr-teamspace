@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { describe, expect, it } from 'vitest';
 import { MemoryEmployeeDirectoryRepository } from './directory.repository';
+import { employeeDirectoryQuerySchema } from './directory.schemas';
 import { EmployeeDirectoryService } from './directory.service';
 import { EmployeeDirectoryItem } from './directory.types';
 
@@ -242,5 +243,26 @@ describe('EmployeeDirectoryService (Unit Tests)', () => {
     // No row repeated across pages
     expect(ids1.includes(ids2[0]!)).toBe(false);
     expect([...ids1, ...ids2].sort()).toEqual([e1.id, e2.id, e3.id].sort());
+  });
+
+  it('rejects unknown query keys in employeeDirectoryQuerySchema', () => {
+    const unknownKeyResult = employeeDirectoryQuerySchema.safeParse({ bogus: '1' });
+    expect(unknownKeyResult.success).toBe(false);
+
+    const validResult = employeeDirectoryQuerySchema.safeParse({
+      page: '2',
+      pageSize: '30',
+      sortBy: 'employeeCode',
+      sortOrder: 'desc',
+      status: 'active',
+    });
+    expect(validResult.success).toBe(true);
+    if (validResult.success) {
+      expect(validResult.data.page).toBe(2);
+      expect(validResult.data.pageSize).toBe(30);
+      expect(validResult.data.sortBy).toBe('employeeCode');
+      expect(validResult.data.sortOrder).toBe('desc');
+      expect(validResult.data.status).toBe('active');
+    }
   });
 });

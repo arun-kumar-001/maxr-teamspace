@@ -41,8 +41,8 @@ export interface EmployeeDirectoryItem {
   updatedAt: string;
 }
 
-export type EmployeeDirectoryQuery = z.input<typeof employeeDirectoryQuerySchema>;
-export type ParsedEmployeeDirectoryQuery = z.output<typeof employeeDirectoryQuerySchema>;
+export type EmployeeDirectoryQuery = z.infer<typeof employeeDirectoryQuerySchema>;
+export type EmployeeDirectoryQueryInput = z.input<typeof employeeDirectoryQuerySchema>;
 
 export interface EmployeeDirectoryFindManyParams {
   offset: number;

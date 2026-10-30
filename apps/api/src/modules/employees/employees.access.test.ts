@@ -252,4 +252,38 @@ describe('Departments & Designations RBAC Access Matrix', () => {
       expect(res.status).toBe(status);
     },
   );
+
+  it('rejects unknown query keys with 400 Bad Request (e.g. ?bogus=1)', async () => {
+    const { as } = await setup();
+    const res = await as.admin.get('/api/v1/employees?bogus=1');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    expect(
+      res.body.error.details.some(
+        (d: { field: string; message: string }) =>
+          d.field.includes('bogus') || d.message.includes('bogus'),
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects unexpected keys mixed with valid parameters to prevent silent filter bypass', async () => {
+    const { as } = await setup();
+    const res = await as.admin.get('/api/v1/employees?page=1&pageSize=10&unknownFilter=true');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
+  it('accepts valid query parameters and returns 200 with directory data and meta', async () => {
+    const { as } = await setup();
+    const res = await as.admin.get(
+      '/api/v1/employees?page=1&pageSize=10&sortBy=name&sortOrder=asc&status=active',
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.meta).toBeDefined();
+    expect(res.body.meta.page).toBe(1);
+    expect(res.body.meta.pageSize).toBe(10);
+  });
 });

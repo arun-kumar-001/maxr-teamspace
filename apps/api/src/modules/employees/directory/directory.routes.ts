@@ -1,5 +1,6 @@
 import { RequestHandler, Router } from 'express';
 import { getPool } from '../../../db/client';
+import { asyncHandler } from '../../../http/async-handler';
 import { validate } from '../../../http/validate';
 import { requirePermission } from '../../rbac';
 import { EmployeeDirectoryController } from './directory.controller';
@@ -26,7 +27,7 @@ export function createEmployeeDirectoryRouter(options: EmployeeDirectoryRouterOp
     options.authenticate,
     requirePermission('employees.list'),
     validate({ query: employeeDirectoryQuerySchema }),
-    controller.list,
+    asyncHandler(controller.list),
   );
 
   return router;

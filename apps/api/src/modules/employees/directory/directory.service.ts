@@ -9,11 +9,11 @@ export class EmployeeDirectoryService {
   constructor(private readonly repository: IEmployeeDirectoryRepository) {}
 
   async list(
-    query: EmployeeDirectoryQuery,
+    query: Partial<EmployeeDirectoryQuery>,
     filter: ScopeFilter,
   ): Promise<PaginatedResponse<EmployeeDirectoryItem>> {
-    const page = Number(query.page) > 0 ? Number(query.page) : 1;
-    const pageSize = Number(query.pageSize) > 0 ? Math.min(Number(query.pageSize), 100) : 20;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
     const sort = resolveSort(
       { sortBy: query.sortBy, sortOrder: query.sortOrder ?? 'asc' },
       EMPLOYEE_SORTABLE_FIELDS,
