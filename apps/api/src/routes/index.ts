@@ -2,16 +2,12 @@ import { Router } from 'express';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
-<<<<<<< HEAD
 import { createAttendanceRouter } from '../modules/attendance';
-import { createDepartmentRouter, createDesignationRouter } from '../modules/employees';
-=======
 import {
   createDepartmentRouter,
   createDesignationRouter,
   createEmployeeDirectoryRouter,
 } from '../modules/employees';
->>>>>>> develop
 import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createAuditLogs } from '../modules/audit-logs';
