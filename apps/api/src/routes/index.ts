@@ -3,6 +3,7 @@ import { getPool } from '../db/client';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
+import { createAttendanceRouter } from '../modules/attendance';
 import {
   createDepartmentRouter,
   createDesignationRouter,
@@ -53,6 +54,15 @@ export function createApiRouter({
   router.use('/audit-logs', createAuditLogs({ authenticate: auth.authenticate }).router);
   const settings = createSettings({ platform, authenticate: auth.authenticate });
   router.use('/settings', settings.router);
+  router.use(
+    '/attendance',
+    createAttendanceRouter({
+      authenticate: auth.authenticate,
+      audit: platform.audit,
+      settingsReader: settings.reader,
+    }),
+  );
+
   // A registry passed in (tests) is used as given; the default app gets the employee reports.
   const registry = reportRegistry ?? new ReportRegistry();
   if (!reportRegistry) {
