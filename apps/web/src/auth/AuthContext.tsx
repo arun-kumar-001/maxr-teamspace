@@ -1,9 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { ROLES, type Role } from '@maxr/shared';
-import { MOCK_USERS, type MockUser } from './mockUsers';
+import { apiFetch, setCsrfToken } from '../api/client';
+import { MOCK_USERS } from './mockUsers';
+import { AuthUser } from './types';
+
+export { type AuthUser } from './types';
 
 export interface AuthContextValue {
-  user: MockUser | null;
+  user: AuthUser | null;
   role: Role | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -16,6 +20,60 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'maxr_auth_session';
 
+const ROLE_DISPLAY_NAMES: Record<Role, string> = {
+  [ROLES.ADMIN]: 'System Administrator',
+  [ROLES.HR_MANAGER]: 'HR Manager',
+  [ROLES.TEAM_LEAD]: 'Team Lead',
+  [ROLES.STAFF]: 'Staff Member',
+};
+
+export function computeInitials(name?: string, email?: string): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0];
+    const last = parts[parts.length - 1];
+    if (parts.length >= 2 && first && last && first[0] && last[0]) {
+      return (first[0] + last[0]).toUpperCase();
+    }
+    if (parts.length === 1 && first && first.length > 0) {
+      return first.slice(0, 2).toUpperCase();
+    }
+  }
+  if (email && email.length >= 2) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return 'U';
+}
+
+export function buildUserFromApi(apiUser: Record<string, unknown>): AuthUser {
+  const role = (apiUser.role as Role) || ROLES.STAFF;
+  const roles = Array.isArray(apiUser.roles) ? (apiUser.roles as Role[]) : [role];
+  const permissions = Array.isArray(apiUser.permissions) ? (apiUser.permissions as string[]) : [];
+
+  const firstName = typeof apiUser.firstName === 'string' ? apiUser.firstName : '';
+  const lastName = typeof apiUser.lastName === 'string' ? apiUser.lastName : '';
+  const fullName =
+    `${firstName} ${lastName}`.trim() ||
+    (apiUser.name as string) ||
+    (apiUser.email as string) ||
+    'User';
+
+  return {
+    id: (apiUser.id as string) || '',
+    employeeId: apiUser.employeeId as string | undefined,
+    email: (apiUser.email as string) || '',
+    name: fullName,
+    firstName: firstName || undefined,
+    lastName: lastName || undefined,
+    role,
+    roles,
+    permissions,
+    title: (apiUser.title as string) || ROLE_DISPLAY_NAMES[role] || role,
+    department: (apiUser.department as string) || undefined,
+    avatarInitials: computeInitials(fullName, apiUser.email as string),
+  };
+}
+
 export interface AuthProviderProps {
   children: ReactNode;
   initialRole?: Role;
@@ -23,17 +81,16 @@ export interface AuthProviderProps {
 }
 
 export function AuthProvider({ children, initialRole, persistSession = true }: AuthProviderProps) {
-  const [user, setUser] = useState<MockUser | null>(() => {
-    // Explicit initialRole (e.g. for testing)
+  // Opt-in development mock authentication flag (defaults to false per TL review)
+  const isDevMockAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
+
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    // 1. Explicit initialRole (used by unit tests)
     if (initialRole && MOCK_USERS[initialRole]) {
       return MOCK_USERS[initialRole];
     }
-    // In production: strictly unauthenticated by default (B1 fix: deny by default in production)
-    if (!import.meta.env.DEV) {
-      return null;
-    }
-    // In development only: check localStorage or fallback to seeded mock session (TL-10 until #7 merges)
-    if (persistSession && typeof window !== 'undefined' && window.localStorage) {
+    // 2. In DEV mode with explicit VITE_DEV_MOCK_AUTH opt-in: check storage or fallback
+    if (isDevMockAuth && persistSession && typeof window !== 'undefined' && window.localStorage) {
       try {
         const storedRole = localStorage.getItem(AUTH_STORAGE_KEY) as Role | null;
         if (storedRole && MOCK_USERS[storedRole]) {
@@ -42,8 +99,10 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
       } catch {
         // Fallback gracefully on storage access errors
       }
+      return MOCK_USERS[ROLES.STAFF];
     }
-    return MOCK_USERS[ROLES.STAFF];
+    // 3. Default: unauthenticated (deny by default)
+    return null;
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -53,26 +112,23 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     let isMounted = true;
     if (typeof window !== 'undefined' && typeof window.fetch === 'function' && !user) {
       setIsLoading(true);
-      fetch('/api/v1/auth/me', {
-        headers: { Accept: 'application/json' },
-        credentials: 'include',
-      })
+      apiFetch('/api/v1/auth/me')
         .then(async (res) => {
           if (!isMounted) return;
           if (res.ok) {
-            const data = await res.json();
-            const sessionUser = data?.user ?? data?.data;
-            if (sessionUser && sessionUser.role && MOCK_USERS[sessionUser.role as Role]) {
-              setUser({
-                ...MOCK_USERS[sessionUser.role as Role],
-                name: sessionUser.name ?? MOCK_USERS[sessionUser.role as Role].name,
-                email: sessionUser.email ?? MOCK_USERS[sessionUser.role as Role].email,
-              });
+            const json = await res.json();
+            const apiData = json?.data;
+            if (apiData?.csrfToken) {
+              setCsrfToken(apiData.csrfToken);
+            }
+            if (apiData?.user) {
+              const serverUser = buildUserFromApi(apiData.user);
+              setUser(serverUser);
             }
           }
         })
         .catch(() => {
-          // Network error or dev server offline - keep unauthenticated
+          // Network error or backend offline - stay unauthenticated
         })
         .finally(() => {
           if (isMounted) setIsLoading(false);
@@ -84,14 +140,9 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     };
   }, []);
 
-  // Sync dev session storage
+  // Sync dev session storage only when mock auth is enabled
   useEffect(() => {
-    if (
-      import.meta.env.DEV &&
-      persistSession &&
-      typeof window !== 'undefined' &&
-      window.localStorage
-    ) {
+    if (isDevMockAuth && persistSession && typeof window !== 'undefined' && window.localStorage) {
       try {
         if (user) {
           localStorage.setItem(AUTH_STORAGE_KEY, user.role);
@@ -102,32 +153,28 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
         // Ignore storage errors in test / private mode
       }
     }
-  }, [user, persistSession]);
+  }, [user, persistSession, isDevMockAuth]);
 
   const login = async (email: string, password = ''): Promise<boolean> => {
     setIsLoading(true);
     const cleanEmail = email.toLowerCase().trim();
 
-    // 1. Attempt authoritative backend authentication first
+    // 1. Authoritative backend authentication
     try {
-      const response = await fetch('/api/v1/auth/login', {
+      const response = await apiFetch('/api/v1/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: cleanEmail, password }),
       });
 
       if (response.ok) {
-        const payload = await response.json();
-        const userData = payload?.user ?? payload?.data;
-        if (userData && userData.role) {
-          const baseMock = MOCK_USERS[userData.role as Role] ?? MOCK_USERS[ROLES.STAFF];
-          setUser({
-            ...baseMock,
-            name: userData.name ?? baseMock.name,
-            email: userData.email ?? cleanEmail,
-            role: userData.role as Role,
-          });
+        const json = await response.json();
+        const apiData = json?.data;
+        if (apiData?.csrfToken) {
+          setCsrfToken(apiData.csrfToken);
+        }
+        if (apiData?.user) {
+          const serverUser = buildUserFromApi(apiData.user);
+          setUser(serverUser);
           setIsLoading(false);
           return true;
         }
@@ -136,16 +183,16 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
       // Backend not running or unreachable
     }
 
-    // 2. In DEV mode only: allow exact-match fallback for canonical demo accounts
-    if (import.meta.env.DEV) {
-      let matchedUser: MockUser | undefined;
-      if (cleanEmail === 'admin@maxr.com') {
+    // 2. In DEV mode with explicit VITE_DEV_MOCK_AUTH flag: fallback demo matching
+    if (isDevMockAuth) {
+      let matchedUser: AuthUser | undefined;
+      if (cleanEmail === 'admin@maxr.com' || cleanEmail === 'admin@maxr.internal') {
         matchedUser = MOCK_USERS[ROLES.ADMIN];
-      } else if (cleanEmail === 'hr@maxr.com') {
+      } else if (cleanEmail === 'hr@maxr.com' || cleanEmail === 'hr@maxr.internal') {
         matchedUser = MOCK_USERS[ROLES.HR_MANAGER];
-      } else if (cleanEmail === 'lead@maxr.com') {
+      } else if (cleanEmail === 'lead@maxr.com' || cleanEmail === 'teamlead@maxr.internal') {
         matchedUser = MOCK_USERS[ROLES.TEAM_LEAD];
-      } else if (cleanEmail === 'staff@maxr.com') {
+      } else if (cleanEmail === 'staff@maxr.com' || cleanEmail === 'staff@maxr.internal') {
         matchedUser = MOCK_USERS[ROLES.STAFF];
       }
 
@@ -162,17 +209,14 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
 
   const logout = () => {
     if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-      fetch('/api/v1/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      }).catch(() => {});
+      apiFetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
     }
+    setCsrfToken(null);
     setUser(null);
   };
 
   const switchRole = (newRole: Role) => {
-    // Dev only switcher
-    if (import.meta.env.DEV && MOCK_USERS[newRole]) {
+    if (isDevMockAuth && MOCK_USERS[newRole]) {
       setUser(MOCK_USERS[newRole]);
     }
   };

@@ -67,7 +67,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
             <Input
               id="login-email"
               type="email"
-              placeholder="name@maxr.com"
+              placeholder="e.g. admin@maxr.internal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -98,8 +98,8 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           </div>
         </form>
 
-        {/* Development Quick Role Switcher (Hidden in production per B1) */}
-        {import.meta.env.DEV && (
+        {/* Development Quick Role Switcher (Opt-in via VITE_DEV_MOCK_AUTH=true only) */}
+        {import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true' && (
           <div className="mt-8 pt-6 border-t border-border">
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
               Development Quick Role Switcher
