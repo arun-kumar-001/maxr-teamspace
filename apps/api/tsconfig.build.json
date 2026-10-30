@@ -16,6 +16,7 @@
     "src/modules/employees/creation/creation.repository.memory.ts",
     "src/modules/employees/detail/detail.repository.memory.ts",
     "src/modules/employees/deactivation/deactivation.repository.memory.ts",
+    "src/modules/employees/hierarchy/hierarchy.repository.memory.ts",
     "src/modules/rbac/rbac.testing.ts",
     "src/test/**"
   ]

@@ -7,6 +7,7 @@ import '../modules/reports/report.openapi';
 import '../modules/approvals/approvals.openapi';
 import '../modules/employees/creation/creation.openapi';
 import '../modules/employees/deactivation/deactivation.openapi';
+import '../modules/employees/hierarchy/hierarchy.openapi';
 import '../modules/employees/detail/detail.openapi';
 import '../modules/settings/settings.openapi';
 import '../modules/users/users.openapi';
