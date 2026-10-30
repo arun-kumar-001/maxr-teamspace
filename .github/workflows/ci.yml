@@ -195,7 +195,7 @@ jobs:
           docker run -d --name rd --network ci redis:7-alpine
           for i in $(seq 1 30); do docker exec pg pg_isready -U postgres -d app && break; sleep 2; done
           DB=postgresql://postgres:postgres@pg:5432/app
-          docker run --rm --network ci -e NODE_ENV=production -e SESSION_SECRET="$(openssl rand -hex 24)" -e DATABASE_URL=$DB maxr-api:ci node apps/api/dist/db/migrator.js
+          docker run --rm --network ci -e NODE_ENV=production -e CORS_ORIGIN=https://ci.example.com -e SESSION_SECRET="$(openssl rand -hex 24)" -e DATABASE_URL=$DB maxr-api:ci node apps/api/dist/db/migrator.js
           docker run -d --name api --network ci -e NODE_ENV=development -e DATABASE_URL=$DB -e REDIS_URL=redis://rd:6379 -e TRUST_PROXY=1 maxr-api:ci
           for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy ] && break; sleep 2; done
           test "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy

@@ -2,13 +2,14 @@ import { randomBytes } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { loadAndValidateConfig } from './env';
 
-const KEYS = ['NODE_ENV', 'DATABASE_URL', 'SESSION_SECRET'] as const;
+const KEYS = ['NODE_ENV', 'DATABASE_URL', 'SESSION_SECRET', 'CORS_ORIGIN'] as const;
 const saved: Record<string, string | undefined> = {};
 
 beforeEach(() => {
   for (const k of KEYS) saved[k] = process.env[k];
   process.env.NODE_ENV = 'production';
   process.env.DATABASE_URL = 'postgresql://u:p@db:5432/app';
+  process.env.CORS_ORIGIN = 'https://teamspace.example.com';
 });
 
 afterEach(() => {
@@ -42,5 +43,28 @@ describe('SESSION_SECRET production guard (#52 F6)', () => {
     process.env.NODE_ENV = 'development';
     delete process.env.SESSION_SECRET;
     expect(loadAndValidateConfig().SESSION_SECRET.length).toBeGreaterThanOrEqual(32);
+  });
+});
+
+describe('CORS_ORIGIN (#16)', () => {
+  beforeEach(() => {
+    process.env.SESSION_SECRET = randomBytes(24).toString('hex');
+  });
+
+  it('is required in production: the localhost default is not accepted', () => {
+    delete process.env.CORS_ORIGIN;
+    expect(() => loadAndValidateConfig()).toThrow(/CORS_ORIGIN/);
+  });
+
+  it.each(['*', 'http://teamspace.example.com', 'https://teamspace.example.com/app'])(
+    'rejects %s in production',
+    (origin) => {
+      process.env.CORS_ORIGIN = origin;
+      expect(() => loadAndValidateConfig()).toThrow(/CORS_ORIGIN/);
+    },
+  );
+
+  it('accepts an https origin', () => {
+    expect(loadAndValidateConfig().CORS_ORIGIN).toBe('https://teamspace.example.com');
   });
 });

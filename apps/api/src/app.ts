@@ -5,6 +5,7 @@ import { checkDatabaseHealth } from './db/client';
 import { checkRedisHealth } from './db/redis';
 import { HealthDependencies, createHealthHandler } from './health/health';
 import { HttpConfig, loadHttpConfig } from './http/http-config';
+import { securityHeaders } from './http/security-headers';
 import { InMemoryIdempotencyStore } from './http/idempotency';
 import { createRateLimiter } from './http/rate-limit';
 import { Logger, getLogger } from './logging/logger';
@@ -56,6 +57,7 @@ export function createApp(options: AppOptions = {}): Express {
   // Request id first so every later log line and error carries it.
   app.use(requestIdMiddleware);
   app.use(requestLogger(logger));
+  app.use(securityHeaders({ hsts: nodeEnv === 'production' }));
 
   // Security & Core Middleware
   app.use(
