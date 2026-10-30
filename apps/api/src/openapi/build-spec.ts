@@ -8,6 +8,7 @@ import '../modules/settings/settings.openapi';
 import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';
 import '../modules/employees/designations/designation.openapi';
+import '../modules/employees/directory/directory.openapi';
 import '../platform/storage/files.openapi';
 
 export function buildOpenApiDocument() {
