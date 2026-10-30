@@ -7,6 +7,7 @@
     "src/platform/contracts/**",
     "src/modules/auth/contracts/**",
     "src/modules/auth/auth.testing.ts",
+    "src/**/*.fixture.js",
     "src/modules/auth/auth.repository.memory.ts",
     "src/modules/rbac/rbac.testing.ts",
     "src/test/**"

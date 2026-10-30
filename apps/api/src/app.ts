@@ -15,7 +15,7 @@ import { notFoundHandler } from './middleware/not-found';
 import { requestIdMiddleware } from './middleware/request-id';
 import { Platform, createPlatform } from './platform';
 import { publicRoute } from './modules/rbac';
-import { ReportRegistry } from './modules/reports';
+import { PdfExporter, ReportRegistry } from './modules/reports';
 import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
 import { createApiRouter } from './routes';
 import { getPool } from './db/client';
@@ -34,6 +34,8 @@ export interface AppOptions {
   auth?: AuthServices;
   /** Report definitions from the modules; defaults to none. */
   reportRegistry?: ReportRegistry;
+  /** Replaces the PDF renderer (tests). */
+  reportPdfExporter?: PdfExporter;
 }
 
 export function createApp(options: AppOptions = {}): Express {
@@ -99,6 +101,7 @@ export function createApp(options: AppOptions = {}): Express {
       platform,
       auth,
       reportRegistry: options.reportRegistry,
+      reportPdfExporter: options.reportPdfExporter,
       exposeDevRoutes: nodeEnv !== 'production',
     }),
   );
