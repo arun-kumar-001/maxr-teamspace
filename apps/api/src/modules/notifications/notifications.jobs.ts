@@ -8,6 +8,10 @@ export function createNotificationJobs(service: NotificationsService): Job[] {
       name: 'notification-reminders',
       run: async (now) => void (await service.sendApprovalReminders(now)),
     },
+    {
+      name: 'notification-task-due',
+      run: async (now) => void (await service.sendTaskDueReminders(now)),
+    },
     { name: 'notification-retention', run: async (now) => void (await service.purgeRead(now)) },
   ];
 }

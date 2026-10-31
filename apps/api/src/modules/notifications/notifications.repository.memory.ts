@@ -3,6 +3,7 @@ import { INotificationsRepository } from './notifications.repository';
 import {
   AppNotification,
   NewNotification,
+  DueTask,
   NotificationTx,
   Recipient,
   StaleApproval,
@@ -27,6 +28,7 @@ export class MemoryNotificationsRepository implements INotificationsRepository {
   stale: StaleApproval[] = [];
   /** The cutoffs the service asked for, so a test can check the thresholds. */
   staleCutoffs: Date[] = [];
+  dueSoon: DueTask[] = [];
   now: () => Date = () => new Date();
 
   async transaction<T>(work: (tx: NotificationTx) => Promise<T>): Promise<T> {
@@ -133,6 +135,10 @@ export class MemoryNotificationsRepository implements INotificationsRepository {
     return Object.entries(this.employees)
       .filter(([id, e]) => e.isHrApprover && e.active && id !== excludeEmployeeId)
       .map(([id, e]) => ({ employeeId: id, email: e.email }));
+  }
+
+  async findTasksDueSoon(_now: Date): Promise<DueTask[]> {
+    return this.dueSoon;
   }
 
   async findStaleApprovals(cutoff: Date): Promise<StaleApproval[]> {

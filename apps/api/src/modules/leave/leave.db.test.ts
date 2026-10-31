@@ -367,6 +367,14 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
       expect(await balancesOf(other, 2026)).toEqual({});
     });
 
+    it('creates the missing balances of the current year by itself, once', async () => {
+      const id = await employee('scheduled', '2020-01-01');
+      expect(await balancesOf(id, 2026)).toEqual({});
+      expect(await balances.runScheduledAccrual()).toBeGreaterThanOrEqual(3);
+      expect(Object.keys(await balancesOf(id, 2026)).sort()).toEqual(['ANNUAL', 'CASUAL', 'SICK']);
+      expect(await balances.runScheduledAccrual()).toBe(0);
+    });
+
     it('refuses a year that has not started and audits the run', async () => {
       await expect(balances.accrue(2027, caller)).rejects.toMatchObject({ statusCode: 422 });
       const result = await balances.accrue(2026, caller);

@@ -25,9 +25,10 @@ The module subscribes to domain events, which the platform delivers **after the 
 | `tasks.status_changed` to `in_review` or `blocked` | the person who assigned the task (unless they made the move) | `task.in_review` / `task.blocked` |
 | `tasks.status_changed` to `completed`, or out of `completed` | the assignee (unless they made the move) | `task.completed` / `task.reopened` |
 | `tasks.commented` | the assignee and the assigner, except the author | `task.commented` |
+| the task-due job | the assignee of an open task due today or tomorrow (or up to a week overdue), once per task and due date | `task.due` |
 | the reminder job | the approvers of a step that has waited over 24 hours | `approval.reminder` |
 
-Because leave requests, attendance corrections and later expense claims all go through the approvals engine, they are covered by the same four events. The title names the kind ("Leave request waiting for your decision"). Meeting reminders and the task-due reminder (D-15) are jobs still to add: they only need a job and a template.
+Because leave requests, attendance corrections and later expense claims all go through the approvals engine, they are covered by the same four events. The title names the kind ("Leave request waiting for your decision"). The meeting reminder (D-15) is a job still to add with the meetings module: it only needs a job and a template.
 
 Each notification carries a dedupe key per recipient (for example `approval.reminder:{approvalId}:{stage}`). The same event twice, or a reminder run twice, creates one row and one e-mail.
 
@@ -39,7 +40,7 @@ Sent through the outbox (`platform.notifications.enqueueEmail`): queued after th
 
 `platform/jobs/job-runner.ts` runs jobs on an interval inside the API process (`JOBS_ENABLED`, default true; `JOBS_INTERVAL_MS`, default 15 minutes). With several API instances every one ticks, but a PostgreSQL **transaction-level advisory lock** (key = job name) lets only one run a given job at a time; the others skip that tick. The lock goes with the transaction, so a crashed instance cannot hold it. A failing job is logged and retried at the next tick.
 
-Jobs today: `notification-reminders` (once per approval step) and `notification-retention` (deletes notifications read more than 90 days ago; unread ones stay).
+Jobs today: `notification-reminders` (once per approval step), `notification-task-due` (see above; "today" is the company calendar) and `notification-retention` (deletes notifications read more than 90 days ago; unread ones stay).
 
 ## Data
 

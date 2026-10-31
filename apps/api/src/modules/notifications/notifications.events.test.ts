@@ -444,6 +444,7 @@ describe('reminders and retention', () => {
     const jobs = createNotificationJobs(notifications.service);
     expect(jobs.map((job) => job.name)).toEqual([
       'notification-reminders',
+      'notification-task-due',
       'notification-retention',
     ]);
     notifRepo.stale = [
@@ -466,8 +467,39 @@ describe('reminders and retention', () => {
     });
     notifRepo.now = () => new Date('2026-07-01T00:00:00Z');
     await notifRepo.markRead(made?.id ?? '', id('staff'));
-    await jobs[1]?.run(NOW);
+    await jobs[2]?.run(NOW);
     expect(notifRepo.rows.map((r) => r.id)).not.toContain(made?.id);
+  });
+
+  it('reminds the assignee once per task and due date, and again when the due date changes', async () => {
+    const { notifications, notifRepo, id, inbox, emails } = await setup({ appUrl: APP_URL });
+    const due = (dueDate: string) => [{ taskId: A1, assigneeEmployeeId: id('staff'), dueDate }];
+    notifRepo.dueSoon = due('2026-11-06');
+    expect(await notifications.service.sendTaskDueReminders(NOW)).toBe(1);
+    expect(await notifications.service.sendTaskDueReminders(NOW)).toBe(0);
+    const notices = (await inbox('staff')).data;
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toMatchObject({
+      type: 'task.due',
+      title: 'A task is due soon',
+      link: `/tasks/${A1}`,
+    });
+    // The text names no task, no date and no person.
+    const payloads = (await emails()).map((item) => item.payload);
+    expect(JSON.stringify(payloads)).not.toMatch(/2026-11|Sam|Staff/);
+    expect(payloads[0]?.subject).toBe('A task is due soon');
+    notifRepo.dueSoon = due('2026-11-20');
+    expect(await notifications.service.sendTaskDueReminders(NOW)).toBe(1);
+    expect((await inbox('staff')).data).toHaveLength(2);
+  });
+
+  it('skips a task whose assignee is no longer active', async () => {
+    const { notifications, notifRepo, id } = await setup();
+    const person = notifRepo.employees[id('staff')];
+    if (person) person.active = false;
+    notifRepo.dueSoon = [{ taskId: A1, assigneeEmployeeId: id('staff'), dueDate: '2026-11-06' }];
+    expect(await notifications.service.sendTaskDueReminders(NOW)).toBe(0);
+    expect(notifRepo.rows).toHaveLength(0);
   });
 
   it('never reminds a requester about their own request', async () => {
