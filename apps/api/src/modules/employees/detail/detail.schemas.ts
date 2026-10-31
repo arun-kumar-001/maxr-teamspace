@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 const name = z.string().trim().min(1).max(100);
 
+/** Digits, spaces, + ( ) and -: shared by the HR edit and the employee's own profile. */
+export const phoneSchema = z
+  .string()
+  .trim()
+  .regex(/^[0-9+()\-\s]{6,50}$/, 'Digits, spaces, + ( ) and - only');
+
 /**
  * Body for `PUT /employees/{id}`: only the fields to change, plus the `version` that was read.
  * Unknown keys are rejected, so `status`, `managerId`, a role or a user id can never be sent here.
@@ -17,12 +23,7 @@ export const updateEmployeeSchema = z
     firstName: name.optional(),
     lastName: name.optional(),
     email: z.string().trim().toLowerCase().email().max(255).optional(),
-    phone: z
-      .string()
-      .trim()
-      .regex(/^[0-9+()\-\s]{6,50}$/, 'Digits, spaces, + ( ) and - only')
-      .nullable()
-      .optional(),
+    phone: phoneSchema.nullable().optional(),
     departmentId: z.string().uuid().optional(),
     designationId: z.string().uuid().optional(),
     joiningDate: z

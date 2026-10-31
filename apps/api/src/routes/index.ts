@@ -16,6 +16,7 @@ import { createEmployeeCreation } from '../modules/employees/creation';
 import { createEmployeeDeactivation } from '../modules/employees/deactivation';
 import { createEmployeeDetail } from '../modules/employees/detail';
 import { createEmployeeHierarchy } from '../modules/employees/hierarchy';
+import { createEmployeeProfile } from '../modules/employees/profile';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
@@ -104,7 +105,11 @@ export function createApiRouter({
       idempotencyStore,
     }).router,
   );
-  // Before the detail router: `/employees/org-roots` must not be read as an employee id.
+  // Before the detail router: `/employees/me` and `/employees/org-roots` must not be read as ids.
+  router.use(
+    '/employees',
+    createEmployeeProfile({ platform, authenticate: auth.authenticate }).router,
+  );
   router.use(
     '/employees',
     createEmployeeHierarchy({ platform, authenticate: auth.authenticate }).router,
