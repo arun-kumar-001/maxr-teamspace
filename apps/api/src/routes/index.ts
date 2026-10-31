@@ -23,6 +23,7 @@ import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
 import { createLeaveSetup } from '../modules/leave';
 import { createNotifications, loadNotificationsConfig } from '../modules/notifications';
+import { createProjects } from '../modules/projects';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
@@ -109,6 +110,8 @@ export function createApiRouter({
   router.use('/holidays', leave.holidaysRouter);
   router.use('/leave-balances', leave.balancesRouter);
   router.use('/leave-requests', leave.requestsRouter);
+  const projects = createProjects({ platform, authenticate: auth.authenticate, idempotencyStore });
+  router.use('/projects', projects.router);
   router.use(
     '/notifications',
     createNotifications({

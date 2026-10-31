@@ -156,6 +156,16 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
   },
 
+  // Projects are not owned by one employee, so `own` here means "the projects I own or belong to".
+  'projects.read': {
+    description: 'View the projects you own or belong to',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: OWN, [TEAM_LEAD]: OWN, [STAFF]: OWN },
+  },
+  'projects.manage': {
+    description: 'Create projects and manage the ones you own',
+    grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },
+  },
+
   'tasks.create': {
     description: 'Create and assign team task',
     grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },
