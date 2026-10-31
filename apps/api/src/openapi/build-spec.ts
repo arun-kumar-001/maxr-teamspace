@@ -9,6 +9,7 @@ import '../modules/leave/policies/policies.openapi';
 import '../modules/leave/holidays/holidays.openapi';
 import '../modules/leave/balances/balances.openapi';
 import '../modules/leave/requests/requests.openapi';
+import '../modules/notifications/notifications.openapi';
 import '../modules/reports/report.openapi';
 import '../modules/approvals/approvals.openapi';
 import '../modules/employees/creation/creation.openapi';
