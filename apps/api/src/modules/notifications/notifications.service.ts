@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { PaginatedResponse } from '@maxr/shared';
 import { notFound } from '../../http/errors';
 import { buildPage, toOffsetLimit } from '../../http/pagination';
@@ -24,6 +25,12 @@ export interface NotificationCaller {
 }
 
 type Stage = 'manager' | 'hr';
+
+interface TaskEventPayload {
+  taskId: string;
+  assigneeEmployeeId: string;
+  assignerEmployeeId: string;
+}
 
 interface ApprovalEventPayload {
   approvalId: string;
@@ -57,6 +64,8 @@ export class NotificationsService {
       this.onApprovalDecided(event, 'approval.rejected'),
     );
     bus.subscribe('leave.cancelled', (event) => this.onLeaveCancelled(event));
+    bus.subscribe('tasks.assigned', (event) => this.onTaskAssigned(event));
+    bus.subscribe('tasks.status_changed', (event) => this.onTaskStatusChanged(event));
   }
 
   private async onApprovalStep(event: DomainEvent, type: TemplateType): Promise<void> {
@@ -91,6 +100,58 @@ export class NotificationsService {
       link: '/leave',
       dedupeKey: `leave.cancelled:${p.leaveRequestId}`,
     });
+  }
+
+  private async onTaskAssigned(event: DomainEvent): Promise<void> {
+    const p = event.payload as TaskEventPayload;
+    // Giving yourself a task needs no message.
+    if (p.assigneeEmployeeId === p.assignerEmployeeId) return;
+    await this.notifyEmployee(p.assigneeEmployeeId, 'task.assigned', {
+      link: `/tasks/${p.taskId}`,
+      dedupeKey: `task.assigned:${p.taskId}:${event.requestId ?? randomUUID()}`,
+    });
+  }
+
+  /**
+   * Review and blockage go to the person who assigned the task; completion and reopening go to
+   * its assignee. Nobody is told about a move they made themselves.
+   */
+  private async onTaskStatusChanged(event: DomainEvent): Promise<void> {
+    const p = event.payload as TaskEventPayload & {
+      from: string;
+      to: string;
+      byEmployeeId: string;
+    };
+    const toAssigner: Record<string, TemplateType> = {
+      in_review: 'task.in_review',
+      blocked: 'task.blocked',
+    };
+    let type: TemplateType | undefined;
+    let recipientId: string | undefined;
+    if (toAssigner[p.to]) {
+      type = toAssigner[p.to];
+      recipientId = p.assignerEmployeeId;
+    } else if (p.to === 'completed') {
+      type = 'task.completed';
+      recipientId = p.assigneeEmployeeId;
+    } else if (p.from === 'completed') {
+      type = 'task.reopened';
+      recipientId = p.assigneeEmployeeId;
+    }
+    if (!type || !recipientId || recipientId === p.byEmployeeId) return;
+    await this.notifyEmployee(recipientId, type, {
+      link: `/tasks/${p.taskId}`,
+      dedupeKey: `${type}:${p.taskId}:${event.requestId ?? randomUUID()}`,
+    });
+  }
+
+  private async notifyEmployee(
+    employeeId: string,
+    type: TemplateType,
+    options: { link: string; dedupeKey: string },
+  ): Promise<void> {
+    const recipient = await this.repository.findRecipient(employeeId);
+    if (recipient) await this.notify(recipient, type, options);
   }
 
   /** Who decides the step: the requester's manager, or the HR Managers and Admins (never the requester). */

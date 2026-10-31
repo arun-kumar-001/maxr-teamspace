@@ -287,6 +287,96 @@ describe('notifications from events', () => {
   });
 });
 
+describe('notifications from task events', () => {
+  const TASK = '88000000-0000-4000-8000-000000000001';
+  const emitAssigned = (
+    platform: { events: { emit: (e: never) => Promise<void> } },
+    assignee: string,
+    assigner: string,
+    requestId = 'r1',
+  ) =>
+    platform.events.emit({
+      type: 'tasks.assigned',
+      payload: { taskId: TASK, assigneeEmployeeId: assignee, assignerEmployeeId: assigner },
+      requestId,
+    } as never);
+  const emitMoved = (
+    platform: { events: { emit: (e: never) => Promise<void> } },
+    from: string,
+    to: string,
+    by: string,
+    assignee: string,
+    assigner: string,
+    requestId = 'r1',
+  ) =>
+    platform.events.emit({
+      type: 'tasks.status_changed',
+      payload: {
+        taskId: TASK,
+        from,
+        to,
+        byEmployeeId: by,
+        assigneeEmployeeId: assignee,
+        assignerEmployeeId: assigner,
+      },
+      requestId,
+    } as never);
+
+  it('tells an assignee about a new task, with no task title in the text, but not someone who assigned it to themselves', async () => {
+    const { platform, id, inbox, emails } = await setup({ appUrl: APP_URL });
+    await emitAssigned(platform, id('staff'), id('team_lead'));
+    const notices = (await inbox('staff')).data;
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toMatchObject({
+      type: 'task.assigned',
+      title: 'New task assigned to you',
+      link: `/tasks/${TASK}`,
+    });
+    expect(JSON.stringify(await emails())).toContain('New task assigned to you');
+    await emitAssigned(platform, id('team_lead'), id('team_lead'), 'r2');
+    expect((await inbox('team_lead')).data).toHaveLength(0);
+  });
+
+  it('tells the assigner when a task is ready for review or blocked, and the assignee when it is completed or reopened', async () => {
+    const { platform, id, inbox } = await setup();
+    const staff = id('staff');
+    const lead = id('team_lead');
+    await emitMoved(platform, 'in_progress', 'in_review', staff, staff, lead, 'a');
+    await emitMoved(platform, 'in_progress', 'blocked', staff, staff, lead, 'b');
+    await emitMoved(platform, 'in_review', 'completed', lead, staff, lead, 'c');
+    await emitMoved(platform, 'completed', 'in_progress', lead, staff, lead, 'd');
+    expect((await inbox('team_lead')).data.map((n: { type: string }) => n.type).sort()).toEqual([
+      'task.blocked',
+      'task.in_review',
+    ]);
+    expect((await inbox('staff')).data.map((n: { type: string }) => n.type).sort()).toEqual([
+      'task.completed',
+      'task.reopened',
+    ]);
+  });
+
+  it('stays quiet about ordinary moves and about moves people make on their own task', async () => {
+    const { platform, id, inbox } = await setup();
+    const staff = id('staff');
+    const lead = id('team_lead');
+    await emitMoved(platform, 'todo', 'in_progress', staff, staff, lead, 'a');
+    await emitMoved(platform, 'in_progress', 'todo', staff, staff, lead, 'b');
+    await emitMoved(platform, 'blocked', 'in_progress', staff, staff, lead, 'c');
+    // A Team Lead who assigned the task to themselves, and moves it.
+    await emitMoved(platform, 'in_progress', 'in_review', lead, lead, lead, 'd');
+    await emitMoved(platform, 'in_review', 'completed', lead, lead, lead, 'e');
+    expect((await inbox('staff')).data).toHaveLength(0);
+    expect((await inbox('team_lead')).data).toHaveLength(0);
+  });
+
+  it('does not repeat itself when the same request is announced twice', async () => {
+    const { platform, id, inbox } = await setup();
+    await emitAssigned(platform, id('staff'), id('team_lead'), 'same');
+    await emitAssigned(platform, id('staff'), id('team_lead'), 'same');
+    expect((await inbox('staff')).data).toHaveLength(1);
+  });
+});
+
 describe('reminders and retention', () => {
   const NOW = new Date('2026-11-05T10:00:00Z');
   const A1 = '81000000-0000-4000-8000-000000000001';

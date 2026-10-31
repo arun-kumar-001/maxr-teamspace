@@ -8,6 +8,11 @@ const TYPES: TemplateType[] = [
   'approval.rejected',
   'approval.reminder',
   'leave.cancelled',
+  'task.assigned',
+  'task.in_review',
+  'task.blocked',
+  'task.completed',
+  'task.reopened',
 ];
 
 describe('notification templates (D-15)', () => {
