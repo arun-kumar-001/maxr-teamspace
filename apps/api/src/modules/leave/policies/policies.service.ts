@@ -34,6 +34,11 @@ export class LeavePoliciesService {
     return this.repository.list();
   }
 
+  /** One leave type with its policy, or null. The table is a handful of rows, so this reads the list. */
+  async get(id: string): Promise<LeavePolicy | null> {
+    return (await this.repository.list()).find((p) => p.id === id) ?? null;
+  }
+
   async create(input: CreateLeavePolicyInput, caller: PolicyCaller): Promise<LeavePolicy> {
     const audit = this.platform.audit.withContext(caller);
     return this.repository.transaction(async (tx) => {

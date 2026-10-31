@@ -99,6 +99,7 @@ export function createApiRouter({
   router.use('/approvals', approvals.router);
   const leave = createLeaveSetup({
     platform,
+    approvals: approvals.service,
     authenticate: auth.authenticate,
     idempotencyStore,
     settings: settings.reader,
@@ -106,6 +107,7 @@ export function createApiRouter({
   router.use('/leave-policies', leave.policiesRouter);
   router.use('/holidays', leave.holidaysRouter);
   router.use('/leave-balances', leave.balancesRouter);
+  router.use('/leave-requests', leave.requestsRouter);
   const users = createUsers({ platform, authenticate: auth.authenticate });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);

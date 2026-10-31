@@ -8,6 +8,8 @@ import { createErrorHandler } from '../../middleware/error-handler';
 import { notFoundHandler } from '../../middleware/not-found';
 import { requestIdMiddleware } from '../../middleware/request-id';
 import { createTestPlatform } from '../../platform';
+import { createApprovals } from '../approvals';
+import { MemoryApprovalsRepository } from '../approvals/approvals.repository.memory';
 import { createTestAuth } from '../auth/auth.testing';
 import { ALL_ROLES, SignedIn, listRoutes, signInAs } from '../rbac/rbac.testing';
 import { MemoryLeaveBalancesRepository } from './balances/balances.repository.memory';
@@ -41,8 +43,14 @@ async function setup() {
   const policiesRepo = new MemoryLeavePoliciesRepository([{ ...seedPolicy }]);
   const holidaysRepo = new MemoryHolidaysRepository();
   const balancesRepo = new MemoryLeaveBalancesRepository((id) => (id === staff ? lead : null));
+  const approvals = createApprovals({
+    platform,
+    authenticate: kit.auth.authenticate,
+    repository: new MemoryApprovalsRepository(),
+  });
   const leave = createLeaveSetup({
     platform,
+    approvals: approvals.service,
     authenticate: kit.auth.authenticate,
     idempotencyStore: new InMemoryIdempotencyStore(),
     settings: {
