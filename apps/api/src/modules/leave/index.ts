@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { getPool } from '../../db/client';
 import { IdempotencyStore } from '../../http/idempotency';
 import type { PlatformServices } from '../../platform';
+import type { ApprovalsService } from '../approvals';
 import type { CompanySettingsReader } from '../settings';
 import {
   ILeaveBalancesRepository,
@@ -20,6 +21,12 @@ import {
 } from './policies/policies.repository';
 import { createLeavePoliciesRouter } from './policies/policies.routes';
 import { LeavePoliciesService } from './policies/policies.service';
+import {
+  ILeaveRequestsRepository,
+  PgLeaveRequestsRepository,
+} from './requests/requests.repository';
+import { createLeaveRequestsRouter } from './requests/requests.routes';
+import { LeaveRequestsService } from './requests/requests.service';
 import type { LeaveTx } from './policies/policies.types';
 
 export type { HolidayReader } from './holidays/holidays.types';
@@ -31,6 +38,8 @@ export interface LeaveSetup {
   holidaysRouter: Router;
   /** Mount at /api/v1/leave-balances. */
   balancesRouter: Router;
+  /** Mount at /api/v1/leave-requests. */
+  requestsRouter: Router;
   /** For leave requests and reports: the holiday dates. */
   holidays: HolidayReader;
   /** For employee creation: gives a joiner their balances inside its transaction. */
@@ -38,13 +47,16 @@ export interface LeaveSetup {
 }
 
 export function createLeaveSetup(options: {
-  platform: Pick<PlatformServices, 'audit'>;
+  platform: Pick<PlatformServices, 'audit' | 'events'>;
+  /** Leave requests open an approval and register their decision handler with it. */
+  approvals: ApprovalsService;
   authenticate: RequestHandler;
   idempotencyStore: IdempotencyStore;
   settings: CompanySettingsReader;
   policiesRepository?: ILeavePoliciesRepository;
   holidaysRepository?: IHolidaysRepository;
   balancesRepository?: ILeaveBalancesRepository;
+  requestsRepository?: ILeaveRequestsRepository;
   getPool?: () => Pool;
   clock?: () => Date;
 }): LeaveSetup {
@@ -65,6 +77,16 @@ export function createLeaveSetup(options: {
     options.settings,
     options.clock,
   );
+  const requests = new LeaveRequestsService(
+    options.requestsRepository ?? new PgLeaveRequestsRepository(pool),
+    options.approvals,
+    options.platform,
+    options.settings,
+    holidays,
+    policies,
+    options.clock,
+  );
+  options.approvals.registerHandler(requests);
   return {
     policiesRouter: createLeavePoliciesRouter({
       service: policies,
@@ -73,6 +95,11 @@ export function createLeaveSetup(options: {
     }),
     holidaysRouter: createHolidaysRouter({
       service: holidays,
+      authenticate: options.authenticate,
+      idempotencyStore: options.idempotencyStore,
+    }),
+    requestsRouter: createLeaveRequestsRouter({
+      service: requests,
       authenticate: options.authenticate,
       idempotencyStore: options.idempotencyStore,
     }),

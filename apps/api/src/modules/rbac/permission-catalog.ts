@@ -145,6 +145,10 @@ export const PERMISSION_CATALOG = {
     description: 'Approve or reject leave request',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
   },
+  'leave.list': {
+    description: 'List leave requests within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
   'leave.cancel': { description: 'Cancel submitted leave request', grants: everyone(OWN) },
 
   'tasks.create': {
