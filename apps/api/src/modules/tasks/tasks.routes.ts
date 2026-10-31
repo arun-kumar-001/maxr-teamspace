@@ -39,6 +39,8 @@ export function createTasksRouter(options: {
   service: TasksService;
   authenticate: RequestHandler;
   idempotencyStore: IdempotencyStore;
+  /** Comment and attachment routes, mounted under the same path after the task routes. */
+  collaboration?: Router;
 }): Router {
   const { service } = options;
   const router = Router();
@@ -114,6 +116,8 @@ export function createTasksRouter(options: {
       });
     }),
   );
+
+  if (options.collaboration) router.use(options.collaboration);
 
   return router;
 }

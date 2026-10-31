@@ -369,6 +369,32 @@ describe('notifications from task events', () => {
     expect((await inbox('team_lead')).data).toHaveLength(0);
   });
 
+  it('tells the assignee and the assigner about a comment, but not its author, and never the text', async () => {
+    const { platform, id, inbox, emails } = await setup();
+    const emitCommented = (author: string, requestId: string) =>
+      platform.events.emit({
+        type: 'tasks.commented',
+        payload: {
+          taskId: TASK,
+          assigneeEmployeeId: id('staff'),
+          assignerEmployeeId: id('team_lead'),
+          authorEmployeeId: author,
+        },
+        requestId,
+      } as never);
+    await emitCommented(id('staff'), 'a');
+    expect((await inbox('team_lead')).data.map((n: { type: string }) => n.type)).toEqual([
+      'task.commented',
+    ]);
+    expect((await inbox('staff')).data).toHaveLength(0);
+    await emitCommented(id('hr_manager'), 'b'); // a third person comments: both parties hear
+    expect((await inbox('staff')).data.map((n: { type: string }) => n.type)).toEqual([
+      'task.commented',
+    ]);
+    expect((await inbox('team_lead')).data).toHaveLength(2);
+    expect(JSON.stringify(await emails())).not.toMatch(/comment text|secret/i);
+  });
+
   it('does not repeat itself when the same request is announced twice', async () => {
     const { platform, id, inbox } = await setup();
     await emitAssigned(platform, id('staff'), id('team_lead'), 'same');

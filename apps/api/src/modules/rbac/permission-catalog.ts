@@ -180,6 +180,12 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL, [HR_MANAGER]: OWN, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
   },
 
+  // Whoever can see a task can read its thread and files; this key is for writing to them.
+  'tasks.collaborate': {
+    description: 'Comment on and attach files to the tasks you can see',
+    grants: everyone(OWN),
+  },
+
   'reports.read': {
     description: 'View reports the role may run',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },

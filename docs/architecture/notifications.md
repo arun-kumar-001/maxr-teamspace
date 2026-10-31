@@ -24,6 +24,7 @@ The module subscribes to domain events, which the platform delivers **after the 
 | `tasks.assigned` | the new assignee, unless they assigned it to themselves | `task.assigned` |
 | `tasks.status_changed` to `in_review` or `blocked` | the person who assigned the task (unless they made the move) | `task.in_review` / `task.blocked` |
 | `tasks.status_changed` to `completed`, or out of `completed` | the assignee (unless they made the move) | `task.completed` / `task.reopened` |
+| `tasks.commented` | the assignee and the assigner, except the author | `task.commented` |
 | the reminder job | the approvers of a step that has waited over 24 hours | `approval.reminder` |
 
 Because leave requests, attendance corrections and later expense claims all go through the approvals engine, they are covered by the same four events. The title names the kind ("Leave request waiting for your decision"). Meeting reminders and the task-due reminder (D-15) are jobs still to add: they only need a job and a template.
