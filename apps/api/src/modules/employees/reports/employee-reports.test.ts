@@ -5,6 +5,15 @@ import { ALL_ROLES, signInAs } from '../../rbac/rbac.testing';
 import { registerEmployeeReports } from './employee-reports';
 
 const NAMES = ['employee-directory', 'employee-headcount', 'joiners-leavers'];
+const EVERYTHING = [
+  'attendance-summary',
+  'employee-directory',
+  'employee-headcount',
+  'joiners-leavers',
+  'leave-usage',
+  'project-status',
+  'task-status',
+];
 
 describe('employee report definitions', () => {
   it('register under unique, valid names with at least one data permission and the columns they declare', () => {
@@ -44,7 +53,13 @@ describe('employee report definitions', () => {
         expect(res.status).toBe(403);
       } else {
         expect(res.status).toBe(200);
-        expect(res.body.data.map((r: { name: string }) => r.name)).toEqual(NAMES);
+        const names = res.body.data.map((r: { name: string }) => r.name);
+        // The employee reports are there for everyone who may run reports; the others follow
+        // the data permissions of their module (HR has no task-board scope).
+        expect(names).toEqual(expect.arrayContaining(NAMES));
+        expect(names).toEqual(
+          role === 'hr_manager' ? EVERYTHING.filter((n) => n !== 'task-status') : EVERYTHING,
+        );
       }
     }
   });

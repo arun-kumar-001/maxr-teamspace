@@ -18,7 +18,10 @@ import { createEmployeeDeactivation } from '../modules/employees/deactivation';
 import { createEmployeeDetail } from '../modules/employees/detail';
 import { createEmployeeHierarchy } from '../modules/employees/hierarchy';
 import { createEmployeeProfile } from '../modules/employees/profile';
+import { registerAttendanceReports } from '../modules/attendance/reports/attendance-reports';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
+import { registerLeaveReports } from '../modules/leave/reports/leave-reports';
+import { registerTaskReports } from '../modules/tasks/reports/task-reports';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
 import { createLeaveSetup } from '../modules/leave';
@@ -98,6 +101,10 @@ export function createApiRouter({
   const registry = reportRegistry ?? new ReportRegistry();
   if (!reportRegistry) {
     registerEmployeeReports(registry, { getPool, settings: settings.reader });
+    const reportDeps = { getPool, settings: settings.reader };
+    registerAttendanceReports(registry, reportDeps);
+    registerLeaveReports(registry, reportDeps);
+    registerTaskReports(registry, reportDeps);
   }
   router.use('/approvals', approvals.router);
   const leave = createLeaveSetup({

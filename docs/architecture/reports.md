@@ -67,7 +67,23 @@ A joiner's date is `joining_date`. A leaver's date is the day the employee was d
 
 `employees.deactivated_at` (migration `20261030000013`) records the deactivation. A trigger sets it when `status` becomes `deactivated` and clears it on reactivation, and a CHECK keeps the two in agreement, so the deactivation endpoint (#26) only has to change the status. Existing deactivated rows were given their last update time. Leavers before this migration therefore have approximate dates.
 
+## Attendance, leave and task reports (#47, D-36)
+
+Registered by the default app next to the employee reports. Each needs `reports.read` and a data permission of its own module; the widest scope the caller holds is applied **inside the query**. A report whose data permission the caller lacks does not exist for them (404), and `GET /reports` does not list it. Exports (CSV or PDF) go through the shared export route and are audited (`report.export`).
+
+| Report | Data permission | Who sees what | Filters |
+| --- | --- | --- | --- |
+| `attendance-summary` | `attendance.list` | Team Lead: direct reports; HR, Admin: everyone | `from`, `to` (required, fewer than 92 days apart), `departmentId` |
+| `leave-usage` | `leave_balances.list` | Team Lead: direct reports; HR, Admin: everyone | `year` (default: the current company year), `leaveTypeId`, `departmentId` |
+| `task-status` | `tasks.read_team` | Team Lead: tasks assigned to direct reports; Admin: all; **HR: not available** | `projectId`, `dueFrom`, `dueTo` |
+| `project-status` | `projects.read` | Projects you own or belong to; Admin: all | `status` |
+
+- **`attendance-summary`** columns: Code, Employee, Department, Working days, Days present, Late days, Half days, On leave, Absent, Hours worked. *Working days* are the company's working days (settings) that are not holidays, from the day the employee joined to the day they were deactivated (company calendar) and not after today. *Present*: a day with at least one session (an open session counts, with no hours). *Late*: the first session of the day was late. *Half day*: the day's worked time reached the policy's half day but not its full day (D-13). *On leave*: a working day covered by **approved** leave. *Absent*: a working day with no session and no approved leave. Pending, applied and rejected leave excuses nothing.
+- **`leave-usage`** columns: Code, Employee, Department, Leave type, Year, Allotted, Carried forward, Used, Pending, Remaining. *Pending* is the days of applied and pending requests; approved leave is already in *Used*.
+- **`task-status`** columns: Code, Employee, Department, To do, In progress, In review, Blocked, Completed, Overdue, Total. A completed task is never overdue. "Today" is the company calendar.
+- **`project-status`** columns: Code, Project, Status, Owner, Members, Tasks, Completed, Overdue, Complete %.
+- No report lists a reason, comment, title, description or location, and a test fails if a column name suggests one. HR having no `task-status` follows the task permissions (D-34): HR is not on the task board.
+
 ## Not built yet
 
 - **Async exports** for more than 10,000 rows (CSV) or 2,000 rows (PDF).
-- Attendance, leave and task reports (#47).
