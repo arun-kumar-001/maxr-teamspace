@@ -150,6 +150,8 @@ describe('leave requests API: access', () => {
       ['get', '/api/v1/leave-requests'],
       ['get', '/api/v1/leave-requests/me'],
       ['get', `/api/v1/leave-requests/${MISSING}`],
+      ['get', '/api/v1/leave-requests/calendar'],
+      ['post', `/api/v1/leave-requests/${MISSING}/cancel`],
     ] as const) {
       expect((await request(app)[method](path).send({})).status, `${method} ${path}`).toBe(401);
     }
@@ -158,7 +160,7 @@ describe('leave requests API: access', () => {
   it('declares a permission on every route', async () => {
     const { app } = await setup();
     const routes = listRoutes(app).filter((r) => r.path.startsWith('/api/v1/leave-requests'));
-    expect(routes).toHaveLength(4);
+    expect(routes).toHaveLength(6);
     for (const route of routes) expect(route.access, `${route.method} ${route.path}`).toBeDefined();
   });
 
@@ -459,6 +461,205 @@ describe('leave requests API: access', () => {
         200,
       );
       expect((await as.staff.get('/api/v1/leave-requests/not-a-uuid')).status).toBe(400);
+    });
+  });
+
+  describe('cancelling', () => {
+    const cancel = (as: SignedIn, id: string) => as.post(`/api/v1/leave-requests/${id}/cancel`);
+
+    it('the owner cancels a pending request: no balance change, the approval is withdrawn, the dates are free again', async () => {
+      const { as, apply, week, used, approvalOf, requestsRepo, kit } = await setup();
+      const created = await apply('staff', week());
+      const approvalId = await approvalOf('team_lead');
+      const res = await cancel(as.staff, created.body.data.id);
+      expect(res.status).toBe(200);
+      expect(res.body.data.status).toBe('cancelled');
+      expect(requestsRepo.requests[0]?.status).toBe('cancelled');
+      expect(used(kit.users.staff.employeeId)).toBe(0);
+      // The approver can no longer decide it.
+      expect((await as.team_lead.post(`/api/v1/approvals/${approvalId}/approve`)).status).toBe(409);
+      expect((await apply('staff', week())).status).toBe(201);
+    });
+
+    it('cancelling approved leave before it starts gives the days back, and is audited', async () => {
+      const { as, apply, week, used, approvalOf, auditStore, kit } = await setup();
+      const created = await apply('staff', week());
+      await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+      expect(used(kit.users.staff.employeeId)).toBe(4);
+      const res = await cancel(as.staff, created.body.data.id);
+      expect(res.status).toBe(200);
+      expect(used(kit.users.staff.employeeId)).toBe(0);
+      const entry = auditStore.find((e) => e.action === 'leave.cancel')[0];
+      expect(entry?.changes).toEqual({
+        status: { from: 'approved', to: 'cancelled' },
+        balanceUsed: { from: 4, to: 0 },
+      });
+      expect(entry?.metadata).toMatchObject({ byOwner: true, days: 4 });
+    });
+
+    it('cancelling approved leave of a type without a balance changes no balance', async () => {
+      const { as, apply, approvalOf, requestsRepo } = await setup();
+      const created = await apply('staff', {
+        leaveTypeId: UNPAID,
+        startDate: '2026-11-02',
+        endDate: '2026-11-03',
+      });
+      await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+      expect((await cancel(as.staff, created.body.data.id)).status).toBe(200);
+      expect(requestsRepo.requests[0]?.status).toBe('cancelled');
+    });
+
+    describe('approved leave that has started', () => {
+      // Starts today (Saturday 31 October), one working day on Monday the 2nd.
+      const started = async () => {
+        const ctx = await setup();
+        const created = await ctx.apply(
+          'staff',
+          ctx.week({ startDate: '2026-10-31', endDate: '2026-11-02' }),
+        );
+        await ctx.as.team_lead.post(
+          `/api/v1/approvals/${await ctx.approvalOf('team_lead')}/approve`,
+        );
+        return { ...ctx, id: created.body.data.id as string };
+      };
+
+      it('cannot be cancelled by its owner, who is told to ask HR', async () => {
+        const { as, id, used, kit } = await started();
+        const res = await cancel(as.staff, id);
+        expect(res.status).toBe(403);
+        expect(used(kit.users.staff.employeeId)).toBe(1);
+      });
+
+      it.each(['hr_manager', 'admin'] as Role[])(
+        'can be cancelled by %s at any time, restoring the days',
+        async (who) => {
+          const { as, id, used, kit } = await started();
+          expect((await cancel(as[who], id)).status).toBe(200);
+          expect(used(kit.users.staff.employeeId)).toBe(0);
+        },
+      );
+
+      it('is out of reach of a Team Lead, who gets the 404 of a missing request', async () => {
+        const { as, id } = await started();
+        expectNoExistenceLeak(await cancel(as.team_lead, id), await cancel(as.team_lead, MISSING));
+      });
+    });
+
+    it('HR cannot cancel their own started leave past the owner\u2019s limit', async () => {
+      const { as, apply, week, approvalOf } = await setup();
+      const created = await apply(
+        'hr_manager',
+        week({ startDate: '2026-10-31', endDate: '2026-11-02' }),
+      );
+      // An HR Manager's request goes to HR/Admin; the Admin decides it.
+      await as.admin.post(`/api/v1/approvals/${await approvalOf('admin')}/approve`);
+      expect((await cancel(as.hr_manager, created.body.data.id)).status).toBe(403);
+    });
+
+    it('someone else\u2019s request is a 404 for a role without the right', async () => {
+      const { as, apply, week } = await setup();
+      const created = await apply('team_lead', week());
+      expectNoExistenceLeak(
+        await cancel(as.staff, created.body.data.id),
+        await cancel(as.staff, MISSING),
+      );
+    });
+
+    it('a rejected or cancelled request is final (409)', async () => {
+      const { as, apply, week, approvalOf } = await setup();
+      const first = await apply('staff', week());
+      await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/reject`, {
+        comment: 'No',
+      });
+      expect((await cancel(as.staff, first.body.data.id)).status).toBe(409);
+      const second = await apply('staff', week());
+      expect((await cancel(as.staff, second.body.data.id)).status).toBe(200);
+      expect((await cancel(as.staff, second.body.data.id)).status).toBe(409);
+      expect((await cancel(as.hr_manager, second.body.data.id)).status).toBe(409);
+    });
+
+    it('answers 404 for an unknown id and 400 for one that is not a uuid', async () => {
+      const { as } = await setup();
+      expect((await cancel(as.staff, MISSING)).status).toBe(404);
+      expect((await cancel(as.staff, 'nope')).status).toBe(400);
+    });
+  });
+
+  describe('the calendar', () => {
+    const range = '?from=2026-11-01&to=2026-11-30';
+
+    it('shows pending and approved leave in scope, without reasons, and not rejected or cancelled', async () => {
+      const { as, apply, week } = await setup();
+      await apply('staff', week({ reason: 'A private reason' }));
+      await apply('staff', { leaveTypeId: UNPAID, startDate: '2026-11-16', endDate: '2026-11-17' });
+      await apply('staff', { leaveTypeId: UNPAID, startDate: '2026-11-23', endDate: '2026-11-24' });
+      const cancelled = (await as.staff.get('/api/v1/leave-requests/me')).body.data[0].id as string;
+      await as.staff.post(`/api/v1/leave-requests/${cancelled}/cancel`);
+      await apply('team_lead', week());
+      const res = await as.team_lead.get(`/api/v1/leave-requests/calendar${range}`);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(2); // the Team Lead's own leave is not in the team
+      expect(res.body.data.map((e: { status: string }) => e.status)).toEqual([
+        'pending',
+        'pending',
+      ]);
+      expect(JSON.stringify(res.body)).not.toContain('A private reason');
+      expect(res.body.data[0]).toMatchObject({ halfDay: false, leaveTypeCode: expect.any(String) });
+      expect(res.body.data[0].reason).toBeUndefined();
+    });
+
+    it('a Team Lead sees direct reports, HR and Admin everyone, and Staff nobody', async () => {
+      const { as, apply, week } = await setup();
+      await apply('staff', week());
+      await apply('team_lead', week());
+      await apply('hr_manager', week());
+      const count = async (who: Role) =>
+        (await as[who].get(`/api/v1/leave-requests/calendar${range}`)).body.data.length;
+      expect(await count('team_lead')).toBe(1);
+      expect(await count('hr_manager')).toBe(3);
+      expect(await count('admin')).toBe(3);
+      expect((await as.staff.get(`/api/v1/leave-requests/calendar${range}`)).status).toBe(403);
+    });
+
+    it('returns only leave that touches the range', async () => {
+      const { as, apply } = await setup();
+      await apply('staff', { leaveTypeId: UNPAID, startDate: '2026-11-02', endDate: '2026-11-03' });
+      await apply('staff', { leaveTypeId: UNPAID, startDate: '2026-11-16', endDate: '2026-11-17' });
+      const dates = async (q: string) =>
+        (await as.hr_manager.get(`/api/v1/leave-requests/calendar${q}`)).body.data.map(
+          (e: { startDate: string }) => e.startDate,
+        );
+      expect(await dates('?from=2026-11-03&to=2026-11-15')).toEqual(['2026-11-02']); // overlaps by a day
+      expect(await dates('?from=2026-11-04&to=2026-11-15')).toEqual([]);
+      expect(await dates('?from=2026-11-17&to=2026-11-17')).toEqual(['2026-11-16']);
+    });
+
+    it.each([
+      ['no range', ''],
+      ['no end', '?from=2026-11-01'],
+      ['an end before the start', '?from=2026-11-10&to=2026-11-01'],
+      ['a range over 62 days', '?from=2026-11-01&to=2027-01-15'],
+      ['a date that does not exist', '?from=2026-02-30&to=2026-03-05'],
+      ['an unknown parameter', '?from=2026-11-01&to=2026-11-30&employeeId=x'],
+    ])('rejects %s with 400', async (_name, query) => {
+      const { as } = await setup();
+      expect((await as.hr_manager.get(`/api/v1/leave-requests/calendar${query}`)).status).toBe(400);
+    });
+
+    it('refuses 63 days', async () => {
+      const { as } = await setup();
+      expect(
+        (await as.hr_manager.get('/api/v1/leave-requests/calendar?from=2026-11-01&to=2027-01-02'))
+          .status,
+      ).toBe(400);
+    });
+
+    it('allows exactly 62 days', async () => {
+      const { as } = await setup();
+      expect(
+        (await as.hr_manager.get('/api/v1/leave-requests/calendar?from=2026-11-01&to=2027-01-01'))
+          .status,
+      ).toBe(200);
     });
   });
 });

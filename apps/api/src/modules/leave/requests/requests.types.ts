@@ -30,3 +30,17 @@ export interface NewLeaveRequest {
   days: number;
   reason: string | null;
 }
+
+/** One entry of the leave calendar: who is away, when and for what. No reason, it can be private. */
+export interface LeaveCalendarEntry {
+  requestId: string;
+  employeeId: string;
+  employeeName: string;
+  leaveTypeCode: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  halfDay: boolean;
+  days: number;
+  status: 'pending' | 'approved';
+}

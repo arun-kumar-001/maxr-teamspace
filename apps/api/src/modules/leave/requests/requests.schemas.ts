@@ -51,6 +51,35 @@ export const listLeaveRequestsQuerySchema = z
   .object({ ...listFields, employeeId: z.string().uuid().optional() })
   .strict();
 
+/** The calendar window is capped so the answer stays small; page through longer ranges by month. */
+export const MAX_CALENDAR_DAYS = 62;
+
+export const leaveCalendarQuerySchema = z
+  .object({ from: calendarDate, to: calendarDate })
+  .strict()
+  .refine((v) => v.to >= v.from, { message: 'The end must be on or after the start', path: ['to'] })
+  .refine(
+    (v) =>
+      (Date.parse(`${v.to}T00:00:00Z`) - Date.parse(`${v.from}T00:00:00Z`)) / 86_400_000 <
+      MAX_CALENDAR_DAYS,
+    { message: `Ask for at most ${MAX_CALENDAR_DAYS} days at a time`, path: ['to'] },
+  );
+
+export const leaveCalendarEntrySchema = z
+  .object({
+    requestId: z.string().uuid(),
+    employeeId: z.string().uuid(),
+    employeeName: z.string(),
+    leaveTypeCode: z.string(),
+    leaveTypeName: z.string(),
+    startDate: z.string(),
+    endDate: z.string(),
+    halfDay: z.boolean(),
+    days: z.number(),
+    status: z.enum(['pending', 'approved']),
+  })
+  .meta({ id: 'LeaveCalendarEntry' });
+
 export const leaveRequestSchema = z
   .object({
     id: z.string().uuid(),
@@ -71,6 +100,7 @@ export const leaveRequestSchema = z
   })
   .meta({ id: 'LeaveRequest' });
 
+export type LeaveCalendarQuery = z.infer<typeof leaveCalendarQuerySchema>;
 export type ApplyForLeaveInput = z.infer<typeof applyForLeaveSchema>;
 export type ListLeaveRequestsQuery = z.infer<typeof listLeaveRequestsQuerySchema>;
 export type ListMyLeaveRequestsQuery = z.infer<typeof listMyLeaveRequestsQuerySchema>;

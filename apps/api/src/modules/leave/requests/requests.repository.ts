@@ -2,7 +2,12 @@ import type { PoolClient } from 'pg';
 import { conflict } from '../../../http/errors';
 import { ScopeFilter, scopeToSql } from '../../rbac';
 import type { LeaveTx, PoolGetter } from '../policies/policies.types';
-import { LeaveRequest, LeaveRequestStatus, NewLeaveRequest } from './requests.types';
+import {
+  LeaveCalendarEntry,
+  LeaveRequest,
+  LeaveRequestStatus,
+  NewLeaveRequest,
+} from './requests.types';
 
 export interface FindLeaveRequestsParams {
   filter: ScopeFilter;
@@ -40,6 +45,20 @@ export interface ILeaveRequestsRepository {
     year: number,
     days: number,
   ): Promise<{ usedBefore: number; usedAfter: number } | null>;
+  /** Gives `days` back to the balance's `used`. Null when there is no such balance or it holds fewer days. */
+  restore(
+    tx: LeaveTx,
+    employeeId: string,
+    leaveTypeId: string,
+    year: number,
+    days: number,
+  ): Promise<{ usedBefore: number; usedAfter: number } | null>;
+  /** Pending and approved leave touching `from`..`to`, for employees inside `filter`. At most 2000 rows. */
+  findCalendar(params: {
+    filter: ScopeFilter;
+    from: string;
+    to: string;
+  }): Promise<LeaveCalendarEntry[]>;
   /** One request, only when its employee is inside `filter`. */
   find(id: string, filter: ScopeFilter): Promise<LeaveRequest | null>;
   findMany(params: FindLeaveRequestsParams): Promise<{ items: LeaveRequest[]; total: number }>;
@@ -189,6 +208,55 @@ export class PgLeaveRequestsRepository implements ILeaveRequestsRepository {
     );
     const row = res.rows[0];
     return row ? { usedBefore: Number(row.used_before), usedAfter: Number(row.used_after) } : null;
+  }
+
+  async restore(
+    tx: LeaveTx,
+    employeeId: string,
+    leaveTypeId: string,
+    year: number,
+    days: number,
+  ): Promise<{ usedBefore: number; usedAfter: number } | null> {
+    const res = await tx.query<{ used_before: string; used_after: string }>(
+      `UPDATE leave_balances b
+          SET used = b.used - $4, updated_at = NOW()
+         FROM (SELECT id, used FROM leave_balances
+                WHERE employee_id = $1 AND leave_type_id = $2 AND year = $3 FOR UPDATE) old
+        WHERE b.id = old.id AND b.used >= $4
+        RETURNING old.used AS used_before, b.used AS used_after`,
+      [employeeId, leaveTypeId, year, days],
+    );
+    const row = res.rows[0];
+    return row ? { usedBefore: Number(row.used_before), usedAfter: Number(row.used_after) } : null;
+  }
+
+  async findCalendar(params: {
+    filter: ScopeFilter;
+    from: string;
+    to: string;
+  }): Promise<LeaveCalendarEntry[]> {
+    const scope = scopeToSql(params.filter, 'r.employee_id', 1);
+    const next = scope.values.length + 1;
+    const res = await this.getPool().query<Row>(
+      `${SELECT}
+        WHERE ${scope.clause} AND r.status IN ('pending', 'approved')
+          AND r.end_date >= $${next}::date AND r.start_date <= $${next + 1}::date
+        ORDER BY r.start_date, employee_name, r.id
+        LIMIT 2000`,
+      [...scope.values, params.from, params.to],
+    );
+    return res.rows.map((row) => ({
+      requestId: row.id,
+      employeeId: row.employee_id,
+      employeeName: row.employee_name,
+      leaveTypeCode: row.code,
+      leaveTypeName: row.type_name,
+      startDate: row.start_date,
+      endDate: row.end_date,
+      halfDay: row.half_day,
+      days: Number(row.days),
+      status: row.status as 'pending' | 'approved',
+    }));
   }
 
   async find(id: string, filter: ScopeFilter): Promise<LeaveRequest | null> {

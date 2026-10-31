@@ -1,5 +1,5 @@
 import { PaginatedResponse } from '@maxr/shared';
-import { conflict, notFound, unprocessable } from '../../../http/errors';
+import { conflict, forbidden, notFound, unprocessable } from '../../../http/errors';
 import { buildPage, toOffsetLimit } from '../../../http/pagination';
 import type { PlatformServices } from '../../../platform';
 import { EventCollector } from '../../../platform/events/event-bus';
@@ -19,9 +19,10 @@ import { ILeaveRequestsRepository } from './requests.repository';
 import type {
   ApplyForLeaveInput,
   ListLeaveRequestsQuery,
+  LeaveCalendarQuery,
   ListMyLeaveRequestsQuery,
 } from './requests.schemas';
-import { LeaveRequest } from './requests.types';
+import { LeaveCalendarEntry, LeaveRequest } from './requests.types';
 
 type Deps = Pick<PlatformServices, 'audit' | 'events'>;
 
@@ -47,7 +48,7 @@ export class LeaveRequestsService implements ApprovalHandler {
 
   constructor(
     private readonly repository: ILeaveRequestsRepository,
-    private readonly approvals: Pick<ApprovalsService, 'route' | 'submit'>,
+    private readonly approvals: Pick<ApprovalsService, 'route' | 'submit' | 'cancel'>,
     private readonly platform: Deps,
     private readonly settings: CompanySettingsReader,
     private readonly holidays: HolidayReader,
@@ -200,6 +201,87 @@ export class LeaveRequestsService implements ApprovalHandler {
         },
         { transaction: tx },
       );
+  }
+
+  /**
+   * Cancels a request (D-12). Its owner may cancel while it is applied or pending, and an approved
+   * one only before its start date. HR Manager and Admin (`cancelScope`) may cancel an approved
+   * or pending request of someone in their scope at any time, but never their own past the
+   * owner's limit. Cancelling an approved request gives its days back to the balance in the same
+   * transaction. Rejected and cancelled requests are final (409).
+   */
+  async cancel(id: string, caller: LeaveCaller, cancelScope: ScopeFilter): Promise<LeaveRequest> {
+    const { timezone } = await this.settings.getBasic();
+    const today = localDate(this.clock(), timezone);
+    const audit = this.platform.audit.withContext({
+      actorId: caller.actorId,
+      requestId: caller.requestId,
+    });
+    return this.repository.transaction(async (tx) => {
+      const own = await this.repository.find(id, { kind: 'own', employeeId: caller.employeeId });
+      const found = own ?? (await this.repository.find(id, cancelScope));
+      // Someone else's request looks exactly like a missing one.
+      if (!found) throw notFound('Leave request not found');
+      const byOwner = found.employeeId === caller.employeeId;
+
+      // Same lock order as a decision: the approval first, then the request, then the balance.
+      if (found.status === 'applied' || found.status === 'pending') {
+        await this.approvals.cancel(tx, LEAVE_SUBJECT, id);
+      }
+      const request = await this.repository.findForUpdate(tx, id);
+      if (!request) throw notFound('Leave request not found');
+      if (
+        request.status !== 'applied' &&
+        request.status !== 'pending' &&
+        request.status !== 'approved'
+      ) {
+        throw conflict(`A ${request.status} leave request cannot be cancelled`);
+      }
+      if (byOwner && request.status === 'approved' && request.startDate <= today) {
+        throw forbidden('Approved leave can only be cancelled before it starts; ask HR');
+      }
+
+      let changes: Record<string, { from: unknown; to: unknown }> = {
+        status: { from: request.status, to: 'cancelled' },
+      };
+      if (request.status === 'approved') {
+        const policy = await this.policies.get(request.leaveTypeId);
+        if (policy?.hasBalance) {
+          const restored = await this.repository.restore(
+            tx,
+            request.employeeId,
+            request.leaveTypeId,
+            Number(request.startDate.slice(0, 4)),
+            request.days,
+          );
+          if (!restored) {
+            throw new Error(`The balance of leave request ${id} cannot take its days back`);
+          }
+          changes = {
+            ...changes,
+            balanceUsed: { from: restored.usedBefore, to: restored.usedAfter },
+          };
+        }
+      }
+      await this.repository.setStatus(tx, id, 'cancelled');
+      await audit.record(
+        {
+          action: 'leave.cancel',
+          outcome: 'success',
+          entityType: 'leave_request',
+          entityId: id,
+          changes,
+          metadata: { leaveType: request.leaveTypeCode, days: request.days, byOwner },
+        },
+        { transaction: tx },
+      );
+      return { ...request, status: 'cancelled' as const };
+    });
+  }
+
+  /** Who is away between two dates, inside the caller's scope. Pending and approved leave, no reasons. */
+  async calendar(query: LeaveCalendarQuery, filter: ScopeFilter): Promise<LeaveCalendarEntry[]> {
+    return this.repository.findCalendar({ filter, from: query.from, to: query.to });
   }
 
   async listMine(

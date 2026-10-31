@@ -5,6 +5,7 @@ import { validate, validated } from '../../../http/validate';
 import { accessFor, requirePermission, resolveScope, toScopeFilter } from '../../rbac';
 import {
   applyForLeaveSchema,
+  leaveCalendarQuerySchema,
   leaveRequestIdParamsSchema,
   listLeaveRequestsQuerySchema,
   listMyLeaveRequestsQuerySchema,
@@ -20,7 +21,7 @@ function caller(req: Request): LeaveCaller {
 /**
  * Mounted at /api/v1/leave-requests. The employee is always the signed-in caller. Decisions are
  * not here: approvers use /api/v1/approvals, which calls back into the service. `/me` is declared
- * before `/:id`.
+ * before `/:id`, and `/calendar` too.
  */
 export function createLeaveRequestsRouter(options: {
   service: LeaveRequestsService;
@@ -53,6 +54,16 @@ export function createLeaveRequestsRouter(options: {
   );
 
   router.get(
+    '/calendar',
+    requirePermission('leave.list'),
+    validate({ query: leaveCalendarQuerySchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { query } = validated(req, { query: leaveCalendarQuerySchema });
+      res.status(200).json({ data: await service.calendar(query, accessFor(req).filter) });
+    }),
+  );
+
+  router.get(
     '/',
     requirePermission('leave.list'),
     validate({ query: listLeaveRequestsQuerySchema }),
@@ -72,6 +83,19 @@ export function createLeaveRequestsRouter(options: {
       if (!actor) throw new Error('authenticate() did not run before this handler');
       const reviewScope = toScopeFilter(resolveScope(actor.roles, 'leave.list'), actor);
       res.status(200).json({ data: await service.get(params.id, caller(req), reviewScope) });
+    }),
+  );
+
+  router.post(
+    '/:id/cancel',
+    requirePermission('leave.cancel'),
+    validate({ params: leaveRequestIdParamsSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: leaveRequestIdParamsSchema });
+      const { actor } = req;
+      if (!actor) throw new Error('authenticate() did not run before this handler');
+      const cancelScope = toScopeFilter(resolveScope(actor.roles, 'leave.cancel_any'), actor);
+      res.status(200).json({ data: await service.cancel(params.id, caller(req), cancelScope) });
     }),
   );
 

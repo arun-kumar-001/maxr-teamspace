@@ -32,6 +32,7 @@ describe('leave requests against PostgreSQL', () => {
   const run = randomUUID().slice(0, 8);
   const ids = { dept: '', desig: '', manager: '', requester: '', hr: '', user: '' };
   let failAfterDeduct = false;
+  let failOnCancel = false;
 
   const silent = createLogger({ level: 'silent', write: () => undefined });
   const { platform } = createTestPlatform({ logger: silent, auditStore: new SqlAuditStore(pool) });
@@ -53,6 +54,7 @@ describe('leave requests against PostgreSQL', () => {
   class FlakyRepository extends PgLeaveRequestsRepository {
     override async setStatus(tx: LeaveTx, id: string, status: LeaveRequestStatus) {
       if (failAfterDeduct && status === 'approved') throw new Error('status write failed');
+      if (failOnCancel && status === 'cancelled') throw new Error('cancel write failed');
       return super.setStatus(tx, id, status);
     }
   }
@@ -67,6 +69,18 @@ describe('leave requests against PostgreSQL', () => {
     clock,
   );
   approvals.registerHandler(service);
+  // The same service on Wednesday 4 January 2090, after 2 to 4 January have started.
+  const later = new LeaveRequestsService(
+    new FlakyRepository(getPool),
+    approvals,
+    platform,
+    settings,
+    new HolidaysService(new PgHolidaysRepository(getPool), platform, settings, clock),
+    new LeavePoliciesService(new PgLeavePoliciesRepository(getPool), platform),
+    () => new Date('2090-01-04T10:00:00Z'),
+  );
+  const noRights = (): { kind: 'none' } => ({ kind: 'none' });
+  const hrScope = { kind: 'all' } as const;
 
   const requesterCaller = (): LeaveCaller => ({ actorId: randomUUID(), employeeId: ids.requester });
   const managerCaller = (): ApprovalCaller => ({
@@ -151,6 +165,7 @@ describe('leave requests against PostgreSQL', () => {
 
   beforeEach(async () => {
     failAfterDeduct = false;
+    failOnCancel = false;
     await pool.query(`DELETE FROM approvals WHERE requester_employee_id = $1`, [ids.requester]);
     await pool.query(`DELETE FROM leave_requests WHERE employee_id = $1`, [ids.requester]);
     await pool.query(`DELETE FROM leave_balances WHERE employee_id = $1`, [ids.requester]);
@@ -372,5 +387,138 @@ describe('leave requests against PostgreSQL', () => {
     expect((await repo.find(a.id, { kind: 'team', managerId: ids.manager }))?.approvalId).toBe(
       a.approvalId,
     );
+  });
+
+  describe('cancelling', () => {
+    const cancel = (id: string, scope: Parameters<typeof service.cancel>[2] = noRights()) =>
+      service.cancel(id, requesterCaller(), scope);
+
+    it('a pending request is withdrawn with its approval, and nothing is deducted', async () => {
+      const created = await apply('2090-01-02', '2090-01-04');
+      await expect(cancel(created.id)).resolves.toMatchObject({ status: 'cancelled' });
+      expect(await statusOf(created.id)).toBe('cancelled');
+      expect(await approvalStatus(created.approvalId as string)).toBe('cancelled');
+      expect(Number((await balance())?.used)).toBe(0);
+      await expect(apply('2090-01-02', '2090-01-04')).resolves.toMatchObject({ status: 'pending' });
+    });
+
+    it('approved leave gives exactly its days back, once', async () => {
+      const created = await apply('2090-01-02', '2090-01-04'); // 3 days
+      await approve(created.approvalId as string);
+      expect(Number((await balance())?.used)).toBe(3);
+      await cancel(created.id);
+      expect(Number((await balance())?.used)).toBe(0);
+      expect(await statusOf(created.id)).toBe('cancelled');
+      await expect(cancel(created.id)).rejects.toMatchObject({ statusCode: 409 });
+      expect(Number((await balance())?.used)).toBe(0);
+      const audit = await pool.query<{ changes: Record<string, unknown> }>(
+        `SELECT changes FROM audit_logs WHERE entity_id = $1 AND action = 'leave.cancel'`,
+        [created.id],
+      );
+      expect(audit.rows[0]?.changes).toEqual({
+        status: { from: 'approved', to: 'cancelled' },
+        balanceUsed: { from: 3, to: 0 },
+      });
+    });
+
+    it('two cancellations at once restore the days once and never push the balance below zero', async () => {
+      const created = await apply('2090-01-02', '2090-01-04');
+      await approve(created.approvalId as string);
+      const results = await Promise.allSettled([cancel(created.id), cancel(created.id)]);
+      expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+      expect(
+        (results.find((r) => r.status === 'rejected') as PromiseRejectedResult).reason,
+      ).toMatchObject({
+        statusCode: 409,
+      });
+      expect(Number((await balance())?.used)).toBe(0);
+    });
+
+    it('a cancel and an approval at the same moment end in one consistent state without deadlocking', async () => {
+      const created = await apply('2090-01-02', '2090-01-04');
+      await Promise.allSettled([approve(created.approvalId as string), cancel(created.id)]);
+      const status = await statusOf(created.id);
+      expect(['approved', 'cancelled']).toContain(status);
+      // Whatever won, the balance matches: approved holds the days, cancelled holds none.
+      expect(Number((await balance())?.used)).toBe(status === 'approved' ? 3 : 0);
+      // And an approved one can still be cancelled afterwards, giving the days back.
+      if (status === 'approved') {
+        await cancel(created.id);
+        expect(Number((await balance())?.used)).toBe(0);
+      }
+    });
+
+    it('a failure while cancelling undoes the restore', async () => {
+      const created = await apply('2090-01-02', '2090-01-04');
+      await approve(created.approvalId as string);
+      failOnCancel = true;
+      await expect(cancel(created.id)).rejects.toThrow('cancel write failed');
+      expect(Number((await balance())?.used)).toBe(3);
+      expect(await statusOf(created.id)).toBe('approved');
+      failOnCancel = false;
+      await cancel(created.id);
+      expect(Number((await balance())?.used)).toBe(0);
+    });
+
+    it('after the start date only HR can cancel, and the days still come back', async () => {
+      const created = await apply('2090-01-02', '2090-01-04');
+      await approve(created.approvalId as string);
+      // On 4 January the leave has started: the owner is refused, HR is not.
+      await expect(later.cancel(created.id, requesterCaller(), noRights())).rejects.toMatchObject({
+        statusCode: 403,
+      });
+      expect(Number((await balance())?.used)).toBe(3);
+      const hr: LeaveCaller = { actorId: randomUUID(), employeeId: ids.hr };
+      await expect(later.cancel(created.id, hr, hrScope)).resolves.toMatchObject({
+        status: 'cancelled',
+      });
+      expect(Number((await balance())?.used)).toBe(0);
+    });
+
+    it('someone without the right gets a 404 and nothing changes', async () => {
+      const created = await apply('2090-01-02', '2090-01-04');
+      await approve(created.approvalId as string);
+      const stranger: LeaveCaller = { actorId: randomUUID(), employeeId: ids.hr };
+      await expect(service.cancel(created.id, stranger, noRights())).rejects.toMatchObject({
+        statusCode: 404,
+      });
+      expect(Number((await balance())?.used)).toBe(3);
+    });
+
+    it('the repository will not give back more days than were used', async () => {
+      const repo = new PgLeaveRequestsRepository(getPool);
+      await repo.transaction(async (tx) => {
+        expect(await repo.restore(tx, ids.requester, ANNUAL, YEAR, 1)).toBeNull();
+        expect(await repo.restore(tx, ids.requester, UNPAID, YEAR, 1)).toBeNull();
+      });
+    });
+  });
+
+  describe('the calendar', () => {
+    it('lists pending and approved leave in scope, without the reason, and leaves out the rest', async () => {
+      const kept = await apply('2090-01-02', '2090-01-03', { reason: 'Private' });
+      const dropped = await apply('2090-01-09', '2090-01-09');
+      await service.cancel(dropped.id, requesterCaller(), noRights());
+      await approve(kept.approvalId as string);
+      const repo = new PgLeaveRequestsRepository(getPool);
+      const forManager = await repo.findCalendar({
+        filter: { kind: 'team', managerId: ids.manager },
+        from: '2090-01-01',
+        to: '2090-01-31',
+      });
+      expect(forManager).toHaveLength(1);
+      expect(forManager[0]).toMatchObject({ requestId: kept.id, status: 'approved', days: 2 });
+      expect(JSON.stringify(forManager)).not.toContain('Private');
+      expect(
+        await repo.findCalendar({
+          filter: { kind: 'team', managerId: ids.hr },
+          from: '2090-01-01',
+          to: '2090-01-31',
+        }),
+      ).toEqual([]);
+      expect(
+        await repo.findCalendar({ filter: { kind: 'all' }, from: '2090-01-04', to: '2090-01-08' }),
+      ).toEqual([]);
+    });
   });
 });
