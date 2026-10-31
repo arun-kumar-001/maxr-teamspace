@@ -41,6 +41,7 @@ async function setup() {
       audit: platform.audit,
       repository: repo,
       service,
+      shiftResolver: undefined,
     }),
   );
   app.use(notFoundHandler);

@@ -1,7 +1,12 @@
 import { randomUUID } from 'crypto';
 import { conflict } from '../../http/errors';
 import { ScopeFilter, scopeAllows } from '../rbac';
-import { AttendanceLocation, AttendanceRecord, CheckInDto } from './attendance.types';
+import {
+  AttendanceLocation,
+  AttendanceRecord,
+  AttendanceStatus,
+  CheckInDto,
+} from './attendance.types';
 import { AttendanceFindManyParams, IAttendanceRepository } from './attendance.repository';
 
 export function uniqueViolation(constraint = 'idx_attendance_single_open_session'): Error {
@@ -68,6 +73,7 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
     workDate: string,
     dto: CheckInDto,
     checkInTime = new Date().toISOString(),
+    status: AttendanceStatus = 'present',
   ): Promise<AttendanceRecord> {
     // Enforce partial unique index: at most one open session per employee
     const active = await this.findActiveSession(employeeId);
@@ -83,7 +89,7 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       checkInTime,
       checkOutTime: null,
       durationMinutes: null,
-      status: 'present',
+      status,
       location: (dto.location as AttendanceLocation) ?? null,
       notes: dto.notes ?? null,
       createdAt: now,

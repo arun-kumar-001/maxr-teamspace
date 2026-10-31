@@ -27,6 +27,7 @@ export interface IAttendanceRepository {
     workDate: string,
     dto: CheckInDto,
     checkInTime?: string,
+    status?: AttendanceStatus,
   ): Promise<AttendanceRecord>;
   createCheckOut(
     sessionId: string,
@@ -140,6 +141,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
     workDate: string,
     dto: CheckInDto,
     checkInTime?: string,
+    status: AttendanceStatus = 'present',
   ): Promise<AttendanceRecord> {
     const active = await this.isEmployeeActive(employeeId);
     if (!active) {
@@ -151,7 +153,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
         `INSERT INTO attendance_records (
            employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes
          ) VALUES (
-           $1, $2, COALESCE($3, NOW()), NULL, NULL, 'present', $4, $5
+           $1, $2, COALESCE($3, NOW()), NULL, NULL, $6, $4, $5
          ) RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, notes, created_at, updated_at`,
         [
           employeeId,
@@ -159,6 +161,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
           checkInTime ?? null,
           dto.location ? JSON.stringify(dto.location) : null,
           dto.notes ?? null,
+          status,
         ],
       );
       return toRecord(res.rows[0]!);
