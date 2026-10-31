@@ -151,6 +151,11 @@ export const PERMISSION_CATALOG = {
   },
   'leave.cancel': { description: 'Cancel submitted leave request', grants: everyone(OWN) },
 
+  'leave.cancel_any': {
+    description: 'Cancel an approved leave request of another employee',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
   'tasks.create': {
     description: 'Create and assign team task',
     grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },

@@ -3,7 +3,12 @@ import { conflict } from '../../../http/errors';
 import { ScopeFilter, scopeAllows } from '../../rbac';
 import type { LeaveTx } from '../policies/policies.types';
 import { FindLeaveRequestsParams, ILeaveRequestsRepository } from './requests.repository';
-import { LeaveRequest, LeaveRequestStatus, NewLeaveRequest } from './requests.types';
+import {
+  LeaveCalendarEntry,
+  LeaveRequest,
+  LeaveRequestStatus,
+  NewLeaveRequest,
+} from './requests.types';
 
 interface MemoryBalance {
   employeeId: string;
@@ -108,6 +113,38 @@ export class MemoryLeaveRequestsRepository implements ILeaveRequestsRepository {
     const usedBefore = balance.used;
     balance.used += days;
     return { usedBefore, usedAfter: balance.used };
+  }
+
+  async restore(_tx: LeaveTx, employeeId: string, leaveTypeId: string, year: number, days: number) {
+    const balance = this.balance(employeeId, leaveTypeId, year);
+    if (!balance || balance.used < days) return null;
+    const usedBefore = balance.used;
+    balance.used -= days;
+    return { usedBefore, usedAfter: balance.used };
+  }
+
+  async findCalendar(params: { filter: ScopeFilter; from: string; to: string }) {
+    return this.requests
+      .filter(
+        (r) =>
+          (r.status === 'pending' || r.status === 'approved') &&
+          scopeAllows(params.filter, r.employeeId, this.managerOf(r.employeeId)) &&
+          r.endDate >= params.from &&
+          r.startDate <= params.to,
+      )
+      .sort((a, b) => a.startDate.localeCompare(b.startDate))
+      .map((r): LeaveCalendarEntry => ({
+        requestId: r.id,
+        employeeId: r.employeeId,
+        employeeName: r.employeeName,
+        leaveTypeCode: r.leaveTypeCode,
+        leaveTypeName: r.leaveTypeName,
+        startDate: r.startDate,
+        endDate: r.endDate,
+        halfDay: r.halfDay,
+        days: r.days,
+        status: r.status as 'pending' | 'approved',
+      }));
   }
 
   async find(id: string, filter: ScopeFilter): Promise<LeaveRequest | null> {

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { registerRoute } from '../../../openapi/registry';
 import {
   applyForLeaveSchema,
+  leaveCalendarEntrySchema,
+  leaveCalendarQuerySchema,
   leaveRequestIdParamsSchema,
   leaveRequestSchema,
   listLeaveRequestsQuerySchema,
@@ -65,4 +67,35 @@ registerRoute({
   permission: 'leave.read_own',
   params: leaveRequestIdParamsSchema,
   success: { status: 200, description: 'The request', schema: one },
+});
+
+registerRoute({
+  method: 'get',
+  path: '/leave-requests/calendar',
+  tags,
+  summary:
+    'Who is away between two dates (at most 62 days): pending and approved leave of your direct reports (Team Lead) or everyone (HR Manager, Admin). Reasons are not included',
+  permission: 'leave.list',
+  query: leaveCalendarQuerySchema,
+  success: {
+    status: 200,
+    description: 'Leave touching the range, earliest first (at most 2000 entries)',
+    schema: z.object({ data: z.array(leaveCalendarEntrySchema) }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/leave-requests/{id}/cancel',
+  tags,
+  summary:
+    'Cancel a leave request. You can cancel your own while it is pending, and approved leave only before it starts; HR Manager and Admin can cancel approved or pending leave of others at any time. Approved leave gives its days back to the balance',
+  permission: 'leave.cancel',
+  params: leaveRequestIdParamsSchema,
+  extraResponses: {
+    403: 'Your approved leave has already started; ask HR',
+    404: 'Not your request, or not in your scope',
+    409: 'The request is rejected or already cancelled',
+  },
+  success: { status: 200, description: 'The cancelled request', schema: one },
 });
