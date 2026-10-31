@@ -72,6 +72,7 @@ export function createApiRouter({
       authenticate: auth.authenticate,
       audit: platform.audit,
       settingsReader: settings.reader,
+      shiftResolver: shifts.resolver,
     }),
   );
 

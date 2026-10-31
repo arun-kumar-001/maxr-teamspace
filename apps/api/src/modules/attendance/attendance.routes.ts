@@ -9,6 +9,7 @@ import { IAttendanceRepository, PgAttendanceRepository } from './attendance.repo
 import { AttendanceService } from './attendance.service';
 import { AuditLogger } from '../../platform/audit/types';
 import { CompanySettingsReader } from '../settings';
+import type { ShiftResolver } from '../shifts';
 import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
 
 export interface AttendanceRouterOptions {
@@ -17,6 +18,11 @@ export interface AttendanceRouterOptions {
   repository?: IAttendanceRepository;
   service?: AttendanceService;
   settingsReader?: CompanySettingsReader;
+  /**
+   * Decides `late` at check-in. A required key on purpose: forgetting to wire it would make every
+   * check-in `present` without any error. Pass `undefined` only where shifts do not matter (tests).
+   */
+  shiftResolver: ShiftResolver | undefined;
   getPool?: () => Pool;
 }
 
@@ -24,7 +30,14 @@ export function createAttendanceRouter(options: AttendanceRouterOptions): Router
   const router = Router();
   const repo = options.repository ?? new PgAttendanceRepository(options.getPool ?? getPool);
   const service =
-    options.service ?? new AttendanceService(repo, options.audit, options.settingsReader);
+    options.service ??
+    new AttendanceService(
+      repo,
+      options.audit,
+      options.settingsReader,
+      undefined,
+      options.shiftResolver,
+    );
   const controller = new AttendanceController(service);
 
   router.use(options.authenticate);

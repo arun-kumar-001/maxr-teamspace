@@ -30,6 +30,7 @@ async function setup(isEmployeeActive: (id: string) => boolean = () => true) {
       audit: platform.audit,
       repository: repo,
       service,
+      shiftResolver: undefined,
     }),
   );
   app.use(notFoundHandler);

@@ -44,3 +44,11 @@ There is no delete: to change course, assign from a later date.
 ## Data
 
 Migration `20261030000016_shifts_and_attendance_policy.sql` creates `shifts`, `employee_shifts` and `attendance_policies`, seeds General and the policy row, and enables the `btree_gist` extension (needed for the exclusion constraint; a managed database needs it allowed). The seeded ids are valid v4-shaped UUIDs so strict validation accepts them.
+
+## Attendance status at check-in (#34 follow-ups)
+
+- `POST /attendance/check-in` looks up the employee's shift for the company-local date (`ShiftResolver.shiftOn`) and stores `late` when the check-in is after the shift start plus its grace, judged on the company clock (D-13); otherwise `present`. With no shift resolver wired (tests only) the status is `present`. Half days and absences are worked out per day by the reports.
+- A shift that runs past midnight needs no special case: its end is earlier than its start, so an early-morning check-in is already before start plus grace.
+- The check-in audit entry holds the work date, time, status, whether a location was given and the work mode. It never holds coordinates or the address.
+- Migration `20261030000017_attendance_time_checks.sql` adds CHECKs: `check_out_time >= check_in_time` and `duration_minutes >= 0`.
+- Check-out with no open session, including losing a race with another check-out, answers 400 (unchanged from #89).
