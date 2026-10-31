@@ -55,3 +55,6 @@ uploads/
 
 # Playwright output
 e2e-output/
+
+# Local Redis snapshots
+dump.rdb

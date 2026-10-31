@@ -119,6 +119,10 @@ export const PERMISSION_CATALOG = {
     description: 'View company-wide attendance history',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
   },
+  'attendance.request_correction': {
+    description: 'Request a correction of own attendance record',
+    grants: everyone(OWN),
+  },
   'attendance.approve_correction': {
     description: 'Approve attendance correction request',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
