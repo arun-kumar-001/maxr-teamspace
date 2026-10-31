@@ -66,6 +66,7 @@ export class NotificationsService {
     bus.subscribe('leave.cancelled', (event) => this.onLeaveCancelled(event));
     bus.subscribe('tasks.assigned', (event) => this.onTaskAssigned(event));
     bus.subscribe('tasks.status_changed', (event) => this.onTaskStatusChanged(event));
+    bus.subscribe('tasks.commented', (event) => this.onTaskCommented(event));
   }
 
   private async onApprovalStep(event: DomainEvent, type: TemplateType): Promise<void> {
@@ -143,6 +144,19 @@ export class NotificationsService {
       link: `/tasks/${p.taskId}`,
       dedupeKey: `${type}:${p.taskId}:${event.requestId ?? randomUUID()}`,
     });
+  }
+
+  /** The assignee and the assigner hear of a comment, except the person who wrote it. The text is not sent. */
+  private async onTaskCommented(event: DomainEvent): Promise<void> {
+    const p = event.payload as TaskEventPayload & { authorEmployeeId: string };
+    const recipients = new Set([p.assigneeEmployeeId, p.assignerEmployeeId]);
+    recipients.delete(p.authorEmployeeId);
+    for (const employeeId of recipients) {
+      await this.notifyEmployee(employeeId, 'task.commented', {
+        link: `/tasks/${p.taskId}`,
+        dedupeKey: `task.commented:${p.taskId}:${event.requestId ?? randomUUID()}`,
+      });
+    }
   }
 
   private async notifyEmployee(

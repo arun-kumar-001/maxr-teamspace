@@ -13,6 +13,7 @@ const TYPES: TemplateType[] = [
   'task.blocked',
   'task.completed',
   'task.reopened',
+  'task.commented',
 ];
 
 describe('notification templates (D-15)', () => {

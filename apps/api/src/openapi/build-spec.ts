@@ -12,6 +12,7 @@ import '../modules/leave/requests/requests.openapi';
 import '../modules/notifications/notifications.openapi';
 import '../modules/projects/projects.openapi';
 import '../modules/tasks/tasks.openapi';
+import '../modules/tasks/collaboration/collaboration.openapi';
 import '../modules/reports/report.openapi';
 import '../modules/approvals/approvals.openapi';
 import '../modules/employees/creation/creation.openapi';
