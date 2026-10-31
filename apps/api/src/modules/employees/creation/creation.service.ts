@@ -7,7 +7,7 @@ import { EventCollector } from '../../../platform/events/event-bus';
 import type { PasswordHasher } from '../../auth/password-hasher';
 import { IEmployeeCreationRepository } from './creation.repository';
 import { referenceProblems } from '../references';
-import { CreateEmployeeDto, CreatedEmployee } from './creation.types';
+import { CreateEmployeeDto, CreatedEmployee, CreationTx } from './creation.types';
 
 type Deps = Pick<PlatformServices, 'audit' | 'events' | 'notifications'>;
 
@@ -27,6 +27,8 @@ export class EmployeeCreationService {
     private readonly platform: Deps,
     private readonly hasher: PasswordHasher,
     private readonly logger: Logger = getLogger(),
+    /** Runs inside the creation transaction, so the new employee never exists without what it adds (default leave balances, D-20). */
+    private readonly afterCreate?: (tx: CreationTx, employee: CreatedEmployee) => Promise<void>,
   ) {}
 
   /**
@@ -57,6 +59,7 @@ export class EmployeeCreationService {
         if (existing.email) throw conflict('An employee or account with this email already exists');
 
         const account = await this.repository.insertAccount(tx, dto, unusableHash);
+        await this.afterCreate?.(tx, account);
         // Ids and the code only: names and email are personal data and stay out of the trail.
         await audit.record(
           {

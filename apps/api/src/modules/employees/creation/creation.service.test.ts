@@ -204,6 +204,32 @@ describe('EmployeeCreationService.create', () => {
     ]);
   });
 
+  it('runs afterCreate inside the creation, with the new employee, and a failure there undoes the creation', async () => {
+    const seen: string[] = [];
+    const withHook = (fail: boolean) =>
+      new EmployeeCreationService(
+        ctx.repo,
+        ctx.platform,
+        testHasher,
+        createLogger({ level: 'silent', write: () => undefined }),
+        async (_tx, employee) => {
+          seen.push(
+            `${employee.employeeCode}:${employee.joiningDate}:${ctx.repo.employees.length}`,
+          );
+          if (fail) throw new Error('balances could not be created');
+        },
+      );
+    await withHook(false).create(dto(), hr);
+    // The employee row already exists when the hook runs, so it can refer to it.
+    expect(seen).toEqual(['EMP-1001:2026-11-02:1']);
+
+    await expect(
+      withHook(true).create(dto({ employeeCode: 'EMP-1002', email: 'b@maxr.internal' }), hr),
+    ).rejects.toThrow('balances could not be created');
+    expect(ctx.repo.employees).toHaveLength(1);
+    expect(ctx.events).toHaveLength(1);
+  });
+
   it('an audit failure undoes the creation (fail closed)', async () => {
     ctx.auditStore.failNextWith(new AuditError('audit store down'));
     await expect(ctx.service.create(dto(), admin)).rejects.toThrow();

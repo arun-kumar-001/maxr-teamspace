@@ -201,6 +201,25 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
   },
 
+  'leave_policies.read': { description: 'View leave types and policies', grants: everyone(ALL) },
+  'leave_policies.manage': {
+    description: 'Create and update leave types and policies',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'holidays.read': { description: 'View the holiday calendar', grants: everyone(ALL) },
+  'holidays.manage': {
+    description: 'Add and remove holidays',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'leave_balances.list': {
+    description: 'List leave balances within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
+  'leave_balances.accrue': {
+    description: 'Create the yearly leave balances',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
   'approvals.list': {
     description: 'List approval requests within the role scope',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
