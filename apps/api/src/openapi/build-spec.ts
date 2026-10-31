@@ -12,6 +12,7 @@ import '../modules/employees/hierarchy/hierarchy.openapi';
 import '../modules/employees/profile/profile.openapi';
 import '../modules/employees/detail/detail.openapi';
 import '../modules/settings/settings.openapi';
+import '../modules/shifts/shifts.openapi';
 import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';
 import '../modules/employees/designations/designation.openapi';
