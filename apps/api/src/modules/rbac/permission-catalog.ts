@@ -100,6 +100,14 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL },
   },
 
+  // The caller's own profile (`/employees/me`). Separate keys from employees.read/update, which are
+  // about other people, so what someone may do with their own record never depends on them.
+  'profile.read': { description: 'View own profile', grants: everyone(OWN) },
+  'profile.update': {
+    description: 'Update own profile (allowed fields only)',
+    grants: everyone(OWN),
+  },
+
   'attendance.check_in': { description: 'Check-in to work session', grants: everyone(OWN) },
   'attendance.check_out': { description: 'Check-out of work session', grants: everyone(OWN) },
   'attendance.read_own': { description: 'View own attendance history', grants: everyone(OWN) },
