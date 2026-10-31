@@ -100,6 +100,14 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL },
   },
 
+  // The caller's own profile (`/employees/me`). Separate keys from employees.read/update, which are
+  // about other people, so what someone may do with their own record never depends on them.
+  'profile.read': { description: 'View own profile', grants: everyone(OWN) },
+  'profile.update': {
+    description: 'Update own profile (allowed fields only)',
+    grants: everyone(OWN),
+  },
+
   'attendance.check_in': { description: 'Check-in to work session', grants: everyone(OWN) },
   'attendance.check_out': { description: 'Check-out of work session', grants: everyone(OWN) },
   'attendance.read_own': { description: 'View own attendance history', grants: everyone(OWN) },
@@ -110,6 +118,10 @@ export const PERMISSION_CATALOG = {
   'attendance.read_all': {
     description: 'View company-wide attendance history',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'attendance.request_correction': {
+    description: 'Request a correction of own attendance record',
+    grants: everyone(OWN),
   },
   'attendance.approve_correction': {
     description: 'Approve attendance correction request',
@@ -133,7 +145,26 @@ export const PERMISSION_CATALOG = {
     description: 'Approve or reject leave request',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
   },
+  'leave.list': {
+    description: 'List leave requests within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
   'leave.cancel': { description: 'Cancel submitted leave request', grants: everyone(OWN) },
+
+  'leave.cancel_any': {
+    description: 'Cancel an approved leave request of another employee',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
+  // Projects are not owned by one employee, so `own` here means "the projects I own or belong to".
+  'projects.read': {
+    description: 'View the projects you own or belong to',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: OWN, [TEAM_LEAD]: OWN, [STAFF]: OWN },
+  },
+  'projects.manage': {
+    description: 'Create projects and manage the ones you own',
+    grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },
+  },
 
   'tasks.create': {
     description: 'Create and assign team task',
@@ -147,6 +178,12 @@ export const PERMISSION_CATALOG = {
   'tasks.update_status': {
     description: 'Update status of task',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: OWN, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
+  },
+
+  // Whoever can see a task can read its thread and files; this key is for writing to them.
+  'tasks.collaborate': {
+    description: 'Comment on and attach files to the tasks you can see',
+    grants: everyone(OWN),
   },
 
   'reports.read': {
@@ -187,6 +224,34 @@ export const PERMISSION_CATALOG = {
   'attendance_policies.update': {
     description: 'Update attendance policy',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
+  'leave_policies.read': { description: 'View leave types and policies', grants: everyone(ALL) },
+  'leave_policies.manage': {
+    description: 'Create and update leave types and policies',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'holidays.read': { description: 'View the holiday calendar', grants: everyone(ALL) },
+  'holidays.manage': {
+    description: 'Add and remove holidays',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'leave_balances.list': {
+    description: 'List leave balances within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
+  'leave_balances.accrue': {
+    description: 'Create the yearly leave balances',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
+  'notifications.read_own': {
+    description: 'Read and mark own notifications',
+    grants: everyone(OWN),
+  },
+  'notifications.announce': {
+    description: 'Send an announcement to every employee',
+    grants: { [ADMIN]: ALL },
   },
 
   'approvals.list': {

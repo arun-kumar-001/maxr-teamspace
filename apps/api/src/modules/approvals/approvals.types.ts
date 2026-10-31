@@ -75,7 +75,7 @@ export interface ApprovalHandler {
     tx: ApprovalTx,
     approval: Approval,
     outcome: ApprovalOutcome,
-    decider: { employeeId: string },
+    decider: { employeeId: string; actorId: string; requestId?: string },
   ): Promise<void>;
 }
 

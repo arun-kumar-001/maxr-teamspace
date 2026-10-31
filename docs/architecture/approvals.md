@@ -56,6 +56,8 @@ await approvals.service.submit(tx, { subjectType: 'leave_request', subjectId, re
 await approvals.service.cancel(tx, 'leave_request', subjectId);
 ```
 
+`decider` carries `employeeId`, `actorId` and `requestId`: write the module's own audit entry with `audit.withContext({ actorId, requestId }).record(..., { transaction: tx })`. `createApprovals(...)` returns `{ router, service }`; `routes/index.ts` keeps the service and passes it to each module that owns a subject type (attendance corrections today; leave and expenses next).
+
 `route` follows D-12 and D-17: the requester's manager when there is one, then HR when `twoStep`. A Team Lead, HR Manager or Admin, and anyone without a manager, goes to HR only. Throwing from `apply` rolls the whole decision back. Submitting a subject type with no registered handler is a programming error and throws.
 
 ## Not covered here

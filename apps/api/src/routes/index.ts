@@ -3,6 +3,8 @@ import { getPool } from '../db/client';
 import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
+import { createAttendanceRouter } from '../modules/attendance';
+import { createAttendanceCorrections } from '../modules/attendance/corrections';
 import {
   createDepartmentRouter,
   createDesignationRouter,
@@ -12,10 +14,18 @@ import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createApprovals } from '../modules/approvals';
 import { createEmployeeCreation } from '../modules/employees/creation';
+import { createEmployeeDeactivation } from '../modules/employees/deactivation';
 import { createEmployeeDetail } from '../modules/employees/detail';
+import { createEmployeeHierarchy } from '../modules/employees/hierarchy';
+import { createEmployeeProfile } from '../modules/employees/profile';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
+import { createLeaveSetup } from '../modules/leave';
+import { createNotifications, loadNotificationsConfig } from '../modules/notifications';
+import { createProjects } from '../modules/projects';
+import { createTasks } from '../modules/tasks';
+import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
@@ -52,12 +62,76 @@ export function createApiRouter({
   router.use('/audit-logs', createAuditLogs({ authenticate: auth.authenticate }).router);
   const settings = createSettings({ platform, authenticate: auth.authenticate });
   router.use('/settings', settings.router);
+  const shifts = createShifts({
+    platform,
+    authenticate: auth.authenticate,
+    idempotencyStore,
+    settings: settings.reader,
+  });
+  router.use('/shifts', shifts.shiftsRouter);
+  // Before the attendance router, which owns `/attendance/...`.
+  router.use('/attendance/policies', shifts.policyRouter);
+  const approvals = createApprovals({ platform, authenticate: auth.authenticate });
+  // Before the attendance router, which owns `/attendance/...`.
+  router.use(
+    '/attendance/corrections',
+    createAttendanceCorrections({
+      platform,
+      authenticate: auth.authenticate,
+      idempotencyStore,
+      approvals: approvals.service,
+      settings: settings.reader,
+      shiftResolver: shifts.resolver,
+    }).router,
+  );
+  router.use(
+    '/attendance',
+    createAttendanceRouter({
+      authenticate: auth.authenticate,
+      audit: platform.audit,
+      settingsReader: settings.reader,
+      shiftResolver: shifts.resolver,
+    }),
+  );
+
   // A registry passed in (tests) is used as given; the default app gets the employee reports.
   const registry = reportRegistry ?? new ReportRegistry();
   if (!reportRegistry) {
     registerEmployeeReports(registry, { getPool, settings: settings.reader });
   }
-  router.use('/approvals', createApprovals({ platform, authenticate: auth.authenticate }).router);
+  router.use('/approvals', approvals.router);
+  const leave = createLeaveSetup({
+    platform,
+    approvals: approvals.service,
+    authenticate: auth.authenticate,
+    idempotencyStore,
+    settings: settings.reader,
+  });
+  router.use('/leave-policies', leave.policiesRouter);
+  router.use('/holidays', leave.holidaysRouter);
+  router.use('/leave-balances', leave.balancesRouter);
+  router.use('/leave-requests', leave.requestsRouter);
+  const projects = createProjects({ platform, authenticate: auth.authenticate, idempotencyStore });
+  router.use('/projects', projects.router);
+  router.use(
+    '/tasks',
+    createTasks({
+      platform,
+      authenticate: auth.authenticate,
+      idempotencyStore,
+      settings: settings.reader,
+      projects: projects.reader,
+    }).router,
+  );
+  router.use(
+    '/notifications',
+    createNotifications({
+      platform,
+      authenticate: auth.authenticate,
+      idempotencyStore,
+      appUrl: loadNotificationsConfig().appUrl,
+    }).router,
+  );
   const users = createUsers({ platform, authenticate: auth.authenticate });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);
@@ -90,11 +164,30 @@ export function createApiRouter({
       platform,
       authenticate: auth.authenticate,
       idempotencyStore,
+      afterCreate: (tx, employee) =>
+        leave.initializeBalances(tx, employee.id, employee.joiningDate),
     }).router,
+  );
+  // Before the detail router: `/employees/me` and `/employees/org-roots` must not be read as ids.
+  router.use(
+    '/employees',
+    createEmployeeProfile({ platform, authenticate: auth.authenticate }).router,
+  );
+  router.use(
+    '/employees',
+    createEmployeeHierarchy({ platform, authenticate: auth.authenticate }).router,
   );
   router.use(
     '/employees',
     createEmployeeDetail({ platform, authenticate: auth.authenticate }).router,
+  );
+  router.use(
+    '/employees',
+    createEmployeeDeactivation({
+      platform,
+      authenticate: auth.authenticate,
+      sessions: auth.sessions,
+    }).router,
   );
   router.use(
     '/reports',

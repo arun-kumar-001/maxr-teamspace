@@ -6,6 +6,7 @@ import type { PlatformServices } from '../../../platform';
 import { PasswordHasher, createArgon2Hasher } from '../../auth/password-hasher';
 import { IEmployeeCreationRepository, PgEmployeeCreationRepository } from './creation.repository';
 import { createEmployeeCreationRouter } from './creation.routes';
+import type { CreatedEmployee, CreationTx } from './creation.types';
 import { EmployeeCreationService } from './creation.service';
 
 /** `POST /employees`. Mount it on `/employees` next to the directory router. */
@@ -16,6 +17,8 @@ export function createEmployeeCreation(options: {
   repository?: IEmployeeCreationRepository;
   hasher?: PasswordHasher;
   getPool?: () => Pool;
+  /** See `EmployeeCreationService`: runs inside the creation transaction. */
+  afterCreate?: (tx: CreationTx, employee: CreatedEmployee) => Promise<void>;
 }): { router: Router } {
   const repository =
     options.repository ?? new PgEmployeeCreationRepository(options.getPool ?? getPool);
@@ -23,6 +26,8 @@ export function createEmployeeCreation(options: {
     repository,
     options.platform,
     options.hasher ?? createArgon2Hasher(),
+    undefined,
+    options.afterCreate,
   );
   return {
     router: createEmployeeCreationRouter({

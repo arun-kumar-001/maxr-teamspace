@@ -34,6 +34,7 @@ export const UPLOAD_POLICIES: Record<UploadCategory, UploadPolicy> = {
   receipts: { maxBytes: 5 * MB, kinds: ['pdf', 'png', 'jpeg'] },
   employeeDocuments: { maxBytes: 10 * MB, kinds: ['pdf', 'png', 'jpeg'] },
   profilePhotos: { maxBytes: 2 * MB, kinds: ['png', 'jpeg'] },
+  taskAttachments: { maxBytes: 10 * MB, kinds: ['pdf', 'png', 'jpeg'] },
 };
 
 /** Detects the file type from its first bytes. Returns null if it is not a type we know. */
