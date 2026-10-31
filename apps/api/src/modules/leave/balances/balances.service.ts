@@ -78,6 +78,32 @@ export class LeaveBalancesService {
   }
 
   /**
+   * The scheduled form of the accrual (D-12): creates whatever balances of the current company
+   * year are missing, so nobody has to remember to run it on 1 January. It is safe to run every
+   * tick and writes an audit entry only when it created something. Returns how many it created.
+   */
+  async runScheduledAccrual(): Promise<number> {
+    const year = await this.currentYear();
+    const audit = this.platform.audit.withContext({});
+    return this.repository.transaction(async (tx) => {
+      const created = await this.repository.accrue(tx, year);
+      if (created > 0) {
+        await audit.record(
+          {
+            action: 'leave_balances.accrue',
+            outcome: 'success',
+            entityType: 'leave_balance',
+            changes: { year, created },
+            metadata: { scheduled: true },
+          },
+          { transaction: tx },
+        );
+      }
+      return created;
+    });
+  }
+
+  /**
    * Gives a new employee their balances inside the transaction that creates them. The year is the
    * joining year, or the current one when they joined earlier; the pro-rata is in the SQL.
    */

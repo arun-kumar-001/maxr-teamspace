@@ -36,3 +36,11 @@ export interface StaleApproval {
   requesterEmployeeId: string;
   stage: 'manager' | 'hr';
 }
+
+/** An open task that is due within the reminder window or recently overdue. */
+export interface DueTask {
+  taskId: string;
+  assigneeEmployeeId: string;
+  /** `YYYY-MM-DD`. Part of the reminder's dedupe key: a new due date is reminded again. */
+  dueDate: string;
+}

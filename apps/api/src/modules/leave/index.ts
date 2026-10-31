@@ -10,6 +10,8 @@ import {
   PgLeaveBalancesRepository,
 } from './balances/balances.repository';
 import { createLeaveBalancesRouter } from './balances/balances.routes';
+import { createLeaveJobs } from './leave.jobs';
+import type { Job } from '../../platform/jobs/job-runner';
 import { LeaveBalancesService } from './balances/balances.service';
 import { IHolidaysRepository, PgHolidaysRepository } from './holidays/holidays.repository';
 import { createHolidaysRouter } from './holidays/holidays.routes';
@@ -111,4 +113,20 @@ export function createLeaveSetup(options: {
     initializeBalances: (tx, employeeId, joiningDate) =>
       balances.initializeForJoiner(tx, employeeId, joiningDate),
   };
+}
+
+/** The background jobs of leave (the yearly accrual) for the server process. */
+export function createLeaveBackgroundJobs(options: {
+  platform: Pick<PlatformServices, 'audit'>;
+  settings: CompanySettingsReader;
+  getPool?: () => Pool;
+}): Job[] {
+  const pool = options.getPool ?? getPool;
+  return createLeaveJobs(
+    new LeaveBalancesService(
+      new PgLeaveBalancesRepository(pool),
+      options.platform,
+      options.settings,
+    ),
+  );
 }

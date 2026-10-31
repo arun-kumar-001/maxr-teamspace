@@ -282,6 +282,24 @@ export class NotificationsService {
     return sent;
   }
 
+  /**
+   * Reminds the assignee of an open task that is due by tomorrow (D-15), once per task and due
+   * date. A task given a new due date is reminded about again. Returns how many reminders it created.
+   */
+  async sendTaskDueReminders(now: Date): Promise<number> {
+    let sent = 0;
+    for (const due of await this.repository.findTasksDueSoon(now)) {
+      const recipient = await this.repository.findRecipient(due.assigneeEmployeeId);
+      if (!recipient) continue;
+      const created = await this.notify(recipient, 'task.due', {
+        link: `/tasks/${due.taskId}`,
+        dedupeKey: `task.due:${due.taskId}:${due.dueDate}`,
+      });
+      if (created) sent += 1;
+    }
+    return sent;
+  }
+
   /** Removes notifications that were read more than 90 days ago. */
   purgeRead(now: Date): Promise<number> {
     return this.repository.deleteReadBefore(

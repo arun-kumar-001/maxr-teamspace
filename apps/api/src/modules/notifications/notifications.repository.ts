@@ -1,6 +1,7 @@
 import type { PoolClient } from 'pg';
 import {
   AppNotification,
+  DueTask,
   NewNotification,
   NotificationTx,
   PoolGetter,
@@ -30,6 +31,12 @@ export interface INotificationsRepository {
   findHrApprovers(excludeEmployeeId: string): Promise<Recipient[]>;
   /** Pending approvals whose current step has waited since before `cutoff`. */
   findStaleApprovals(cutoff: Date): Promise<StaleApproval[]>;
+  /**
+   * Open tasks due by tomorrow on the company calendar and not more than a week overdue, as of
+   * `now`. The bound keeps the query small and stops a task that was missed years ago from being
+   * reminded about forever.
+   */
+  findTasksDueSoon(now: Date): Promise<DueTask[]>;
 }
 
 interface Row {
@@ -170,6 +177,30 @@ export class PgNotificationsRepository implements INotificationsRepository {
       [excludeEmployeeId],
     );
     return res.rows.map((row) => ({ employeeId: row.id, email: row.email }));
+  }
+
+  async findTasksDueSoon(now: Date): Promise<DueTask[]> {
+    // "Today" is the company's date: the timezone setting is read in the same statement.
+    const res = await this.getPool().query<{
+      id: string;
+      assignee_employee_id: string;
+      due_date: string;
+    }>(
+      `WITH today AS (
+         SELECT ($1::timestamptz AT TIME ZONE COALESCE((SELECT timezone FROM company_settings LIMIT 1), 'UTC'))::date AS d
+       )
+       SELECT t.id, t.assignee_employee_id, t.due_date::text AS due_date
+         FROM tasks t, today
+        WHERE t.status <> 'completed'
+          AND t.due_date BETWEEN today.d - 7 AND today.d + 1
+        ORDER BY t.due_date, t.id`,
+      [now],
+    );
+    return res.rows.map((row) => ({
+      taskId: row.id,
+      assigneeEmployeeId: row.assignee_employee_id,
+      dueDate: row.due_date,
+    }));
   }
 
   async findStaleApprovals(cutoff: Date): Promise<StaleApproval[]> {

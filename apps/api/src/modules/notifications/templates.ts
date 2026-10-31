@@ -17,7 +17,8 @@ export type TemplateType =
   | 'task.blocked'
   | 'task.completed'
   | 'task.reopened'
-  | 'task.commented';
+  | 'task.commented'
+  | 'task.due';
 
 const SUBJECT_LABELS: Record<string, string> = {
   leave_request: 'Leave request',
@@ -65,6 +66,8 @@ export function renderNotification(
       };
     case 'task.completed':
       return { title: 'Your task was marked completed', body: 'Open it to see the details.' };
+    case 'task.due':
+      return { title: 'A task is due soon', body: 'Open your tasks to see what is due.' };
     case 'task.commented':
       return { title: 'New comment on a task', body: 'Open the task to read it.' };
     case 'task.reopened':

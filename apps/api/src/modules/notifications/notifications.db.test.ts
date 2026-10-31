@@ -274,6 +274,50 @@ describe('notifications against PostgreSQL', () => {
     });
   });
 
+  describe('tasks due soon', () => {
+    const open = (title: string, due: string | null, status = 'todo') =>
+      outer.query<{ id: string }>(
+        `INSERT INTO tasks (title, assignee_employee_id, assigner_employee_id, status, due_date, completed_at)
+         VALUES ($1, $2, $3, $4::varchar, $5, CASE WHEN $4::varchar = 'completed' THEN NOW() ELSE NULL END)
+         RETURNING id`,
+        [`${title}-${run}`, ids.staff, ids.boss, status, due],
+      );
+    const found = async (now: string) =>
+      (await repo.findTasksDueSoon(new Date(now)))
+        .filter((t) => t.assigneeEmployeeId === ids.staff)
+        .map((t) => t.dueDate);
+    const timezone = (tz: string) => outer.query(`UPDATE company_settings SET timezone = $1`, [tz]);
+
+    it('finds open tasks due by tomorrow and up to a week overdue, and nothing else', async () => {
+      await timezone('UTC');
+      for (const [title, due] of [
+        ['eight days late', '2026-10-23'],
+        ['a week late', '2026-10-24'],
+        ['today', '2026-10-31'],
+        ['tomorrow', '2026-11-01'],
+        ['in two days', '2026-11-02'],
+      ] as const) {
+        await open(title, due);
+      }
+      await open('undated', null);
+      await open('done', '2026-10-31', 'completed');
+      expect(await found('2026-10-31T10:00:00Z')).toEqual([
+        '2026-10-24',
+        '2026-10-31',
+        '2026-11-01',
+      ]);
+    });
+
+    it('works out today on the company calendar, not in UTC', async () => {
+      await open('edge', '2026-11-02');
+      // 00:30 on 1 November in Kolkata is still 31 October in UTC.
+      await timezone('Asia/Kolkata');
+      expect(await found('2026-10-31T19:00:00Z')).toEqual(['2026-11-02']); // today is 1 Nov: tomorrow is the 2nd
+      await timezone('UTC');
+      expect(await found('2026-10-31T19:00:00Z')).toEqual([]); // today is 31 Oct: the 2nd is two days away
+    });
+  });
+
   describe('stale approvals', () => {
     const approval = async (
       stages: string[],

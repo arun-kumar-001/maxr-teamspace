@@ -4,6 +4,8 @@ import { createPlatform, SqlAuditStore, SqlNotificationOutbox } from './platform
 import { getPool } from './db/client';
 import { getLogger } from './logging/logger';
 import { createNotificationBackgroundJobs, loadNotificationsConfig } from './modules/notifications';
+import { createLeaveBackgroundJobs } from './modules/leave';
+import { createSettingsReader } from './modules/settings';
 import { JobRunner } from './platform/jobs/job-runner';
 
 function startServer(): void {
@@ -17,11 +19,10 @@ function startServer(): void {
   const app = createApp({ platform });
   // Reminders and retention run on an interval; only one API instance runs a given job at a time.
   const notifications = loadNotificationsConfig();
-  const jobs = new JobRunner(
-    getPool,
-    getLogger(),
-    createNotificationBackgroundJobs({ platform, appUrl: notifications.appUrl }),
-  );
+  const jobs = new JobRunner(getPool, getLogger(), [
+    ...createNotificationBackgroundJobs({ platform, appUrl: notifications.appUrl }),
+    ...createLeaveBackgroundJobs({ platform, settings: createSettingsReader() }),
+  ]);
   if (notifications.jobsEnabled) jobs.start(notifications.jobsIntervalMs);
 
   // Sends queued emails in the background; stopped on shutdown.
