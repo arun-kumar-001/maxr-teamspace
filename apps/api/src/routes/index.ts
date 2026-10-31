@@ -21,6 +21,7 @@ import { createEmployeeProfile } from '../modules/employees/profile';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
+import { createLeaveSetup } from '../modules/leave';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
@@ -96,6 +97,15 @@ export function createApiRouter({
     registerEmployeeReports(registry, { getPool, settings: settings.reader });
   }
   router.use('/approvals', approvals.router);
+  const leave = createLeaveSetup({
+    platform,
+    authenticate: auth.authenticate,
+    idempotencyStore,
+    settings: settings.reader,
+  });
+  router.use('/leave-policies', leave.policiesRouter);
+  router.use('/holidays', leave.holidaysRouter);
+  router.use('/leave-balances', leave.balancesRouter);
   const users = createUsers({ platform, authenticate: auth.authenticate });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);
@@ -128,6 +138,8 @@ export function createApiRouter({
       platform,
       authenticate: auth.authenticate,
       idempotencyStore,
+      afterCreate: (tx, employee) =>
+        leave.initializeBalances(tx, employee.id, employee.joiningDate),
     }).router,
   );
   // Before the detail router: `/employees/me` and `/employees/org-roots` must not be read as ids.
