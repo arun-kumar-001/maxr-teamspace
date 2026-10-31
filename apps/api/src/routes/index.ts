@@ -20,6 +20,7 @@ import { createEmployeeProfile } from '../modules/employees/profile';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { createAuditLogs } from '../modules/audit-logs';
 import { createSettings } from '../modules/settings';
+import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
 import { createFilesRouter } from '../platform/storage/files.routes';
@@ -56,6 +57,15 @@ export function createApiRouter({
   router.use('/audit-logs', createAuditLogs({ authenticate: auth.authenticate }).router);
   const settings = createSettings({ platform, authenticate: auth.authenticate });
   router.use('/settings', settings.router);
+  const shifts = createShifts({
+    platform,
+    authenticate: auth.authenticate,
+    idempotencyStore,
+    settings: settings.reader,
+  });
+  router.use('/shifts', shifts.shiftsRouter);
+  // Before the attendance router, which owns `/attendance/...`.
+  router.use('/attendance/policies', shifts.policyRouter);
   router.use(
     '/attendance',
     createAttendanceRouter({

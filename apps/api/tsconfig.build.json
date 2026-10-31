@@ -14,6 +14,7 @@
     "src/modules/settings/settings.repository.memory.ts",
     "src/modules/users/users.repository.memory.ts",
     "src/modules/approvals/approvals.repository.memory.ts",
+    "src/modules/shifts/shifts.repository.memory.ts",
     "src/modules/employees/creation/creation.repository.memory.ts",
     "src/modules/employees/detail/detail.repository.memory.ts",
     "src/modules/employees/deactivation/deactivation.repository.memory.ts",
