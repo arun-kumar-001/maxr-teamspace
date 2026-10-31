@@ -11,7 +11,12 @@ export type TemplateType =
   | 'approval.approved'
   | 'approval.rejected'
   | 'approval.reminder'
-  | 'leave.cancelled';
+  | 'leave.cancelled'
+  | 'task.assigned'
+  | 'task.in_review'
+  | 'task.blocked'
+  | 'task.completed'
+  | 'task.reopened';
 
 const SUBJECT_LABELS: Record<string, string> = {
   leave_request: 'Leave request',
@@ -48,6 +53,19 @@ export function renderNotification(
         title: `${label} still waiting for your decision`,
         body: 'It has been waiting for more than 24 hours.',
       };
+    case 'task.assigned':
+      return { title: 'New task assigned to you', body: 'Open your tasks to see it.' };
+    case 'task.in_review':
+      return { title: 'A task is ready for your review', body: 'Open the task to review it.' };
+    case 'task.blocked':
+      return {
+        title: 'A task you assigned is blocked',
+        body: 'Open the task to see what is needed.',
+      };
+    case 'task.completed':
+      return { title: 'Your task was marked completed', body: 'Open it to see the details.' };
+    case 'task.reopened':
+      return { title: 'Your task was reopened', body: 'Open it to see what is needed.' };
     case 'leave.cancelled':
       return {
         title: 'Your approved leave was cancelled by HR',
