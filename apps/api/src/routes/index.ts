@@ -4,6 +4,7 @@ import { IdempotencyStore } from '../http/idempotency';
 import { createTemplateRouter } from '../modules/_template/template.routes';
 import { AuthServices } from '../modules/auth';
 import { createAttendanceRouter } from '../modules/attendance';
+import { createAttendanceCorrections } from '../modules/attendance/corrections';
 import {
   createDepartmentRouter,
   createDesignationRouter,
@@ -66,6 +67,19 @@ export function createApiRouter({
   router.use('/shifts', shifts.shiftsRouter);
   // Before the attendance router, which owns `/attendance/...`.
   router.use('/attendance/policies', shifts.policyRouter);
+  const approvals = createApprovals({ platform, authenticate: auth.authenticate });
+  // Before the attendance router, which owns `/attendance/...`.
+  router.use(
+    '/attendance/corrections',
+    createAttendanceCorrections({
+      platform,
+      authenticate: auth.authenticate,
+      idempotencyStore,
+      approvals: approvals.service,
+      settings: settings.reader,
+      shiftResolver: shifts.resolver,
+    }).router,
+  );
   router.use(
     '/attendance',
     createAttendanceRouter({
@@ -81,7 +95,7 @@ export function createApiRouter({
   if (!reportRegistry) {
     registerEmployeeReports(registry, { getPool, settings: settings.reader });
   }
-  router.use('/approvals', createApprovals({ platform, authenticate: auth.authenticate }).router);
+  router.use('/approvals', approvals.router);
   const users = createUsers({ platform, authenticate: auth.authenticate });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);
