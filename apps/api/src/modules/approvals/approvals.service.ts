@@ -97,6 +97,7 @@ export class ApprovalsService {
         approvalId: approval.id,
         subjectType: approval.subjectType,
         subjectId: approval.subjectId,
+        requesterEmployeeId: approval.requesterEmployeeId,
         stage: currentStageOf(approval),
       },
       actorId: input.requesterEmployeeId,

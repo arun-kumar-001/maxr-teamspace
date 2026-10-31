@@ -217,7 +217,8 @@ export class LeaveRequestsService implements ApprovalHandler {
       actorId: caller.actorId,
       requestId: caller.requestId,
     });
-    return this.repository.transaction(async (tx) => {
+    const events = new EventCollector();
+    const cancelled = await this.repository.transaction(async (tx) => {
       const own = await this.repository.find(id, { kind: 'own', employeeId: caller.employeeId });
       const found = own ?? (await this.repository.find(id, cancelScope));
       // Someone else's request looks exactly like a missing one.
@@ -275,8 +276,16 @@ export class LeaveRequestsService implements ApprovalHandler {
         },
         { transaction: tx },
       );
+      events.add({
+        type: 'leave.cancelled',
+        payload: { leaveRequestId: id, employeeId: request.employeeId, byOwner },
+        actorId: caller.actorId,
+        requestId: caller.requestId,
+      });
       return { ...request, status: 'cancelled' as const };
     });
+    await events.flush(this.platform.events);
+    return cancelled;
   }
 
   /** Who is away between two dates, inside the caller's scope. Pending and approved leave, no reasons. */

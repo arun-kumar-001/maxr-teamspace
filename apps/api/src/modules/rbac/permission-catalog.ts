@@ -229,6 +229,15 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
   },
 
+  'notifications.read_own': {
+    description: 'Read and mark own notifications',
+    grants: everyone(OWN),
+  },
+  'notifications.announce': {
+    description: 'Send an announcement to every employee',
+    grants: { [ADMIN]: ALL },
+  },
+
   'approvals.list': {
     description: 'List approval requests within the role scope',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
