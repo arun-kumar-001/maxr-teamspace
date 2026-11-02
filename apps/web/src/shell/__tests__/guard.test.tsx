@@ -162,4 +162,102 @@ describe('TC-12-03: RouteGuard Access Control & Forbidden State', () => {
       expect(staffHtml).not.toContain('data-testid="directory-content"');
     });
   });
+
+  describe('Departments & Designations access control (Issue #18)', () => {
+    it('authorizes Admin and HR Manager to view /departments and denies Team Lead and Staff', () => {
+      for (const role of [ROLES.ADMIN, ROLES.HR_MANAGER]) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <RouteGuard currentPath="/departments" onNavigate={() => {}}>
+              <div data-testid="departments-content">Departments Management</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(html).toContain('data-testid="departments-content"');
+        expect(html).not.toContain('Access Denied');
+      }
+
+      for (const role of [ROLES.TEAM_LEAD, ROLES.STAFF]) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <RouteGuard currentPath="/departments" onNavigate={() => {}}>
+              <div data-testid="departments-content">Departments Management</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(html).toContain('data-testid="forbidden-route-container"');
+        expect(html).toContain('Access Denied');
+        expect(html).not.toContain('data-testid="departments-content"');
+      }
+    });
+
+    it('authorizes Admin and HR Manager to view /designations and denies Team Lead and Staff', () => {
+      for (const role of [ROLES.ADMIN, ROLES.HR_MANAGER]) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <RouteGuard currentPath="/designations" onNavigate={() => {}}>
+              <div data-testid="designations-content">Designations Management</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(html).toContain('data-testid="designations-content"');
+        expect(html).not.toContain('Access Denied');
+      }
+
+      for (const role of [ROLES.TEAM_LEAD, ROLES.STAFF]) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <RouteGuard currentPath="/designations" onNavigate={() => {}}>
+              <div data-testid="designations-content">Designations Management</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(html).toContain('data-testid="forbidden-route-container"');
+        expect(html).toContain('Access Denied');
+        expect(html).not.toContain('data-testid="designations-content"');
+      }
+    });
+
+    it('authorizes Admin for /admin/departments and /admin/designations, denying other roles', () => {
+      const adminDeptHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <RouteGuard currentPath="/admin/departments" onNavigate={() => {}}>
+            <div data-testid="admin-dept">Admin Depts</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(adminDeptHtml).toContain('data-testid="admin-dept"');
+
+      const hrDeptHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.HR_MANAGER} persistSession={false}>
+          <RouteGuard currentPath="/admin/departments" onNavigate={() => {}}>
+            <div data-testid="admin-dept">Admin Depts</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(hrDeptHtml).toContain('Access Denied');
+      expect(hrDeptHtml).not.toContain('data-testid="admin-dept"');
+    });
+
+    it('authorizes HR Manager for /hr/departments and /hr/designations, denying other roles', () => {
+      const hrDeptHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.HR_MANAGER} persistSession={false}>
+          <RouteGuard currentPath="/hr/departments" onNavigate={() => {}}>
+            <div data-testid="hr-dept">HR Depts</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(hrDeptHtml).toContain('data-testid="hr-dept"');
+
+      const staffDeptHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <RouteGuard currentPath="/hr/departments" onNavigate={() => {}}>
+            <div data-testid="hr-dept">HR Depts</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(staffDeptHtml).toContain('Access Denied');
+      expect(staffDeptHtml).not.toContain('data-testid="hr-dept"');
+    });
+  });
 });

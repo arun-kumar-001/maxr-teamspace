@@ -13,9 +13,10 @@ import { RunAccrualModal } from '../components/RunAccrualModal';
 import { ApplyLeaveModal } from '../components/ApplyLeaveModal';
 import { LeaveRequestsTable } from '../components/LeaveRequestsTable';
 import { LeaveCalendarView } from '../components/LeaveCalendarView';
+import { LeaveApprovalsTab } from '../components/LeaveApprovalsTab';
 
 export interface LeaveManagementPageProps {
-  initialTab?: 'requests' | 'balances' | 'calendar' | 'holidays' | 'policies';
+  initialTab?: 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies';
 }
 
 export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
@@ -23,10 +24,18 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
 }) => {
   const { role } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
+  const canReviewApprovals =
+    role === ROLES.TEAM_LEAD || role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
 
   const [activeTab, setActiveTab] = useState<
-    'requests' | 'balances' | 'calendar' | 'holidays' | 'policies'
-  >(initialTab === 'policies' && !canManage ? 'requests' : initialTab);
+    'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies'
+  >(
+    initialTab === 'policies' && !canManage
+      ? 'requests'
+      : initialTab === 'approvals' && !canReviewApprovals
+        ? 'requests'
+        : initialTab,
+  );
 
   const {
     policies,
@@ -75,6 +84,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
 
   const tabOptions = [
     { value: 'requests', label: 'My Requests' },
+    ...(canReviewApprovals ? [{ value: 'approvals', label: 'Team Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
     { value: 'calendar', label: 'Team Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
@@ -223,6 +233,8 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           onApplyClick={() => setIsApplyModalOpen(true)}
         />
       )}
+
+      {activeTab === 'approvals' && canReviewApprovals && <LeaveApprovalsTab />}
 
       {activeTab === 'balances' && (
         <LeaveBalancesSummary

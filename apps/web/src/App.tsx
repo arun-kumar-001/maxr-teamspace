@@ -24,6 +24,8 @@ import {
   OnboardingPage,
   SetPasswordPage,
 } from './features/employees';
+import { DepartmentsPage } from './features/departments';
+import { DesignationsPage } from './features/designations';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
@@ -127,6 +129,58 @@ function AppRoutes() {
         }
       />
 
+      {/* Departments Management Routes (Issue #18) */}
+      <Route
+        path="/departments"
+        element={
+          <ShellLayout>
+            <DepartmentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/departments"
+        element={
+          <ShellLayout>
+            <DepartmentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/departments"
+        element={
+          <ShellLayout>
+            <DepartmentsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Designations Management Routes (Issue #18) */}
+      <Route
+        path="/designations"
+        element={
+          <ShellLayout>
+            <DesignationsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/designations"
+        element={
+          <ShellLayout>
+            <DesignationsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/designations"
+        element={
+          <ShellLayout>
+            <DesignationsPage />
+          </ShellLayout>
+        }
+      />
+
       {/* Employee Documents Routes (Issue #25) */}
       <Route
         path="/employees/:id/documents"
@@ -153,28 +207,11 @@ function AppRoutes() {
           </ShellLayout>
         }
       />
-      {/* Onboarding Routes */}
-      <Route
-        path="/hr/lifecycle"
-        element={
-          <ShellLayout>
-            <OnboardingPage />
-          </ShellLayout>
-        }
-      />
       <Route
         path="/hr/employees/:id/documents"
         element={
           <ShellLayout>
             <EmployeeDocumentsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/hr/onboarding"
-        element={
-          <ShellLayout>
-            <OnboardingPage />
           </ShellLayout>
         }
       />
@@ -187,7 +224,17 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/hr/onboarding/:id"
+        path="/staff/documents"
+        element={
+          <ShellLayout>
+            <EmployeeDocumentsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Onboarding Routes */}
+      <Route
+        path="/hr/lifecycle"
         element={
           <ShellLayout>
             <OnboardingPage />
@@ -195,10 +242,18 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/staff/documents"
+        path="/hr/onboarding"
         element={
           <ShellLayout>
-            <EmployeeDocumentsPage />
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/onboarding/:id"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
           </ShellLayout>
         }
       />

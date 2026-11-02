@@ -46,6 +46,20 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     allowedRoles: [ROLES.ADMIN],
   },
   {
+    id: 'admin-departments',
+    label: 'Departments',
+    path: '/admin/departments',
+    iconName: 'briefcase',
+    allowedRoles: [ROLES.ADMIN],
+  },
+  {
+    id: 'admin-designations',
+    label: 'Designations',
+    path: '/admin/designations',
+    iconName: 'file-text',
+    allowedRoles: [ROLES.ADMIN],
+  },
+  {
     id: 'admin-audit',
     label: 'Audit Logs',
     path: '/admin/audit',
@@ -66,6 +80,20 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Employee Directory',
     path: '/hr/employees',
     iconName: 'users',
+    allowedRoles: [ROLES.HR_MANAGER],
+  },
+  {
+    id: 'hr-departments',
+    label: 'Departments',
+    path: '/hr/departments',
+    iconName: 'briefcase',
+    allowedRoles: [ROLES.HR_MANAGER],
+  },
+  {
+    id: 'hr-designations',
+    label: 'Designations',
+    path: '/hr/designations',
+    iconName: 'file-text',
     allowedRoles: [ROLES.HR_MANAGER],
   },
   {
@@ -220,6 +248,14 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   // Canonical employee directory route (Issue #19)
   if (path === '/employees' || path.startsWith('/employees/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
+  }
+
+  // Canonical departments & designations routes (Issue #18)
+  if (path === '/departments' || path.startsWith('/departments/')) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+  if (path === '/designations' || path.startsWith('/designations/')) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
   const matchingItem = NAVIGATION_REGISTRY.find((item) => item.path === path);
