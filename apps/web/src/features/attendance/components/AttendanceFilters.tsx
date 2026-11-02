@@ -107,6 +107,18 @@ export function AttendanceFilters({
           >
             Calendar View
           </button>
+          <button
+            type="button"
+            onClick={() => onDisplayModeChange('corrections')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded min-h-[44px] transition-colors ${
+              displayMode === 'corrections'
+                ? 'bg-surface text-primary-deep shadow-sm font-bold'
+                : 'text-text-muted hover:text-text'
+            }`}
+            data-testid="view-corrections-btn"
+          >
+            Corrections
+          </button>
           {canViewTeam && scope === 'team' && (
             <button
               type="button"

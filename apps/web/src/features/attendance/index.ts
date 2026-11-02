@@ -7,4 +7,8 @@ export * from './components/AttendanceStatusBadge';
 export * from './components/AttendanceFilters';
 export * from './components/AttendanceCalendarView';
 export * from './components/TeamAttendanceGrid';
+export * from './components/CorrectionStatusBadge';
+export * from './components/RequestCorrectionModal';
+export * from './components/CorrectionsHistoryView';
+export * from './hooks/useAttendanceCorrections';
 export * from './pages/AttendancePage';
