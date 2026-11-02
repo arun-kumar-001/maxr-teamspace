@@ -63,3 +63,39 @@ export interface AttendanceListResponse {
   data: AttendanceRecord[];
   meta: AttendancePaginationMeta;
 }
+
+export type CorrectionStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface AttendanceCorrection extends Record<string, unknown> {
+  id: string;
+  attendanceRecordId: string;
+  employeeId: string;
+  workDate: string;
+  originalCheckIn: string;
+  originalCheckOut: string | null;
+  requestedCheckIn: string;
+  requestedCheckOut: string;
+  reason: string;
+  status: CorrectionStatus;
+  approvalId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RequestCorrectionPayload {
+  attendanceRecordId: string;
+  requestedCheckIn: string;
+  requestedCheckOut: string;
+  reason: string;
+}
+
+export interface CorrectionQuery {
+  page?: number;
+  pageSize?: number;
+  status?: CorrectionStatus;
+}
+
+export interface PaginatedCorrectionsResponse {
+  data: AttendanceCorrection[];
+  meta: AttendancePaginationMeta;
+}
