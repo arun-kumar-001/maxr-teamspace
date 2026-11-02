@@ -83,7 +83,23 @@ function AppRoutes() {
         }
       />
 
-      {/* Employee Directory Routes */}
+      {/* Employee Directory Routes (Issue #19) */}
+      <Route
+        path="/employees"
+        element={
+          <ShellLayout>
+            <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/employees"
+        element={
+          <ShellLayout>
+            <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
       <Route
         path="/hr/employees"
         element={
@@ -93,7 +109,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/employees"
+        path="/lead/team"
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
