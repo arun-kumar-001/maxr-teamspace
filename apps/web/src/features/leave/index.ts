@@ -8,4 +8,8 @@ export * from './components/HolidayCalendar';
 export * from './components/AddHolidayModal';
 export * from './components/LeaveBalancesSummary';
 export * from './components/RunAccrualModal';
+export * from './components/ApplyLeaveModal';
+export * from './components/LeaveRequestCard';
+export * from './components/LeaveRequestsTable';
+export * from './components/LeaveCalendarView';
 export * from './pages/LeaveManagementPage';

@@ -76,3 +76,53 @@ export interface PaginationMeta {
   pageSize: number;
   total: number;
 }
+
+export type LeaveRequestStatus = 'applied' | 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface LeaveRequest extends Record<string, unknown> {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  leaveTypeId: string;
+  leaveTypeCode: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  halfDay: boolean;
+  days: number;
+  reason: string | null;
+  status: LeaveRequestStatus;
+  approvalId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApplyForLeavePayload {
+  leaveTypeId: string;
+  startDate: string;
+  endDate: string;
+  halfDay?: boolean;
+  reason?: string;
+}
+
+export interface ListMyLeaveRequestsQuery {
+  page?: number;
+  pageSize?: number;
+  status?: LeaveRequestStatus;
+  leaveTypeId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface LeaveCalendarEntry {
+  requestId: string;
+  employeeId: string;
+  employeeName: string;
+  leaveTypeCode: string;
+  leaveTypeName: string;
+  startDate: string;
+  endDate: string;
+  halfDay: boolean;
+  days: number;
+  status: 'pending' | 'approved';
+}

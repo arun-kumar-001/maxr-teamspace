@@ -16,8 +16,10 @@ import { createApprovals } from '../modules/approvals';
 import { createEmployeeCreation } from '../modules/employees/creation';
 import { createEmployeeDeactivation } from '../modules/employees/deactivation';
 import { createEmployeeDetail } from '../modules/employees/detail';
+import { createEmployeeDocuments } from '../modules/employees/documents';
 import { createEmployeeHierarchy } from '../modules/employees/hierarchy';
 import { createEmployeeProfile } from '../modules/employees/profile';
+import { createOnboarding } from '../modules/employees/onboarding';
 import { registerAttendanceReports } from '../modules/attendance/reports/attendance-reports';
 import { registerEmployeeReports } from '../modules/employees/reports/employee-reports';
 import { registerLeaveReports } from '../modules/leave/reports/leave-reports';
@@ -193,7 +195,19 @@ export function createApiRouter({
   );
   router.use(
     '/employees',
+    createEmployeeDocuments({ platform, authenticate: auth.authenticate }).router,
+  );
+  router.use(
+    '/employees',
     createEmployeeDeactivation({
+      platform,
+      authenticate: auth.authenticate,
+      sessions: auth.sessions,
+    }).router,
+  );
+  router.use(
+    '/onboarding',
+    createOnboarding({
       platform,
       authenticate: auth.authenticate,
       sessions: auth.sessions,

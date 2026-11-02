@@ -17,3 +17,6 @@ export * from './directory/directory.schemas';
 export * from './directory/directory.service';
 export * from './directory/directory.repository';
 export * from './directory/directory.routes';
+
+export * from './documents';
+export * from './onboarding';
