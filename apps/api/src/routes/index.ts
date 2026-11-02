@@ -28,6 +28,7 @@ import { createLeaveSetup } from '../modules/leave';
 import { createNotifications, loadNotificationsConfig } from '../modules/notifications';
 import { createProjects } from '../modules/projects';
 import { createTasks } from '../modules/tasks';
+import { createExpenses } from '../modules/expenses';
 import { createMeetings } from '../modules/meetings';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
@@ -133,6 +134,15 @@ export function createApiRouter({
   );
   const meetings = createMeetings({ platform, authenticate: auth.authenticate });
   router.use('/meetings', meetings.router);
+  const expenses = createExpenses({
+    platform,
+    approvals: approvals.service,
+    authenticate: auth.authenticate,
+    idempotencyStore,
+    settings: settings.reader,
+  });
+  router.use('/expense-claims', expenses.claimsRouter);
+  router.use('/expense-categories', expenses.categoriesRouter);
   router.use(
     '/notifications',
     createNotifications({

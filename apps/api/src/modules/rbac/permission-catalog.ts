@@ -176,6 +176,27 @@ export const PERMISSION_CATALOG = {
   },
   'meetings.rsvp': { description: 'Answer an invitation to a meeting', grants: everyone(OWN) },
 
+  'expenses.submit': {
+    description: 'Create, submit and cancel your own expense claims and attach receipts',
+    grants: everyone(OWN),
+  },
+  'expenses.read_own': {
+    description: 'See your own expense claims and receipts',
+    grants: everyone(OWN),
+  },
+  'expenses.list': {
+    description: 'List and view the expense claims you review, within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM },
+  },
+  'expenses.reimburse': {
+    description: 'Mark approved expense claims as reimbursed',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'expenses.manage_categories': {
+    description: 'Add and deactivate expense categories',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
   'tasks.create': {
     description: 'Create and assign team task',
     grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },
