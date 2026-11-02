@@ -1,11 +1,14 @@
 import {
   Badge,
+  Button,
   Column,
   DataTable,
   ErrorState,
   ForbiddenState,
+  Skeleton,
   SortDirection,
 } from '../../../components/ui';
+import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
 import { useEmployeeDirectory } from '../hooks/useEmployeeDirectory';
 import type { EmployeeDirectoryItem } from '../types';
@@ -17,34 +20,51 @@ export function EmployeeDirectoryPage() {
     isLoading,
     error,
     statusCode,
+    isForbidden,
     departments,
     designations,
+    managers,
     query,
     setPage,
     setSearch,
     setStatus,
     setDepartmentId,
     setDesignationId,
+    setManagerId,
     setSort,
     resetFilters,
     refetch,
   } = useEmployeeDirectory();
 
-  if (statusCode === 403) {
+  if (isForbidden || statusCode === 403) {
     return (
-      <div className="p-4 sm:p-6 space-y-6" data-testid="employee-directory-page">
-        <ForbiddenState
-          title="Access Restricted"
-          message="You do not have permission to access the employee directory."
-        />
+      <div
+        className="p-4 sm:p-6 space-y-6 max-w-dashboard mx-auto"
+        data-testid="employee-directory-page"
+      >
+        <div data-testid="directory-forbidden-view">
+          <ForbiddenState
+            title="Access Restricted"
+            message="You do not have permission to access the employee directory."
+          />
+        </div>
       </div>
     );
   }
 
   if (error && !isLoading && employees.length === 0) {
     return (
-      <div className="p-4 sm:p-6 space-y-6" data-testid="employee-directory-page">
-        <ErrorState title="Failed to Load Employees" message={error} onRetry={refetch} />
+      <div
+        className="p-4 sm:p-6 space-y-6 max-w-dashboard mx-auto"
+        data-testid="employee-directory-page"
+      >
+        <div data-testid="directory-error-view">
+          <ErrorState
+            title="Failed to Load Employees"
+            message={error.message || String(error)}
+            onRetry={refetch}
+          />
+        </div>
       </div>
     );
   }
@@ -65,7 +85,7 @@ export function EmployeeDirectoryPage() {
             <div className="font-semibold text-text">
               {emp.firstName} {emp.lastName}
             </div>
-            <div className="text-xs text-text-muted">{emp.email}</div>
+            <div className="text-xs font-mono text-text-muted">{emp.employeeCode}</div>
           </div>
         </div>
       ),
@@ -144,7 +164,7 @@ export function EmployeeDirectoryPage() {
   };
 
   return (
-    <div className="space-y-6" data-testid="employee-directory-page">
+    <div className="space-y-6 max-w-dashboard mx-auto" data-testid="employee-directory-page">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1">
@@ -165,22 +185,74 @@ export function EmployeeDirectoryPage() {
       </div>
 
       {/* Filter Controls */}
-      <EmployeeFilters
-        search={query.search}
-        status={query.status}
-        departmentId={query.departmentId}
-        designationId={query.designationId}
-        departments={departments}
-        designations={designations}
-        onSearchChange={setSearch}
-        onStatusChange={setStatus}
-        onDepartmentChange={setDepartmentId}
-        onDesignationChange={setDesignationId}
-        onReset={resetFilters}
-      />
+      <div data-testid="employee-directory-filters">
+        <EmployeeFilters
+          search={query.search}
+          status={query.status}
+          departmentId={query.departmentId}
+          designationId={query.designationId}
+          managerId={query.managerId}
+          departments={departments}
+          designations={designations}
+          managers={managers}
+          onSearchChange={setSearch}
+          onStatusChange={setStatus}
+          onDepartmentChange={setDepartmentId}
+          onDesignationChange={setDesignationId}
+          onManagerChange={setManagerId}
+          onReset={resetFilters}
+        />
+      </div>
 
-      {/* Data Table with Mobile Cards & Desktop Table */}
+      {/* Loading Skeleton */}
+      {isLoading && (
+        <div data-testid="directory-loading-skeleton">
+          <div className="block sm:hidden space-y-3">
+            <Skeleton variant="rectangular" height={120} />
+            <Skeleton variant="rectangular" height={120} />
+            <Skeleton variant="rectangular" height={120} />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Card Layout (Shown on Phone: <640px) */}
+      {!isLoading && employees.length > 0 && (
+        <div className="block sm:hidden space-y-3" data-testid="employee-mobile-cards">
+          {employees.map((emp) => (
+            <EmployeeCard key={emp.id} employee={emp} />
+          ))}
+
+          {meta.totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={meta.page <= 1}
+                onClick={() => setPage(meta.page - 1)}
+                className="min-h-[44px]"
+              >
+                Previous
+              </Button>
+              <span className="text-xs text-text-muted">
+                Page {meta.page} of {meta.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={meta.page >= meta.totalPages}
+                onClick={() => setPage(meta.page + 1)}
+                className="min-h-[44px]"
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Desktop & Tablet Data Table (Shown on Screen: >=640px) */}
       <DataTable
+        className={employees.length > 0 ? 'hidden sm:flex' : ''}
         data={employees as unknown as Record<string, unknown>[]}
         columns={columns as unknown as Column<Record<string, unknown>>[]}
         keyExtractor={(row) => (row as unknown as EmployeeDirectoryItem).id}
@@ -194,7 +266,7 @@ export function EmployeeDirectoryPage() {
         onSortChange={handleSortChange}
         ariaLabel="Employee directory listing"
         emptyTitle="No employees found"
-        emptyMessage="No employees match your search query or selected filters. Try broadening your criteria."
+        emptyMessage="There are no employee records to display."
       />
     </div>
   );

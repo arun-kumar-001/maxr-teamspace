@@ -16,10 +16,16 @@ import { RouteGuard } from './shell/RouteGuard';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
-import { EmployeeDirectoryPage } from './features/employees';
+import {
+  EmployeeDirectoryPage,
+  MyOnboardingPage,
+  OnboardingPage,
+  SetPasswordPage,
+} from './features/employees';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
+import { LeaveManagementPage } from './features/leave';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -62,6 +68,9 @@ function AppRoutes() {
         }
       />
 
+      {/* Public Set-Password Route (Onboarding Claim) */}
+      <Route path="/set-password" element={<SetPasswordPage />} />
+
       {/* Root redirects to dashboard */}
       <Route
         path="/"
@@ -82,7 +91,23 @@ function AppRoutes() {
         }
       />
 
-      {/* Employee Directory Routes */}
+      {/* Employee Directory Routes (Issue #19) */}
+      <Route
+        path="/employees"
+        element={
+          <ShellLayout>
+            <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/employees"
+        element={
+          <ShellLayout>
+            <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
       <Route
         path="/hr/employees"
         element={
@@ -92,10 +117,52 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/employees"
+        path="/lead/team"
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Onboarding Routes */}
+      <Route
+        path="/hr/lifecycle"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/onboarding"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/onboarding/:id"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/onboarding"
+        element={
+          <ShellLayout>
+            <MyOnboardingPage />
           </ShellLayout>
         }
       />
@@ -166,6 +233,64 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ShiftsAndPoliciesPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Leave & Holiday Routes */}
+      <Route
+        path="/staff/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/balances"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/holidays"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="holidays" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/policies"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="policies" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="policies" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/holidays"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="holidays" />
           </ShellLayout>
         }
       />

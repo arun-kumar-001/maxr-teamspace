@@ -72,3 +72,13 @@ export interface DesignationItem {
   code: string;
   level: number;
 }
+
+export interface ManagerOption {
+  id: string;
+  name: string;
+  employeeCode: string;
+}
+
+// Aliases for compatibility
+export type DepartmentOption = DepartmentItem;
+export type DesignationOption = DesignationItem;

@@ -16678,6 +16678,1462 @@
         }
       }
     },
+    "/onboarding": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "List onboarding checklists with stage and progress (Admin, HR Manager, Team Lead)",
+        "description": "Required permission: `onboarding.list`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_progress",
+                "completed"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "hr",
+                "system",
+                "it_admin",
+                "employee",
+                "completed"
+              ]
+            },
+            "required": false,
+            "name": "step",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "departmentId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of onboarding checklists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "employeeId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "employeeCode": {
+                            "type": "string"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "departmentId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "departmentName": {
+                            "type": "string"
+                          },
+                          "designationId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "designationTitle": {
+                            "type": "string"
+                          },
+                          "managerId": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "uuid"
+                          },
+                          "joiningDate": {
+                            "type": "string"
+                          },
+                          "employeeStatus": {
+                            "type": "string"
+                          },
+                          "userActive": {
+                            "type": "boolean"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "in_progress",
+                              "completed"
+                            ]
+                          },
+                          "currentStep": {
+                            "type": "string",
+                            "enum": [
+                              "hr",
+                              "system",
+                              "it_admin",
+                              "employee",
+                              "completed"
+                            ]
+                          },
+                          "completedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date-time"
+                          },
+                          "totalItems": {
+                            "type": "number"
+                          },
+                          "verifiedItems": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "employeeId",
+                          "employeeCode",
+                          "firstName",
+                          "lastName",
+                          "email",
+                          "departmentId",
+                          "departmentName",
+                          "designationId",
+                          "designationTitle",
+                          "managerId",
+                          "joiningDate",
+                          "employeeStatus",
+                          "userActive",
+                          "status",
+                          "currentStep",
+                          "completedAt",
+                          "totalItems",
+                          "verifiedItems"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/me": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Get onboarding checklist for the logged-in employee",
+        "description": "Required permission: `onboarding.read_own`",
+        "responses": {
+          "200": {
+            "description": "Own onboarding checklist detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeCode": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "departmentId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "departmentName": {
+                          "type": "string"
+                        },
+                        "designationId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "designationTitle": {
+                          "type": "string"
+                        },
+                        "managerId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "joiningDate": {
+                          "type": "string"
+                        },
+                        "employeeStatus": {
+                          "type": "string"
+                        },
+                        "userActive": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_progress",
+                            "completed"
+                          ]
+                        },
+                        "currentStep": {
+                          "type": "string",
+                          "enum": [
+                            "hr",
+                            "system",
+                            "it_admin",
+                            "employee",
+                            "completed"
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "totalItems": {
+                          "type": "number"
+                        },
+                        "verifiedItems": {
+                          "type": "number"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "checklistId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "step": {
+                                "type": "string",
+                                "enum": [
+                                  "hr",
+                                  "system",
+                                  "it_admin",
+                                  "employee"
+                                ]
+                              },
+                              "itemKey": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isVerified": {
+                                "type": "boolean"
+                              },
+                              "verifiedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "verifiedBy": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "checklistId",
+                              "step",
+                              "itemKey",
+                              "title",
+                              "description",
+                              "isVerified",
+                              "verifiedAt",
+                              "verifiedBy",
+                              "notes"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "employeeId",
+                        "employeeCode",
+                        "firstName",
+                        "lastName",
+                        "email",
+                        "departmentId",
+                        "departmentName",
+                        "designationId",
+                        "designationTitle",
+                        "managerId",
+                        "joiningDate",
+                        "employeeStatus",
+                        "userActive",
+                        "status",
+                        "currentStep",
+                        "completedAt",
+                        "totalItems",
+                        "verifiedItems",
+                        "items"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/{id}": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Get onboarding checklist detail by employee ID",
+        "description": "Required permission: `onboarding.read`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Onboarding checklist detail with items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeCode": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "departmentId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "departmentName": {
+                          "type": "string"
+                        },
+                        "designationId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "designationTitle": {
+                          "type": "string"
+                        },
+                        "managerId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "joiningDate": {
+                          "type": "string"
+                        },
+                        "employeeStatus": {
+                          "type": "string"
+                        },
+                        "userActive": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_progress",
+                            "completed"
+                          ]
+                        },
+                        "currentStep": {
+                          "type": "string",
+                          "enum": [
+                            "hr",
+                            "system",
+                            "it_admin",
+                            "employee",
+                            "completed"
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "totalItems": {
+                          "type": "number"
+                        },
+                        "verifiedItems": {
+                          "type": "number"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "checklistId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "step": {
+                                "type": "string",
+                                "enum": [
+                                  "hr",
+                                  "system",
+                                  "it_admin",
+                                  "employee"
+                                ]
+                              },
+                              "itemKey": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isVerified": {
+                                "type": "boolean"
+                              },
+                              "verifiedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "verifiedBy": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "checklistId",
+                              "step",
+                              "itemKey",
+                              "title",
+                              "description",
+                              "isVerified",
+                              "verifiedAt",
+                              "verifiedBy",
+                              "notes"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "employeeId",
+                        "employeeCode",
+                        "firstName",
+                        "lastName",
+                        "email",
+                        "departmentId",
+                        "departmentName",
+                        "designationId",
+                        "designationTitle",
+                        "managerId",
+                        "joiningDate",
+                        "employeeStatus",
+                        "userActive",
+                        "status",
+                        "currentStep",
+                        "completedAt",
+                        "totalItems",
+                        "verifiedItems",
+                        "items"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or outside your scope)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/{id}/items/{itemKey}/verify": {
+      "post": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Verify a specific onboarding checklist item",
+        "description": "Required permission: `onboarding.verify_hr`",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated onboarding checklist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeCode": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "departmentId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "departmentName": {
+                          "type": "string"
+                        },
+                        "designationId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "designationTitle": {
+                          "type": "string"
+                        },
+                        "managerId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "joiningDate": {
+                          "type": "string"
+                        },
+                        "employeeStatus": {
+                          "type": "string"
+                        },
+                        "userActive": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_progress",
+                            "completed"
+                          ]
+                        },
+                        "currentStep": {
+                          "type": "string",
+                          "enum": [
+                            "hr",
+                            "system",
+                            "it_admin",
+                            "employee",
+                            "completed"
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "totalItems": {
+                          "type": "number"
+                        },
+                        "verifiedItems": {
+                          "type": "number"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "checklistId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "step": {
+                                "type": "string",
+                                "enum": [
+                                  "hr",
+                                  "system",
+                                  "it_admin",
+                                  "employee"
+                                ]
+                              },
+                              "itemKey": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isVerified": {
+                                "type": "boolean"
+                              },
+                              "verifiedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "verifiedBy": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "checklistId",
+                              "step",
+                              "itemKey",
+                              "title",
+                              "description",
+                              "isVerified",
+                              "verifiedAt",
+                              "verifiedBy",
+                              "notes"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "employeeId",
+                        "employeeCode",
+                        "firstName",
+                        "lastName",
+                        "email",
+                        "departmentId",
+                        "departmentName",
+                        "designationId",
+                        "designationTitle",
+                        "managerId",
+                        "joiningDate",
+                        "employeeStatus",
+                        "userActive",
+                        "status",
+                        "currentStep",
+                        "completedAt",
+                        "totalItems",
+                        "verifiedItems",
+                        "items"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/{id}/activate": {
+      "post": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Activate employee account once all checklist items are verified",
+        "description": "Required permission: `onboarding.activate`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activated employee checklist detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "employeeCode": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "departmentId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "departmentName": {
+                          "type": "string"
+                        },
+                        "designationId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "designationTitle": {
+                          "type": "string"
+                        },
+                        "managerId": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "uuid"
+                        },
+                        "joiningDate": {
+                          "type": "string"
+                        },
+                        "employeeStatus": {
+                          "type": "string"
+                        },
+                        "userActive": {
+                          "type": "boolean"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "in_progress",
+                            "completed"
+                          ]
+                        },
+                        "currentStep": {
+                          "type": "string",
+                          "enum": [
+                            "hr",
+                            "system",
+                            "it_admin",
+                            "employee",
+                            "completed"
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        },
+                        "totalItems": {
+                          "type": "number"
+                        },
+                        "verifiedItems": {
+                          "type": "number"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "checklistId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "step": {
+                                "type": "string",
+                                "enum": [
+                                  "hr",
+                                  "system",
+                                  "it_admin",
+                                  "employee"
+                                ]
+                              },
+                              "itemKey": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "isVerified": {
+                                "type": "boolean"
+                              },
+                              "verifiedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time"
+                              },
+                              "verifiedBy": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "checklistId",
+                              "step",
+                              "itemKey",
+                              "title",
+                              "description",
+                              "isVerified",
+                              "verifiedAt",
+                              "verifiedBy",
+                              "notes"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "employeeId",
+                        "employeeCode",
+                        "firstName",
+                        "lastName",
+                        "email",
+                        "departmentId",
+                        "departmentName",
+                        "designationId",
+                        "designationTitle",
+                        "managerId",
+                        "joiningDate",
+                        "employeeStatus",
+                        "userActive",
+                        "status",
+                        "currentStep",
+                        "completedAt",
+                        "totalItems",
+                        "verifiedItems",
+                        "items"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (or outside your scope)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unverified checklist items remain; account cannot be activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/set-password": {
+      "post": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Claim account and set initial password using 72h single-use token",
+        "description": "Access: Public",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 256
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "token",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password set success confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean"
+                        },
+                        "employeeId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "success",
+                        "employeeId"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/files/download": {
       "get": {
         "tags": [
