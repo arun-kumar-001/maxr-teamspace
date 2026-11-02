@@ -12,4 +12,5 @@ export * from './components/ApplyLeaveModal';
 export * from './components/LeaveRequestCard';
 export * from './components/LeaveRequestsTable';
 export * from './components/LeaveCalendarView';
+export * from './components/LeaveApprovalsTab';
 export * from './pages/LeaveManagementPage';
