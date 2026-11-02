@@ -10,6 +10,7 @@ const PUBLIC = [
   'GET /api/v1/health',
   'POST /api/v1/auth/login',
   'GET /api/v1/files/download', // the signed token is the permission
+  'POST /api/v1/onboarding/set-password', // the signed single-use token is the permission
   'GET /api/v1/openapi.json', // development only: not mounted when NODE_ENV=production
 ];
 
