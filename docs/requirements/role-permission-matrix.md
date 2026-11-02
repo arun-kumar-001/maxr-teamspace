@@ -19,7 +19,7 @@ Enforcement: scope filter is added **inside the repository query** (never post-f
 |---|---|---|---|---|
 | **Auth** login / logout | ✔ | ✔ | ✔ | ✔ |
 | **Users & roles** create/deactivate user accounts | ✔ all | ◐ only via employee create/deactivate | ✖ | ✖ |
-| assign role to user | ✔ | ◐ at employee creation (F2 activity diagram) | ✖ | ✖ |
+| assign role to user | ✔ | ◐ only at employee creation (F2 activity diagram); `PUT /users/{id}/roles` is Admin only (#27) | ✖ | ✖ |
 | edit roles / permission catalog | ◐ (view-only if D-21 fixed roles) | ✖ | ✖ | ✖ |
 | view audit logs | ✔ | ✖ (◐ HR-scope events) | ✖ | ✖ |
 | **Employees** create | ✔ | ✔ | ✖ | ✖ |
