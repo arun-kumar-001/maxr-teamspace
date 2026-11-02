@@ -18,6 +18,7 @@ import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import { EmployeeDirectoryPage } from './features/employees';
 import { AttendancePage } from './features/attendance';
+import { ApprovalsInboxPage } from './features/approvals';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -120,6 +121,32 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <AttendancePage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Approvals Routes */}
+      <Route
+        path="/approvals"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/approvals"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/approvals"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
           </ShellLayout>
         }
       />
