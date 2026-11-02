@@ -25,6 +25,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(adminPaths).toContain('/admin/designations');
     expect(adminPaths).toContain('/admin/audit');
     expect(adminPaths).toContain('/admin/settings');
+    expect(adminPaths).toContain('/profile');
 
     // Must NOT contain HR, Lead, or Staff specific paths
     expect(adminPaths).not.toContain('/hr/employees');
@@ -46,6 +47,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(hrPaths).toContain('/hr/lifecycle');
     expect(hrPaths).toContain('/hr/policies');
     expect(hrPaths).toContain('/hr/reports');
+    expect(hrPaths).toContain('/profile');
 
     // Must NOT contain Admin or Staff specific paths
     expect(hrPaths).not.toContain('/admin/users');
@@ -65,6 +67,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(leadPaths).toContain('/lead/approvals');
     expect(leadPaths).toContain('/lead/tasks');
     expect(leadPaths).toContain('/lead/reports');
+    expect(leadPaths).toContain('/profile');
 
     // Must NOT contain Admin or HR specific paths
     expect(leadPaths).not.toContain('/admin/users');
@@ -81,7 +84,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     const staffPaths = staffItems.map((i) => i.path);
 
     expect(staffPaths).toContain('/dashboard');
-    expect(staffPaths).toContain('/staff/profile');
+    expect(staffPaths).toContain('/profile');
     expect(staffPaths).toContain('/staff/attendance');
     expect(staffPaths).toContain('/staff/leave');
     expect(staffPaths).toContain('/staff/tasks');
@@ -134,8 +137,19 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/designations', ROLES.TEAM_LEAD)).toBe(false);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.TEAM_LEAD)).toBe(false);
 
-      // HR Manager trying to access Admin audit logs or admin paths
+      // HR Manager trying to access Admin audit logs or deactivation
       expect(isPathAuthorizedForRole('/admin/audit', ROLES.HR_MANAGER)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.HR_MANAGER)).toBe(
+        false,
+      );
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.TEAM_LEAD)).toBe(
+        false,
+      );
+      expect(isPathAuthorizedForRole('/employees/emp-1/deactivate', ROLES.HR_MANAGER)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/emp-1/deactivate', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/emp-1/deactivate', ROLES.TEAM_LEAD)).toBe(false);
+      // HR Manager trying to access admin department or designation setup
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.HR_MANAGER)).toBe(false);
       expect(isPathAuthorizedForRole('/admin/designations', ROLES.HR_MANAGER)).toBe(false);
     });
@@ -143,6 +157,8 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     it('should authorize legitimate role paths', () => {
       expect(isPathAuthorizedForRole('/admin/users', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/employees', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/designations', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/employees', ROLES.HR_MANAGER)).toBe(true);
@@ -161,6 +177,12 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/staff/documents', ROLES.STAFF)).toBe(true);
+
+      // Issue #22: All four roles are authorized to access /profile and /staff/profile
+      Object.values(ROLES).forEach((role: Role) => {
+        expect(isPathAuthorizedForRole('/profile', role)).toBe(true);
+        expect(isPathAuthorizedForRole('/staff/profile', role)).toBe(true);
+      });
     });
   });
 });
