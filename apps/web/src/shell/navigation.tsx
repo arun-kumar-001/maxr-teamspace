@@ -217,6 +217,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
+  // Employee deactivation route (Issue #26) - Admin only (D-23)
+  if (path.match(/^\/(admin\/)?employees\/[^/]+\/deactivate/)) {
+    return role === ROLES.ADMIN;
+  }
+
   // Employee documents routes (Issue #25) - TL denied, Admin & HR Manager allowed
   if (path.match(/^\/(admin\/|hr\/)?employees\/[^/]+\/documents/)) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;

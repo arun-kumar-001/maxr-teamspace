@@ -3,9 +3,11 @@ import { Badge } from '../../../components/ui/StatusPill';
 
 export interface EmployeeCardProps {
   employee: EmployeeDirectoryItem;
+  canDeactivate?: boolean;
+  onDeactivate?: (employee: EmployeeDirectoryItem) => void;
 }
 
-export function EmployeeCard({ employee }: EmployeeCardProps) {
+export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: EmployeeCardProps) {
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
   const statusVariant =
@@ -87,6 +89,17 @@ export function EmployeeCard({ employee }: EmployeeCardProps) {
             >
               Call
             </a>
+          )}
+          {canDeactivate && onDeactivate && employee.status !== 'deactivated' && (
+            <button
+              type="button"
+              onClick={() => onDeactivate(employee)}
+              className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-input transition-colors focus:ring-2 focus:ring-rose-500 outline-none"
+              aria-label={`Deactivate ${employee.firstName} ${employee.lastName}`}
+              data-testid={`deactivate-btn-card-${employee.id}`}
+            >
+              Deactivate
+            </button>
           )}
         </div>
       </div>
