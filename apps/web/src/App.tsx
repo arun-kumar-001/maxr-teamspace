@@ -16,7 +16,12 @@ import { RouteGuard } from './shell/RouteGuard';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
-import { EmployeeDirectoryPage } from './features/employees';
+import {
+  EmployeeDirectoryPage,
+  MyOnboardingPage,
+  OnboardingPage,
+  SetPasswordPage,
+} from './features/employees';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 
@@ -61,6 +66,9 @@ function AppRoutes() {
         }
       />
 
+      {/* Public Set-Password Route (Onboarding Claim) */}
+      <Route path="/set-password" element={<SetPasswordPage />} />
+
       {/* Root redirects to dashboard */}
       <Route
         path="/"
@@ -95,6 +103,48 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Onboarding Routes */}
+      <Route
+        path="/hr/lifecycle"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/onboarding"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/onboarding/:id"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/onboarding"
+        element={
+          <ShellLayout>
+            <MyOnboardingPage />
           </ShellLayout>
         }
       />
