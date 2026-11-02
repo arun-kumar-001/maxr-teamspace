@@ -4,7 +4,7 @@ import { DependencyStatus } from '../db/types';
 import { HealthDependencies } from '../health/health';
 import { InMemoryAuditStore } from '../platform/audit/stores';
 import { Platform, createTestPlatform } from '../platform';
-import { ReportRegistry } from '../modules/reports';
+import { PdfExporter, ReportRegistry } from '../modules/reports';
 import { TestAuthKit, createTestAuth } from '../modules/auth/auth.testing';
 import { HttpConfig } from '../http/http-config';
 import { Logger, createLogger } from '../logging/logger';
@@ -47,6 +47,7 @@ export function makeApp(
     platform?: Platform;
     auth?: TestAuthKit;
     reportRegistry?: ReportRegistry;
+    reportPdfExporter?: PdfExporter;
   } = {},
 ): {
   app: Express;
@@ -68,6 +69,7 @@ export function makeApp(
     platform,
     auth: authKit.auth,
     reportRegistry: overrides.reportRegistry,
+    reportPdfExporter: overrides.reportPdfExporter,
   });
   return {
     app,

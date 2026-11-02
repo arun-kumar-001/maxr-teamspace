@@ -6,10 +6,15 @@ import type { AuditLogger } from '../../platform';
 import { ScopeFilter, resolveScope, toScopeFilter, widestScope } from '../rbac';
 import { toCsv } from './csv';
 import { ReportDefinition, ReportRow } from './report-definition';
+import { PdfExporter } from './pdf/pdf-exporter';
 import { ReportRegistry } from './report-registry';
 
-/** Hard ceiling for one export. Larger exports need narrower filters (async exports come later). */
+/** Hard ceiling for one CSV export. Larger exports need narrower filters (async exports come later). */
 export const MAX_EXPORT_ROWS = 10_000;
+/** PDF layout is CPU-heavy (ADR D-08), so PDFs stop earlier than CSV. */
+export const MAX_PDF_ROWS = 2_000;
+
+export type ExportFormat = 'csv' | 'pdf';
 
 export interface ReportActor {
   id: string;
@@ -33,7 +38,7 @@ export interface ReportSummary {
 export interface ExportFile {
   filename: string;
   contentType: string;
-  body: string;
+  body: string | Buffer;
 }
 
 const previewPaging = z.object({
@@ -41,7 +46,7 @@ const previewPaging = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-const exportOptions = z.object({ format: z.enum(['csv']).default('csv') });
+const exportOptions = z.object({ format: z.enum(['csv', 'pdf']).default('csv') });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyDefinition = ReportDefinition<any>;
@@ -68,6 +73,7 @@ export class ReportService {
   constructor(
     private readonly registry: ReportRegistry,
     private readonly audit: AuditLogger,
+    private readonly pdf: PdfExporter,
   ) {}
 
   /** The widest scope the caller's roles give them over a report's data; null when they hold none. */
@@ -124,7 +130,8 @@ export class ReportService {
       exportOptions.extend((def.filters as ZodObject<ZodRawShape>).shape).strict(),
       query,
     );
-    const { format, ...filters } = parsed as { format: 'csv' };
+    const { format, ...filters } = parsed as { format: ExportFormat };
+    const limit = format === 'pdf' ? MAX_PDF_ROWS : MAX_EXPORT_ROWS;
     const audit = this.audit.withContext({
       actorId: ctx.actor.id,
       actorRole: ctx.actor.roles[0],
@@ -136,22 +143,57 @@ export class ReportService {
       filters: filters as never,
       scope,
       offset: 0,
-      limit: MAX_EXPORT_ROWS + 1,
+      limit: limit + 1,
     });
-    if (rows.length > MAX_EXPORT_ROWS) {
+    if (rows.length > limit) {
       await audit.tryRecord({
         action: 'report.export',
         outcome: 'failure',
         entityType: 'report',
         entityId: def.name,
-        metadata: { format, reason: 'too_many_rows', limit: MAX_EXPORT_ROWS },
+        metadata: { format, reason: 'too_many_rows', limit },
       });
       throw unprocessable(
-        `This export has more than ${MAX_EXPORT_ROWS} rows. Narrow the filters and try again.`,
+        format === 'pdf'
+          ? `A PDF can hold at most ${limit} rows. Use CSV or narrow the filters and try again.`
+          : `This export has more than ${limit} rows. Narrow the filters and try again.`,
       );
     }
 
-    const body = toCsv(def.columns, rows);
+    const date = new Date().toISOString().slice(0, 10);
+    let file: ExportFile;
+    try {
+      file =
+        format === 'pdf'
+          ? {
+              filename: `${def.name}-${date}.pdf`,
+              contentType: 'application/pdf',
+              body: await this.pdf.render(
+                {
+                  title: def.title,
+                  subtitle: `${date} · ${rows.length} rows`,
+                  columns: def.columns,
+                  rows,
+                },
+                ctx.actor.id,
+              ),
+            }
+          : {
+              filename: `${def.name}-${date}.csv`,
+              contentType: 'text/csv; charset=utf-8',
+              body: toCsv(def.columns, rows),
+            };
+    } catch (err) {
+      await audit.tryRecord({
+        action: 'report.export',
+        outcome: 'failure',
+        entityType: 'report',
+        entityId: def.name,
+        metadata: { format, reason: 'render_failed' },
+      });
+      throw err;
+    }
+
     // Audit before delivery and fail closed: no audit entry, no file. Filter names only, not values.
     await audit.record({
       action: 'report.export',
@@ -160,10 +202,6 @@ export class ReportService {
       entityId: def.name,
       metadata: { format, rows: rows.length, filters: Object.keys(filters) },
     });
-    return {
-      filename: `${def.name}-${new Date().toISOString().slice(0, 10)}.csv`,
-      contentType: 'text/csv; charset=utf-8',
-      body,
-    };
+    return file;
   }
 }

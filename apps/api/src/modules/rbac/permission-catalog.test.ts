@@ -79,7 +79,7 @@ const MATRIX: Array<[PermissionKey, Partial<Record<Role, RecordScope>>]> = [
   ['tasks.create', { admin: 'all', team_lead: 'team' }],
   ['tasks.update_status', { admin: 'all', hr_manager: 'own', team_lead: 'team', staff: 'own' }],
   ['audit_logs.list', { admin: 'all' }],
-  ['users.assign_role', { admin: 'all', hr_manager: 'hr' }],
+  ['users.assign_role', { admin: 'all' }],
 ];
 
 describe.each(MATRIX)('role matrix: %s', (key, expected) => {

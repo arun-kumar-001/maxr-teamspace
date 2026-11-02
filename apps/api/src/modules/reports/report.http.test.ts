@@ -4,7 +4,8 @@ import { makeApp } from '../../test/helpers';
 import { ScopeFilter, scopeAllows } from '../rbac';
 import { ALL_ROLES, signInAs } from '../rbac/rbac.testing';
 import { ReportDefinition, ReportRegistry } from './index';
-import { MAX_EXPORT_ROWS } from './report.service';
+import { PdfDocumentInput, PdfExporter } from './pdf/pdf-exporter';
+import { MAX_EXPORT_ROWS, MAX_PDF_ROWS } from './report.service';
 
 type Row = {
   name: string;
@@ -15,10 +16,14 @@ type Row = {
 };
 
 /** Builds an app whose reports read an in-memory list through the scope filter. */
-function setup(extra: Partial<ReportDefinition> = {}, rows?: (e: Record<string, string>) => Row[]) {
+function setup(
+  extra: Partial<ReportDefinition> = {},
+  rows?: (e: Record<string, string>) => Row[],
+  reportPdfExporter?: PdfExporter,
+) {
   const registry = new ReportRegistry();
   const seen: Array<{ scope: ScopeFilter; limit: number; filters: unknown }> = [];
-  const ctx = makeApp({ reportRegistry: registry });
+  const ctx = makeApp({ reportRegistry: registry, reportPdfExporter });
   const { users } = ctx.authKit;
   const data: Row[] = rows
     ? rows({
@@ -174,7 +179,7 @@ describe('reports: input validation', () => {
     expect((await admin.get('/api/v1/reports/headcount?department=' + 'x'.repeat(51))).status).toBe(
       400,
     );
-    expect((await admin.get('/api/v1/reports/headcount/export?format=pdf')).status).toBe(400);
+    expect((await admin.get('/api/v1/reports/headcount/export?format=docx')).status).toBe(400);
     expect((await admin.get('/api/v1/reports/Not_Valid!')).status).toBe(400);
   });
 });
@@ -256,6 +261,152 @@ describe('reports: export', () => {
     ).get('/api/v1/reports/headcount/export');
     expect(res.status).toBe(200);
   });
+});
+
+/** Records what it was asked to render and returns a tiny PDF, so the cap and audit tests stay fast. */
+class FakePdf implements PdfExporter {
+  calls: Array<{ input: PdfDocumentInput; ownerKey: string }> = [];
+  failWith?: Error;
+  async render(input: PdfDocumentInput, ownerKey: string): Promise<Buffer> {
+    this.calls.push({ input, ownerKey });
+    if (this.failWith) throw this.failWith;
+    return Buffer.from('%PDF-1.7 fake');
+  }
+}
+
+const people = (n: number): Row[] =>
+  Array.from({ length: n }, (_, i) => ({
+    name: `n${i}`,
+    department: 'Eng',
+    ownerEmployeeId: `e${i}`,
+    managerId: null,
+    bank: 'x',
+  }));
+
+describe('reports: PDF export (ADR D-08)', () => {
+  it('staff cannot export a PDF (403) and an unknown format is 400', async () => {
+    const { app, authKit } = setup({}, undefined, new FakePdf());
+    expect(
+      (
+        await (
+          await signInAs(app, authKit, 'staff')
+        ).get('/api/v1/reports/headcount/export?format=pdf')
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await (
+          await signInAs(app, authKit, 'admin')
+        ).get('/api/v1/reports/headcount/export?format=docx')
+      ).status,
+    ).toBe(400);
+  });
+
+  it("downloads a PDF for the caller's scope only, with declared columns, and audits it", async () => {
+    const pdf = new FakePdf();
+    const { app, authKit, auditStore } = setup({}, undefined, pdf);
+    const lead = await signInAs(app, authKit, 'team_lead');
+    const res = await lead.get('/api/v1/reports/headcount/export?format=pdf&department=Eng');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.headers['content-disposition']).toMatch(/headcount-\d{4}-\d{2}-\d{2}\.pdf/);
+    expect(res.headers['cache-control']).toBe('private, no-store');
+    expect(Buffer.from(res.body).subarray(0, 5).toString()).toBe('%PDF-');
+
+    expect(pdf.calls).toHaveLength(1);
+    const [{ input, ownerKey }] = pdf.calls as [(typeof pdf.calls)[number]];
+    expect(ownerKey).toBe(authKit.users.team_lead.id);
+    expect(input.columns.map((c) => c.key)).toEqual(['name', 'department']);
+    expect(input.rows.map((r) => r.name)).toEqual(['=cmd|calc']); // the team's row only
+
+    const entry = auditStore.list().find((e) => e.action === 'report.export');
+    expect(entry).toMatchObject({
+      outcome: 'success',
+      entityId: 'headcount',
+      metadata: { format: 'pdf', rows: 1, filters: ['department'] },
+    });
+  });
+
+  it('allows exactly the PDF row limit and refuses one more with 422 and an audited failure', async () => {
+    const ok = setup({}, () => people(MAX_PDF_ROWS), new FakePdf());
+    expect(
+      (
+        await (
+          await signInAs(ok.app, ok.authKit, 'admin')
+        ).get('/api/v1/reports/headcount/export?format=pdf')
+      ).status,
+    ).toBe(200);
+
+    const over = setup({}, () => people(MAX_PDF_ROWS + 1), new FakePdf());
+    const res = await (
+      await signInAs(over.app, over.authKit, 'admin')
+    ).get('/api/v1/reports/headcount/export?format=pdf');
+    expect(res.status).toBe(422);
+    expect(res.body.error.message).toMatch(/PDF can hold at most 2000 rows/);
+    expect(over.auditStore.list().find((e) => e.action === 'report.export')).toMatchObject({
+      outcome: 'failure',
+      metadata: { format: 'pdf', reason: 'too_many_rows', limit: MAX_PDF_ROWS },
+    });
+    // The same rows are fine as CSV (limit 10,000).
+    expect(
+      (
+        await (
+          await signInAs(over.app, over.authKit, 'admin')
+        ).get('/api/v1/reports/headcount/export')
+      ).status,
+    ).toBe(200);
+  });
+
+  it('a render failure is a generic 500, audited as a failure, and no file is sent', async () => {
+    const pdf = new FakePdf();
+    pdf.failWith = new Error('layout exploded with secret detail');
+    const { app, authKit, auditStore } = setup({}, undefined, pdf);
+    const res = await (
+      await signInAs(app, authKit, 'admin')
+    ).get('/api/v1/reports/headcount/export?format=pdf');
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(res.body)).not.toContain('secret detail');
+    expect(auditStore.list().find((e) => e.action === 'report.export')).toMatchObject({
+      outcome: 'failure',
+      metadata: { format: 'pdf', reason: 'render_failed' },
+    });
+  });
+
+  it('fails closed: if the audit entry cannot be written, no PDF is delivered', async () => {
+    const { app, authKit, auditStore } = setup({}, undefined, new FakePdf());
+    const admin = await signInAs(app, authKit, 'admin');
+    auditStore.failNextWith(new Error('audit database down'));
+    const res = await admin.get('/api/v1/reports/headcount/export?format=pdf');
+    expect(res.status).toBe(500);
+    expect(res.headers['content-type']).not.toBe('application/pdf');
+  });
+
+  it('with the real renderer, Tamil names end up in a real PDF', async () => {
+    const tamil = (): Row[] => [
+      {
+        name: 'அருண் குமார்',
+        department: 'Eng',
+        ownerEmployeeId: 'e1',
+        managerId: null,
+        bank: 'x',
+      },
+    ];
+    const { app, authKit } = setup({}, tamil);
+    const res = await (
+      await signInAs(app, authKit, 'admin')
+    )
+      .get('/api/v1/reports/headcount/export?format=pdf')
+      .buffer(true)
+      .parse((r, cb) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => cb(null, Buffer.concat(chunks)));
+      });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect((res.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+    expect((res.body as Buffer).toString('latin1')).toContain('Tamil');
+  }, 30_000);
 });
 
 describe('ReportRegistry', () => {

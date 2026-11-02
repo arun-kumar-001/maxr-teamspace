@@ -1,23 +1,26 @@
-import { Button, StatusPill } from '../components/ui';
+import { Button, Badge, StatusPill } from '../components/ui';
 
 export function TeamLeadDashboard() {
   return (
     <div className="space-y-6" data-testid="team-lead-dashboard">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
-            Engineering Team Lead Dashboard
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600">
+      {/* Top Banner with Sample Data Badge (B2 Fix) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-text font-display">
+              Engineering Team Lead Dashboard
+            </h1>
+            <Badge variant="neutral">Sample data</Badge>
+          </div>
+          <p className="text-xs sm:text-sm text-text-muted">
             Own team attendance, leave approvals, and sprint task progress
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="min-h-[44px]">
             Team Shift Roster
           </Button>
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" className="min-h-[44px]">
             Assign Task
           </Button>
         </div>
@@ -25,46 +28,51 @@ export function TeamLeadDashboard() {
 
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Team Size</p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">12</p>
-          <p className="mt-1 text-xs text-emerald-600 font-medium">10 present today</p>
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Team Size
+          </p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">12</p>
+          <p className="mt-1 text-xs text-positive-ink font-medium">10 present today</p>
         </div>
 
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Pending Approvals
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-amber-600">2</p>
-          <p className="mt-1 text-xs text-amber-600 font-medium">Leave requests awaiting action</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-warning font-display">2</p>
+          <p className="mt-1 text-xs text-warning font-medium">Leave requests awaiting action</p>
         </div>
 
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Sprint Velocity
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-teal-600">88%</p>
-          <p className="mt-1 text-xs text-slate-600">Tasks completed on track</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-primary-deep font-display">
+            88%
+          </p>
+          <p className="mt-1 text-xs text-text-muted">Tasks completed on track</p>
         </div>
 
-        <div className="p-5 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Blocked Issues
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-red-600">1</p>
-          <p className="mt-1 text-xs text-red-600 font-medium">Needs dependency clearance</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-danger font-display">1</p>
+          <p className="mt-1 text-xs text-danger font-medium">Needs dependency clearance</p>
         </div>
       </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Approvals Widget */}
-        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-900">Pending Leave Approvals</h2>
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800">
-              2 Actions
-            </span>
+            <h2 className="text-base font-bold text-text font-display">Pending Leave Approvals</h2>
+            <div className="flex items-center gap-2">
+              <Badge variant="warning">2 Actions</Badge>
+              <Badge variant="neutral">Sample data</Badge>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -74,19 +82,19 @@ export function TeamLeadDashboard() {
             ].map((req, idx) => (
               <div
                 key={idx}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 gap-3"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-input bg-surface-muted border border-border gap-3"
               >
                 <div>
-                  <p className="text-xs font-bold text-slate-900">{req.employee}</p>
-                  <p className="text-[11px] text-slate-600">
+                  <p className="text-xs font-bold text-text">{req.employee}</p>
+                  <p className="text-[11px] text-text-muted">
                     {req.type} &middot; {req.dates}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="text-xs min-h-[36px]">
+                  <Button variant="outline" size="sm" className="text-xs min-h-[44px]">
                     Reject
                   </Button>
-                  <Button variant="primary" size="sm" className="text-xs min-h-[36px]">
+                  <Button variant="primary" size="sm" className="text-xs min-h-[44px]">
                     Approve
                   </Button>
                 </div>
@@ -96,38 +104,36 @@ export function TeamLeadDashboard() {
         </div>
 
         {/* Team Tasks Snapshot */}
-        <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-slate-900">Active Sprint Tasks</h2>
+        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-text font-display">Active Sprint Tasks</h2>
+            <Badge variant="neutral">Sample data</Badge>
+          </div>
           <div className="space-y-3">
             {[
               {
-                task: 'Implement check-in geolocation validation',
-                owner: 'Alex M.',
+                task: 'Refactor Auth session tokens',
+                assignee: 'Alex Mercer',
                 status: 'In Progress' as const,
               },
               {
-                task: 'Audit log pagination API optimization',
-                owner: 'Kavita N.',
-                status: 'In Review' as const,
-              },
-              {
-                task: 'Cantobo file storage adapter integration',
-                owner: 'Dev Team',
-                status: 'Blocked' as const,
-              },
-              {
-                task: 'Responsive breakpoint verification',
-                owner: 'Venkat B.',
+                task: 'PostgreSQL migration for shifts',
+                assignee: 'Kavita Nair',
                 status: 'Completed' as const,
+              },
+              {
+                task: 'Fix mobile drawer focus trap',
+                assignee: 'Vikram Mehta',
+                status: 'Blocked' as const,
               },
             ].map((t, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between text-xs py-2 border-b border-slate-100"
+                className="flex items-center justify-between text-xs py-2 border-b border-border"
               >
                 <div>
-                  <p className="font-semibold text-slate-900">{t.task}</p>
-                  <p className="text-[11px] text-slate-600">Assignee: {t.owner}</p>
+                  <p className="font-semibold text-text">{t.task}</p>
+                  <p className="text-[11px] text-text-muted">Assigned to: {t.assignee}</p>
                 </div>
                 <StatusPill status={t.status} size="sm" />
               </div>

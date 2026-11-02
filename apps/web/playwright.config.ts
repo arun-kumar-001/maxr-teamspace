@@ -42,5 +42,8 @@ export default defineConfig({
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    env: {
+      VITE_DEV_MOCK_AUTH: 'true',
+    },
   },
 });

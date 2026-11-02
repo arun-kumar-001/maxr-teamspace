@@ -40,6 +40,11 @@ export interface RouteDoc {
   params?: ZodObject<ZodRawShape>;
   query?: ZodObject<ZodRawShape>;
   body?: ZodTypeAny;
+  /**
+   * The route takes a file as the raw request body (see http/raw-upload.ts) instead of JSON.
+   * Adds the required `X-Filename` header and documents the accepted content types.
+   */
+  upload?: { contentTypes: string[] };
   /** Adds the required Idempotency-Key header. */
   idempotent?: boolean;
   /** Extra documented responses, e.g. `{ 410: 'Link expired' }`. */
@@ -55,15 +60,22 @@ const errorResponse = (description: string) => ({
 /** Registers one route and attaches the standard error responses automatically. */
 export function registerRoute(doc: RouteDoc): void {
   const isWrite = doc.method !== 'get';
-  const headers = doc.idempotent
-    ? z.object({
-        'Idempotency-Key': z
-          .string()
-          .min(8)
-          .max(128)
-          .meta({ example: 'b7d1c0e2-3f4a-4c55-9a77-1d2e3f4a5b6c' }),
-      })
-    : undefined;
+  const headerShape: Record<string, z.ZodType> = {};
+  if (doc.idempotent) {
+    headerShape['Idempotency-Key'] = z
+      .string()
+      .min(8)
+      .max(128)
+      .meta({ example: 'b7d1c0e2-3f4a-4c55-9a77-1d2e3f4a5b6c' });
+  }
+  if (doc.upload) {
+    headerShape['X-Filename'] = z.string().meta({
+      description: 'The original file name, percent-encoded',
+      example: 'report%202026.pdf',
+    });
+  }
+  const headers = Object.keys(headerShape).length > 0 ? z.object(headerShape) : undefined;
+  const binary = z.string().meta({ format: 'binary' });
 
   registry.registerPath({
     method: doc.method,
@@ -79,9 +91,16 @@ export function registerRoute(doc: RouteDoc): void {
       params: doc.params,
       query: doc.query,
       headers,
-      body: doc.body
-        ? { required: true, content: { 'application/json': { schema: doc.body } } }
-        : undefined,
+      body: doc.upload
+        ? {
+            required: true,
+            content: Object.fromEntries(
+              doc.upload.contentTypes.map((type) => [type, { schema: binary }]),
+            ),
+          }
+        : doc.body
+          ? { required: true, content: { 'application/json': { schema: doc.body } } }
+          : undefined,
     },
     responses: {
       [doc.success.status]: {

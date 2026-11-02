@@ -63,6 +63,18 @@ describe('RBAC reference-data migrations match the permission catalog', () => {
           [...block[2].matchAll(/'([a-z_.]+)'/g)].forEach((m) => inSql.add(m[1] as string));
         }
       }
+      // Later migrations may take a permission away from a role; they run after the grants.
+      const revocations = sql.matchAll(
+        new RegExp(
+          `DELETE FROM role_permissions\\s+WHERE role_id = '${ROLE_IDS[role]}'\\s+AND permission_id IN \\(SELECT id FROM permissions WHERE key IN \\(([^)]*)\\)\\)`,
+          'g',
+        ),
+      );
+      for (const revocation of revocations) {
+        [...(revocation[1] ?? '').matchAll(/'([a-z_.]+)'/g)].forEach((m) =>
+          inSql.delete(m[1] as string),
+        );
+      }
       const inCatalog = PERMISSION_KEYS.filter((k) => grantFor(role, k) !== null);
       expect([...inSql].sort()).toEqual(inCatalog.sort());
     },
