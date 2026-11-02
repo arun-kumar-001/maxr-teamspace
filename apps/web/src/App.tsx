@@ -19,6 +19,7 @@ import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPa
 import { EmployeeDirectoryPage } from './features/employees';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
+import { ShiftsAndPoliciesPage } from './features/shifts';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -147,6 +148,24 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Shifts & Policies Routes */}
+      <Route
+        path="/hr/policies"
+        element={
+          <ShellLayout>
+            <ShiftsAndPoliciesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/shifts"
+        element={
+          <ShellLayout>
+            <ShiftsAndPoliciesPage />
           </ShellLayout>
         }
       />
