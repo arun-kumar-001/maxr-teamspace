@@ -47,6 +47,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT '10000000-0000-0000-0000-000000000004', id FROM permissions
 WHERE key IN (
+  'onboarding.read',
   'onboarding.read_own',
   'onboarding.complete_employee'
 )
