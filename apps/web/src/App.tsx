@@ -17,6 +17,8 @@ import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import { EmployeeDirectoryPage } from './features/employees';
+import { DepartmentsPage } from './features/departments';
+import { DesignationsPage } from './features/designations';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
@@ -113,6 +115,58 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Departments Management Routes (Issue #18) */}
+      <Route
+        path="/departments"
+        element={
+          <ShellLayout>
+            <DepartmentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/departments"
+        element={
+          <ShellLayout>
+            <DepartmentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/departments"
+        element={
+          <ShellLayout>
+            <DepartmentsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Designations Management Routes (Issue #18) */}
+      <Route
+        path="/designations"
+        element={
+          <ShellLayout>
+            <DesignationsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/designations"
+        element={
+          <ShellLayout>
+            <DesignationsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/designations"
+        element={
+          <ShellLayout>
+            <DesignationsPage />
           </ShellLayout>
         }
       />
