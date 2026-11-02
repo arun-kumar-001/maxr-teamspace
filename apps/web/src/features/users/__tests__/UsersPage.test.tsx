@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import type { Role } from '@maxr/shared';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -80,16 +81,16 @@ describe('UsersPage Component Suite (Issue #27)', () => {
     },
   ];
 
-  function setupAuth(role: string = 'admin') {
+  function setupAuth(role: Role = 'admin') {
     vi.spyOn(authContext, 'useAuth').mockReturnValue({
-      role: role as any,
+      role: role,
       user: {
         id: 'u-1',
         employeeId: 'emp-1',
         name: 'Eleanor Vance',
         email: 'eleanor@maxr.internal',
-        role: role as any,
-        roles: [role as any],
+        role: role,
+        roles: [role],
         permissions: ['users.list', 'users.assign_role'],
         avatarInitials: 'EV',
       },

@@ -46,4 +46,3 @@ export function useRolesAndPermissions(): UseRolesAndPermissionsResult {
     refetch: fetchData,
   };
 }
-

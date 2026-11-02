@@ -144,4 +144,3 @@ export function useUsers(initialQuery: Partial<UserListQuery> = {}): UseUsersRes
     refetch: fetchUsers,
   };
 }
-
