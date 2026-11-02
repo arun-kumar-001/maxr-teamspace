@@ -30,6 +30,7 @@ import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
+import { UsersPage } from './features/users';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -91,6 +92,16 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* User and Role Administration Routes (Issue #27) */}
+      <Route
+        path="/admin/users"
+        element={
+          <ShellLayout>
+            <UsersPage />
           </ShellLayout>
         }
       />
