@@ -8,7 +8,7 @@ import type {
 } from '../types';
 
 export type AttendanceViewScope = 'own' | 'team';
-export type AttendanceDisplayMode = 'list' | 'calendar' | 'teamGrid';
+export type AttendanceDisplayMode = 'list' | 'calendar' | 'teamGrid' | 'corrections';
 
 export interface UseAttendanceHistoryOptions {
   initialScope?: AttendanceViewScope;

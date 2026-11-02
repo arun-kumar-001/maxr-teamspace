@@ -1,13 +1,23 @@
 import { useMemo } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { DataTable, type Column, EmptyState, ErrorState, Skeleton } from '../../../components/ui';
+import {
+  DataTable,
+  type Column,
+  EmptyState,
+  ErrorState,
+  Skeleton,
+  Button,
+} from '../../../components/ui';
 import { AttendanceCalendarView } from '../components/AttendanceCalendarView';
 import { AttendanceFilters } from '../components/AttendanceFilters';
 import { AttendanceStatusBadge } from '../components/AttendanceStatusBadge';
 import { AttendanceWidget } from '../components/AttendanceWidget';
 import { TeamAttendanceGrid } from '../components/TeamAttendanceGrid';
+import { RequestCorrectionModal } from '../components/RequestCorrectionModal';
+import { CorrectionsHistoryView } from '../components/CorrectionsHistoryView';
 import { useAttendanceHistory } from '../hooks/useAttendanceHistory';
+import { useAttendanceCorrections } from '../hooks/useAttendanceCorrections';
 import type { AttendanceRecord } from '../types';
 
 function formatTime(isoString: string | null): string {
@@ -54,6 +64,21 @@ export function AttendancePage() {
     initialDisplayMode: 'list',
     pageSize: 10,
   });
+
+  const {
+    corrections,
+    meta: correctionsMeta,
+    isLoading: isCorrectionsLoading,
+    error: correctionsError,
+    page: correctionsPage,
+    setPage: setCorrectionsPage,
+    refetch: refetchCorrections,
+    isRequestModalOpen,
+    selectedRecord,
+    openRequestModal,
+    closeRequestModal,
+    handleCancel,
+  } = useAttendanceCorrections();
 
   const columns = useMemo<Column<AttendanceRecord>[]>(
     () => [
@@ -114,8 +139,25 @@ export function AttendancePage() {
           </span>
         ),
       },
+      {
+        key: 'actions',
+        header: 'Actions',
+        priority: 'high',
+        render: (row) => (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => openRequestModal(row)}
+            data-testid={`request-correction-btn-${row.id}`}
+            className="text-xs min-h-[44px]"
+          >
+            Correct
+          </Button>
+        ),
+      },
     ],
-    [],
+    [openRequestModal],
   );
 
   return (
@@ -164,6 +206,17 @@ export function AttendancePage() {
         </div>
       ) : error ? (
         <ErrorState title="Could not load attendance records" message={error} onRetry={refresh} />
+      ) : displayMode === 'corrections' ? (
+        <CorrectionsHistoryView
+          corrections={corrections}
+          meta={correctionsMeta}
+          isLoading={isCorrectionsLoading}
+          error={correctionsError}
+          page={correctionsPage}
+          onPageChange={setCorrectionsPage}
+          onCancelCorrection={handleCancel}
+          onRetry={refetchCorrections}
+        />
       ) : displayMode === 'calendar' ? (
         <AttendanceCalendarView records={records} />
       ) : displayMode === 'teamGrid' && canViewTeam && scope === 'team' ? (
@@ -194,6 +247,17 @@ export function AttendancePage() {
           }}
         />
       )}
+
+      {/* Correction Request Modal */}
+      <RequestCorrectionModal
+        isOpen={isRequestModalOpen}
+        onClose={closeRequestModal}
+        record={selectedRecord}
+        onSuccess={() => {
+          refetchCorrections();
+          refresh();
+        }}
+      />
     </div>
   );
 }

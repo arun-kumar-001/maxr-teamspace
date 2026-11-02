@@ -1,10 +1,14 @@
 import { apiFetch } from '../../../api/client';
 import type {
+  AttendanceCorrection,
   AttendanceListResponse,
   AttendanceQuery,
   AttendanceRecord,
   CheckInRequest,
   CheckOutRequest,
+  CorrectionQuery,
+  PaginatedCorrectionsResponse,
+  RequestCorrectionPayload,
   TodayAttendanceSummary,
 } from '../types';
 
@@ -127,4 +131,54 @@ export async function fetchTeamAttendance(
   const qs = buildQueryString(query);
   const res = await apiFetch(`/api/v1/attendance${qs}`);
   return handleResponse<AttendanceListResponse>(res);
+}
+
+/**
+ * Submit an attendance correction request.
+ */
+export async function requestCorrection(
+  payload: RequestCorrectionPayload,
+): Promise<AttendanceCorrection> {
+  const res = await apiFetch('/api/v1/attendance/corrections', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const body = await handleResponse<{ data: AttendanceCorrection }>(res);
+  return body.data;
+}
+
+/**
+ * List the current user's attendance correction requests.
+ */
+export async function fetchCorrections(
+  query?: CorrectionQuery,
+): Promise<PaginatedCorrectionsResponse> {
+  const params = new URLSearchParams();
+  if (query?.page) params.set('page', String(query.page));
+  if (query?.pageSize) params.set('pageSize', String(query.pageSize));
+  if (query?.status) params.set('status', query.status);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+
+  const res = await apiFetch(`/api/v1/attendance/corrections${qs}`);
+  return handleResponse<PaginatedCorrectionsResponse>(res);
+}
+
+/**
+ * Fetch a single attendance correction by ID.
+ */
+export async function fetchCorrection(id: string): Promise<AttendanceCorrection> {
+  const res = await apiFetch(`/api/v1/attendance/corrections/${encodeURIComponent(id)}`);
+  const body = await handleResponse<{ data: AttendanceCorrection }>(res);
+  return body.data;
+}
+
+/**
+ * Cancel a pending attendance correction request.
+ */
+export async function cancelCorrection(id: string): Promise<AttendanceCorrection> {
+  const res = await apiFetch(`/api/v1/attendance/corrections/${encodeURIComponent(id)}/cancel`, {
+    method: 'POST',
+  });
+  const body = await handleResponse<{ data: AttendanceCorrection }>(res);
+  return body.data;
 }
