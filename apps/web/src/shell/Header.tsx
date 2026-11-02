@@ -87,7 +87,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
               {user.avatarInitials}
             </div>
 
-            <div className="hidden text-left md:block">
+            <div className="hidden text-left lg:block">
               <p className="text-xs font-semibold text-text leading-tight">{user.name}</p>
               <p className="text-[11px] text-text-muted leading-tight">{user.title}</p>
             </div>
