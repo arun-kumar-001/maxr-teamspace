@@ -24,6 +24,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('approvals')) return 'Pending Approvals';
     if (path.includes('reports')) return 'Workforce Reports';
     if (path.includes('leave')) return 'My Leave & Balances';
+    if (path.includes('projects')) return 'Projects & Initiatives';
     if (path.includes('tasks')) return 'Tasks & Projects';
     if (path.includes('profile')) return 'My Employee Profile';
     if (path.includes('payslips')) return 'Payslip Statements';

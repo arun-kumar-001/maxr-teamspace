@@ -33,6 +33,7 @@ import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
 import { UsersPage } from './features/users';
 import { NotificationsInboxPage } from './features/notifications';
+import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -357,6 +358,48 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <NotificationsInboxPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Projects Routes (Issue #42) */}
+      <Route
+        path="/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/projects/:id"
+        element={
+          <ShellLayout>
+            <ProjectDetailPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
           </ShellLayout>
         }
       />
