@@ -18,7 +18,10 @@ export type TemplateType =
   | 'task.completed'
   | 'task.reopened'
   | 'task.commented'
-  | 'task.due';
+  | 'task.due'
+  | 'meeting.invited'
+  | 'meeting.cancelled'
+  | 'meeting.reminder';
 
 const SUBJECT_LABELS: Record<string, string> = {
   leave_request: 'Leave request',
@@ -66,6 +69,18 @@ export function renderNotification(
       };
     case 'task.completed':
       return { title: 'Your task was marked completed', body: 'Open it to see the details.' };
+    case 'meeting.invited':
+      return {
+        title: 'You are invited to a meeting',
+        body: 'Open your meetings to see it and answer.',
+      };
+    case 'meeting.cancelled':
+      return {
+        title: 'A meeting you were invited to was cancelled',
+        body: 'Open your meetings to see the details.',
+      };
+    case 'meeting.reminder':
+      return { title: 'A meeting starts in 15 minutes', body: 'Open your meetings to see it.' };
     case 'task.due':
       return { title: 'A task is due soon', body: 'Open your tasks to see what is due.' };
     case 'task.commented':

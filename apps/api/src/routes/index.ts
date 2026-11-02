@@ -28,6 +28,7 @@ import { createLeaveSetup } from '../modules/leave';
 import { createNotifications, loadNotificationsConfig } from '../modules/notifications';
 import { createProjects } from '../modules/projects';
 import { createTasks } from '../modules/tasks';
+import { createMeetings } from '../modules/meetings';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
@@ -130,6 +131,8 @@ export function createApiRouter({
       projects: projects.reader,
     }).router,
   );
+  const meetings = createMeetings({ platform, authenticate: auth.authenticate });
+  router.use('/meetings', meetings.router);
   router.use(
     '/notifications',
     createNotifications({
