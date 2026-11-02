@@ -5,6 +5,7 @@ import { getPool } from './db/client';
 import { getLogger } from './logging/logger';
 import { createNotificationBackgroundJobs, loadNotificationsConfig } from './modules/notifications';
 import { createLeaveBackgroundJobs } from './modules/leave';
+import { createMeetingBackgroundJobs } from './modules/meetings';
 import { createSettingsReader } from './modules/settings';
 import { JobRunner } from './platform/jobs/job-runner';
 
@@ -22,6 +23,7 @@ function startServer(): void {
   const jobs = new JobRunner(getPool, getLogger(), [
     ...createNotificationBackgroundJobs({ platform, appUrl: notifications.appUrl }),
     ...createLeaveBackgroundJobs({ platform, settings: createSettingsReader() }),
+    ...createMeetingBackgroundJobs({ platform }),
   ]);
   if (notifications.jobsEnabled) jobs.start(notifications.jobsIntervalMs);
 

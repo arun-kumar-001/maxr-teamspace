@@ -166,6 +166,16 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },
   },
 
+  'meetings.schedule': {
+    description: 'Schedule, edit and cancel meetings you organise',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: ALL, [TEAM_LEAD]: ALL },
+  },
+  'meetings.read_own': {
+    description: 'See the meetings you organise or are invited to',
+    grants: everyone(OWN),
+  },
+  'meetings.rsvp': { description: 'Answer an invitation to a meeting', grants: everyone(OWN) },
+
   'tasks.create': {
     description: 'Create and assign team task',
     grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },

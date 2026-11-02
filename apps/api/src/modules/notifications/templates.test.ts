@@ -15,6 +15,9 @@ const TYPES: TemplateType[] = [
   'task.reopened',
   'task.commented',
   'task.due',
+  'meeting.invited',
+  'meeting.cancelled',
+  'meeting.reminder',
 ];
 
 describe('notification templates (D-15)', () => {

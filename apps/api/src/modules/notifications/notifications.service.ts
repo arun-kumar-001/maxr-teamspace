@@ -67,6 +67,15 @@ export class NotificationsService {
     bus.subscribe('tasks.assigned', (event) => this.onTaskAssigned(event));
     bus.subscribe('tasks.status_changed', (event) => this.onTaskStatusChanged(event));
     bus.subscribe('tasks.commented', (event) => this.onTaskCommented(event));
+    bus.subscribe('meetings.invited', (event) =>
+      this.onMeetingEvent(event, 'meeting.invited', 'meetings.invited'),
+    );
+    bus.subscribe('meetings.cancelled', (event) =>
+      this.onMeetingEvent(event, 'meeting.cancelled', 'meetings.cancelled'),
+    );
+    bus.subscribe('meetings.reminder_due', (event) =>
+      this.onMeetingEvent(event, 'meeting.reminder', 'meetings.reminder_due'),
+    );
   }
 
   private async onApprovalStep(event: DomainEvent, type: TemplateType): Promise<void> {
@@ -147,6 +156,24 @@ export class NotificationsService {
   }
 
   /** The assignee and the assigner hear of a comment, except the person who wrote it. The text is not sent. */
+  /**
+   * Tells each invitee of a meeting event once per meeting and event kind, so a repeated event
+   * creates no second notification. The meeting's text is not sent.
+   */
+  private async onMeetingEvent(
+    event: DomainEvent,
+    type: TemplateType,
+    kind: string,
+  ): Promise<void> {
+    const p = event.payload as { meetingId: string; inviteeEmployeeIds: string[] };
+    for (const employeeId of p.inviteeEmployeeIds) {
+      await this.notifyEmployee(employeeId, type, {
+        link: `/meetings/${p.meetingId}`,
+        dedupeKey: `${kind}:${p.meetingId}`,
+      });
+    }
+  }
+
   private async onTaskCommented(event: DomainEvent): Promise<void> {
     const p = event.payload as TaskEventPayload & { authorEmployeeId: string };
     const recipients = new Set([p.assigneeEmployeeId, p.assignerEmployeeId]);
