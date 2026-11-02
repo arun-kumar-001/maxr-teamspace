@@ -1,7 +1,7 @@
 import type { Pool } from 'pg';
 import { z } from 'zod';
-import { validationError } from '../../../http/errors';
 import { ReportDefinition, ReportRegistry } from '../../reports';
+import { assertRange as assertRangeOf, isoDate } from '../../reports/report-filters';
 import { scopeToSql } from '../../rbac';
 import type { CompanySettingsReader } from '../../settings';
 
@@ -13,28 +13,7 @@ export interface EmployeeReportDeps {
 
 const MAX_RANGE_DAYS = 366;
 
-const isoDate = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD')
-  .refine((value) => {
-    const parsed = new Date(`${value}T00:00:00Z`);
-    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(value);
-  }, 'Not a real calendar date');
-
-const dayMs = 24 * 60 * 60 * 1000;
-
-function assertRange(from: string, to: string): void {
-  const days =
-    (new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime()) / dayMs;
-  if (days < 0) {
-    throw validationError([{ field: 'from', message: 'from must not be after to', rule: 'range' }]);
-  }
-  if (days >= MAX_RANGE_DAYS) {
-    throw validationError([
-      { field: 'to', message: `Use a range of at most ${MAX_RANGE_DAYS} days`, rule: 'range' },
-    ]);
-  }
-}
+const assertRange = (from: string, to: string): void => assertRangeOf(from, to, MAX_RANGE_DAYS);
 
 /** Every report here reads the employee directory, so it needs, and is scoped by, `employees.list`. */
 const DATA_PERMISSIONS = ['employees.list'] as ReportDefinition['dataPermissions'];
