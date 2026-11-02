@@ -16,6 +16,8 @@ import { RouteGuard } from './shell/RouteGuard';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
+import { EmployeeDirectoryPage } from './features/employees';
+import { AttendancePage } from './features/attendance';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -74,6 +76,50 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* Employee Directory Routes */}
+      <Route
+        path="/hr/employees"
+        element={
+          <ShellLayout>
+            <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/employees"
+        element={
+          <ShellLayout>
+            <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Attendance Routes */}
+      <Route
+        path="/attendance"
+        element={
+          <ShellLayout>
+            <AttendancePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/attendance"
+        element={
+          <ShellLayout>
+            <AttendancePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/attendance"
+        element={
+          <ShellLayout>
+            <AttendancePage />
           </ShellLayout>
         }
       />

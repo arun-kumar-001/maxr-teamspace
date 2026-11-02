@@ -17,6 +17,11 @@ export interface SettingsServices {
   reader: CompanySettingsReader;
 }
 
+/** A cached reader on its own, for background jobs that run outside the HTTP app. */
+export function createSettingsReader(getPoolFn: () => Pool = getPool): CompanySettingsReader {
+  return new CachedCompanySettingsReader(new PgSettingsRepository(getPoolFn));
+}
+
 export function createSettings(options: {
   platform: Pick<PlatformServices, 'audit' | 'events'>;
   authenticate: RequestHandler;

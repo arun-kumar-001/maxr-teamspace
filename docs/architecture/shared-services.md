@@ -65,7 +65,7 @@ Contract for the `notification_outbox` table (with #6/#41): `id uuid pk`, `chann
 
 ### 4.4 Storage
 `storage.upload({ category, filename, declaredType, body, uploadedBy })` returns `{ key, size, contentType, sha256, originalName }`.
-1. **Policy per category** (`receipts`, `employeeDocuments`, `profilePhotos` are provided): max bytes, allowed types. Empty and oversize files are rejected.
+1. **Policy per category** (`receipts`, `employeeDocuments`, `profilePhotos`, `taskAttachments` are provided): max bytes, allowed types. Empty and oversize files are rejected.
 2. **Type check by content:** the declared MIME type and file extension must agree with the file's magic bytes (PDF `%PDF-`, PNG, JPEG). A program renamed to `.pdf` is rejected.
 3. **Server-generated key** `category/yyyy/mm/<uuid>`: a client-supplied name is never part of the storage path (no traversal). The original filename is cleaned (no path, no control characters, max 120 chars) and kept as metadata only.
 4. **Virus-scan hook** `scanner.scan(buffer, meta)`: infected or scanner error means rejected and nothing stored (fail closed). With `STORAGE_REQUIRE_SCAN=true` (required in production) the app will not start without a scanner.

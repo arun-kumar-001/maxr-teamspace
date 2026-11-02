@@ -53,6 +53,7 @@ const KEY_PREFIX = {
   receipts: 'receipts',
   employeeDocuments: 'employee-documents',
   profilePhotos: 'profile-photos',
+  taskAttachments: 'task-attachments',
 } as const;
 
 export function createStorageService({
