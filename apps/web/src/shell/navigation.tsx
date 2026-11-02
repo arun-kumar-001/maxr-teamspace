@@ -233,6 +233,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.STAFF || role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
+  // Notifications route - accessible to all authenticated roles
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return true;
+  }
+
   // Onboarding routes authorization
   if (
     path.startsWith('/hr/onboarding') ||
