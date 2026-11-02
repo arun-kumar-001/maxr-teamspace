@@ -10,33 +10,44 @@ import { HolidayCalendar } from '../components/HolidayCalendar';
 import { AddHolidayModal } from '../components/AddHolidayModal';
 import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
 import { RunAccrualModal } from '../components/RunAccrualModal';
+import { ApplyLeaveModal } from '../components/ApplyLeaveModal';
+import { LeaveRequestsTable } from '../components/LeaveRequestsTable';
+import { LeaveCalendarView } from '../components/LeaveCalendarView';
 
 export interface LeaveManagementPageProps {
-  initialTab?: 'balances' | 'policies' | 'holidays';
+  initialTab?: 'requests' | 'balances' | 'calendar' | 'holidays' | 'policies';
 }
 
 export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
-  initialTab = 'balances',
+  initialTab = 'requests',
 }) => {
   const { role } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
 
-  const [activeTab, setActiveTab] = useState<'balances' | 'policies' | 'holidays'>(
-    initialTab === 'policies' && !canManage ? 'balances' : initialTab,
-  );
+  const [activeTab, setActiveTab] = useState<
+    'requests' | 'balances' | 'calendar' | 'holidays' | 'policies'
+  >(initialTab === 'policies' && !canManage ? 'requests' : initialTab);
 
   const {
     policies,
     holidays,
     balances,
+    requests,
+    calendarEntries,
     selectedYear,
     setSelectedYear,
     isLoadingPolicies,
     isLoadingHolidays,
     isLoadingBalances,
+    isLoadingRequests,
+    isLoadingCalendar,
     policyError,
     holidayError,
     balanceError,
+    requestsError,
+    calendarError,
+    applyLeave,
+    cancelRequest,
     createPolicy,
     updatePolicy,
     createHoliday,
@@ -45,6 +56,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
   } = useLeave();
 
   // Modals
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [selectedPolicyForEdit, setSelectedPolicyForEdit] = useState<LeavePolicy | null>(null);
 
@@ -62,7 +74,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
   };
 
   const tabOptions = [
+    { value: 'requests', label: 'My Requests' },
     { value: 'balances', label: 'My Balances' },
+    { value: 'calendar', label: 'Team Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
@@ -79,13 +93,24 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
             Leave & Holiday Management
           </h1>
           <p className="text-sm text-text-muted mt-1">
-            Track annual leave balances, explore company holidays, and configure organizational
-            leave quotas.
+            Apply for leave, track requests and approvals, check balances, and review team
+            schedules.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3 flex-wrap">
+          {/* Apply for Leave Button - Accessible to all staff */}
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => setIsApplyModalOpen(true)}
+            data-testid="apply-leave-btn"
+            className="min-h-[44px]"
+          >
+            Apply for Leave
+          </Button>
+
           {canManage && (
             <Button
               type="button"
@@ -101,7 +126,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           {canManage && activeTab === 'policies' && (
             <Button
               type="button"
-              variant="primary"
+              variant="outline"
               onClick={handleOpenCreatePolicy}
               data-testid="create-policy-btn"
               className="min-h-[44px]"
@@ -113,7 +138,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           {canManage && activeTab === 'holidays' && (
             <Button
               type="button"
-              variant="primary"
+              variant="outline"
               onClick={() => setIsHolidayModalOpen(true)}
               data-testid="top-add-holiday-btn"
               className="min-h-[44px]"
@@ -128,30 +153,22 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       <div className="border-b border-border pb-4">
         <SegmentedControl
           value={activeTab}
-          onChange={(val) => setActiveTab(val as 'balances' | 'policies' | 'holidays')}
+          onChange={(val) =>
+            setActiveTab(val as 'requests' | 'balances' | 'calendar' | 'holidays' | 'policies')
+          }
           options={tabOptions}
           ariaLabel="Leave and holiday navigation tabs"
         />
       </div>
 
-      {/* Errors */}
-      {policyError && activeTab === 'policies' && (
+      {/* Error Banners */}
+      {requestsError && activeTab === 'requests' && (
         <div
           className="p-4 rounded-tile bg-rose-50 border border-rose-200 text-sm text-rose-800"
           role="alert"
-          data-testid="policy-error-banner"
+          data-testid="requests-error-banner"
         >
-          {policyError}
-        </div>
-      )}
-
-      {holidayError && activeTab === 'holidays' && (
-        <div
-          className="p-4 rounded-tile bg-rose-50 border border-rose-200 text-sm text-rose-800"
-          role="alert"
-          data-testid="holiday-error-banner"
-        >
-          {holidayError}
+          {requestsError}
         </div>
       )}
 
@@ -165,7 +182,48 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
         </div>
       )}
 
+      {calendarError && activeTab === 'calendar' && (
+        <div
+          className="p-4 rounded-tile bg-rose-50 border border-rose-200 text-sm text-rose-800"
+          role="alert"
+          data-testid="calendar-error-banner"
+        >
+          {calendarError}
+        </div>
+      )}
+
+      {holidayError && activeTab === 'holidays' && (
+        <div
+          className="p-4 rounded-tile bg-rose-50 border border-rose-200 text-sm text-rose-800"
+          role="alert"
+          data-testid="holiday-error-banner"
+        >
+          {holidayError}
+        </div>
+      )}
+
+      {policyError && activeTab === 'policies' && (
+        <div
+          className="p-4 rounded-tile bg-rose-50 border border-rose-200 text-sm text-rose-800"
+          role="alert"
+          data-testid="policy-error-banner"
+        >
+          {policyError}
+        </div>
+      )}
+
       {/* Tab Panels */}
+      {activeTab === 'requests' && (
+        <LeaveRequestsTable
+          requests={requests}
+          isLoading={isLoadingRequests}
+          onCancelRequest={async (id) => {
+            await cancelRequest(id);
+          }}
+          onApplyClick={() => setIsApplyModalOpen(true)}
+        />
+      )}
+
       {activeTab === 'balances' && (
         <LeaveBalancesSummary
           balances={balances}
@@ -173,6 +231,10 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           onYearChange={setSelectedYear}
           isLoading={isLoadingBalances}
         />
+      )}
+
+      {activeTab === 'calendar' && (
+        <LeaveCalendarView entries={calendarEntries} isLoading={isLoadingCalendar} />
       )}
 
       {activeTab === 'holidays' && (
@@ -206,6 +268,17 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       )}
 
       {/* Modals */}
+      <ApplyLeaveModal
+        isOpen={isApplyModalOpen}
+        onClose={() => setIsApplyModalOpen(false)}
+        policies={policies}
+        balances={balances}
+        holidays={holidays}
+        onSubmit={async (payload) => {
+          await applyLeave(payload);
+        }}
+      />
+
       <LeavePolicyFormModal
         isOpen={isPolicyModalOpen}
         onClose={() => setIsPolicyModalOpen(false)}

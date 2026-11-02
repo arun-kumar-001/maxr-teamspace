@@ -9,6 +9,10 @@ import type {
   AccrualResult,
   ListBalancesQuery,
   PaginationMeta,
+  LeaveRequest,
+  ApplyForLeavePayload,
+  ListMyLeaveRequestsQuery,
+  LeaveCalendarEntry,
 } from '../types';
 
 export class LeaveApiError extends Error {
@@ -155,5 +159,66 @@ export async function runYearlyAccrual(year: number): Promise<AccrualResult> {
     body: JSON.stringify({ year }),
   });
   const json = await handleResponse<{ data: AccrualResult }>(res);
+  return json.data;
+}
+
+export async function applyForLeave(payload: ApplyForLeavePayload): Promise<LeaveRequest> {
+  const res = await fetch('/api/v1/leave-requests', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      credentials: 'include',
+    },
+    body: JSON.stringify(payload),
+  });
+  const json = await handleResponse<{ data: LeaveRequest }>(res);
+  return json.data;
+}
+
+export async function fetchMyLeaveRequests(
+  query: ListMyLeaveRequestsQuery = {},
+): Promise<{ data: LeaveRequest[]; meta: PaginationMeta }> {
+  const params = new URLSearchParams();
+  if (query.page) params.append('page', query.page.toString());
+  if (query.pageSize) params.append('pageSize', query.pageSize.toString());
+  if (query.status) params.append('status', query.status);
+  if (query.leaveTypeId) params.append('leaveTypeId', query.leaveTypeId);
+  if (query.from) params.append('from', query.from);
+  if (query.to) params.append('to', query.to);
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/v1/leave-requests/me?${queryString}`
+    : '/api/v1/leave-requests/me';
+
+  const res = await fetch(url, {
+    headers: { credentials: 'include' },
+  });
+  return handleResponse<{ data: LeaveRequest[]; meta: PaginationMeta }>(res);
+}
+
+export async function fetchLeaveRequest(id: string): Promise<LeaveRequest> {
+  const res = await fetch(`/api/v1/leave-requests/${id}`, {
+    headers: { credentials: 'include' },
+  });
+  const json = await handleResponse<{ data: LeaveRequest }>(res);
+  return json.data;
+}
+
+export async function cancelLeaveRequest(id: string): Promise<LeaveRequest> {
+  const res = await fetch(`/api/v1/leave-requests/${id}/cancel`, {
+    method: 'POST',
+    headers: { credentials: 'include' },
+  });
+  const json = await handleResponse<{ data: LeaveRequest }>(res);
+  return json.data;
+}
+
+export async function fetchLeaveCalendar(from: string, to: string): Promise<LeaveCalendarEntry[]> {
+  const params = new URLSearchParams({ from, to });
+  const res = await fetch(`/api/v1/leave-requests/calendar?${params.toString()}`, {
+    headers: { credentials: 'include' },
+  });
+  const json = await handleResponse<{ data: LeaveCalendarEntry[] }>(res);
   return json.data;
 }
