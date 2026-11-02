@@ -126,3 +126,4 @@ describe('RoleAssignmentModal Component (Issue #27)', () => {
     expect(screen.getByTestId('role-assignment-modal')).toBeInTheDocument();
   });
 });
+

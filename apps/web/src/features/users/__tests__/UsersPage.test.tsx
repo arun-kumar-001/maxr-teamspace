@@ -6,7 +6,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { UsersPage } from '../pages/UsersPage';
 import * as usersApi from '../api/usersApi';
 import * as authContext from '../../../auth/AuthContext';
-import type { Role } from '@maxr/shared';
 import type { PermissionSummary, RoleSummary, UserAccount, UserListResponse } from '../types';
 
 afterEach(cleanup);
@@ -81,16 +80,16 @@ describe('UsersPage Component Suite (Issue #27)', () => {
     },
   ];
 
-  function setupAuth(role: Role = 'admin') {
+  function setupAuth(role: string = 'admin') {
     vi.spyOn(authContext, 'useAuth').mockReturnValue({
-      role,
+      role: role as any,
       user: {
         id: 'u-1',
         employeeId: 'emp-1',
         name: 'Eleanor Vance',
         email: 'eleanor@maxr.internal',
-        role,
-        roles: [role],
+        role: role as any,
+        roles: [role as any],
         permissions: ['users.list', 'users.assign_role'],
         avatarInitials: 'EV',
       },

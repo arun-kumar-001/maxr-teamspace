@@ -99,3 +99,4 @@ export function UserCard({ user, canAssignRoles = false, onAssignRoles }: UserCa
     </div>
   );
 }
+

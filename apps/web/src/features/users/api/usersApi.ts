@@ -130,3 +130,4 @@ export async function getPermissions(): Promise<PermissionSummary[]> {
   const json = (await res.json()) as { data: PermissionSummary[] };
   return json.data;
 }
+
