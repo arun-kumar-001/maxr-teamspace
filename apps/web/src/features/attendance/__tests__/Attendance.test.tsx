@@ -265,7 +265,12 @@ describe('Attendance Feature UI Components & Pages', () => {
 
   describe('AttendanceCalendarView', () => {
     it('renders month grid and displays selected date details', () => {
-      render(<AttendanceCalendarView records={mockHistoryRecords} />);
+      render(
+        <AttendanceCalendarView
+          records={mockHistoryRecords}
+          initialDate={new Date('2026-10-15')}
+        />,
+      );
 
       expect(screen.getByTestId('attendance-calendar-view')).toBeDefined();
       expect(screen.getByTestId('calendar-days-grid')).toBeDefined();

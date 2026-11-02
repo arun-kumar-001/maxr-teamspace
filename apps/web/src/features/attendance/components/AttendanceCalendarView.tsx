@@ -5,13 +5,18 @@ import { AttendanceStatusBadge } from './AttendanceStatusBadge';
 
 export interface AttendanceCalendarViewProps {
   records: AttendanceRecord[];
+  initialDate?: Date;
   onDateSelect?: (date: string) => void;
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function AttendanceCalendarView({ records, onDateSelect }: AttendanceCalendarViewProps) {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
+export function AttendanceCalendarView({
+  records,
+  initialDate,
+  onDateSelect,
+}: AttendanceCalendarViewProps) {
+  const [currentDate, setCurrentDate] = useState(() => initialDate ?? new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const year = currentDate.getFullYear();
