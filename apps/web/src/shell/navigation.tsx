@@ -157,12 +157,13 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
   },
 
   // Staff Routes (AGENTS.md §1)
+  // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
   {
-    id: 'staff-profile',
+    id: 'my-profile',
     label: 'My Profile',
-    path: '/staff/profile',
+    path: '/profile',
     iconName: 'user',
-    allowedRoles: [ROLES.STAFF],
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
   {
     id: 'staff-attendance',
@@ -232,6 +233,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.STAFF || role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
+  // Notifications route - accessible to all authenticated roles
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return true;
+  }
+
   // Onboarding routes authorization
   if (
     path.startsWith('/hr/onboarding') ||
@@ -256,6 +262,16 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   }
   if (path === '/designations' || path.startsWith('/designations/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  // My Profile canonical route & compatibility redirect (Issue #22)
+  if (
+    path === '/profile' ||
+    path.startsWith('/profile/') ||
+    path === '/staff/profile' ||
+    path.startsWith('/staff/profile/')
+  ) {
+    return true;
   }
 
   const matchingItem = NAVIGATION_REGISTRY.find((item) => item.path === path);

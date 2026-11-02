@@ -54,6 +54,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
             e?.preventDefault?.();
             onNavigate(id);
           }}
+          onUserMenu={() => onNavigate('/profile')}
           user={sidebarUser}
         />
       </div>
@@ -70,12 +71,20 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
           onNavigate(id);
           setIsMobileNavOpen(false);
         }}
+        onUserMenu={() => {
+          onNavigate('/profile');
+          setIsMobileNavOpen(false);
+        }}
         user={sidebarUser}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onToggleMobileNav={() => setIsMobileNavOpen(true)} activePath={currentPath} />
+        <Header
+          onToggleMobileNav={() => setIsMobileNavOpen(true)}
+          activePath={currentPath}
+          onNavigate={onNavigate}
+        />
 
         <main className="flex-1 pb-20 md:pb-12">
           <PageContainer maxWidth="dashboard" className="py-6 sm:py-8">

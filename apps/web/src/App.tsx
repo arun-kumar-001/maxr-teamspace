@@ -26,11 +26,13 @@ import {
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
 import { DesignationsPage } from './features/designations';
+import { MyProfilePage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
 import { UsersPage } from './features/users';
+import { NotificationsInboxPage } from './features/notifications';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -192,6 +194,18 @@ function AppRoutes() {
         }
       />
 
+      {/* My Employee Profile Routes (Issue #22) */}
+      <Route
+        path="/profile"
+        element={
+          <ShellLayout>
+            <MyProfilePage />
+          </ShellLayout>
+        }
+      />
+      {/* Legacy /staff/profile compatibility redirect (Issue #22) */}
+      <Route path="/staff/profile" element={<Navigate to="/profile" replace />} />
+
       {/* Employee Documents Routes (Issue #25) */}
       <Route
         path="/employees/:id/documents"
@@ -333,6 +347,16 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Notifications Routes */}
+      <Route
+        path="/notifications"
+        element={
+          <ShellLayout>
+            <NotificationsInboxPage />
           </ShellLayout>
         }
       />
