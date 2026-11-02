@@ -67,9 +67,9 @@ Then open a **Pull Request: base `develop`**, compare = your branch. Fill in the
 - [ ] Docs updated (`docs/project-status.md`, API docs)
 
 ## 5. Order of work
-**Both:** do not write feature code until the foundation is merged into `develop`.
-- **Dev 1:** #3 (scaffold) first. Nothing else can start before it. Then #4, #5, #6, #7, #8, #9, #13 in dependency order, then Employee Management (#18 onward).
-- **Dev 2:** while #3 is in progress, read the docs, install tools, and write down your plan for #10 (design tokens) and #11 (UI components): which components, what states, how they behave at each width. Start coding when #3 is merged. Then #10 → #11 → #12 (the app shell and four role views), then Attendance, Leave and the rest (#33 onward).
+Work in any order that suits the dependencies below; nothing waits on another issue being finished.
+- **Dev 1:** suggested order: #4 to #9, #13, then Employee Management (#18 onward).
+- **Dev 2:** suggested order: #10 (design tokens), #11 (UI components), #12 (the app shell and four role views), then Attendance, Leave and the rest (#33 onward).
 - Check each issue's **Dependencies** line. If a dependency is not merged, build against a mock and say so in the PR.
 
 ## 6. If you are blocked or unsure
