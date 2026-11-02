@@ -100,6 +100,24 @@ export const PERMISSION_CATALOG = {
     grants: { [ADMIN]: ALL },
   },
 
+  // Employee documents (D1-08, #25, D-10, D-25)
+  'documents.read': {
+    description: 'View employee document list and metadata',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [STAFF]: OWN },
+  },
+  'documents.upload': {
+    description: 'Upload an employee document',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [STAFF]: OWN },
+  },
+  'documents.download': {
+    description: 'Generate signed download link for an employee document',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [STAFF]: OWN },
+  },
+  'documents.delete': {
+    description: 'Soft delete an employee document',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+
   // The caller's own profile (`/employees/me`). Separate keys from employees.read/update, which are
   // about other people, so what someone may do with their own record never depends on them.
   'profile.read': { description: 'View own profile', grants: everyone(OWN) },

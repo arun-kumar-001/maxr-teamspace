@@ -7,6 +7,10 @@ import type {
   CreateHolidayInput,
   LeaveBalance,
   AccrualResult,
+  LeaveRequest,
+  ApplyForLeavePayload,
+  ListMyLeaveRequestsQuery,
+  LeaveCalendarEntry,
 } from '../types';
 import * as leaveApi from '../api/leave';
 
@@ -14,15 +18,21 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
   const [policies, setPolicies] = useState<LeavePolicy[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [calendarEntries, setCalendarEntries] = useState<LeaveCalendarEntry[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(initialYear);
 
   const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
+  const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [holidayError, setHolidayError] = useState<string | null>(null);
   const [balanceError, setBalanceError] = useState<string | null>(null);
+  const [requestsError, setRequestsError] = useState<string | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
 
   const loadPolicies = useCallback(async () => {
     try {
@@ -63,6 +73,48 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     }
   }, []);
 
+  const loadMyRequests = useCallback(async (query: ListMyLeaveRequestsQuery = {}) => {
+    try {
+      setIsLoadingRequests(true);
+      setRequestsError(null);
+      const res = await leaveApi.fetchMyLeaveRequests(query);
+      setRequests(res.data);
+    } catch (err) {
+      setRequestsError(err instanceof Error ? err.message : 'Failed to fetch leave applications');
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  }, []);
+
+  const loadCalendar = useCallback(async (from: string, to: string) => {
+    try {
+      setIsLoadingCalendar(true);
+      setCalendarError(null);
+      const data = await leaveApi.fetchLeaveCalendar(from, to);
+      setCalendarEntries(data);
+    } catch (err) {
+      setCalendarError(err instanceof Error ? err.message : 'Failed to fetch leave calendar');
+    } finally {
+      setIsLoadingCalendar(false);
+    }
+  }, []);
+
+  const handleApplyLeave = async (payload: ApplyForLeavePayload) => {
+    const created = await leaveApi.applyForLeave(payload);
+    setRequests((prev) => [created, ...prev]);
+    // Refresh balances after successful leave submission
+    await loadBalances(selectedYear);
+    return created;
+  };
+
+  const handleCancelRequest = async (id: string) => {
+    const cancelled = await leaveApi.cancelLeaveRequest(id);
+    setRequests((prev) => prev.map((r) => (r.id === id ? cancelled : r)));
+    // Refresh balances after request cancellation
+    await loadBalances(selectedYear);
+    return cancelled;
+  };
+
   const handleCreatePolicy = async (payload: CreateLeavePolicyInput) => {
     const created = await leaveApi.createLeavePolicy(payload);
     setPolicies((prev) => [...prev, created]);
@@ -88,7 +140,6 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
 
   const handleRunAccrual = async (year: number): Promise<AccrualResult> => {
     const res = await leaveApi.runYearlyAccrual(year);
-    // Refresh balances if target year matches
     if (year === selectedYear) {
       await loadBalances(year);
     }
@@ -105,23 +156,41 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     loadPolicies();
     loadHolidays(selectedYear);
     loadBalances(selectedYear);
-  }, [loadPolicies, loadHolidays, loadBalances, selectedYear]);
+    loadMyRequests();
+
+    // Load initial 30 days of leave calendar
+    const today = new Date();
+    const fromStr = today.toISOString().slice(0, 10);
+    const toDate = new Date(today.getTime() + 30 * 86_400_000);
+    const toStr = toDate.toISOString().slice(0, 10);
+    loadCalendar(fromStr, toStr);
+  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadCalendar, selectedYear]);
 
   return {
     policies,
     holidays,
     balances,
+    requests,
+    calendarEntries,
     selectedYear,
     setSelectedYear: handleYearChange,
     isLoadingPolicies,
     isLoadingHolidays,
     isLoadingBalances,
+    isLoadingRequests,
+    isLoadingCalendar,
     policyError,
     holidayError,
     balanceError,
+    requestsError,
+    calendarError,
     loadPolicies,
     loadHolidays,
     loadBalances,
+    loadMyRequests,
+    loadCalendar,
+    applyLeave: handleApplyLeave,
+    cancelRequest: handleCancelRequest,
     createPolicy: handleCreatePolicy,
     updatePolicy: handleUpdatePolicy,
     createHoliday: handleCreateHoliday,
