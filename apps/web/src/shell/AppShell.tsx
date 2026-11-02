@@ -75,7 +75,11 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onToggleMobileNav={() => setIsMobileNavOpen(true)} activePath={currentPath} />
+        <Header
+          onToggleMobileNav={() => setIsMobileNavOpen(true)}
+          activePath={currentPath}
+          onNavigate={onNavigate}
+        />
 
         <main className="flex-1 pb-20 md:pb-12">
           <PageContainer maxWidth="dashboard" className="py-6 sm:py-8">

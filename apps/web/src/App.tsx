@@ -29,6 +29,7 @@ import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
+import { NotificationsInboxPage } from './features/notifications';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -304,6 +305,16 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Notifications Routes */}
+      <Route
+        path="/notifications"
+        element={
+          <ShellLayout>
+            <NotificationsInboxPage />
           </ShellLayout>
         }
       />
