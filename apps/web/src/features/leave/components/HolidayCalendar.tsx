@@ -160,71 +160,75 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
                     const dayNumber = holiday.date.slice(8, 10);
                     const isUpcoming = holiday.date >= todayStr;
 
-                  return (
-                    <div
-                      key={holiday.id}
-                      className="p-2.5 rounded-control bg-surface-muted/60 border border-border flex items-center justify-between gap-3 group"
-                      data-testid={`holiday-item-${holiday.id}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-center justify-center w-10 h-10 rounded bg-surface border border-border text-center shrink-0">
-                          <span className="text-xs font-bold text-primary-deep leading-none">
-                            {dayNumber}
-                          </span>
-                          <span className="text-[10px] text-text-subtle leading-none mt-0.5">
-                            {dayName.slice(0, 3)}
-                          </span>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-text text-sm">{holiday.name}</span>
-                            {isUpcoming && (
-                              <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-primary-soft text-primary-deep border border-primary/20">
-                                Upcoming
-                              </span>
-                            )}
+                    return (
+                      <div
+                        key={holiday.id}
+                        className="p-2.5 rounded-control bg-surface-muted/60 border border-border flex items-center justify-between gap-3 group"
+                        data-testid={`holiday-item-${holiday.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col items-center justify-center w-10 h-10 rounded bg-surface border border-border text-center shrink-0">
+                            <span className="text-xs font-bold text-primary-deep leading-none">
+                              {dayNumber}
+                            </span>
+                            <span className="text-[10px] text-text-subtle leading-none mt-0.5">
+                              {dayName.slice(0, 3)}
+                            </span>
                           </div>
-                          <span className="text-xs text-text-subtle">{dayName}</span>
-                        </div>
-                      </div>
 
-                      {canManage && onDeleteHoliday && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (
-                              window.confirm(`Delete holiday "${holiday.name}" (${holiday.date})?`)
-                            ) {
-                              onDeleteHoliday(holiday.id, holiday.name);
-                            }
-                          }}
-                          data-testid={`delete-holiday-btn-${holiday.id}`}
-                          aria-label={`Delete ${holiday.name}`}
-                          className="opacity-70 group-hover:opacity-100 p-2 hover:bg-rose-50 hover:text-rose-600 rounded text-text-subtle transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-text text-sm">
+                                {holiday.name}
+                              </span>
+                              {isUpcoming && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-primary-soft text-primary-deep border border-primary/20">
+                                  Upcoming
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-text-subtle">{dayName}</span>
+                          </div>
+                        </div>
+
+                        {canManage && onDeleteHoliday && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  `Delete holiday "${holiday.name}" (${holiday.date})?`,
+                                )
+                              ) {
+                                onDeleteHoliday(holiday.id, holiday.name);
+                              }
+                            }}
+                            data-testid={`delete-holiday-btn-${holiday.id}`}
+                            aria-label={`Delete ${holiday.name}`}
+                            className="opacity-70 group-hover:opacity-100 p-2 hover:bg-rose-50 hover:text-rose-600 rounded text-text-subtle transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
         </div>
       )}
     </div>
