@@ -183,6 +183,16 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
+  // Employee documents routes (Issue #25) - TL denied, Admin & HR Manager allowed
+  if (path.match(/^\/(admin\/|hr\/)?employees\/[^/]+\/documents/)) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  // Staff documents route
+  if (path === '/staff/documents' || path.startsWith('/staff/documents/')) {
+    return role === ROLES.STAFF || role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
   // Canonical employee directory route (Issue #19)
   if (path === '/employees' || path.startsWith('/employees/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;

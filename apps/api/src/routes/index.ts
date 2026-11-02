@@ -16,6 +16,7 @@ import { createApprovals } from '../modules/approvals';
 import { createEmployeeCreation } from '../modules/employees/creation';
 import { createEmployeeDeactivation } from '../modules/employees/deactivation';
 import { createEmployeeDetail } from '../modules/employees/detail';
+import { createEmployeeDocuments } from '../modules/employees/documents';
 import { createEmployeeHierarchy } from '../modules/employees/hierarchy';
 import { createEmployeeProfile } from '../modules/employees/profile';
 import { registerAttendanceReports } from '../modules/attendance/reports/attendance-reports';
@@ -190,6 +191,10 @@ export function createApiRouter({
   router.use(
     '/employees',
     createEmployeeDetail({ platform, authenticate: auth.authenticate }).router,
+  );
+  router.use(
+    '/employees',
+    createEmployeeDocuments({ platform, authenticate: auth.authenticate }).router,
   );
   router.use(
     '/employees',
