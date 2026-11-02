@@ -28,6 +28,7 @@ import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';
 import '../modules/employees/designations/designation.openapi';
 import '../modules/employees/directory/directory.openapi';
+import '../modules/employees/onboarding/onboarding.openapi';
 import '../platform/storage/files.openapi';
 
 export function buildOpenApiDocument() {

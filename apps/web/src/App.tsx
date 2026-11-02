@@ -16,7 +16,13 @@ import { RouteGuard } from './shell/RouteGuard';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
-import { EmployeeDirectoryPage, EmployeeDocumentsPage } from './features/employees';
+import {
+  EmployeeDirectoryPage,
+  EmployeeDocumentsPage,
+  MyOnboardingPage,
+  OnboardingPage,
+  SetPasswordPage,
+} from './features/employees';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
@@ -62,6 +68,9 @@ function AppRoutes() {
           )
         }
       />
+
+      {/* Public Set-Password Route (Onboarding Claim) */}
+      <Route path="/set-password" element={<SetPasswordPage />} />
 
       {/* Root redirects to dashboard */}
       <Route
@@ -126,11 +135,28 @@ function AppRoutes() {
           </ShellLayout>
         }
       />
+      {/* Onboarding Routes */}
+      <Route
+        path="/hr/lifecycle"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
       <Route
         path="/hr/employees/:id/documents"
         element={
           <ShellLayout>
             <EmployeeDocumentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/onboarding"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
           </ShellLayout>
         }
       />
@@ -143,10 +169,34 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/hr/onboarding/:id"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/staff/documents"
         element={
           <ShellLayout>
             <EmployeeDocumentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ShellLayout>
+            <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/onboarding"
+        element={
+          <ShellLayout>
+            <MyOnboardingPage />
           </ShellLayout>
         }
       />

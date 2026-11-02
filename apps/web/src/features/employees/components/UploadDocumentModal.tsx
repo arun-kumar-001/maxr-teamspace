@@ -1,9 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Button, FormField, Input, Modal, Select } from '../../../components/ui';
-import {
-  DOCUMENT_TYPE_LABELS,
-  type DocumentType,
-} from '../types/documents';
+import { DOCUMENT_TYPE_LABELS, type DocumentType } from '../types/documents';
 
 export interface UploadDocumentModalProps {
   isOpen: boolean;
@@ -93,12 +90,7 @@ export function UploadDocumentModal({
       title="Upload Employee Document"
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
-          <Button
-            variant="ghost"
-            size="md"
-            disabled={isSubmitting}
-            onClick={onClose}
-          >
+          <Button variant="ghost" size="md" disabled={isSubmitting} onClick={onClose}>
             Cancel
           </Button>
           <Button
@@ -114,7 +106,12 @@ export function UploadDocumentModal({
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 p-4" noValidate data-testid="upload-document-modal">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 p-4"
+        noValidate
+        data-testid="upload-document-modal"
+      >
         {error && (
           <div
             className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm rounded-input font-medium"
@@ -190,7 +187,10 @@ export function UploadDocumentModal({
               disabled={isSubmitting}
               className="mt-1 w-4 h-4 text-primary-strong rounded border-border-strong focus:ring-primary-strong"
             />
-            <label htmlFor="document-sensitive" className="text-xs text-text select-none cursor-pointer">
+            <label
+              htmlFor="document-sensitive"
+              className="text-xs text-text select-none cursor-pointer"
+            >
               <span className="font-semibold block">Mark as Sensitive Document</span>
               <span className="text-text-muted block text-[11px]">
                 Restricts view access to HR managers and administrators.

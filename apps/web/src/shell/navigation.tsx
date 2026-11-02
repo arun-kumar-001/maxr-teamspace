@@ -179,7 +179,13 @@ export function getNavItemsForRole(role: Role): NavItem[] {
  */
 export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   // Common paths allowed for all authenticated users
-  if (path === '/' || path === '/dashboard' || path === '/login' || path === '/components') {
+  if (
+    path === '/' ||
+    path === '/dashboard' ||
+    path === '/login' ||
+    path === '/set-password' ||
+    path === '/components'
+  ) {
     return true;
   }
 
@@ -191,6 +197,19 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   // Staff documents route
   if (path === '/staff/documents' || path.startsWith('/staff/documents/')) {
     return role === ROLES.STAFF || role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  // Onboarding routes authorization
+  if (
+    path.startsWith('/hr/onboarding') ||
+    path.startsWith('/hr/lifecycle') ||
+    path === '/onboarding'
+  ) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  if (path.startsWith('/staff/onboarding')) {
+    return role === ROLES.STAFF;
   }
 
   // Canonical employee directory route (Issue #19)

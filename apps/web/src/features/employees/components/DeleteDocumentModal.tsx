@@ -42,12 +42,7 @@ export function DeleteDocumentModal({
       title="Delete Document"
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
-          <Button
-            variant="ghost"
-            size="md"
-            disabled={isDeleting}
-            onClick={onClose}
-          >
+          <Button variant="ghost" size="md" disabled={isDeleting} onClick={onClose}>
             Cancel
           </Button>
           <Button
@@ -73,10 +68,12 @@ export function DeleteDocumentModal({
         )}
 
         <p className="text-sm text-text">
-          Are you sure you want to delete <span className="font-semibold text-text">{document.title}</span>?
+          Are you sure you want to delete{' '}
+          <span className="font-semibold text-text">{document.title}</span>?
         </p>
         <p className="text-xs text-text-muted">
-          This document will be soft-deleted and removed from the active records, but preserved for compliance auditing.
+          This document will be soft-deleted and removed from the active records, but preserved for
+          compliance auditing.
         </p>
       </div>
     </Modal>

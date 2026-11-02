@@ -40,4 +40,3 @@ export interface UploadDocumentParams {
   title: string;
   isSensitive?: boolean;
 }
-

@@ -2,10 +2,10 @@
 -- Mirrors modules/rbac/permission-catalog.ts; rbac-reference-data.test.ts fails when they differ. Idempotent.
 
 INSERT INTO permissions (id, key, module, action, description) VALUES
-  ('20000000-0000-0000-0000-000000000071', 'documents.read', 'documents', 'read', 'View employee document list and metadata'),
-  ('20000000-0000-0000-0000-000000000072', 'documents.upload', 'documents', 'upload', 'Upload an employee document'),
-  ('20000000-0000-0000-0000-000000000073', 'documents.download', 'documents', 'download', 'Generate signed download link for an employee document'),
-  ('20000000-0000-0000-0000-000000000074', 'documents.delete', 'documents', 'delete', 'Soft delete an employee document')
+  ('20000000-0000-0000-0000-000000000078', 'documents.read', 'documents', 'read', 'View employee document list and metadata'),
+  ('20000000-0000-0000-0000-000000000079', 'documents.upload', 'documents', 'upload', 'Upload an employee document'),
+  ('20000000-0000-0000-0000-00000000007a', 'documents.download', 'documents', 'download', 'Generate signed download link for an employee document'),
+  ('20000000-0000-0000-0000-00000000007b', 'documents.delete', 'documents', 'delete', 'Soft delete an employee document')
 ON CONFLICT (key) DO UPDATE SET
   description = EXCLUDED.description;
 

@@ -91,11 +91,7 @@ export function EmployeeDocumentsTab({
   if (error && !isLoading && documents.length === 0) {
     return (
       <div className="p-4" data-testid="documents-tab-error">
-        <ErrorState
-          title="Failed to Load Documents"
-          message={error}
-          onRetry={refetch}
-        />
+        <ErrorState title="Failed to Load Documents" message={error} onRetry={refetch} />
       </div>
     );
   }
@@ -159,7 +155,10 @@ export function EmployeeDocumentsTab({
       {isLoading ? (
         <div className="space-y-3" data-testid="documents-loading">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="p-4 bg-surface rounded-tile border border-border flex items-center justify-between">
+            <div
+              key={i}
+              className="p-4 bg-surface rounded-tile border border-border flex items-center justify-between"
+            >
               <div className="space-y-2 w-1/2">
                 <Skeleton height={18} width="70%" />
                 <Skeleton height={14} width="40%" />
@@ -236,16 +235,30 @@ export function EmployeeDocumentsTab({
             <table className="min-w-full divide-y divide-border text-left">
               <thead className="bg-surface-muted text-xs font-semibold text-text-muted uppercase tracking-wider">
                 <tr>
-                  <th scope="col" className="px-4 py-3">Document Title</th>
-                  <th scope="col" className="px-4 py-3">Category</th>
-                  <th scope="col" className="px-4 py-3">Size</th>
-                  <th scope="col" className="px-4 py-3">Uploaded</th>
-                  <th scope="col" className="px-4 py-3 text-right">Actions</th>
+                  <th scope="col" className="px-4 py-3">
+                    Document Title
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Category
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Size
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Uploaded
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-sm">
                 {documents.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-surface-muted/50 transition-colors" data-testid={`document-row-${doc.id}`}>
+                  <tr
+                    key={doc.id}
+                    className="hover:bg-surface-muted/50 transition-colors"
+                    data-testid={`document-row-${doc.id}`}
+                  >
                     <td className="px-4 py-3">
                       <div className="font-semibold text-text">{doc.title}</div>
                       <div className="text-xs text-text-muted font-mono">{doc.originalName}</div>
