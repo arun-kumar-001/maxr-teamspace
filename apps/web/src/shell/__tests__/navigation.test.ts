@@ -137,8 +137,16 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/designations', ROLES.TEAM_LEAD)).toBe(false);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.TEAM_LEAD)).toBe(false);
 
-      // HR Manager trying to access Admin audit logs or admin paths
+      // HR Manager trying to access Admin audit logs or deactivation
       expect(isPathAuthorizedForRole('/admin/audit', ROLES.HR_MANAGER)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.HR_MANAGER)).toBe(
+        false,
+      );
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.TEAM_LEAD)).toBe(
+        false,
+      );
+      // HR Manager trying to access admin department or designation setup
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.HR_MANAGER)).toBe(false);
       expect(isPathAuthorizedForRole('/admin/designations', ROLES.HR_MANAGER)).toBe(false);
     });
@@ -146,6 +154,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     it('should authorize legitimate role paths', () => {
       expect(isPathAuthorizedForRole('/admin/users', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/employees', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/designations', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/employees', ROLES.HR_MANAGER)).toBe(true);

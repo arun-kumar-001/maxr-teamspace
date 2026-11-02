@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Badge,
   Button,
@@ -8,8 +9,10 @@ import {
   Skeleton,
   SortDirection,
 } from '../../../components/ui';
+import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
+import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { useEmployeeDirectory } from '../hooks/useEmployeeDirectory';
 import type { EmployeeDirectoryItem } from '../types';
 
@@ -35,6 +38,20 @@ export function EmployeeDirectoryPage() {
     resetFilters,
     refetch,
   } = useEmployeeDirectory();
+
+  let user = null;
+  let role = null;
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    role = auth.role;
+  } catch {
+    // Fallback when rendered outside AuthProvider in isolated tests
+  }
+  const isAdmin = role === 'admin';
+  const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(
+    null,
+  );
 
   if (isForbidden || statusCode === 403) {
     return (
@@ -155,6 +172,34 @@ export function EmployeeDirectoryPage() {
         <span className="text-xs text-text-muted">{emp.joiningDate || '\u2014'}</span>
       ),
     },
+    ...(isAdmin
+      ? [
+          {
+            key: 'actions' as keyof EmployeeDirectoryItem,
+            header: 'Actions',
+            priority: 'high' as const,
+            render: (emp: EmployeeDirectoryItem) => {
+              if (emp.status === 'deactivated') {
+                return <span className="text-xs text-text-subtle font-mono">Deactivated</span>;
+              }
+              if (emp.id === user?.employeeId) {
+                return <span className="text-xs text-text-subtle font-medium">(Current User)</span>;
+              }
+              return (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setDeactivatingEmployee(emp)}
+                  data-testid={`deactivate-btn-table-${emp.id}`}
+                  className="min-h-[36px] text-xs"
+                >
+                  Deactivate
+                </Button>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   const handleSortChange = (key: string, direction: SortDirection) => {
@@ -219,7 +264,12 @@ export function EmployeeDirectoryPage() {
       {!isLoading && employees.length > 0 && (
         <div className="block sm:hidden space-y-3" data-testid="employee-mobile-cards">
           {employees.map((emp) => (
-            <EmployeeCard key={emp.id} employee={emp} />
+            <EmployeeCard
+              key={emp.id}
+              employee={emp}
+              canDeactivate={isAdmin && emp.id !== user?.employeeId}
+              onDeactivate={(e) => setDeactivatingEmployee(e)}
+            />
           ))}
 
           {meta.totalPages > 1 && (
@@ -268,6 +318,18 @@ export function EmployeeDirectoryPage() {
         emptyTitle="No employees found"
         emptyMessage="There are no employee records to display."
       />
+
+      {/* Deactivate Employee Confirmation Modal (Issue #26) */}
+      {deactivatingEmployee && (
+        <DeactivateEmployeeModal
+          isOpen={true}
+          onClose={() => setDeactivatingEmployee(null)}
+          employee={deactivatingEmployee}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 }
