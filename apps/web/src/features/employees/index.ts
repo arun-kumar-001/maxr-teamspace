@@ -17,6 +17,7 @@ export * from './components/OnboardingStepBadge';
 export * from './components/OnboardingItemRow';
 export * from './components/OnboardingBoard';
 export * from './components/OnboardingChecklistDetail';
+export * from './components/EmployeeCard';
 export * from './pages/EmployeeDirectoryPage';
 export * from './pages/OnboardingPage';
 export * from './pages/MyOnboardingPage';

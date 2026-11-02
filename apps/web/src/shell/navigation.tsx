@@ -39,6 +39,13 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     allowedRoles: [ROLES.ADMIN],
   },
   {
+    id: 'admin-employees',
+    label: 'Employee Directory',
+    path: '/admin/employees',
+    iconName: 'users',
+    allowedRoles: [ROLES.ADMIN],
+  },
+  {
     id: 'admin-audit',
     label: 'Audit Logs',
     path: '/admin/audit',
@@ -84,6 +91,13 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
   },
 
   // Team Lead Routes (AGENTS.md §1)
+  {
+    id: 'lead-team',
+    label: 'Team Directory',
+    path: '/lead/team',
+    iconName: 'users',
+    allowedRoles: [ROLES.TEAM_LEAD],
+  },
   {
     id: 'lead-attendance',
     label: 'Team Attendance',
@@ -186,6 +200,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
 
   if (path.startsWith('/staff/onboarding')) {
     return role === ROLES.STAFF;
+  }
+
+  // Canonical employee directory route (Issue #19)
+  if (path === '/employees' || path.startsWith('/employees/')) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
   }
 
   const matchingItem = NAVIGATION_REGISTRY.find((item) => item.path === path);
