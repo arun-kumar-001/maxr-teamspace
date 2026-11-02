@@ -18,6 +18,7 @@ import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import {
   EmployeeDirectoryPage,
+  EmployeeDocumentsPage,
   MyOnboardingPage,
   OnboardingPage,
   SetPasswordPage,
@@ -125,12 +126,29 @@ function AppRoutes() {
         }
       />
 
+      {/* Employee Documents Routes (Issue #25) */}
+      <Route
+        path="/employees/:id/documents"
+        element={
+          <ShellLayout>
+            <EmployeeDocumentsPage />
+          </ShellLayout>
+        }
+      />
       {/* Onboarding Routes */}
       <Route
         path="/hr/lifecycle"
         element={
           <ShellLayout>
             <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/employees/:id/documents"
+        element={
+          <ShellLayout>
+            <EmployeeDocumentsPage />
           </ShellLayout>
         }
       />
@@ -143,10 +161,26 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/employees/:id/documents"
+        element={
+          <ShellLayout>
+            <EmployeeDocumentsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/hr/onboarding/:id"
         element={
           <ShellLayout>
             <OnboardingPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/documents"
+        element={
+          <ShellLayout>
+            <EmployeeDocumentsPage />
           </ShellLayout>
         }
       />

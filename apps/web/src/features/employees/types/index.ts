@@ -1,3 +1,5 @@
+export * from './documents';
+
 export type EmployeeStatus = 'active' | 'pending' | 'deactivated';
 
 export interface EmployeeDepartmentRef {

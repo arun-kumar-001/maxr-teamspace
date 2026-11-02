@@ -106,6 +106,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       // Team Lead trying to access Admin users
       expect(isPathAuthorizedForRole('/admin/users', ROLES.TEAM_LEAD)).toBe(false);
       expect(isPathAuthorizedForRole('/admin/employees', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.TEAM_LEAD)).toBe(false);
 
       // HR Manager trying to access Admin audit logs
       expect(isPathAuthorizedForRole('/admin/audit', ROLES.HR_MANAGER)).toBe(false);
@@ -121,6 +122,9 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/employees', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/employees', ROLES.TEAM_LEAD)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/staff/documents', ROLES.STAFF)).toBe(true);
     });
   });
 });
