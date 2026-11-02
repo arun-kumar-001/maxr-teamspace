@@ -259,5 +259,30 @@ describe('TC-12-03: RouteGuard Access Control & Forbidden State', () => {
       expect(staffDeptHtml).toContain('Access Denied');
       expect(staffDeptHtml).not.toContain('data-testid="hr-dept"');
     });
+
+    it('Issue #22: authorizes all four roles for /profile and /staff/profile', () => {
+      const allRoles = [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF];
+      for (const r of allRoles) {
+        const profileHtml = renderToStaticMarkup(
+          <AuthProvider initialRole={r} persistSession={false}>
+            <RouteGuard currentPath="/profile" onNavigate={() => {}}>
+              <div data-testid="profile-content">Profile for {r}</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(profileHtml).toContain('data-testid="profile-content"');
+        expect(profileHtml).not.toContain('Access Denied');
+
+        const staffProfileHtml = renderToStaticMarkup(
+          <AuthProvider initialRole={r} persistSession={false}>
+            <RouteGuard currentPath="/staff/profile" onNavigate={() => {}}>
+              <div data-testid="staff-profile-content">Staff Profile for {r}</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(staffProfileHtml).toContain('data-testid="staff-profile-content"');
+        expect(staffProfileHtml).not.toContain('Access Denied');
+      }
+    });
   });
 });

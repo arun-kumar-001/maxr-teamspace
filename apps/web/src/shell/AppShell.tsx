@@ -54,6 +54,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
             e?.preventDefault?.();
             onNavigate(id);
           }}
+          onUserMenu={() => onNavigate('/profile')}
           user={sidebarUser}
         />
       </div>
@@ -68,6 +69,10 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);
+          setIsMobileNavOpen(false);
+        }}
+        onUserMenu={() => {
+          onNavigate('/profile');
           setIsMobileNavOpen(false);
         }}
         user={sidebarUser}
