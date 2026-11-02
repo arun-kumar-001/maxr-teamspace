@@ -1,20 +1,7 @@
-import { useState } from 'react';
 import { Button, Badge, StatusPill } from '../components/ui';
+import { AttendanceWidget } from '../features/attendance';
 
 export function StaffDashboard() {
-  const [isCheckedIn, setIsCheckedIn] = useState(true);
-  const [checkInTime, setCheckInTime] = useState('09:15 AM');
-
-  const handleToggleAttendance = () => {
-    if (isCheckedIn) {
-      setIsCheckedIn(false);
-    } else {
-      setIsCheckedIn(true);
-      const now = new Date();
-      setCheckInTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    }
-  };
-
   return (
     <div className="space-y-6" data-testid="staff-dashboard">
       {/* Top Welcome Banner with Sample Data Badge (B2 Fix) */}
@@ -40,39 +27,8 @@ export function StaffDashboard() {
         </div>
       </div>
 
-      {/* Attendance & Shift Card */}
-      <div className="p-6 bg-surface border border-border rounded-card shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-3 h-3 rounded-full ${isCheckedIn ? 'bg-positive-ink animate-pulse ring-4 ring-positive-soft' : 'bg-text-subtle'}`}
-            />
-            <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
-              Today's Attendance Session
-            </span>
-          </div>
-          <p className="text-lg sm:text-xl font-bold text-text font-display">
-            {isCheckedIn
-              ? `Checked In \u00B7 Started at ${checkInTime}`
-              : 'Not Checked In \u00B7 Shift Pending'}
-          </p>
-          <p className="text-xs text-text-muted">
-            Regular Shift: 09:00 AM &ndash; 06:00 PM (IST) &middot; Working from Office
-          </p>
-        </div>
-
-        <div>
-          <Button
-            variant={isCheckedIn ? 'danger' : 'primary'}
-            size="lg"
-            onClick={handleToggleAttendance}
-            className="w-full sm:w-auto min-h-[48px] px-6 text-sm font-bold shadow-sm"
-            data-testid="attendance-toggle-button"
-          >
-            {isCheckedIn ? 'Check Out for Today' : 'Check In Now'}
-          </Button>
-        </div>
-      </div>
+      {/* Live Attendance & Shift Widget */}
+      <AttendanceWidget />
 
       {/* Leave Balances Grid */}
       <div>
