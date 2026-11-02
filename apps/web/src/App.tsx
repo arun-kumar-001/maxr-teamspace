@@ -20,6 +20,7 @@ import { EmployeeDirectoryPage } from './features/employees';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
+import { LeaveManagementPage } from './features/leave';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -166,6 +167,64 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ShiftsAndPoliciesPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Leave & Holiday Routes */}
+      <Route
+        path="/staff/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/balances"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/holidays"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="holidays" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/policies"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="policies" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="policies" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/holidays"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="holidays" />
           </ShellLayout>
         }
       />
