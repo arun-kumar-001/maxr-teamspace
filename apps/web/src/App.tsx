@@ -37,6 +37,7 @@ import { NotificationsInboxPage } from './features/notifications';
 import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
+import { CompanySettingsPage } from './features/settings';
 import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
 import { ReportsPage } from './features/reports';
@@ -129,6 +130,24 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <AuditLogsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Company Settings Routes (Issue #30) */}
+      <Route
+        path="/admin/settings"
+        element={
+          <ShellLayout>
+            <CompanySettingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ShellLayout>
+            <CompanySettingsPage />
           </ShellLayout>
         }
       />
