@@ -203,15 +203,35 @@ async function setupOperationsMockRoutes(page: any) {
     });
   });
 
-  // Mock Leave Policies & Balances
+  // Mock Leave Policies, Holidays & Balances
   await page.route('**/api/v1/leave-policies*', async (route: any) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([
-        { id: 'pol-1', name: 'Annual Leave', code: 'AL', daysPerYear: 18 },
-        { id: 'pol-2', name: 'Sick Leave', code: 'SL', daysPerYear: 12 },
-      ]),
+      body: JSON.stringify({
+        data: [
+          { id: 'pol-1', name: 'Annual Leave', code: 'AL', daysPerYear: 18 },
+          { id: 'pol-2', name: 'Sick Leave', code: 'SL', daysPerYear: 12 },
+        ],
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/holidays*', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [
+          {
+            id: 'hol-1',
+            name: 'New Year Day',
+            date: '2026-01-01',
+            year: 2026,
+            isOptional: false,
+          },
+        ],
+      }),
     });
   });
 
@@ -236,7 +256,8 @@ async function setupOperationsMockRoutes(page: any) {
   });
 
   await page.route('**/api/v1/leave-requests*', async (route: any) => {
-    if (route.request().method() === 'POST') {
+    const method = route.request().method();
+    if (method === 'POST') {
       await route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -455,7 +476,7 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
 
     await page.goto('/lead/approvals');
     await expect(page.locator('h1, h2').first()).toContainText('Approvals');
-    await expect(page.getByText('Alex River').first()).toBeVisible();
+    await expect(page.locator(':visible').filter({ hasText: 'Alex River' }).first()).toBeVisible();
 
     await expectNoHorizontalScroll(page);
   });
@@ -468,7 +489,9 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
 
     await page.goto('/lead/tasks');
     await expect(page.locator('h1, h2').first()).toContainText('Tasks');
-    await expect(page.getByText('Verify Redis Invalidation Strategy').first()).toBeVisible();
+    await expect(
+      page.locator(':visible').filter({ hasText: 'Verify Redis Invalidation Strategy' }).first(),
+    ).toBeVisible();
 
     await expectNoHorizontalScroll(page);
   });
