@@ -72,7 +72,7 @@ describe('Employee Creation API Client (Issue #20)', () => {
         }),
       );
 
-      const idempotencyKey = 'test-idemp-12345';
+      const idempotencyKey = generateIdempotencyKey();
       const result = await createEmployee(validPayload, idempotencyKey);
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
