@@ -36,6 +36,7 @@ import { NotificationsInboxPage } from './features/notifications';
 import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
+import { MeetingsPage } from './features/meetings';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -454,6 +455,40 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <TasksPage initialScope="team" />
+          </ShellLayout>
+        }
+      />
+
+      {/* Meetings Routes (Issue #45) */}
+      <Route
+        path="/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
           </ShellLayout>
         }
       />
