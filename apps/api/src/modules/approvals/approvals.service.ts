@@ -211,7 +211,7 @@ export class ApprovalsService {
           { transaction: tx },
         );
         // Last, so a module failure also takes the decision and its audit entry with it.
-        await handler?.apply(tx, current, outcome, {
+        await handler?.apply(tx, saved, outcome, {
           employeeId: caller.employeeId,
           actorId: caller.actorId,
           requestId: caller.requestId,

@@ -37,6 +37,7 @@ import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { MeetingsPage } from './features/meetings';
+import { ExpensesPage } from './features/expenses';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -489,6 +490,48 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Expenses Routes (Issue #29) */}
+      <Route
+        path="/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
           </ShellLayout>
         }
       />

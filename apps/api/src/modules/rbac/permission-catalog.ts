@@ -342,6 +342,36 @@ export const PERMISSION_CATALOG = {
     description: 'Change company settings',
     grants: { [ADMIN]: ALL },
   },
+
+  // Expense claims (D1-12, #29, D-17)
+  'expenses.submit': {
+    description: 'Submit expense claim with receipt',
+    grants: everyone(OWN),
+  },
+  'expenses.list': {
+    description: 'List expense claims within the role scope',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
+  },
+  'expenses.read': {
+    description: 'View expense claim details and download receipt',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
+  },
+  'expenses.cancel': {
+    description: 'Cancel own submitted expense claim',
+    grants: everyone(OWN),
+  },
+  'expenses.reimburse': {
+    description: 'Mark approved expense claim as reimbursed',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'expenses.manage_categories': {
+    description: 'Create and update expense categories',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'expenses.read_categories': {
+    description: 'View active expense categories',
+    grants: everyone(ALL),
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;

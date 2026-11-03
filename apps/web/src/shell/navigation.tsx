@@ -173,6 +173,14 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'calendar',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
+  // Shared Expenses Route (Issue #29 - Available to all authenticated roles)
+  {
+    id: 'expenses',
+    label: 'Expenses',
+    path: '/expenses',
+    iconName: 'file-text',
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
   // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
   {
     id: 'my-profile',
@@ -269,6 +277,22 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path.startsWith('/lead/meetings/') ||
     path === '/admin/meetings' ||
     path.startsWith('/admin/meetings/')
+  ) {
+    return true;
+  }
+
+  // Expenses routes (Issue #29) - accessible to all authenticated roles
+  if (
+    path === '/expenses' ||
+    path.startsWith('/expenses/') ||
+    path === '/staff/expenses' ||
+    path.startsWith('/staff/expenses/') ||
+    path === '/lead/expenses' ||
+    path.startsWith('/lead/expenses/') ||
+    path === '/hr/expenses' ||
+    path.startsWith('/hr/expenses/') ||
+    path === '/admin/expenses' ||
+    path.startsWith('/admin/expenses/')
   ) {
     return true;
   }
