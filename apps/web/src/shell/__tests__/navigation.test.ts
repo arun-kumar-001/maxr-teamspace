@@ -152,6 +152,12 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       // HR Manager trying to access admin department or designation setup
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.HR_MANAGER)).toBe(false);
       expect(isPathAuthorizedForRole('/admin/designations', ROLES.HR_MANAGER)).toBe(false);
+
+      // Issue #20: Team Lead and Staff trying to access /employees/new
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/new', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/new', ROLES.STAFF)).toBe(false);
     });
 
     it('should authorize legitimate role paths', () => {
@@ -177,6 +183,12 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/staff/documents', ROLES.STAFF)).toBe(true);
+
+      // Issue #20: Admin and HR Manager authorized for /employees/new
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/admin/employees/new', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/hr/employees/new', ROLES.HR_MANAGER)).toBe(true);
 
       // Issue #22: All four roles are authorized to access /profile and /staff/profile
       Object.values(ROLES).forEach((role: Role) => {

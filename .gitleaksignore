@@ -1,2 +1,5 @@
 # False positive: a made-up example secret in a unit test (replaced by a runtime-generated value in the next commit).
 4da9b5165a37c3bf1f37d79d347b418711df4a06:apps/api/src/config/env.test.ts:generic-api-key:36
+
+# Historical false positive: the hard-coded test Idempotency-Key was removed and replaced with generateIdempotencyKey(). This exact historical fingerprint is retained because Gitleaks scans commit diffs.
+9e678410e84e55e4fc7e47588e72333a0c19b6a4:apps/web/src/features/employees/__tests__/createEmployeeApi.test.ts:generic-api-key:75
