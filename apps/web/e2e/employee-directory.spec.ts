@@ -111,9 +111,36 @@ async function setupDirectoryMockRoutes(page: any) {
     });
   });
 
-  // Mock employees list
+  // Mock employees list & detail
   await page.route('**/api/v1/employees*', async (route: any) => {
     const url = new URL(route.request().url());
+    const pathname = url.pathname;
+
+    // Handle single employee detail (e.g. /api/v1/employees/emp-1)
+    if (pathname.match(/\/api\/v1\/employees\/[^/?#]+$/)) {
+      const parts = pathname.split('/');
+      const empId = parts[parts.length - 1];
+      const fallback = MOCK_EMPLOYEES[0]!;
+      const found = MOCK_EMPLOYEES.find((e) => e.id === empId) ?? fallback;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            ...found,
+            version: 1,
+            account: {
+              userId: 'usr-' + found.id,
+              isActive: true,
+              lastLoginAt: '2026-11-01T10:00:00Z',
+              roles: ['staff'],
+            },
+          },
+        }),
+      });
+      return;
+    }
+
     const search = url.searchParams.get('search')?.toLowerCase() || '';
 
     let filtered = MOCK_EMPLOYEES;
@@ -355,5 +382,40 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await expect(page).toHaveURL(/.*\/lead\/team/);
     await expect(page.getByRole('heading', { level: 1, name: 'Employee Directory' })).toBeVisible();
     await expect(page.getByTestId('employee-directory-filters')).toBeVisible();
+  });
+
+  test('Issue #21: Employee detail navigation and view', async ({ page }) => {
+    await setupDirectoryMockRoutes(page);
+
+    await page.addInitScript(() => {
+      window.localStorage.setItem('maxr_auth_session', 'admin');
+    });
+
+    await page.goto('/employees');
+    await expect(page.getByRole('heading', { level: 1, name: 'Employee Directory' })).toBeVisible();
+
+    // Click on the first visible employee link
+    const firstEmpLink = page.locator(':visible').filter({ hasText: 'Devon Miles' }).first();
+    await expect(firstEmpLink).toBeVisible();
+    await firstEmpLink.click();
+
+    // Expect navigation to detail page
+    await expect(page).toHaveURL(/.*\/employees\/emp-1/);
+    await expect(page.getByTestId('employee-detail-page')).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Devon Miles' })).toBeVisible();
+    await expect(page.getByText('MAX001')).toBeVisible();
+
+    // Verify tabs work
+    await expect(page.getByTestId('tab-overview')).toBeVisible();
+    const personalTab = page.getByRole('radio', { name: /Personal Information/i });
+    await expect(personalTab).toBeVisible();
+    await personalTab.click();
+    await expect(page.getByTestId('tab-personal')).toBeVisible();
+
+    // Back to directory button works
+    const backBtn = page.getByTestId('back-to-directory-btn');
+    await expect(backBtn).toBeVisible();
+    await backBtn.click();
+    await expect(page).toHaveURL(/.*\/employees/);
   });
 });
