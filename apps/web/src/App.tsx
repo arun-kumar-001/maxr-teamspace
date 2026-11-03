@@ -19,6 +19,7 @@ import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPa
 import {
   CreateEmployeePage,
   EmployeeDeactivationPage,
+  EmployeeDetailPage,
   EmployeeDirectoryPage,
   EmployeeDocumentsPage,
   MyOnboardingPage,
@@ -208,6 +209,32 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Employee Detail & Edit Routes (Issue #21) */}
+      <Route
+        path="/employees/:id"
+        element={
+          <ShellLayout>
+            <EmployeeDetailPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/employees/:id"
+        element={
+          <ShellLayout>
+            <EmployeeDetailPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/employees/:id"
+        element={
+          <ShellLayout>
+            <EmployeeDetailPage />
           </ShellLayout>
         }
       />
