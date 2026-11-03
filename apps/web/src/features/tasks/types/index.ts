@@ -88,3 +88,34 @@ export interface ListTasksResponse {
     total: number;
   };
 }
+
+export const MAX_ATTACHMENTS_PER_TASK = 20;
+export const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+export const ALLOWED_ATTACHMENT_TYPES = ['application/pdf', 'image/png', 'image/jpeg'] as const;
+
+export type AllowedAttachmentType = (typeof ALLOWED_ATTACHMENT_TYPES)[number];
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  authorEmployeeId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface TaskAttachment {
+  id: string;
+  taskId: string;
+  uploadedByEmployeeId: string;
+  uploadedByName: string;
+  originalName: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+}
+
+export interface AttachmentDownloadLink {
+  url: string;
+  expiresAt: string;
+}

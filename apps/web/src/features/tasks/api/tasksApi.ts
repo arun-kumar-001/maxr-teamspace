@@ -1,9 +1,12 @@
 import { apiFetch } from '../../../api/client';
 import type {
+  AttachmentDownloadLink,
   CreateTaskInput,
   ListTasksQuery,
   ListTasksResponse,
   Task,
+  TaskAttachment,
+  TaskComment,
   TaskStatus,
   UpdateTaskInput,
 } from '../types';
@@ -118,5 +121,83 @@ export async function changeTaskStatus(id: string, status: TaskStatus): Promise<
   });
 
   const data = await handleResponse<{ data: Task }>(res);
+  return data.data;
+}
+
+export async function fetchTaskComments(
+  taskId: string,
+  query?: { page?: number; pageSize?: number },
+  signal?: AbortSignal,
+): Promise<{ data: TaskComment[]; meta?: { page: number; pageSize: number; total: number } }> {
+  const params = new URLSearchParams();
+  if (query?.page) params.set('page', String(query.page));
+  if (query?.pageSize) params.set('pageSize', String(query.pageSize));
+  const url = `/api/v1/tasks/${encodeURIComponent(taskId)}/comments${params.toString() ? `?${params.toString()}` : ''}`;
+  const res = await apiFetch(url, signal ? { signal } : undefined);
+  return handleResponse<{
+    data: TaskComment[];
+    meta?: { page: number; pageSize: number; total: number };
+  }>(res);
+}
+
+export async function createTaskComment(taskId: string, body: string): Promise<TaskComment> {
+  const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(taskId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body }),
+  });
+
+  const data = await handleResponse<{ data: TaskComment }>(res);
+  return data.data;
+}
+
+export async function fetchTaskAttachments(
+  taskId: string,
+  signal?: AbortSignal,
+): Promise<TaskAttachment[]> {
+  const res = await apiFetch(
+    `/api/v1/tasks/${encodeURIComponent(taskId)}/attachments`,
+    signal ? { signal } : undefined,
+  );
+  const data = await handleResponse<{ data: TaskAttachment[] }>(res);
+  return data.data;
+}
+
+export async function uploadTaskAttachment(taskId: string, file: File): Promise<TaskAttachment> {
+  const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(taskId)}/attachments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type,
+      'X-Filename': encodeURIComponent(file.name),
+    },
+    body: file,
+  });
+
+  const data = await handleResponse<{ data: TaskAttachment }>(res);
+  return data.data;
+}
+
+export async function fetchAttachmentDownloadLink(
+  taskId: string,
+  attachmentId: string,
+): Promise<AttachmentDownloadLink> {
+  const res = await apiFetch(
+    `/api/v1/tasks/${encodeURIComponent(taskId)}/attachments/${encodeURIComponent(attachmentId)}/download-link`,
+  );
+  const data = await handleResponse<{ data: AttachmentDownloadLink }>(res);
+  return data.data;
+}
+
+export async function deleteTaskAttachment(
+  taskId: string,
+  attachmentId: string,
+): Promise<{ removed: boolean }> {
+  const res = await apiFetch(
+    `/api/v1/tasks/${encodeURIComponent(taskId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    {
+      method: 'DELETE',
+    },
+  );
+  const data = await handleResponse<{ data: { removed: boolean } }>(res);
   return data.data;
 }
