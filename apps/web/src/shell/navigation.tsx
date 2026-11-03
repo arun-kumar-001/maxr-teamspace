@@ -351,6 +351,29 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
+  // Org chart routes (Issue #23)
+  if (path === '/employees/org-chart') {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
+  }
+  if (path === '/admin/org-chart') {
+    return role === ROLES.ADMIN;
+  }
+  if (path === '/hr/org-chart') {
+    return role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
+  }
+
+  // Employee detail route (Issues #21 & #155) - Canonical /employees/:id accessible to all authenticated roles
+  // Backend GET /employees/:id enforces record scope (Staff: own record only, TL: direct reports, Admin/HR: all)
+  if (path.match(/^\/employees\/[^/]+$/)) {
+    return true;
+  }
+  if (path.match(/^\/admin\/employees\/[^/]+$/)) {
+    return role === ROLES.ADMIN;
+  }
+  if (path.match(/^\/hr\/employees\/[^/]+$/)) {
+    return role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
+  }
+
   // Canonical employee directory route (Issue #19)
   if (path === '/employees' || path.startsWith('/employees/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;

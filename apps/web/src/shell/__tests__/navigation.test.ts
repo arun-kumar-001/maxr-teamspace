@@ -195,6 +195,18 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
         expect(isPathAuthorizedForRole('/profile', role)).toBe(true);
         expect(isPathAuthorizedForRole('/staff/profile', role)).toBe(true);
       });
+
+      // Issue #155: Canonical /employees/:id accessible to all authenticated roles
+      Object.values(ROLES).forEach((role: Role) => {
+        expect(isPathAuthorizedForRole('/employees/emp-123', role)).toBe(true);
+      });
+      expect(isPathAuthorizedForRole('/admin/employees/emp-123', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-123', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/emp-123', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.TEAM_LEAD)).toBe(false);
     });
   });
 });
