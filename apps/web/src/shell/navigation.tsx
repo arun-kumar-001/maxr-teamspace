@@ -157,12 +157,21 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
   },
 
   // Staff Routes (AGENTS.md §1)
+  // Shared Projects Route (Issue #42 - Available to all authenticated roles)
   {
-    id: 'staff-profile',
+    id: 'projects',
+    label: 'Projects',
+    path: '/projects',
+    iconName: 'briefcase',
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
+  // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
+  {
+    id: 'my-profile',
     label: 'My Profile',
-    path: '/staff/profile',
+    path: '/profile',
     iconName: 'user',
-    allowedRoles: [ROLES.STAFF],
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
   {
     id: 'staff-attendance',
@@ -217,6 +226,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
+  // Employee deactivation route (Issue #26) - Admin only (D-23)
+  if (path.match(/^\/(admin\/)?employees\/[^/]+\/deactivate/)) {
+    return role === ROLES.ADMIN;
+  }
+
   // Employee documents routes (Issue #25) - TL denied, Admin & HR Manager allowed
   if (path.match(/^\/(admin\/|hr\/)?employees\/[^/]+\/documents/)) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
@@ -225,6 +239,27 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   // Staff documents route
   if (path === '/staff/documents' || path.startsWith('/staff/documents/')) {
     return role === ROLES.STAFF || role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  // Notifications route - accessible to all authenticated roles
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return true;
+  }
+
+  // Projects route (Issue #42) - accessible to all authenticated roles
+  if (path === '/projects' || path.startsWith('/projects/')) {
+    return true;
+  }
+
+  // Tasks routes (Issue #43)
+  if (path === '/tasks' || path.startsWith('/tasks/')) {
+    return true;
+  }
+  if (path === '/lead/tasks' || path.startsWith('/lead/tasks')) {
+    return role === ROLES.TEAM_LEAD || role === ROLES.ADMIN;
+  }
+  if (path === '/staff/tasks' || path.startsWith('/staff/tasks')) {
+    return true;
   }
 
   // Onboarding routes authorization
@@ -251,6 +286,16 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   }
   if (path === '/designations' || path.startsWith('/designations/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  // My Profile canonical route & compatibility redirect (Issue #22)
+  if (
+    path === '/profile' ||
+    path.startsWith('/profile/') ||
+    path === '/staff/profile' ||
+    path.startsWith('/staff/profile/')
+  ) {
+    return true;
   }
 
   const matchingItem = NAVIGATION_REGISTRY.find((item) => item.path === path);

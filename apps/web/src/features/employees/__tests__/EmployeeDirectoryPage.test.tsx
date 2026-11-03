@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { EmployeeDirectoryPage } from '../pages/EmployeeDirectoryPage';
 import * as directoryApi from '../api/employees';
@@ -70,6 +71,7 @@ describe('EmployeeDirectoryPage Component', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 

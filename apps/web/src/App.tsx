@@ -17,6 +17,7 @@ import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import {
+  EmployeeDeactivationPage,
   EmployeeDirectoryPage,
   EmployeeDocumentsPage,
   MyOnboardingPage,
@@ -25,10 +26,15 @@ import {
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
 import { DesignationsPage } from './features/designations';
+import { MyProfilePage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
+import { UsersPage } from './features/users';
+import { NotificationsInboxPage } from './features/notifications';
+import { ProjectsListPage, ProjectDetailPage } from './features/projects';
+import { TasksPage } from './features/tasks';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -90,6 +96,16 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* User and Role Administration Routes (Issue #27) */}
+      <Route
+        path="/admin/users"
+        element={
+          <ShellLayout>
+            <UsersPage />
           </ShellLayout>
         }
       />
@@ -180,12 +196,41 @@ function AppRoutes() {
         }
       />
 
+      {/* My Employee Profile Routes (Issue #22) */}
+      <Route
+        path="/profile"
+        element={
+          <ShellLayout>
+            <MyProfilePage />
+          </ShellLayout>
+        }
+      />
+      {/* Legacy /staff/profile compatibility redirect (Issue #22) */}
+      <Route path="/staff/profile" element={<Navigate to="/profile" replace />} />
+
       {/* Employee Documents Routes (Issue #25) */}
       <Route
         path="/employees/:id/documents"
         element={
           <ShellLayout>
             <EmployeeDocumentsPage />
+          </ShellLayout>
+        }
+      />
+      {/* Employee Deactivation Routes (Issue #26) */}
+      <Route
+        path="/admin/employees/:id/deactivate"
+        element={
+          <ShellLayout>
+            <EmployeeDeactivationPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/employees/:id/deactivate"
+        element={
+          <ShellLayout>
+            <EmployeeDeactivationPage />
           </ShellLayout>
         }
       />
@@ -304,6 +349,92 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Notifications Routes */}
+      <Route
+        path="/notifications"
+        element={
+          <ShellLayout>
+            <NotificationsInboxPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Projects Routes (Issue #42) */}
+      <Route
+        path="/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/projects/:id"
+        element={
+          <ShellLayout>
+            <ProjectDetailPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/projects"
+        element={
+          <ShellLayout>
+            <ProjectsListPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Tasks Routes (Issue #43) */}
+      <Route
+        path="/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage initialScope="mine" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage initialScope="team" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage initialScope="team" />
           </ShellLayout>
         }
       />

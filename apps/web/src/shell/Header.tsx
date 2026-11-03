@@ -1,17 +1,20 @@
 import { useAuth } from '../auth/AuthContext';
 import { Badge } from '../components/ui';
 import { ROLE_DISPLAY_NAMES } from '@maxr/shared';
+import { NotificationBell } from '../features/notifications';
 
 export interface HeaderProps {
   onToggleMobileNav?: () => void;
   activePath?: string;
+  onNavigate?: (path: string) => void;
 }
 
-export function Header({ onToggleMobileNav, activePath = '/dashboard' }: HeaderProps) {
+export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigate }: HeaderProps) {
   const { user, role, logout } = useAuth();
 
   const getPageTitle = (path: string): string => {
     if (path.includes('users')) return 'Users & Roles Administration';
+    if (path.includes('notifications')) return 'Notification Inbox';
     if (path.includes('audit')) return 'Security Audit Logs';
     if (path.includes('settings')) return 'Company Configuration';
     if (path.includes('employees')) return 'Employee Directory';
@@ -21,6 +24,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard' }: HeaderP
     if (path.includes('approvals')) return 'Pending Approvals';
     if (path.includes('reports')) return 'Workforce Reports';
     if (path.includes('leave')) return 'My Leave & Balances';
+    if (path.includes('projects')) return 'Projects & Initiatives';
     if (path.includes('tasks')) return 'Tasks & Projects';
     if (path.includes('profile')) return 'My Employee Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
@@ -62,8 +66,10 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard' }: HeaderP
         </div>
       </div>
 
-      {/* Right: Role indicator & User Profile */}
+      {/* Right: Role indicator, Notifications & User Profile */}
       <div className="flex items-center gap-3">
+        {user && <NotificationBell onNavigate={onNavigate} />}
+
         {role && (
           <div className="hidden sm:flex items-center">
             <Badge variant="primary" className="uppercase tracking-wider text-[11px]">
@@ -82,7 +88,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard' }: HeaderP
               {user.avatarInitials}
             </div>
 
-            <div className="hidden text-left md:block">
+            <div className="hidden text-left lg:block">
               <p className="text-xs font-semibold text-text leading-tight">{user.name}</p>
               <p className="text-[11px] text-text-muted leading-tight">{user.title}</p>
             </div>
