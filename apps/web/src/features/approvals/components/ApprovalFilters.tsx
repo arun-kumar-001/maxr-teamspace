@@ -30,10 +30,10 @@ export const ApprovalFiltersBar: React.FC<ApprovalFiltersProps> = ({
 }) => {
   return (
     <div
-      className="bg-surface rounded-card p-4 border border-border shadow-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4"
+      className="bg-surface rounded-card p-4 border border-border shadow-card flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4"
       data-testid="approval-filters"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
         {/* Status Dropdown */}
         <div className="w-full sm:w-44">
           <Select
@@ -53,7 +53,7 @@ export const ApprovalFiltersBar: React.FC<ApprovalFiltersProps> = ({
         </div>
 
         {/* Subject Type Dropdown */}
-        <div className="w-full sm:w-56">
+        <div className="w-full sm:w-48">
           <Select
             aria-label="Filter by Subject Type"
             value={filters.subjectType ?? ''}

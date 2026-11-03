@@ -144,7 +144,7 @@ export function MeetingsPage() {
 
       {/* View Switcher, Month Navigation & Filter Controls */}
       <div className="p-4 bg-surface border border-border rounded-card shadow-card space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Navigation Controls */}
           <div className="flex items-center gap-2">
             <Button
@@ -177,7 +177,7 @@ export function MeetingsPage() {
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-2 self-start md:self-auto">
+          <div className="flex items-center gap-2 self-start lg:self-auto">
             <SegmentedControl
               ariaLabel="View mode"
               options={[
