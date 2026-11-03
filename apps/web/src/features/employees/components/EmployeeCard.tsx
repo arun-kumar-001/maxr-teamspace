@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import type { EmployeeDirectoryItem } from '../types';
 import { Badge } from '../../../components/ui/StatusPill';
 
@@ -5,9 +6,30 @@ export interface EmployeeCardProps {
   employee: EmployeeDirectoryItem;
   canDeactivate?: boolean;
   onDeactivate?: (employee: EmployeeDirectoryItem) => void;
+  onView?: (employee: EmployeeDirectoryItem) => void;
 }
 
-export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: EmployeeCardProps) {
+export function EmployeeCard({
+  employee,
+  canDeactivate = false,
+  onDeactivate,
+  onView,
+}: EmployeeCardProps) {
+  let navigate: (to: string) => void = () => {};
+  try {
+    navigate = useNavigate();
+  } catch {
+    // Fallback when rendered outside Router in tests
+  }
+
+  const handleOpenDetail = () => {
+    if (onView) {
+      onView(employee);
+    } else {
+      navigate(`/employees/${employee.id}`);
+    }
+  };
+
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
   const statusVariant =
@@ -27,16 +49,23 @@ export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: 
       {/* Top Header: Avatar, Name, Code, and Status */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-10 h-10 rounded-full bg-primary-soft text-primary-ink font-semibold flex items-center justify-center shrink-0 text-sm"
-            aria-hidden="true"
+          <button
+            type="button"
+            onClick={handleOpenDetail}
+            className="w-10 h-10 rounded-full bg-primary-soft text-primary-ink font-semibold flex items-center justify-center shrink-0 text-sm hover:ring-2 hover:ring-primary-strong transition-all focus:outline-none"
+            aria-label={`View ${employee.firstName} ${employee.lastName}`}
           >
             {initials || '?'}
-          </div>
+          </button>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-text truncate">
+            <button
+              type="button"
+              onClick={handleOpenDetail}
+              className="text-left font-semibold text-text truncate hover:text-primary-deep hover:underline focus:outline-none focus:ring-1 focus:ring-primary-strong rounded block text-sm"
+              data-testid={`employee-card-link-${employee.id}`}
+            >
               {employee.firstName} {employee.lastName}
-            </h3>
+            </button>
             <span className="text-xs font-mono text-text-muted">{employee.employeeCode}</span>
           </div>
         </div>
@@ -66,12 +95,21 @@ export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: 
       </div>
 
       {/* Bottom Footer: Joining Date and Contact Quick-Actions (Min 44px touch targets) */}
-      <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
         <span className="text-xs text-text-muted">
           Joined: <span className="font-medium text-text">{employee.joiningDate}</span>
         </span>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpenDetail}
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2.5 py-1 text-xs font-medium text-text bg-surface border border-border-strong hover:bg-surface-muted rounded-input transition-colors focus:ring-2 focus:ring-primary-strong outline-none"
+            aria-label={`View details for ${employee.firstName} ${employee.lastName}`}
+            data-testid={`view-detail-btn-card-${employee.id}`}
+          >
+            View
+          </button>
           {employee.email && (
             <a
               href={`mailto:${employee.email}`}

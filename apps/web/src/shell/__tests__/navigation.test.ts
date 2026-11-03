@@ -195,6 +195,14 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
         expect(isPathAuthorizedForRole('/profile', role)).toBe(true);
         expect(isPathAuthorizedForRole('/staff/profile', role)).toBe(true);
       });
+
+      // Issue #155: All four roles are authorized to navigate to /employees/:id
+      // (Backend GET /api/v1/employees/:id enforces record-scope security: Admin/HR all, TL team, Staff self)
+      Object.values(ROLES).forEach((role: Role) => {
+        expect(isPathAuthorizedForRole('/employees/emp-001', role)).toBe(true);
+        expect(isPathAuthorizedForRole('/admin/employees/emp-001', role)).toBe(true);
+        expect(isPathAuthorizedForRole('/hr/employees/emp-001', role)).toBe(true);
+      });
     });
   });
 });

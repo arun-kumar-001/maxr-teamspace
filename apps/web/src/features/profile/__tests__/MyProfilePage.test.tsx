@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import * as profileApi from '../api/profileApi';
 import { MyProfilePage } from '../pages/MyProfilePage';
 import type { EmployeeProfile } from '../types';
@@ -267,5 +268,31 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
 
     // Edit phone button MUST NOT be rendered
     expect(screen.queryByTestId('edit-phone-button')).not.toBeInTheDocument();
+  });
+
+  it('renders View Full Record link and navigates to /employees/:id (Issue #155)', async () => {
+    vi.spyOn(profileApi, 'fetchProfile').mockResolvedValueOnce(mockStaffProfile);
+
+    render(
+      <MemoryRouter initialEntries={['/profile']}>
+        <Routes>
+          <Route path="/profile" element={<MyProfilePage />} />
+          <Route
+            path="/employees/:id"
+            element={<div data-testid="employee-detail-target">Target Employee Detail</div>}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('view-full-record-link')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('view-full-record-link'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('employee-detail-target')).toBeInTheDocument();
+    });
   });
 });

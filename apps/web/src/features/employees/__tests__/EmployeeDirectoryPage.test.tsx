@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { EmployeeDirectoryPage } from '../pages/EmployeeDirectoryPage';
 import * as directoryApi from '../api/employees';
 import { ApiError } from '../api/employees';
@@ -216,6 +217,84 @@ describe('EmployeeDirectoryPage Component', () => {
     expect(
       screen.getByText('You do not have permission to access the employee directory.'),
     ).toBeInTheDocument();
+  });
+
+  describe('Employee Detail Navigation (Issue #155)', () => {
+    it('navigates to /employees/:id when clicking employee row link in desktop table', async () => {
+      render(
+        <MemoryRouter initialEntries={['/employees']}>
+          <Routes>
+            <Route path="/employees" element={<EmployeeDirectoryPage />} />
+            <Route
+              path="/employees/:id"
+              element={<div data-testid="employee-detail-dest">Detail Destination</div>}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('datatable-desktop-table')).toBeInTheDocument();
+      });
+
+      const desktopTable = screen.getByTestId('datatable-desktop-table');
+      const rowLink = within(desktopTable).getByTestId('employee-link-emp-1');
+      fireEvent.click(rowLink);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('employee-detail-dest')).toBeInTheDocument();
+      });
+    });
+
+    it('navigates to /employees/:id when clicking table View button in desktop table', async () => {
+      render(
+        <MemoryRouter initialEntries={['/employees']}>
+          <Routes>
+            <Route path="/employees" element={<EmployeeDirectoryPage />} />
+            <Route
+              path="/employees/:id"
+              element={<div data-testid="employee-detail-dest">Detail Destination</div>}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('datatable-desktop-table')).toBeInTheDocument();
+      });
+
+      const desktopTable = screen.getByTestId('datatable-desktop-table');
+      const viewButton = within(desktopTable).getByTestId('view-detail-btn-table-emp-1');
+      fireEvent.click(viewButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('employee-detail-dest')).toBeInTheDocument();
+      });
+    });
+
+    it('navigates to /employees/:id when clicking mobile card View button', async () => {
+      render(
+        <MemoryRouter initialEntries={['/employees']}>
+          <Routes>
+            <Route path="/employees" element={<EmployeeDirectoryPage />} />
+            <Route
+              path="/employees/:id"
+              element={<div data-testid="employee-detail-dest">Detail Destination</div>}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('view-detail-btn-card-emp-1')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('view-detail-btn-card-emp-1'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('employee-detail-dest')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Responsive 9-Viewport Static Rendering (AGENTS.md §8)', () => {

@@ -101,18 +101,24 @@ export function EmployeeDirectoryPage() {
       sortable: true,
       priority: 'high',
       render: (emp) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-bold text-xs shrink-0">
+        <button
+          type="button"
+          onClick={() => navigate(`/employees/${emp.id}`)}
+          className="flex items-center gap-3 text-left group hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-primary-strong rounded-control p-1 -m-1 transition-all"
+          data-testid={`employee-link-${emp.id}`}
+          aria-label={`View employee details for ${emp.firstName} ${emp.lastName}`}
+        >
+          <div className="w-8 h-8 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-bold text-xs shrink-0 group-hover:ring-2 group-hover:ring-primary-strong transition-all">
             {emp.firstName.charAt(0)}
             {emp.lastName.charAt(0)}
           </div>
           <div>
-            <div className="font-semibold text-text">
+            <div className="font-semibold text-text group-hover:text-primary-deep transition-colors">
               {emp.firstName} {emp.lastName}
             </div>
             <div className="text-xs font-mono text-text-muted">{emp.employeeCode}</div>
           </div>
-        </div>
+        </button>
       ),
     },
     {
@@ -180,34 +186,35 @@ export function EmployeeDirectoryPage() {
         <span className="text-xs text-text-muted">{emp.joiningDate || '\u2014'}</span>
       ),
     },
-    ...(isAdmin
-      ? [
-          {
-            key: 'actions' as keyof EmployeeDirectoryItem,
-            header: 'Actions',
-            priority: 'high' as const,
-            render: (emp: EmployeeDirectoryItem) => {
-              if (emp.status === 'deactivated') {
-                return <span className="text-xs text-text-subtle font-mono">Deactivated</span>;
-              }
-              if (emp.id === user?.employeeId) {
-                return <span className="text-xs text-text-subtle font-medium">(Current User)</span>;
-              }
-              return (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => setDeactivatingEmployee(emp)}
-                  data-testid={`deactivate-btn-table-${emp.id}`}
-                  className="min-h-[36px] text-xs"
-                >
-                  Deactivate
-                </Button>
-              );
-            },
-          },
-        ]
-      : []),
+    {
+      key: 'actions' as keyof EmployeeDirectoryItem,
+      header: 'Actions',
+      priority: 'high' as const,
+      render: (emp: EmployeeDirectoryItem) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/employees/${emp.id}`)}
+            data-testid={`view-detail-btn-table-${emp.id}`}
+            className="min-h-[36px] text-xs font-medium"
+          >
+            View
+          </Button>
+          {isAdmin && emp.status !== 'deactivated' && emp.id !== user?.employeeId && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setDeactivatingEmployee(emp)}
+              data-testid={`deactivate-btn-table-${emp.id}`}
+              className="min-h-[36px] text-xs"
+            >
+              Deactivate
+            </Button>
+          )}
+        </div>
+      ),
+    },
   ];
 
   const handleSortChange = (key: string, direction: SortDirection) => {

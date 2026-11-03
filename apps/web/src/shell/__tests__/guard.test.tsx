@@ -163,6 +163,45 @@ describe('TC-12-03: RouteGuard Access Control & Forbidden State', () => {
     });
   });
 
+  describe('Employee Detail (/employees/:id) access control (Issue #155)', () => {
+    it('authorizes all roles (Admin, HR Manager, Team Lead, Staff) to pass RouteGuard to /employees/:id', () => {
+      const allRoles = [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF];
+      for (const role of allRoles) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <RouteGuard currentPath="/employees/emp-101" onNavigate={() => {}}>
+              <div data-testid="employee-detail-content">Employee Detail</div>
+            </RouteGuard>
+          </AuthProvider>,
+        );
+        expect(html).toContain('data-testid="employee-detail-content"');
+        expect(html).not.toContain('Access Denied');
+      }
+    });
+
+    it('authorizes Staff to pass RouteGuard for /employees/:id while continuing to block /employees list', () => {
+      const detailHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <RouteGuard currentPath="/employees/emp-004" onNavigate={() => {}}>
+            <div data-testid="employee-detail-content">My Detail</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(detailHtml).toContain('data-testid="employee-detail-content"');
+      expect(detailHtml).not.toContain('Access Denied');
+
+      const listHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <RouteGuard currentPath="/employees" onNavigate={() => {}}>
+            <div data-testid="employee-detail-content">Directory</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(listHtml).toContain('Access Denied');
+      expect(listHtml).not.toContain('data-testid="employee-detail-content"');
+    });
+  });
+
   describe('Departments & Designations access control (Issue #18)', () => {
     it('authorizes Admin and HR Manager to view /departments and denies Team Lead and Staff', () => {
       for (const role of [ROLES.ADMIN, ROLES.HR_MANAGER]) {

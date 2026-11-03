@@ -351,6 +351,17 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
+  // Employee detail canonical routes (Issue #21, Issue #155)
+  // Backend enforces record-scope security (Admin/HR: all, TL: team/reports, Staff: self).
+  if (path.match(/^\/(admin\/|hr\/)?employees\/(?!new$|org-chart$)[^/]+$/)) {
+    return (
+      role === ROLES.ADMIN ||
+      role === ROLES.HR_MANAGER ||
+      role === ROLES.TEAM_LEAD ||
+      role === ROLES.STAFF
+    );
+  }
+
   // Canonical employee directory route (Issue #19)
   if (path === '/employees' || path.startsWith('/employees/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
