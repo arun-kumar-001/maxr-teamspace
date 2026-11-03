@@ -251,6 +251,17 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
+  // Tasks routes (Issue #43)
+  if (path === '/tasks' || path.startsWith('/tasks/')) {
+    return true;
+  }
+  if (path === '/lead/tasks' || path.startsWith('/lead/tasks')) {
+    return role === ROLES.TEAM_LEAD || role === ROLES.ADMIN;
+  }
+  if (path === '/staff/tasks' || path.startsWith('/staff/tasks')) {
+    return true;
+  }
+
   // Onboarding routes authorization
   if (
     path.startsWith('/hr/onboarding') ||
