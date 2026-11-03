@@ -34,6 +34,7 @@ import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
 import { UsersPage } from './features/users';
 import { NotificationsInboxPage } from './features/notifications';
+import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 
@@ -107,6 +108,24 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <UsersPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Audit Log Viewer Routes (Issue #28) */}
+      <Route
+        path="/admin/audit"
+        element={
+          <ShellLayout>
+            <AuditLogsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <ShellLayout>
+            <AuditLogsPage />
           </ShellLayout>
         }
       />
