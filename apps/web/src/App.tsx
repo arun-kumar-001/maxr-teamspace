@@ -32,6 +32,7 @@ import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
 import { LeaveManagementPage } from './features/leave';
 import { NotificationsInboxPage } from './features/notifications';
+import { AuditLogsPage } from './features/audit-logs';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -93,6 +94,24 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* Audit Log Viewer Routes (Issue #28) */}
+      <Route
+        path="/admin/audit"
+        element={
+          <ShellLayout>
+            <AuditLogsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <ShellLayout>
+            <AuditLogsPage />
           </ShellLayout>
         }
       />
