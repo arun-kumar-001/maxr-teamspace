@@ -50,3 +50,17 @@ export const EMPLOYEE_STATUS = {
 } as const;
 
 export type EmployeeStatus = (typeof EMPLOYEE_STATUS)[keyof typeof EMPLOYEE_STATUS];
+
+/**
+ * Expense Workflow State Machine states (D-17)
+ * Submitted -> Approved / Rejected -> Reimbursed, plus Cancelled
+ */
+export const EXPENSE_STATUS = {
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  REIMBURSED: 'reimbursed',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type ExpenseStatus = (typeof EXPENSE_STATUS)[keyof typeof EXPENSE_STATUS];

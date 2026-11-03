@@ -38,6 +38,7 @@ import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { MeetingsPage } from './features/meetings';
+import { ExpensesPage } from './features/expenses';
 import { ReportsPage } from './features/reports';
 
 // The gallery is a developer tool; it must not ship to production.
@@ -521,12 +522,29 @@ function AppRoutes() {
         }
       />
 
+      {/* Expenses Routes (Issue #29) */}
+      <Route
+        path="/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
       {/* Reports Routes (Issue #15 & #47) */}
       <Route
         path="/reports"
         element={
           <ShellLayout>
             <ReportsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
           </ShellLayout>
         }
       />
@@ -539,10 +557,34 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/lead/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/hr/reports"
         element={
           <ShellLayout>
             <ReportsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/expenses"
+        element={
+          <ShellLayout>
+            <ExpensesPage />
           </ShellLayout>
         }
       />
