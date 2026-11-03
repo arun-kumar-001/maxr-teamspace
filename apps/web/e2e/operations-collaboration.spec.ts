@@ -35,20 +35,64 @@ async function setupOperationsMockRoutes(page: any) {
     });
   });
 
-  // Mock Attendance Status / Sessions
-  await page.route('**/api/v1/attendance/status*', async (route: any) => {
+  // Mock Departments
+  await page.route('**/api/v1/departments*', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [
+          { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+          { id: 'dept-2', name: 'Operations', code: 'OPS' },
+        ],
+      }),
+    });
+  });
+
+  // Mock Projects
+  await page.route('**/api/v1/projects*', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [
+          {
+            id: 'proj-1',
+            name: 'MAXR Platform',
+            code: 'PLAT',
+            status: 'active',
+            leadEmployeeId: 'emp-003',
+            memberCount: 8,
+          },
+        ],
+        meta: { page: 1, pageSize: 20, total: 1 },
+      }),
+    });
+  });
+
+  // Mock Attendance endpoints
+  await page.route('**/api/v1/attendance/today', async (route: any) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         data: {
-          currentSession: null,
-          todaySummary: {
-            date: '2026-11-03',
-            totalWorkedMinutes: 0,
-            status: 'not_checked_in',
-          },
+          workDate: '2026-11-03',
+          totalDurationMinutes: 0,
+          sessionsCount: 0,
+          activeSession: null,
+          sessions: [],
         },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/attendance/active', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: null,
       }),
     });
   });
@@ -60,28 +104,98 @@ async function setupOperationsMockRoutes(page: any) {
       body: JSON.stringify({
         data: {
           id: 'sess-001',
-          employeeId: 'emp-staff-1',
-          checkIn: new Date().toISOString(),
-          checkOut: null,
-          status: 'open',
+          employeeId: 'emp-004',
+          workDate: '2026-11-03',
+          checkInTime: new Date().toISOString(),
+          checkOutTime: null,
+          durationMinutes: null,
+          status: 'present',
+          location: null,
+          notes: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       }),
     });
   });
 
-  // Mock Attendance History
-  await page.route('**/api/v1/attendance/my*', async (route: any) => {
+  await page.route('**/api/v1/attendance/check-out', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          id: 'sess-001',
+          employeeId: 'emp-004',
+          workDate: '2026-11-03',
+          checkInTime: '2026-11-03T09:00:00Z',
+          checkOutTime: new Date().toISOString(),
+          durationMinutes: 480,
+          status: 'present',
+          location: null,
+          notes: null,
+          createdAt: '2026-11-03T09:00:00Z',
+          updatedAt: new Date().toISOString(),
+        },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/attendance/me*', async (route: any) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         data: [
           {
-            date: '2026-11-02',
-            checkIn: '2026-11-02T09:00:00Z',
-            checkOut: '2026-11-02T18:00:00Z',
+            id: 'sess-hist-1',
+            employeeId: 'emp-004',
+            workDate: '2026-11-02',
+            checkInTime: '2026-11-02T09:00:00Z',
+            checkOutTime: '2026-11-02T18:00:00Z',
+            durationMinutes: 540,
             status: 'present',
-            workedMinutes: 540,
+            location: null,
+            notes: null,
+            createdAt: '2026-11-02T09:00:00Z',
+            updatedAt: '2026-11-02T18:00:00Z',
+          },
+        ],
+        meta: { page: 1, pageSize: 20, total: 1 },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/attendance/corrections*', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [],
+        meta: { page: 1, pageSize: 20, total: 0 },
+      }),
+    });
+  });
+
+  await page.route('**/api/v1/attendance', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [
+          {
+            id: 'sess-hist-1',
+            employeeId: 'emp-004',
+            employeeName: 'Alex River',
+            workDate: '2026-11-02',
+            checkInTime: '2026-11-02T09:00:00Z',
+            checkOutTime: '2026-11-02T18:00:00Z',
+            durationMinutes: 540,
+            status: 'present',
+            location: null,
+            notes: null,
+            createdAt: '2026-11-02T09:00:00Z',
+            updatedAt: '2026-11-02T18:00:00Z',
           },
         ],
         meta: { page: 1, pageSize: 20, total: 1 },
@@ -158,16 +272,20 @@ async function setupOperationsMockRoutes(page: any) {
         data: [
           {
             id: 'appr-1',
-            entityType: 'leave_request',
-            entityId: 'req-1',
+            subjectType: 'leave_request',
+            subjectId: 'req-1',
+            requesterEmployeeId: 'emp-004',
             requesterName: 'Alex River',
-            requesterEmail: 'alex@example.com',
-            details: 'Annual leave from 2026-11-10 to 2026-11-12 (3 days)',
+            requesterManagerId: 'emp-003',
+            stages: ['manager', 'hr'],
+            currentStage: 0,
             status: 'pending',
+            decisions: [],
             createdAt: '2026-11-02T10:00:00Z',
+            decidedAt: null,
           },
         ],
-        meta: { page: 1, pageSize: 20, total: 1 },
+        meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
       }),
     });
   });
@@ -183,12 +301,20 @@ async function setupOperationsMockRoutes(page: any) {
             id: 'task-1',
             title: 'Verify Redis Invalidation Strategy',
             description: 'Ensure cache eviction after employee update.',
+            projectId: null,
+            projectName: null,
+            assigneeEmployeeId: 'emp-004',
+            assigneeName: 'Alex River',
+            assignerEmployeeId: 'emp-003',
+            assignerName: 'Marcus Vance',
             status: 'in_progress',
             priority: 'high',
-            assigneeName: 'Alex River',
             dueDate: '2026-11-15',
-            version: 1,
             isOverdue: false,
+            completedAt: null,
+            version: 1,
+            createdAt: '2026-11-01T09:00:00Z',
+            updatedAt: '2026-11-01T09:00:00Z',
           },
         ],
         meta: { page: 1, pageSize: 50, total: 1 },
@@ -206,13 +332,16 @@ async function setupOperationsMockRoutes(page: any) {
           {
             id: 'mtg-1',
             title: 'Weekly Standup & Sync',
-            organizerName: 'Dev Lead',
+            description: 'Weekly team status sync',
+            organizerId: 'emp-003',
+            organizerName: 'Marcus Vance',
             startsAt: '2026-11-04T10:00:00Z',
             endsAt: '2026-11-04T10:30:00Z',
             status: 'scheduled',
             myRole: 'invitee',
             myRsvp: 'accepted',
             attendeeCount: 4,
+            attendees: [],
           },
         ],
         meta: { page: 1, pageSize: 20, total: 1 },
@@ -326,7 +455,7 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
 
     await page.goto('/lead/approvals');
     await expect(page.locator('h1, h2').first()).toContainText('Approvals');
-    await expect(page.getByText('Alex River')).toBeVisible();
+    await expect(page.getByText('Alex River').first()).toBeVisible();
 
     await expectNoHorizontalScroll(page);
   });
@@ -339,7 +468,7 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
 
     await page.goto('/lead/tasks');
     await expect(page.locator('h1, h2').first()).toContainText('Tasks');
-    await expect(page.getByText('Verify Redis Invalidation Strategy')).toBeVisible();
+    await expect(page.getByText('Verify Redis Invalidation Strategy').first()).toBeVisible();
 
     await expectNoHorizontalScroll(page);
   });
@@ -352,7 +481,7 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
 
     await page.goto('/lead/reports');
     await expect(page.locator('h1, h2').first()).toBeVisible();
-    await expect(page.getByText('Direct Reports Scope')).toBeVisible();
+    await expect(page.getByText('Direct Reports Scope').first()).toBeVisible();
 
     await expectNoHorizontalScroll(page);
   });
