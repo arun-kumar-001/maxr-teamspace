@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -107,13 +107,17 @@ export function EmployeeDirectoryPage() {
             {emp.lastName.charAt(0)}
           </div>
           <div>
-            <Link
-              to={`/employees/${emp.id}`}
+            <a
+              href={`/employees/${emp.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(`/employees/${emp.id}`);
+              }}
               className="font-semibold text-text hover:text-primary-deep hover:underline block"
               data-testid={`employee-link-${emp.id}`}
             >
               {emp.firstName} {emp.lastName}
-            </Link>
+            </a>
             <div className="text-xs font-mono text-text-muted">{emp.employeeCode}</div>
           </div>
         </div>

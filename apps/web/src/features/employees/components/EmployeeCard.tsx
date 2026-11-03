@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import type { EmployeeDirectoryItem } from '../types';
 import { Badge } from '../../../components/ui/StatusPill';
 
@@ -35,12 +34,12 @@ export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: 
             {initials || '?'}
           </div>
           <div className="min-w-0">
-            <Link
-              to={`/employees/${employee.id}`}
+            <a
+              href={`/employees/${employee.id}`}
               className="text-sm font-semibold text-text hover:text-primary-deep hover:underline truncate block"
             >
               {employee.firstName} {employee.lastName}
-            </Link>
+            </a>
             <span className="text-xs font-mono text-text-muted">{employee.employeeCode}</span>
           </div>
         </div>
