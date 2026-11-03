@@ -17,6 +17,7 @@ import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import {
+  CreateEmployeePage,
   EmployeeDeactivationPage,
   EmployeeDirectoryPage,
   EmployeeDocumentsPage,
@@ -37,6 +38,8 @@ import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { CompanySettingsPage } from './features/settings';
+import { MeetingsPage } from './features/meetings';
+import { ReportsPage } from './features/reports';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -178,6 +181,32 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Employee Creation Routes (Issue #20) */}
+      <Route
+        path="/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
           </ShellLayout>
         }
       />
@@ -473,6 +502,74 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <TasksPage initialScope="team" />
+          </ShellLayout>
+        }
+      />
+
+      {/* Meetings Routes (Issue #45) */}
+      <Route
+        path="/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/meetings"
+        element={
+          <ShellLayout>
+            <MeetingsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Reports Routes (Issue #15 & #47) */}
+      <Route
+        path="/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
           </ShellLayout>
         }
       />

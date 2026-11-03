@@ -160,7 +160,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       </div>
 
       {/* Navigation tabs */}
-      <div className="border-b border-border pb-4">
+      <div className="border-b border-border pb-4 overflow-x-auto max-w-full">
         <SegmentedControl
           value={activeTab}
           onChange={(val) =>
