@@ -24,6 +24,7 @@ import {
   EmployeeDocumentsPage,
   MyOnboardingPage,
   OnboardingPage,
+  OrgChartPage,
   SetPasswordPage,
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
@@ -209,6 +210,32 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Employee Org Chart Routes (Issue #23) */}
+      <Route
+        path="/employees/org-chart"
+        element={
+          <ShellLayout>
+            <OrgChartPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/org-chart"
+        element={
+          <ShellLayout>
+            <OrgChartPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/org-chart"
+        element={
+          <ShellLayout>
+            <OrgChartPage />
           </ShellLayout>
         }
       />
