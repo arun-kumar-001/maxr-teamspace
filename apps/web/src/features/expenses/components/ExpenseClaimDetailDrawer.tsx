@@ -145,18 +145,14 @@ export const ExpenseClaimDetailDrawer: React.FC<ExpenseClaimDetailDrawerProps> =
             <p className="font-medium text-text mt-0.5">
               {claim.employeeName || 'Unknown Employee'}
               {claim.employeeCode && (
-                <span className="text-xs text-text-muted ml-1.5">
-                  ({claim.employeeCode})
-                </span>
+                <span className="text-xs text-text-muted ml-1.5">({claim.employeeCode})</span>
               )}
             </p>
           </div>
 
           <div>
             <span className="text-xs text-text-muted">Category</span>
-            <p className="font-medium text-text mt-0.5">
-              {claim.categoryName || 'General'}
-            </p>
+            <p className="font-medium text-text mt-0.5">{claim.categoryName || 'General'}</p>
           </div>
 
           <div>
@@ -191,7 +187,8 @@ export const ExpenseClaimDetailDrawer: React.FC<ExpenseClaimDetailDrawerProps> =
         {claim.status === 'reimbursed' && (
           <div className="p-3 bg-teal-50 border border-teal-200 rounded-control text-sm text-teal-800">
             <span className="font-semibold block mb-0.5">Reimbursement Info:</span>
-            Reimbursed on {claim.reimbursedAt ? new Date(claim.reimbursedAt).toLocaleDateString() : '—'}
+            Reimbursed on{' '}
+            {claim.reimbursedAt ? new Date(claim.reimbursedAt).toLocaleDateString() : '—'}
             {claim.reimbursedByName && ` by ${claim.reimbursedByName}`}.
           </div>
         )}

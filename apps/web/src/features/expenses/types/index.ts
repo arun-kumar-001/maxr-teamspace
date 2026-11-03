@@ -80,4 +80,3 @@ export function formatPaiseToInr(paise: number): string {
 export function inrToPaise(rupees: number): number {
   return Math.round(rupees * 100);
 }
-

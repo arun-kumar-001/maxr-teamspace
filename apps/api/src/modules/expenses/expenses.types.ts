@@ -119,4 +119,3 @@ export interface IExpensesRepository {
     },
   ): Promise<ExpenseClaim | null>;
 }
-

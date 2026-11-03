@@ -7,11 +7,7 @@ import { PageContainer } from '../../../components/ui/PageContainer';
 import { StatCard } from '../../../components/ui/StatCard';
 import { ErrorState } from '../../../components/ui/StateCards';
 import { Tabs } from '../../../components/ui/Tabs';
-import {
-  listCategories,
-  listClaims,
-  listMyClaims,
-} from '../api/expensesApi';
+import { listCategories, listClaims, listMyClaims } from '../api/expensesApi';
 import { ExpenseClaimDetailDrawer } from '../components/ExpenseClaimDetailDrawer';
 import { ExpenseClaimFormModal } from '../components/ExpenseClaimFormModal';
 import { ExpenseStatusPill } from '../components/ExpenseStatusPill';
@@ -63,10 +59,7 @@ export const ExpensesPage: React.FC = () => {
         status: statusFilter === 'all' ? undefined : (statusFilter as ExpenseStatus),
       };
 
-      const res =
-        activeTab === 'mine'
-          ? await listMyClaims(params)
-          : await listClaims(params);
+      const res = activeTab === 'mine' ? await listMyClaims(params) : await listClaims(params);
 
       setClaims(res.data);
       setTotal(res.meta.total);
@@ -103,9 +96,7 @@ export const ExpensesPage: React.FC = () => {
       key: 'expenseDate',
       header: 'Date',
       priority: 'high',
-      render: (row) => (
-        <span className="font-mono text-xs text-text">{row.expenseDate}</span>
-      ),
+      render: (row) => <span className="font-mono text-xs text-text">{row.expenseDate}</span>,
     },
     {
       key: 'description',
@@ -242,11 +233,7 @@ export const ExpensesPage: React.FC = () => {
 
         {/* Content / Error / Table */}
         {error ? (
-          <ErrorState
-            title="Unable to load claims"
-            message={error}
-            onRetry={fetchClaims}
-          />
+          <ErrorState title="Unable to load claims" message={error} onRetry={fetchClaims} />
         ) : (
           <div className="bg-surface border border-border rounded-card shadow-card overflow-hidden">
             <DataTable

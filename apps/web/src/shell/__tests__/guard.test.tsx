@@ -284,5 +284,51 @@ describe('TC-12-03: RouteGuard Access Control & Forbidden State', () => {
         expect(staffProfileHtml).not.toContain('Access Denied');
       }
     });
+
+    it('Issue #20: authorizes Admin and HR Manager for /employees/new, denies Team Lead and Staff', () => {
+      // Admin allowed
+      const adminHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <RouteGuard currentPath="/employees/new" onNavigate={() => {}}>
+            <div data-testid="create-content">Create Page</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(adminHtml).toContain('data-testid="create-content"');
+      expect(adminHtml).not.toContain('Access Denied');
+
+      // HR Manager allowed
+      const hrHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.HR_MANAGER} persistSession={false}>
+          <RouteGuard currentPath="/employees/new" onNavigate={() => {}}>
+            <div data-testid="create-content">Create Page</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(hrHtml).toContain('data-testid="create-content"');
+      expect(hrHtml).not.toContain('Access Denied');
+
+      // Team Lead denied
+      const leadHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.TEAM_LEAD} persistSession={false}>
+          <RouteGuard currentPath="/employees/new" onNavigate={() => {}}>
+            <div data-testid="create-content">Create Page</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(leadHtml).toContain('Access Denied');
+      expect(leadHtml).not.toContain('data-testid="create-content"');
+
+      // Staff denied
+      const staffHtml = renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <RouteGuard currentPath="/employees/new" onNavigate={() => {}}>
+            <div data-testid="create-content">Create Page</div>
+          </RouteGuard>
+        </AuthProvider>,
+      );
+      expect(staffHtml).toContain('Access Denied');
+      expect(staffHtml).not.toContain('data-testid="create-content"');
+    });
   });
 });

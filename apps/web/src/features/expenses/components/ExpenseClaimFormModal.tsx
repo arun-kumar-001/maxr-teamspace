@@ -135,9 +135,7 @@ export const ExpenseClaimFormModal: React.FC<ExpenseClaimFormModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      let receiptPayload:
-        | { filename: string; declaredType: string; base64: string }
-        | undefined;
+      let receiptPayload: { filename: string; declaredType: string; base64: string } | undefined;
 
       if (receiptFile) {
         const base64 = await readFileAsBase64(receiptFile);
@@ -307,9 +305,7 @@ export const ExpenseClaimFormModal: React.FC<ExpenseClaimFormModalProps> = ({
                     d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-text">
-                  Take photo or select receipt
-                </span>
+                <span className="text-sm font-medium text-text">Take photo or select receipt</span>
                 <span className="text-xs text-text-subtle mt-1">
                   Camera / file upload (JPEG, PNG, PDF up to 5 MB)
                 </span>
@@ -327,12 +323,7 @@ export const ExpenseClaimFormModal: React.FC<ExpenseClaimFormModalProps> = ({
               <div className="flex items-center justify-between p-3 bg-surface-raised border border-border rounded-tile">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="w-8 h-8 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center shrink-0">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -342,9 +333,7 @@ export const ExpenseClaimFormModal: React.FC<ExpenseClaimFormModalProps> = ({
                     </svg>
                   </div>
                   <div className="truncate">
-                    <p className="text-sm font-medium text-text truncate">
-                      {receiptFile.name}
-                    </p>
+                    <p className="text-sm font-medium text-text truncate">{receiptFile.name}</p>
                     <p className="text-xs text-text-muted">
                       {(receiptFile.size / 1024).toFixed(1)} KB
                     </p>

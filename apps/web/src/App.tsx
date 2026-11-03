@@ -17,6 +17,7 @@ import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import {
+  CreateEmployeePage,
   EmployeeDeactivationPage,
   EmployeeDirectoryPage,
   EmployeeDocumentsPage,
@@ -38,6 +39,7 @@ import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
+import { ReportsPage } from './features/reports';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -161,6 +163,32 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Employee Creation Routes (Issue #20) */}
+      <Route
+        path="/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
           </ShellLayout>
         }
       />
@@ -503,6 +531,15 @@ function AppRoutes() {
           </ShellLayout>
         }
       />
+      {/* Reports Routes (Issue #15 & #47) */}
+      <Route
+        path="/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
+          </ShellLayout>
+        }
+      />
       <Route
         path="/staff/expenses"
         element={
@@ -512,10 +549,26 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/lead/expenses"
         element={
           <ShellLayout>
             <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
           </ShellLayout>
         }
       />
@@ -532,6 +585,14 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ExpensesPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/lead/reports"
+        element={
+          <ShellLayout>
+            <ReportsPage />
           </ShellLayout>
         }
       />
