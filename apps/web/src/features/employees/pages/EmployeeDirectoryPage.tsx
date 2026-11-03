@@ -107,17 +107,9 @@ export function EmployeeDirectoryPage() {
             {emp.lastName.charAt(0)}
           </div>
           <div>
-            <a
-              href={`/employees/${emp.id}`}
-              onClick={(e) => {
-                e.preventDefault();
-                navigate(`/employees/${emp.id}`);
-              }}
-              className="font-semibold text-text hover:text-primary-deep hover:underline block"
-              data-testid={`employee-link-${emp.id}`}
-            >
+            <div className="font-semibold text-text">
               {emp.firstName} {emp.lastName}
-            </a>
+            </div>
             <div className="text-xs font-mono text-text-muted">{emp.employeeCode}</div>
           </div>
         </div>
@@ -305,7 +297,6 @@ export function EmployeeDirectoryPage() {
               employee={emp}
               canDeactivate={isAdmin && emp.id !== user?.employeeId}
               onDeactivate={(e) => setDeactivatingEmployee(e)}
-              onViewDetails={(e) => navigate(`/employees/${e.id}`)}
             />
           ))}
 
