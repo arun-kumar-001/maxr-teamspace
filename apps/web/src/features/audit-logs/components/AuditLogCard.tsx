@@ -45,9 +45,7 @@ export function AuditLogCard({ log, timezone, onViewDetails }: AuditLogCardProps
         </div>
         <div>
           <span className="text-text-subtle block">Entity:</span>
-          <span className="font-mono font-medium text-text truncate block">
-            {log.entityType}
-          </span>
+          <span className="font-mono font-medium text-text truncate block">{log.entityType}</span>
           <span className="font-mono text-[11px] text-text-muted truncate block">
             {log.entityId || 'N/A'}
           </span>

@@ -130,4 +130,3 @@ export async function getBasicSettings(): Promise<BasicCompanySettings | null> {
     return null;
   }
 }
-

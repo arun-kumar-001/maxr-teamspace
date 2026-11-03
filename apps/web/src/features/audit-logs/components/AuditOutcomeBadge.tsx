@@ -5,10 +5,7 @@ interface AuditOutcomeBadgeProps {
   className?: string;
 }
 
-const OUTCOME_CONFIG: Record<
-  AuditOutcome,
-  { label: string; container: string; dot: string }
-> = {
+const OUTCOME_CONFIG: Record<AuditOutcome, { label: string; container: string; dot: string }> = {
   success: {
     label: 'Success',
     container: 'bg-emerald-50 text-emerald-800 border-emerald-200',

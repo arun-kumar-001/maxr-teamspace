@@ -118,4 +118,3 @@ export function useAuditLogs(initialQuery: Partial<AuditLogQuery> = {}): UseAudi
     refetch: fetchLogs,
   };
 }
-

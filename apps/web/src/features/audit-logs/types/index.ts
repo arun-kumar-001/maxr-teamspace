@@ -56,4 +56,3 @@ export interface BasicCompanySettings {
     days: string[];
   };
 }
-

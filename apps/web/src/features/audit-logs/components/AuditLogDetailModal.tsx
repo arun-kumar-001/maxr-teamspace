@@ -12,12 +12,7 @@ interface AuditLogDetailModalProps {
   timezone: string;
 }
 
-export function AuditLogDetailModal({
-  log,
-  isOpen,
-  onClose,
-  timezone,
-}: AuditLogDetailModalProps) {
+export function AuditLogDetailModal({ log, isOpen, onClose, timezone }: AuditLogDetailModalProps) {
   const [copiedType, setCopiedType] = useState<'changes' | 'metadata' | null>(null);
 
   if (!log) return null;
@@ -100,7 +95,9 @@ export function AuditLogDetailModal({
           </div>
 
           <div className="p-3 bg-surface border border-border rounded-tile space-y-1.5">
-            <h4 className="text-xs font-semibold text-text uppercase tracking-wider">Entity & Request</h4>
+            <h4 className="text-xs font-semibold text-text uppercase tracking-wider">
+              Entity & Request
+            </h4>
             <div className="text-xs space-y-1">
               <div>
                 <span className="text-text-subtle">Type: </span>

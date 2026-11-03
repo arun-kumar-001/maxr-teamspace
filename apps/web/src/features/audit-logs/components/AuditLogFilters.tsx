@@ -50,13 +50,13 @@ export function AuditLogFilters({
 
   const hasActiveFilters = Boolean(
     query.module ||
-      query.action ||
-      query.outcome ||
-      query.entityType ||
-      query.entityId ||
-      query.from ||
-      query.to ||
-      query.sortOrder !== 'desc',
+    query.action ||
+    query.outcome ||
+    query.entityType ||
+    query.entityId ||
+    query.from ||
+    query.to ||
+    query.sortOrder !== 'desc',
   );
 
   return (
