@@ -157,6 +157,14 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
   },
 
   // Staff Routes (AGENTS.md §1)
+  // Shared Projects Route (Issue #42 - Available to all authenticated roles)
+  {
+    id: 'projects',
+    label: 'Projects',
+    path: '/projects',
+    iconName: 'briefcase',
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
   // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
   {
     id: 'my-profile',
@@ -231,6 +239,16 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   // Staff documents route
   if (path === '/staff/documents' || path.startsWith('/staff/documents/')) {
     return role === ROLES.STAFF || role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  // Notifications route - accessible to all authenticated roles
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return true;
+  }
+
+  // Projects route (Issue #42) - accessible to all authenticated roles
+  if (path === '/projects' || path.startsWith('/projects/')) {
+    return true;
   }
 
   // Onboarding routes authorization
