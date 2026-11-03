@@ -12,6 +12,7 @@ import {
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { EmployeeDocumentsTab } from '../components/EmployeeDocumentsTab';
+import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
 import type { EmployeePatch } from '../types';
 
@@ -28,6 +29,7 @@ export function EmployeeDetailPage() {
   );
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
+  const [isChangeManagerOpen, setIsChangeManagerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isAdmin = role === 'admin';
@@ -218,6 +220,15 @@ export function EmployeeDetailPage() {
             </Button>
           )}
 
+          <Button
+            variant="outline"
+            onClick={() => navigate('/employees/org-chart')}
+            className="min-h-[44px]"
+            data-testid="view-org-chart-btn"
+          >
+            Org Chart
+          </Button>
+
           {canDeactivate && (
             <Button
               variant="danger"
@@ -300,20 +311,34 @@ export function EmployeeDetailPage() {
 
             <div className="space-y-1">
               <span className="text-xs text-text-subtle font-medium block">Reporting Manager</span>
-              <p className="font-semibold text-text">
-                {employee.manager ? (
-                  <span>
-                    {employee.manager.firstName} {employee.manager.lastName}{' '}
-                    <span className="text-xs font-mono font-normal text-text-muted">
-                      ({employee.manager.employeeCode})
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-text">
+                  {employee.manager ? (
+                    <span>
+                      {employee.manager.firstName} {employee.manager.lastName}{' '}
+                      <span className="text-xs font-mono font-normal text-text-muted">
+                        ({employee.manager.employeeCode})
+                      </span>
                     </span>
-                  </span>
-                ) : (
-                  <span className="text-text-muted font-normal">
-                    None (Direct Report / Executive)
-                  </span>
+                  ) : (
+                    <span className="text-text-muted font-normal">
+                      None (Direct Report / Executive)
+                    </span>
+                  )}
+                </p>
+                {canEdit && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsChangeManagerOpen(true)}
+                    className="text-xs min-h-[32px] py-0.5 px-2"
+                    data-testid="open-change-manager-btn"
+                  >
+                    Change Manager
+                  </Button>
                 )}
-              </p>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -499,6 +524,31 @@ export function EmployeeDetailPage() {
             designation: { title: employee.designation.title },
           }}
           onSuccess={handleDeactivateSuccess}
+        />
+      )}
+
+      {/* Change Manager Modal */}
+      {isChangeManagerOpen && employee && (
+        <ChangeManagerModal
+          isOpen={isChangeManagerOpen}
+          onClose={() => setIsChangeManagerOpen(false)}
+          employee={{
+            id: employee.id,
+            name: `${employee.firstName} ${employee.lastName}`,
+            employeeCode: employee.employeeCode,
+            version: employee.version,
+            manager: employee.manager
+              ? {
+                  id: employee.manager.id,
+                  name: `${employee.manager.firstName} ${employee.manager.lastName}`,
+                  employeeCode: employee.manager.employeeCode,
+                }
+              : null,
+          }}
+          onSuccess={() => {
+            showToast('Reporting manager updated successfully.');
+            void refetch();
+          }}
         />
       )}
     </div>
