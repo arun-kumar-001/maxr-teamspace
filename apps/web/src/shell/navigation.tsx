@@ -362,7 +362,7 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   }
 
-  // Employee detail route (Issues #21 & #155) - Canonical /employees/:id accessible to all authenticated roles
+  // Employee detail route (Issues 21 and 155) - Canonical /employees/:id accessible to all authenticated roles
   // Backend GET /employees/:id enforces record scope (Staff: own record only, TL: direct reports, Admin/HR: all)
   if (path.match(/^\/employees\/[^/]+$/)) {
     return true;
