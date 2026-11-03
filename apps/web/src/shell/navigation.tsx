@@ -165,6 +165,14 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'briefcase',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
+  // Shared Meetings Route (Issue #45 - Available to all authenticated roles)
+  {
+    id: 'meetings',
+    label: 'Meetings',
+    path: '/meetings',
+    iconName: 'calendar',
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
   // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
   {
     id: 'my-profile',
@@ -248,6 +256,20 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
 
   // Projects route (Issue #42) - accessible to all authenticated roles
   if (path === '/projects' || path.startsWith('/projects/')) {
+    return true;
+  }
+
+  // Meetings routes (Issue #45) - accessible to all authenticated roles
+  if (
+    path === '/meetings' ||
+    path.startsWith('/meetings/') ||
+    path === '/staff/meetings' ||
+    path.startsWith('/staff/meetings/') ||
+    path === '/lead/meetings' ||
+    path.startsWith('/lead/meetings/') ||
+    path === '/admin/meetings' ||
+    path.startsWith('/admin/meetings/')
+  ) {
     return true;
   }
 
