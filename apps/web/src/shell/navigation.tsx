@@ -73,6 +73,13 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'settings',
     allowedRoles: [ROLES.ADMIN],
   },
+  {
+    id: 'admin-reports',
+    label: 'Company Reports',
+    path: '/admin/reports',
+    iconName: 'file-text',
+    allowedRoles: [ROLES.ADMIN],
+  },
 
   // HR Manager Routes (AGENTS.md §1)
   {
@@ -271,6 +278,20 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path.startsWith('/admin/meetings/')
   ) {
     return true;
+  }
+
+  // Reports routes (Issue #15 & #47)
+  if (path === '/reports' || path.startsWith('/reports/')) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
+  }
+  if (path === '/admin/reports' || path.startsWith('/admin/reports/')) {
+    return role === ROLES.ADMIN;
+  }
+  if (path === '/hr/reports' || path.startsWith('/hr/reports/')) {
+    return role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
+  }
+  if (path === '/lead/reports' || path.startsWith('/lead/reports/')) {
+    return role === ROLES.TEAM_LEAD || role === ROLES.ADMIN;
   }
 
   // Tasks routes (Issue #43)
