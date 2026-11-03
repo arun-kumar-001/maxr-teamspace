@@ -246,6 +246,15 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.STAFF;
   }
 
+  // Employee creation routes (Issue #20) - Admin & HR Manager allowed, Team Lead & Staff denied
+  if (
+    path === '/employees/new' ||
+    path === '/admin/employees/new' ||
+    path === '/hr/employees/new'
+  ) {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
   // Canonical employee directory route (Issue #19)
   if (path === '/employees' || path.startsWith('/employees/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;

@@ -17,6 +17,7 @@ import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
 import {
+  CreateEmployeePage,
   EmployeeDeactivationPage,
   EmployeeDirectoryPage,
   EmployeeDocumentsPage,
@@ -126,6 +127,32 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <EmployeeDirectoryPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Employee Creation Routes (Issue #20) */}
+      <Route
+        path="/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/employees/new"
+        element={
+          <ShellLayout>
+            <CreateEmployeePage />
           </ShellLayout>
         }
       />

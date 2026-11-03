@@ -1,5 +1,6 @@
 export * from './documents';
 export * from './deactivation';
+export * from './creation';
 
 export type EmployeeStatus = 'active' | 'pending' | 'deactivated';
 
