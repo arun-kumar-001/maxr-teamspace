@@ -133,7 +133,11 @@ export function EmployeeDirectoryPage() {
             <div className="font-semibold text-text">
               <SafeLink
                 to={`/employees/${emp.id}`}
-                className="hover:text-primary-ink focus:outline-none focus:ring-2 focus:ring-primary-strong rounded transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/employees/${emp.id}`);
+                }}
+                className="hover:text-primary-ink focus:outline-none focus:ring-2 focus:ring-primary-strong rounded transition-colors block"
                 data-testid={`employee-link-${emp.id}`}
               >
                 {emp.firstName} {emp.lastName}
@@ -326,6 +330,7 @@ export function EmployeeDirectoryPage() {
               employee={emp}
               canDeactivate={isAdmin && emp.id !== user?.employeeId}
               onDeactivate={(e) => setDeactivatingEmployee(e)}
+              onViewDetails={(e) => navigate(`/employees/${e.id}`)}
             />
           ))}
 

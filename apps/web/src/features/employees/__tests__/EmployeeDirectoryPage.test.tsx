@@ -247,4 +247,28 @@ describe('EmployeeDirectoryPage Component', () => {
       }
     });
   });
+
+  describe('Employee Detail Navigation Links (Issue #155)', () => {
+    it('renders direct navigation links on employee table and mobile cards', async () => {
+      vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockResolvedValueOnce({
+        data: sampleEmployees,
+        meta: { page: 1, pageSize: 20, total: 2, totalPages: 1 },
+      });
+
+      render(<EmployeeDirectoryPage />);
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('employee-link-emp-1').length).toBeGreaterThanOrEqual(1);
+      });
+
+      const desktopLinks = screen.getAllByTestId('employee-link-emp-1');
+      expect(desktopLinks[0]).toHaveAttribute('href', '/employees/emp-1');
+      expect(desktopLinks[0]).toHaveTextContent('Eleanor Vance');
+
+      const mobileLink = screen.getByTestId('employee-card-link-emp-1');
+      expect(mobileLink).toBeInTheDocument();
+      expect(mobileLink).toHaveAttribute('href', '/employees/emp-1');
+      expect(mobileLink).toHaveTextContent('Eleanor Vance');
+    });
+  });
 });

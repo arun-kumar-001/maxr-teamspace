@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import '@testing-library/jest-dom/vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as profileApi from '../api/profileApi';
 import { MyProfilePage } from '../pages/MyProfilePage';
 import type { EmployeeProfile } from '../types';
@@ -46,6 +47,10 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('renders loading skeleton initially while data is resolving', () => {
@@ -267,5 +272,20 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
 
     // Edit phone button MUST NOT be rendered
     expect(screen.queryByTestId('edit-phone-button')).not.toBeInTheDocument();
+  });
+
+  it('renders View Full Record link with link to user canonical employee detail (Issue #155)', async () => {
+    vi.spyOn(profileApi, 'fetchProfile').mockResolvedValueOnce(mockStaffProfile);
+
+    render(<MyProfilePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('my-profile-page')).toBeInTheDocument();
+    });
+
+    const fullRecordLink = screen.getByTestId('view-full-record-link');
+    expect(fullRecordLink).toBeInTheDocument();
+    expect(fullRecordLink).toHaveAttribute('href', `/employees/${mockStaffProfile.id}`);
+    expect(fullRecordLink).toHaveTextContent('View Full Record');
   });
 });

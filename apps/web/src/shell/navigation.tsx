@@ -342,7 +342,7 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.STAFF;
   }
 
-  // Employee creation routes (Issue #20) - Admin & HR Manager allowed, Team Lead & Staff denied
+  // Employee creation routes (Issue 20) - Admin & HR Manager allowed, Team Lead & Staff denied
   if (
     path === '/employees/new' ||
     path === '/admin/employees/new' ||
@@ -351,24 +351,44 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
-  // Employee detail route (Issue 155 follow-up)
+  // Org chart routes (Issue 23)
+  if (path === '/employees/org-chart') {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
+  }
+  if (path === '/admin/org-chart') {
+    return role === ROLES.ADMIN;
+  }
+  if (path === '/hr/org-chart') {
+    return role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
+  }
+
+  // Employee detail route (Issues 21 and 155 follow-up)
   // Canonical /employees/:id is accessible to all 4 authenticated roles (backend enforces record scope).
   // /admin/employees/:id is Admin-only.
   // /hr/employees/:id is HR Manager-only.
-  // Matches exactly one path segment after employees/. Excludes /employees/new, /employees/me, and arbitrary deeper paths.
+  // Matches exactly one path segment after employees/. Excludes /employees/new, /employees/me, /employees/org-chart, and arbitrary deeper paths.
   const employeeDetailMatch = path.match(/^\/(?:(admin|hr)\/)?employees\/([^/]+)$/);
   if (employeeDetailMatch) {
     const [, prefix, detailId] = employeeDetailMatch;
-    if (detailId !== 'new' && detailId !== 'me') {
+    if (detailId !== 'new' && detailId !== 'me' && detailId !== 'org-chart') {
       if (prefix === 'admin') return role === ROLES.ADMIN;
       if (prefix === 'hr') return role === ROLES.HR_MANAGER;
       return true; // Canonical /employees/:id is accessible to all authenticated roles
     }
   }
 
-  // Canonical employee directory route (Issue #19)
-  if (path === '/employees' || path.startsWith('/employees/')) {
+  // Canonical employee directory route (Issue 19)
+  if (path === '/employees' || path === '/employees/') {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
+  }
+
+  // Deny unsupported arbitrary child routes under /employees/
+  if (
+    path.startsWith('/employees/') ||
+    path.startsWith('/admin/employees/') ||
+    path.startsWith('/hr/employees/')
+  ) {
+    return false;
   }
 
   // Canonical departments & designations routes (Issue #18)

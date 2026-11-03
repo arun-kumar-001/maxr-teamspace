@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ProfileHeader } from '../components/ProfileHeader';
 import type { EmployeeProfile } from '../types';
@@ -29,6 +29,10 @@ const mockProfile: EmployeeProfile = {
 };
 
 describe('ProfileHeader Component Navigation (Issue #155)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders View Full Employee Record link when profile has a valid ID', () => {
     render(
       <MemoryRouter>
@@ -39,7 +43,8 @@ describe('ProfileHeader Component Navigation (Issue #155)', () => {
     const recordLink = screen.getByTestId('view-full-record-link');
     expect(recordLink).toBeInTheDocument();
     expect(recordLink).toHaveAttribute('href', '/employees/emp-001');
-    expect(recordLink).toHaveTextContent(/View Full Employee Record/i);
+    expect(recordLink).toHaveTextContent(/View Full Record/i);
+    expect(recordLink).toHaveAttribute('aria-label', 'View Full Employee Record');
   });
 
   it('handles missing or empty employee ID safely without rendering the link', () => {

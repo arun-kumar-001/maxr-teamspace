@@ -29,9 +29,15 @@ export interface EmployeeCardProps {
   employee: EmployeeDirectoryItem;
   canDeactivate?: boolean;
   onDeactivate?: (employee: EmployeeDirectoryItem) => void;
+  onViewDetails?: (employee: EmployeeDirectoryItem) => void;
 }
 
-export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: EmployeeCardProps) {
+export function EmployeeCard({
+  employee,
+  canDeactivate = false,
+  onDeactivate,
+  onViewDetails,
+}: EmployeeCardProps) {
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
   const statusVariant =
@@ -61,8 +67,14 @@ export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: 
             <h3 className="text-sm font-semibold text-text truncate">
               <SafeLink
                 to={`/employees/${employee.id}`}
-                className="hover:text-primary-ink focus:outline-none focus:ring-2 focus:ring-primary-strong rounded transition-colors"
-                data-testid={`employee-card-name-link-${employee.id}`}
+                onClick={(e) => {
+                  if (onViewDetails) {
+                    e.preventDefault();
+                    onViewDetails(employee);
+                  }
+                }}
+                className="hover:text-primary-ink focus:outline-none focus:ring-2 focus:ring-primary-strong rounded transition-colors block"
+                data-testid={`employee-card-link-${employee.id}`}
               >
                 {employee.firstName} {employee.lastName}
               </SafeLink>

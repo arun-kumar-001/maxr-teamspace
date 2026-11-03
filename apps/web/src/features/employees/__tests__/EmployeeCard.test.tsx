@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { EmployeeCard } from '../components/EmployeeCard';
 import type { EmployeeDirectoryItem } from '../types';
@@ -28,6 +28,10 @@ const mockEmployee: EmployeeDirectoryItem = {
 };
 
 describe('EmployeeCard Component Navigation & Actions (Issue #155)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('renders employee name as a link to detail page (/employees/:id)', () => {
     render(
       <MemoryRouter>
@@ -35,7 +39,7 @@ describe('EmployeeCard Component Navigation & Actions (Issue #155)', () => {
       </MemoryRouter>,
     );
 
-    const nameLink = screen.getByTestId('employee-card-name-link-emp-101');
+    const nameLink = screen.getByTestId('employee-card-link-emp-101');
     expect(nameLink).toBeInTheDocument();
     expect(nameLink).toHaveAttribute('href', '/employees/emp-101');
     expect(nameLink).toHaveTextContent('Priya Sharma');
@@ -101,7 +105,7 @@ describe('EmployeeCard Component Navigation & Actions (Issue #155)', () => {
   it('renders safely outside of Router context using SafeLink fallback', () => {
     render(<EmployeeCard employee={mockEmployee} />);
 
-    const nameLink = screen.getByTestId('employee-card-name-link-emp-101');
+    const nameLink = screen.getByTestId('employee-card-link-emp-101');
     expect(nameLink).toBeInTheDocument();
     expect(nameLink.tagName).toBe('A');
     expect(nameLink).toHaveAttribute('href', '/employees/emp-101');
