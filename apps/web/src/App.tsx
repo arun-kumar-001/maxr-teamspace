@@ -36,6 +36,7 @@ import { NotificationsInboxPage } from './features/notifications';
 import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
+import { CompanySettingsPage } from './features/settings';
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -125,6 +126,24 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <AuditLogsPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Company Settings Routes (Issue #30) */}
+      <Route
+        path="/admin/settings"
+        element={
+          <ShellLayout>
+            <CompanySettingsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ShellLayout>
+            <CompanySettingsPage />
           </ShellLayout>
         }
       />
