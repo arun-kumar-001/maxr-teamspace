@@ -1,5 +1,29 @@
+import { Link, useInRouterContext } from 'react-router-dom';
 import type { EmployeeDirectoryItem } from '../types';
 import { Badge } from '../../../components/ui/StatusPill';
+
+function SafeLink({
+  to,
+  children,
+  ...props
+}: {
+  to: string;
+  children: React.ReactNode;
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return (
+      <Link to={to} {...props}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  );
+}
 
 export interface EmployeeCardProps {
   employee: EmployeeDirectoryItem;
@@ -35,7 +59,13 @@ export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: 
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-text truncate">
-              {employee.firstName} {employee.lastName}
+              <SafeLink
+                to={`/employees/${employee.id}`}
+                className="hover:text-primary-ink focus:outline-none focus:ring-2 focus:ring-primary-strong rounded transition-colors"
+                data-testid={`employee-card-name-link-${employee.id}`}
+              >
+                {employee.firstName} {employee.lastName}
+              </SafeLink>
             </h3>
             <span className="text-xs font-mono text-text-muted">{employee.employeeCode}</span>
           </div>
@@ -66,12 +96,20 @@ export function EmployeeCard({ employee, canDeactivate = false, onDeactivate }: 
       </div>
 
       {/* Bottom Footer: Joining Date and Contact Quick-Actions (Min 44px touch targets) */}
-      <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
         <span className="text-xs text-text-muted">
           Joined: <span className="font-medium text-text">{employee.joiningDate}</span>
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <SafeLink
+            to={`/employees/${employee.id}`}
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] px-2.5 py-1 text-xs font-medium text-primary-deep bg-primary-soft hover:bg-surface-muted rounded-input transition-colors focus:ring-2 focus:ring-primary-strong outline-none"
+            aria-label={`View details for ${employee.firstName} ${employee.lastName}`}
+            data-testid={`view-details-card-${employee.id}`}
+          >
+            View Details
+          </SafeLink>
           {employee.email && (
             <a
               href={`mailto:${employee.email}`}

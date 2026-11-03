@@ -195,6 +195,56 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
         expect(isPathAuthorizedForRole('/profile', role)).toBe(true);
         expect(isPathAuthorizedForRole('/staff/profile', role)).toBe(true);
       });
+
+      // Issue #155 (Follow-up to Issue #21): Employee detail route authorization
+      // Canonical detail route /employees/:id - accessible to all four roles
+      expect(isPathAuthorizedForRole('/employees/EMP-001', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/EMP-001', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/EMP-001', ROLES.TEAM_LEAD)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/EMP-001', ROLES.STAFF)).toBe(true);
+
+      // Admin alias /admin/employees/:id - Admin only
+      expect(isPathAuthorizedForRole('/admin/employees/EMP-001', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/admin/employees/EMP-001', ROLES.HR_MANAGER)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/EMP-001', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/admin/employees/EMP-001', ROLES.STAFF)).toBe(false);
+
+      // HR Manager alias /hr/employees/:id - HR Manager only
+      expect(isPathAuthorizedForRole('/hr/employees/EMP-001', ROLES.ADMIN)).toBe(false);
+      expect(isPathAuthorizedForRole('/hr/employees/EMP-001', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/hr/employees/EMP-001', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/hr/employees/EMP-001', ROLES.STAFF)).toBe(false);
+
+      // Employee directory route /employees - Staff denied, others allowed
+      expect(isPathAuthorizedForRole('/employees', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees', ROLES.TEAM_LEAD)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees', ROLES.STAFF)).toBe(false);
+
+      // Employee creation route /employees/new - Admin & HR only
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/new', ROLES.STAFF)).toBe(false);
+
+      // Reserved path /employees/me - does not become a generic detail route for Staff
+      expect(isPathAuthorizedForRole('/employees/me', ROLES.STAFF)).toBe(false);
+
+      // Existing protected sub-paths
+      expect(isPathAuthorizedForRole('/employees/EMP-001/documents', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/EMP-001/documents', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/EMP-001/documents', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/EMP-001/documents', ROLES.STAFF)).toBe(false);
+
+      expect(isPathAuthorizedForRole('/employees/EMP-001/deactivate', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/employees/EMP-001/deactivate', ROLES.HR_MANAGER)).toBe(
+        false,
+      );
+      expect(isPathAuthorizedForRole('/employees/EMP-001/deactivate', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/employees/EMP-001/deactivate', ROLES.STAFF)).toBe(false);
+
+      // Unsupported nested routes are denied for Staff
+      expect(isPathAuthorizedForRole('/employees/EMP-001/unknown', ROLES.STAFF)).toBe(false);
     });
   });
 });

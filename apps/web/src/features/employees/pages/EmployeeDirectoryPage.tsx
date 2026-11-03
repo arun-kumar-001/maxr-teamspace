@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useInRouterContext } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -16,6 +16,29 @@ import { EmployeeFilters } from '../components/EmployeeFilters';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { useEmployeeDirectory } from '../hooks/useEmployeeDirectory';
 import type { EmployeeDirectoryItem } from '../types';
+
+function SafeLink({
+  to,
+  children,
+  ...props
+}: {
+  to: string;
+  children: React.ReactNode;
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return (
+      <Link to={to} {...props}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  );
+}
 
 export function EmployeeDirectoryPage() {
   const {
@@ -108,7 +131,13 @@ export function EmployeeDirectoryPage() {
           </div>
           <div>
             <div className="font-semibold text-text">
-              {emp.firstName} {emp.lastName}
+              <SafeLink
+                to={`/employees/${emp.id}`}
+                className="hover:text-primary-ink focus:outline-none focus:ring-2 focus:ring-primary-strong rounded transition-colors"
+                data-testid={`employee-link-${emp.id}`}
+              >
+                {emp.firstName} {emp.lastName}
+              </SafeLink>
             </div>
             <div className="text-xs font-mono text-text-muted">{emp.employeeCode}</div>
           </div>

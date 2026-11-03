@@ -218,6 +218,22 @@ describe('EmployeeDirectoryPage Component', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders navigable employee name links pointing to /employees/:id in directory table (Issue #155)', async () => {
+    render(<EmployeeDirectoryPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('employee-link-emp-1').length).toBeGreaterThan(0);
+    });
+
+    const emp1Links = screen.getAllByTestId('employee-link-emp-1');
+    expect(emp1Links[0]).toHaveAttribute('href', '/employees/emp-1');
+    expect(emp1Links[0]).toHaveTextContent('Eleanor Vance');
+
+    const emp2Links = screen.getAllByTestId('employee-link-emp-2');
+    expect(emp2Links[0]).toHaveAttribute('href', '/employees/emp-2');
+    expect(emp2Links[0]).toHaveTextContent('Marcus Brody');
+  });
+
   describe('Responsive 9-Viewport Static Rendering (AGENTS.md §8)', () => {
     it('renders cleanly across all 9 mandatory reference viewports without error', () => {
       for (const vp of REFERENCE_VIEWPORTS) {

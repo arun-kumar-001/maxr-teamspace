@@ -351,6 +351,21 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
+  // Employee detail route (Issue 155 follow-up)
+  // Canonical /employees/:id is accessible to all 4 authenticated roles (backend enforces record scope).
+  // /admin/employees/:id is Admin-only.
+  // /hr/employees/:id is HR Manager-only.
+  // Matches exactly one path segment after employees/. Excludes /employees/new, /employees/me, and arbitrary deeper paths.
+  const employeeDetailMatch = path.match(/^\/(?:(admin|hr)\/)?employees\/([^/]+)$/);
+  if (employeeDetailMatch) {
+    const [, prefix, detailId] = employeeDetailMatch;
+    if (detailId !== 'new' && detailId !== 'me') {
+      if (prefix === 'admin') return role === ROLES.ADMIN;
+      if (prefix === 'hr') return role === ROLES.HR_MANAGER;
+      return true; // Canonical /employees/:id is accessible to all authenticated roles
+    }
+  }
+
   // Canonical employee directory route (Issue #19)
   if (path === '/employees' || path.startsWith('/employees/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
