@@ -305,6 +305,7 @@ export function EmployeeDirectoryPage() {
               employee={emp}
               canDeactivate={isAdmin && emp.id !== user?.employeeId}
               onDeactivate={(e) => setDeactivatingEmployee(e)}
+              onViewDetails={(e) => navigate(`/employees/${e.id}`)}
             />
           ))}
 

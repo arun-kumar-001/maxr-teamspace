@@ -395,7 +395,7 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await expect(page.getByRole('heading', { level: 1, name: 'Employee Directory' })).toBeVisible();
 
     // Click on the first visible employee link
-    const firstEmpLink = page.locator(':visible').filter({ hasText: 'Devon Miles' }).first();
+    const firstEmpLink = page.locator('[data-testid="employee-link-emp-1"]:visible').first();
     await expect(firstEmpLink).toBeVisible();
     await firstEmpLink.click();
 
@@ -404,6 +404,9 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await expect(page.getByTestId('employee-detail-page')).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: 'Devon Miles' })).toBeVisible();
     await expect(page.getByText('MAX001')).toBeVisible();
+
+    // Verify responsive layout has no horizontal scroll (AGENTS.md §8)
+    await expectNoHorizontalScroll(page);
 
     // Verify tabs work
     await expect(page.getByTestId('tab-overview')).toBeVisible();
