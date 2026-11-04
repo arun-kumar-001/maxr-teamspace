@@ -10,6 +10,8 @@ import {
   createDesignationRouter,
   createEmployeeDirectoryRouter,
 } from '../modules/employees';
+import { IEmployeeDirectoryRepository } from '../modules/employees/directory/directory.repository';
+import { IEmployeeDetailRepository } from '../modules/employees/detail/detail.repository';
 import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createApprovals } from '../modules/approvals';
@@ -48,6 +50,8 @@ export interface ApiRouterOptions {
   reportPdfExporter?: PdfExporter;
   /** Sample module and OpenAPI document are development aids: never exposed in production. */
   exposeDevRoutes: boolean;
+  employeeDirectoryRepository?: IEmployeeDirectoryRepository;
+  employeeDetailRepository?: IEmployeeDetailRepository;
 }
 
 /**
@@ -62,6 +66,8 @@ export function createApiRouter({
   reportRegistry,
   reportPdfExporter,
   exposeDevRoutes,
+  employeeDirectoryRepository,
+  employeeDetailRepository,
 }: ApiRouterOptions): Router {
   const router = Router();
 
@@ -169,6 +175,7 @@ export function createApiRouter({
     '/employees',
     createEmployeeDirectoryRouter({
       authenticate: auth.authenticate,
+      repository: employeeDirectoryRepository,
     }),
   );
   router.use(
@@ -192,7 +199,11 @@ export function createApiRouter({
   );
   router.use(
     '/employees',
-    createEmployeeDetail({ platform, authenticate: auth.authenticate }).router,
+    createEmployeeDetail({
+      platform,
+      authenticate: auth.authenticate,
+      repository: employeeDetailRepository,
+    }).router,
   );
   router.use(
     '/employees',
