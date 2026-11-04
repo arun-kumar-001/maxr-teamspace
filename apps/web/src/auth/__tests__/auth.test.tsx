@@ -55,10 +55,11 @@ describe('TC-12-01: AuthContext & Real API Integration', () => {
       </AuthProvider>,
     );
 
-    expect(html).toContain('MAXR Teamspace');
-    expect(html).toContain('Work Email');
-    expect(html).toContain('Password');
-    expect(html).toContain('Sign In to Teamspace');
+    expect(html).toContain('Welcome');
+    expect(html).toContain('MaxR Teamspace');
+    expect(html).toContain('Enter your email');
+    expect(html).toContain('Enter your password');
+    expect(html).toContain('Sign In');
   });
 
   it('correctly parses real API response shape { data: { user, csrfToken } } on login', async () => {
