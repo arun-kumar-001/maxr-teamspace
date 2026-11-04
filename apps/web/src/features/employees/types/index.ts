@@ -1,5 +1,8 @@
 export * from './documents';
 export * from './deactivation';
+export * from './creation';
+export * from './detail';
+export * from './hierarchy';
 
 export type EmployeeStatus = 'active' | 'pending' | 'deactivated';
 

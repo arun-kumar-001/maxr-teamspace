@@ -31,6 +31,7 @@ import { createNotifications, loadNotificationsConfig } from '../modules/notific
 import { createProjects } from '../modules/projects';
 import { createTasks } from '../modules/tasks';
 import { createMeetings } from '../modules/meetings';
+import { createExpensesModule } from '../modules/expenses';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
@@ -225,6 +226,15 @@ export function createApiRouter({
 
   // File downloads by signed link (see docs/architecture/shared-services.md).
   router.use('/files', createFilesRouter(platform.storage));
+
+  const expenses = createExpensesModule({
+    approvals: approvals.service,
+    platform,
+    authenticate: auth.authenticate,
+    settings: settings.reader,
+    idempotencyStore,
+  });
+  router.use('/', expenses.router);
 
   if (exposeDevRoutes) {
     router.use('/templates', createTemplateRouter(idempotencyStore, platform, auth.authenticate));

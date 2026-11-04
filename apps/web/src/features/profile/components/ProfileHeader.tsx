@@ -60,15 +60,39 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
           </div>
         </div>
 
-        {/* Quick status banner for deactivated accounts */}
-        {profile.status === 'deactivated' && (
-          <div
-            className="w-full sm:w-auto px-4 py-2 bg-rose-50 border border-rose-200 rounded-input text-xs text-rose-800"
-            role="alert"
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          {/* Quick status banner for deactivated accounts */}
+          {profile.status === 'deactivated' && (
+            <div
+              className="w-full sm:w-auto px-4 py-2 bg-rose-50 border border-rose-200 rounded-input text-xs text-rose-800"
+              role="alert"
+            >
+              <strong>Account Deactivated:</strong> This profile is read-only.
+            </div>
+          )}
+
+          <a
+            href={`/employees/${profile.id}`}
+            data-testid="view-full-record-link"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-medium rounded-input border border-border bg-surface hover:bg-surface-muted text-text transition-colors shadow-sm min-h-[44px]"
           >
-            <strong>Account Deactivated:</strong> This profile is read-only.
-          </div>
-        )}
+            <svg
+              className="w-4 h-4 text-text-muted"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+            <span>View Full Record</span>
+          </a>
+        </div>
       </div>
     </div>
   );

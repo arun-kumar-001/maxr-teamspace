@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -49,6 +50,13 @@ export function EmployeeDirectoryPage() {
     // Fallback when rendered outside AuthProvider in isolated tests
   }
   const isAdmin = role === 'admin';
+  const canCreateEmployee = role === 'admin' || role === 'hr_manager';
+  let navigate: (to: string) => void = () => {};
+  try {
+    navigate = useNavigate();
+  } catch {
+    // Fallback when rendered outside Router in isolated tests
+  }
   const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(
     null,
   );
@@ -99,9 +107,17 @@ export function EmployeeDirectoryPage() {
             {emp.lastName.charAt(0)}
           </div>
           <div>
-            <div className="font-semibold text-text">
+            <a
+              href={`/employees/${emp.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(`/employees/${emp.id}`);
+              }}
+              className="font-semibold text-text hover:text-primary-deep hover:underline block"
+              data-testid={`employee-link-${emp.id}`}
+            >
               {emp.firstName} {emp.lastName}
-            </div>
+            </a>
             <div className="text-xs font-mono text-text-muted">{emp.employeeCode}</div>
           </div>
         </div>
@@ -227,6 +243,26 @@ export function EmployeeDirectoryPage() {
             Directory of workforce members, departments, and reporting hierarchy
           </p>
         </div>
+
+        {canCreateEmployee && (
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => navigate('/employees/new')}
+            data-testid="add-employee-button"
+            className="min-h-[44px] self-start sm:self-auto shrink-0"
+          >
+            <svg
+              className="w-4 h-4 mr-1.5 stroke-current stroke-2 fill-none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Employee
+          </Button>
+        )}
       </div>
 
       {/* Filter Controls */}
@@ -269,6 +305,7 @@ export function EmployeeDirectoryPage() {
               employee={emp}
               canDeactivate={isAdmin && emp.id !== user?.employeeId}
               onDeactivate={(e) => setDeactivatingEmployee(e)}
+              onViewDetails={(e) => navigate(`/employees/${e.id}`)}
             />
           ))}
 

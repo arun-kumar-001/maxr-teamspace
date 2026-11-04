@@ -9,4 +9,6 @@ export * from './components/TaskKanbanBoard';
 export * from './components/TaskTableView';
 export * from './components/TaskFormModal';
 export * from './components/TaskDetailModal';
+export * from './components/TaskCommentsThread';
+export * from './components/TaskAttachmentsList';
 export * from './pages/TasksPage';
