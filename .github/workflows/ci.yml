@@ -161,9 +161,9 @@ jobs:
           export BACKUP_PASSPHRASE_FILE=/tmp/secret/backup.pass
           export PGUSER=postgres
           export PGDATABASE=maxr_teamspace
-          export PGHOST=localhost
-          export PGPORT=5432
-          export PGPASSWORD=postgres
+          # Use the matching PostgreSQL 16 container binary for pg_dump and pg_restore
+          PG_CONTAINER="$(docker ps -q --filter ancestor=postgres:16-alpine | head -1)"
+          export PG_EXEC="docker exec -i $PG_CONTAINER"
           # 1. Run encrypted backup
           ./deploy/scripts/backup.sh
           # 2. Run verify-restore into ephemeral database
