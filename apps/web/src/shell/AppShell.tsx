@@ -22,13 +22,21 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   const bottomNavItems = roleNavItems.slice(0, 4);
 
   const brand = {
-    name: 'MAXR Teamspace',
+    name: (
+      <span>
+        <span className="sr-only">MAXR Teamspace</span>
+        <span aria-hidden="true">
+          Max<span className="text-primary font-bold">R</span> Teamspace
+        </span>
+      </span>
+    ),
     subtitle: 'Staff Management',
     logo: (
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sidebar font-display font-bold shadow-sm">
-        <span className="text-xl font-black">M</span>
-        <span className="text-xl font-black text-brand-red">1</span>
-      </div>
+      <img
+        src="/maxr-symbol.png"
+        alt="MAXR"
+        className="w-9 h-9 object-contain select-none drop-shadow-[0_1px_2px_rgba(255,255,255,0.3)]"
+      />
     ),
   };
 
@@ -41,9 +49,9 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     : undefined;
 
   return (
-    <div className="min-h-screen bg-bg flex overflow-x-hidden" data-testid="app-shell">
+    <div className="h-screen bg-bg flex overflow-hidden overflow-x-hidden" data-testid="app-shell">
       {/* Desktop / Tablet Persistent Floating Sidebar (DESIGN.md §5) */}
-      <div className="hidden md:flex p-4 shrink-0 h-screen sticky top-0" data-testid="app-sidebar">
+      <div className="hidden md:flex p-4 shrink-0 h-full" data-testid="app-sidebar">
         <Sidebar
           brand={brand}
           groups={groups}
@@ -79,7 +87,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
         <Header
           onToggleMobileNav={() => setIsMobileNavOpen(true)}
           activePath={currentPath}
