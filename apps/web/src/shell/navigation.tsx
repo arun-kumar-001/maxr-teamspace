@@ -379,6 +379,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER || role === ROLES.TEAM_LEAD;
   }
 
+  // Attendance canonical routes
+  if (path === '/attendance' || path.startsWith('/attendance/')) {
+    return true;
+  }
+
   // Canonical departments & designations routes (Issue #18)
   if (path === '/departments' || path.startsWith('/departments/')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
@@ -535,17 +540,49 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
 
   // Group 2: Role-specific modules
   if (moduleItems.length > 0) {
-    groups.push({
-      id: `module-${role}`,
-      label: moduleLabel,
-      items: moduleItems.map((item): SidebarItem => ({
+    const attendanceItem: SidebarItem = {
+      id: '/attendance',
+      label: 'Attendance',
+      href: '/attendance',
+      icon: <NavSvgIcon name="calendar" />,
+      children: [
+        { id: '/attendance', label: 'On Duty', href: '/attendance' },
+        { id: '/attendance/roster', label: 'Roster', href: '/attendance/roster' },
+        { id: '/attendance/timesheets', label: 'Timesheets', href: '/attendance/timesheets' },
+      ],
+    };
+
+    const items: SidebarItem[] = [];
+    for (const item of moduleItems) {
+      if (role !== ROLES.STAFF && (item.path === '/lead/attendance' || item.path === '/staff/attendance')) {
+        items.push(attendanceItem);
+        continue;
+      }
+
+      items.push({
         id: item.path,
         label: item.label,
         href: item.path,
         icon: <NavSvgIcon name={item.iconName} />,
         count: item.badge ? parseInt(String(item.badge), 10) : undefined,
         countTone: item.badge ? 'attention' : undefined,
-      })),
+      });
+
+      // Insert Attendance right after Employee Directory in Admin sidebar
+      if (role === ROLES.ADMIN && item.path === '/admin/employees') {
+        items.push(attendanceItem);
+      }
+
+      // Insert Attendance right after Designations in HR Manager sidebar
+      if (role === ROLES.HR_MANAGER && item.path === '/hr/designations') {
+        items.push(attendanceItem);
+      }
+    }
+
+    groups.push({
+      id: `module-${role}`,
+      label: moduleLabel,
+      items,
     });
   }
 

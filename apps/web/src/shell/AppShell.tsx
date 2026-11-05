@@ -41,6 +41,13 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       }
     : undefined;
 
+  const activeNavPath =
+    currentPath === '/attendance/on-duty'
+      ? '/attendance'
+      : currentPath === '/staff/attendance' || currentPath === '/lead/attendance'
+        ? '/attendance'
+        : currentPath;
+
   return (
     <div className="min-h-screen bg-bg flex overflow-x-hidden" data-testid="app-shell">
       {/* Desktop / Tablet Persistent Floating Sidebar (DESIGN.md §5) */}
@@ -48,7 +55,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         <Sidebar
           brand={brand}
           groups={groups}
-          activeId={currentPath}
+          activeId={activeNavPath}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
           onNavigate={(id, e) => {
@@ -66,7 +73,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         onClose={() => setIsMobileNavOpen(false)}
         brand={brand}
         groups={groups}
-        activeId={currentPath}
+        activeId={activeNavPath}
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);
