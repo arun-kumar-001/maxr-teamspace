@@ -37,8 +37,16 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         name: user.name,
         role: ROLE_DISPLAY_NAMES[user.role] ?? user.role,
         initials: user.avatarInitials,
+        avatarUrl: user.avatarUrl,
       }
     : undefined;
+
+  const activeNavPath =
+    currentPath === '/attendance/on-duty'
+      ? '/attendance'
+      : currentPath === '/staff/attendance' || currentPath === '/lead/attendance'
+        ? '/attendance'
+        : currentPath;
 
   return (
     <div className="min-h-screen bg-bg flex overflow-x-hidden" data-testid="app-shell">
@@ -47,7 +55,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         <Sidebar
           brand={brand}
           groups={groups}
-          activeId={currentPath}
+          activeId={activeNavPath}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
           onNavigate={(id, e) => {
@@ -65,7 +73,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         onClose={() => setIsMobileNavOpen(false)}
         brand={brand}
         groups={groups}
-        activeId={currentPath}
+        activeId={activeNavPath}
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);

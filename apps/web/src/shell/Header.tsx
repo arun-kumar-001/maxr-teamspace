@@ -29,7 +29,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('profile')) return 'My Employee Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
     if (path.includes('components')) return 'Shared UI Component Gallery';
-    return 'Workforce Overview';
+    return 'Dashboard';
   };
 
   return (
@@ -60,9 +60,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           <h2 className="text-base font-semibold text-text sm:text-lg">
             {getPageTitle(activePath)}
           </h2>
-          <p className="hidden text-xs text-text-muted sm:block">
-            Internal workforce platform &middot; MAXR ONE
-          </p>
+          <p className="hidden text-xs text-text-muted sm:block">Company overview</p>
         </div>
       </div>
 
@@ -82,10 +80,14 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
         {user && (
           <div className="flex items-center gap-2.5 pl-2 sm:border-l sm:border-border">
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm overflow-hidden shrink-0"
               title={`${user.name} (${user.email})`}
             >
-              {user.avatarInitials}
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.avatarInitials
+              )}
             </div>
 
             <div className="hidden text-left lg:block">
