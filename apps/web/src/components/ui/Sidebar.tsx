@@ -360,7 +360,11 @@ export function Sidebar({
                 aria-hidden="true"
               >
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   user.initials
                 )}

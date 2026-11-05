@@ -37,7 +37,11 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
             data-testid="profile-avatar-initials"
           >
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={profile.firstName} className="w-full h-full object-cover" />
+              <img
+                src={user.avatarUrl}
+                alt={profile.firstName}
+                className="w-full h-full object-cover"
+              />
             ) : (
               initials
             )}

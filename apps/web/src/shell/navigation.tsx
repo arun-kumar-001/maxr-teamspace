@@ -554,7 +554,10 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
 
     const items: SidebarItem[] = [];
     for (const item of moduleItems) {
-      if (role !== ROLES.STAFF && (item.path === '/lead/attendance' || item.path === '/staff/attendance')) {
+      if (
+        role !== ROLES.STAFF &&
+        (item.path === '/lead/attendance' || item.path === '/staff/attendance')
+      ) {
         items.push(attendanceItem);
         continue;
       }

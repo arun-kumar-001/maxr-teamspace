@@ -5,7 +5,16 @@ import { apiFetch } from '../api/client';
 
 function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -14,7 +23,16 @@ function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -25,7 +43,16 @@ function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
@@ -34,7 +61,16 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -45,7 +81,16 @@ function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconCheckSquare({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="9 11 12 14 22 4" />
       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
     </svg>
@@ -54,7 +99,16 @@ function IconCheckSquare({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconFolder({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
     </svg>
   );
@@ -62,7 +116,16 @@ function IconFolder({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconClipboardCheck({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
       <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
       <path d="m9 14 2 2 4-4" />
@@ -72,7 +135,16 @@ function IconClipboardCheck({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
@@ -80,7 +152,16 @@ function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconCheck({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -88,7 +169,16 @@ function IconCheck({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 
 function IconEye({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -97,7 +187,16 @@ function IconEye({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 
 function IconVideo({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="m22 8-6 4 6 4V8Z" />
       <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
     </svg>
@@ -214,7 +313,7 @@ export function AdminDashboard() {
 
   const handleApprove = (id: string) => {
     setApprovals((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item))
+      prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
   };
 
@@ -227,7 +326,10 @@ export function AdminDashboard() {
     : watchCircumference * (1 - watchProgress);
 
   return (
-    <div className="space-y-5 sm:space-y-6 font-sans select-none w-full min-w-0" data-testid="admin-dashboard">
+    <div
+      className="space-y-5 sm:space-y-6 font-sans select-none w-full min-w-0"
+      data-testid="admin-dashboard"
+    >
       {/* Scoped Keyframe Animations - Zero Hex compliant */}
       <style>{`
         @keyframes maxrFadeInUp {
@@ -431,12 +533,18 @@ export function AdminDashboard() {
                 <IconClock className="w-3.5 h-3.5" />
               </span>
               <div className="min-w-0">
-                <h2 className="text-xs font-bold text-text tracking-wider uppercase truncate">MY WATCH</h2>
-                <p className="text-[10.5px] text-text-muted truncate">Main Office &bull; 08:30 - 17:00</p>
+                <h2 className="text-xs font-bold text-text tracking-wider uppercase truncate">
+                  MY WATCH
+                </h2>
+                <p className="text-[10.5px] text-text-muted truncate">
+                  Main Office &bull; 08:30 - 17:00
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-xs shrink-0">
-              <span className={`w-1.5 h-1.5 rounded-full ${isOnBreak ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`} />
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${isOnBreak ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}
+              />
               <span>{isSignedOff ? 'Signed off' : isOnBreak ? 'On Break' : 'Running'}</span>
             </div>
           </div>
@@ -446,13 +554,24 @@ export function AdminDashboard() {
             {/* SVG Circular Progress Ring */}
             <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface-muted, rgb(242, 245, 244))" strokeWidth="6.5" />
                 <circle
                   cx="50"
                   cy="50"
                   r="42"
                   fill="none"
-                  stroke={isOnBreak ? 'var(--warning, rgb(217, 119, 6))' : 'var(--primary, rgb(70, 199, 184))'}
+                  stroke="var(--surface-muted, rgb(242, 245, 244))"
+                  strokeWidth="6.5"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke={
+                    isOnBreak
+                      ? 'var(--warning, rgb(217, 119, 6))'
+                      : 'var(--primary, rgb(70, 199, 184))'
+                  }
                   strokeWidth="6.5"
                   strokeDasharray="263.89"
                   strokeDashoffset={watchDashOffset}
@@ -464,7 +583,9 @@ export function AdminDashboard() {
                 <span className="font-mono text-base sm:text-lg font-extrabold text-text tracking-tight">
                   {formatTimer(watchSeconds)}
                 </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">of 8.5h today</span>
+                <span className="text-[10.5px] text-text-muted mt-1 font-medium">
+                  of 8.5h today
+                </span>
               </div>
             </div>
 
@@ -505,7 +626,10 @@ export function AdminDashboard() {
                 { day: 'Mon', hours: '8.2h', fillPercent: 96, active: false, delay: '300ms' },
                 { day: 'Tue', hours: '4.3h', fillPercent: 51, active: true, delay: '350ms' },
               ].map((d) => (
-                <div key={d.day} className="flex-1 flex flex-col items-center justify-end gap-1 h-full min-w-0">
+                <div
+                  key={d.day}
+                  className="flex-1 flex flex-col items-center justify-end gap-1 h-full min-w-0"
+                >
                   <div className="w-full max-w-[24px] h-8 rounded-md bg-surface-muted/80 flex items-end justify-center overflow-hidden p-0.5">
                     <div
                       style={{ height: `${d.fillPercent}%`, animationDelay: d.delay }}
@@ -513,13 +637,17 @@ export function AdminDashboard() {
                         d.active
                           ? 'bg-emerald-700'
                           : d.hours === '-'
-                          ? 'bg-transparent'
-                          : 'bg-primary-soft'
+                            ? 'bg-transparent'
+                            : 'bg-primary-soft'
                       }`}
                     />
                   </div>
-                  <span className="text-[10px] font-semibold text-text-muted leading-none">{d.day}</span>
-                  <span className={`text-[9.5px] font-mono leading-none ${d.active ? 'font-bold text-emerald-700' : 'text-text-subtle'}`}>
+                  <span className="text-[10px] font-semibold text-text-muted leading-none">
+                    {d.day}
+                  </span>
+                  <span
+                    className={`text-[9.5px] font-mono leading-none ${d.active ? 'font-bold text-emerald-700' : 'text-text-subtle'}`}
+                  >
                     {d.hours}
                   </span>
                 </div>
@@ -550,7 +678,14 @@ export function AdminDashboard() {
             {/* SVG Donut */}
             <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-muted, rgb(242, 245, 244))" strokeWidth="8" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="var(--surface-muted, rgb(242, 245, 244))"
+                  strokeWidth="8"
+                />
                 {/* Present (89.0%) */}
                 <circle
                   cx="50"
@@ -590,7 +725,9 @@ export function AdminDashboard() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">89.0%</span>
+                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                  89.0%
+                </span>
                 <span className="text-[10.5px] text-text-muted mt-1 font-medium">Present</span>
               </div>
             </div>
@@ -602,28 +739,36 @@ export function AdminDashboard() {
                   <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                   Present
                 </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">112 <span className="font-normal text-text-subtle text-[10px]">(89.0%)</span></span>
+                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  112 <span className="font-normal text-text-subtle text-[10px]">(89.0%)</span>
+                </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
                 <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
                   <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
                   Late
                 </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">9 <span className="font-normal text-text-subtle text-[10px]">(7.1%)</span></span>
+                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  9 <span className="font-normal text-text-subtle text-[10px]">(7.1%)</span>
+                </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
                 <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
                   <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
                   On Leave
                 </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">7 <span className="font-normal text-text-subtle text-[10px]">(5.5%)</span></span>
+                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  7 <span className="font-normal text-text-subtle text-[10px]">(5.5%)</span>
+                </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
                 <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
                   <span className="w-2 h-2 rounded-full bg-danger shrink-0" />
                   Absent
                 </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">0 <span className="font-normal text-text-subtle text-[10px]">(0.0%)</span></span>
+                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  0 <span className="font-normal text-text-subtle text-[10px]">(0.0%)</span>
+                </span>
               </div>
             </div>
           </div>
@@ -631,7 +776,9 @@ export function AdminDashboard() {
           {/* Subtext info for balanced vertical card spacing */}
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted">
             <span className="truncate">Target: 124 staff</span>
-            <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">90.3% avg this week</span>
+            <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
+              90.3% avg this week
+            </span>
           </div>
         </div>
 
@@ -657,7 +804,14 @@ export function AdminDashboard() {
             {/* SVG Donut */}
             <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-muted, rgb(242, 245, 244))" strokeWidth="8" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="var(--surface-muted, rgb(242, 245, 244))"
+                  strokeWidth="8"
+                />
                 {/* Completed (76%) */}
                 <circle
                   cx="50"
@@ -697,7 +851,9 @@ export function AdminDashboard() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">76%</span>
+                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                  76%
+                </span>
                 <span className="text-[10.5px] text-text-muted mt-1 font-medium">Completed</span>
               </div>
             </div>
@@ -709,21 +865,27 @@ export function AdminDashboard() {
                   <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                   Completed
                 </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">142</span>
+                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  142
+                </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
                 <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
                   <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
                   Pending
                 </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">36</span>
+                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  36
+                </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
                 <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
                   <span className="w-2 h-2 rounded-full bg-danger shrink-0" />
                   Overdue
                 </span>
-                <span className="font-bold font-mono text-danger text-[11px] sm:text-xs whitespace-nowrap shrink-0">8</span>
+                <span className="font-bold font-mono text-danger text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                  8
+                </span>
               </div>
             </div>
           </div>
@@ -731,9 +893,14 @@ export function AdminDashboard() {
           {/* Bottom Progress Bar - Animated Fill */}
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between gap-2.5 text-xs">
             <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
-              <div className="maxr-progress-fill h-full rounded-full bg-primary" style={{ width: '76%' }} />
+              <div
+                className="maxr-progress-fill h-full rounded-full bg-primary"
+                style={{ width: '76%' }}
+              />
             </div>
-            <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">142 / 186 Tasks</span>
+            <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
+              142 / 186 Tasks
+            </span>
           </div>
         </div>
       </section>
@@ -773,12 +940,16 @@ export function AdminDashboard() {
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 shadow-xs ${item.avatarBg}`}>
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 shadow-xs ${item.avatarBg}`}
+                  >
                     {item.initial}
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-text truncate leading-tight">{item.name}</p>
-                    <p className="text-[10.5px] sm:text-[11px] text-text-muted truncate mt-0.5">{item.detail}</p>
+                    <p className="text-[10.5px] sm:text-[11px] text-text-muted truncate mt-0.5">
+                      {item.detail}
+                    </p>
                   </div>
                 </div>
 
@@ -817,7 +988,9 @@ export function AdminDashboard() {
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>View all 14 approvals</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">
+                &rarr;
+              </span>
             </button>
           </div>
         </div>
@@ -836,7 +1009,9 @@ export function AdminDashboard() {
               </span>
               <div className="min-w-0">
                 <h2 className="text-sm font-bold text-text truncate">Priority Tasks</h2>
-                <p className="text-[10.5px] text-text-muted truncate">Recent work across the company</p>
+                <p className="text-[10.5px] text-text-muted truncate">
+                  Recent work across the company
+                </p>
               </div>
             </div>
             <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
@@ -883,7 +1058,9 @@ export function AdminDashboard() {
                     <p className="text-[10.5px] text-text-muted truncate mt-0.5">{task.owner}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 shadow-xs whitespace-nowrap ${task.badgeClass}`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 shadow-xs whitespace-nowrap ${task.badgeClass}`}
+                >
                   {task.badge}
                 </span>
               </div>
@@ -898,7 +1075,9 @@ export function AdminDashboard() {
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>Explore all tasks</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">
+                &rarr;
+              </span>
             </button>
           </div>
         </div>
@@ -959,7 +1138,9 @@ export function AdminDashboard() {
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>View full calendar</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">&rarr;</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-1">
+                &rarr;
+              </span>
             </button>
           </div>
         </div>

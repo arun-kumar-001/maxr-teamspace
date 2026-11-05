@@ -5,7 +5,16 @@ import type { AttendanceRecord } from '../types';
 
 function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -15,7 +24,16 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -23,7 +41,16 @@ function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="9" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
@@ -32,7 +59,16 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconAlertTriangle({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -80,11 +116,14 @@ export function TimesheetsTab({
     if (employees.length > 0) {
       return employees.map((emp, index) => {
         const empRecords = records.filter((r) => r.employeeId === emp.id);
-        const totalMinutes = empRecords.reduce((acc, r) => acc + (r.durationMinutes || 480), 0) || (index % 3 === 0 ? 2535 : 2400);
+        const totalMinutes =
+          empRecords.reduce((acc, r) => acc + (r.durationMinutes || 480), 0) ||
+          (index % 3 === 0 ? 2535 : 2400);
         const workedHours = parseFloat((totalMinutes / 60).toFixed(1));
         const plannedHours = 40.0;
-        const overtimeHours = workedHours > plannedHours ? parseFloat((workedHours - plannedHours).toFixed(1)) : 0;
-        
+        const overtimeHours =
+          workedHours > plannedHours ? parseFloat((workedHours - plannedHours).toFixed(1)) : 0;
+
         // Status distribution
         let status: 'submitted' | 'approved' | 'flagged' = 'submitted';
         if (index === 1 || index === 4) status = 'flagged';
@@ -141,7 +180,10 @@ export function TimesheetsTab({
   // Filtered Timesheets
   const filteredTimesheets = useMemo(() => {
     return timesheetList.filter((ts) => {
-      if (departmentFilter !== 'all' && ts.departmentName.toLowerCase() !== departmentFilter.toLowerCase()) {
+      if (
+        departmentFilter !== 'all' &&
+        ts.departmentName.toLowerCase() !== departmentFilter.toLowerCase()
+      ) {
         return false;
       }
       if (statusTab !== 'all' && ts.status !== statusTab) {
@@ -250,7 +292,9 @@ export function TimesheetsTab({
       {successToast && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-between">
           <span>{successToast}</span>
-          <button type="button" onClick={() => setSuccessToast(null)} className="text-emerald-700">✕</button>
+          <button type="button" onClick={() => setSuccessToast(null)} className="text-emerald-700">
+            ✕
+          </button>
         </div>
       )}
 
@@ -435,18 +479,35 @@ export function TimesheetsTab({
                       <input
                         type="checkbox"
                         aria-label="Select all timesheets"
-                        checked={selectedIds.size === filteredTimesheets.length && filteredTimesheets.length > 0}
+                        checked={
+                          selectedIds.size === filteredTimesheets.length &&
+                          filteredTimesheets.length > 0
+                        }
                         onChange={handleSelectAll}
                         className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
                       />
                     </th>
-                    <th scope="col" className="px-4 py-3.5">Employee</th>
-                    <th scope="col" className="px-4 py-3.5 hidden md:table-cell">Dept</th>
-                    <th scope="col" className="px-4 py-3.5">Planned</th>
-                    <th scope="col" className="px-4 py-3.5">Worked</th>
-                    <th scope="col" className="px-4 py-3.5">OT</th>
-                    <th scope="col" className="px-4 py-3.5">Status</th>
-                    <th scope="col" className="px-4 py-3.5 text-right">Actions</th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Employee
+                    </th>
+                    <th scope="col" className="px-4 py-3.5 hidden md:table-cell">
+                      Dept
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Planned
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Worked
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      OT
+                    </th>
+                    <th scope="col" className="px-4 py-3.5">
+                      Status
+                    </th>
+                    <th scope="col" className="px-4 py-3.5 text-right">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border text-text">
@@ -472,7 +533,9 @@ export function TimesheetsTab({
 
                           <td className="px-4 py-3.5">
                             <span className="font-bold text-text block truncate">{ts.name}</span>
-                            <span className="text-[11px] text-text-muted font-mono block">{ts.employeeCode}</span>
+                            <span className="text-[11px] text-text-muted font-mono block">
+                              {ts.employeeCode}
+                            </span>
                           </td>
 
                           <td className="px-4 py-3.5 hidden md:table-cell text-xs text-text-muted">
@@ -483,9 +546,7 @@ export function TimesheetsTab({
                             {ts.plannedHours}h
                           </td>
 
-                          <td className="px-4 py-3.5 font-bold text-text">
-                            {ts.workedHours}h
-                          </td>
+                          <td className="px-4 py-3.5 font-bold text-text">{ts.workedHours}h</td>
 
                           <td className="px-4 py-3.5">
                             {ts.overtimeHours > 0 ? (
@@ -598,7 +659,9 @@ export function TimesheetsTab({
                   <span className="font-bold text-text">Arun Kumar</span>
                   <span className="font-semibold text-emerald-600">+2.5 hrs</span>
                 </div>
-                <p className="text-[11px] text-text-muted">Production deployment on Friday night.</p>
+                <p className="text-[11px] text-text-muted">
+                  Production deployment on Friday night.
+                </p>
               </div>
 
               <div className="p-2.5 rounded-xl bg-surface border border-border/60 space-y-1">
@@ -606,7 +669,9 @@ export function TimesheetsTab({
                   <span className="font-bold text-text">Rajesh Patel</span>
                   <span className="font-semibold text-emerald-600">+3.0 hrs</span>
                 </div>
-                <p className="text-[11px] text-text-muted">Critical incident resolution on server downtime.</p>
+                <p className="text-[11px] text-text-muted">
+                  Critical incident resolution on server downtime.
+                </p>
               </div>
             </div>
           </div>
@@ -632,7 +697,9 @@ export function TimesheetsTab({
               </div>
               <div>
                 <span className="text-text-muted block">Overtime</span>
-                <span className="font-bold text-emerald-600 text-sm">+{detailedEntry.overtimeHours}h</span>
+                <span className="font-bold text-emerald-600 text-sm">
+                  +{detailedEntry.overtimeHours}h
+                </span>
               </div>
             </div>
 
@@ -645,8 +712,17 @@ export function TimesheetsTab({
             <div className="space-y-2">
               <span className="font-bold text-text block">Daily Breakdown</span>
               <div className="border border-border/70 rounded-xl divide-y divide-border/60 overflow-hidden">
-                {['Mon (Nov 02)', 'Tue (Nov 03)', 'Wed (Nov 04)', 'Thu (Nov 05)', 'Fri (Nov 06)'].map((day) => (
-                  <div key={day} className="flex items-center justify-between p-2.5 bg-surface text-text">
+                {[
+                  'Mon (Nov 02)',
+                  'Tue (Nov 03)',
+                  'Wed (Nov 04)',
+                  'Thu (Nov 05)',
+                  'Fri (Nov 06)',
+                ].map((day) => (
+                  <div
+                    key={day}
+                    className="flex items-center justify-between p-2.5 bg-surface text-text"
+                  >
                     <span className="font-semibold">{day}</span>
                     <span className="text-text-muted font-mono">09:00 AM – 06:00 PM (8.5 hrs)</span>
                   </div>

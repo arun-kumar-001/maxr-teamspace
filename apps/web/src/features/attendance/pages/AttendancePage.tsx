@@ -94,7 +94,6 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, role]);
 
   // Format date display (e.g. Tue, 03 Nov 2026)
@@ -146,9 +145,7 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight">
             Attendance
           </h1>
-          <p className="text-xs sm:text-sm text-text-muted">
-            {tabSubtitle}
-          </p>
+          <p className="text-xs sm:text-sm text-text-muted">{tabSubtitle}</p>
         </div>
 
         {/* Date Selector Dropdown */}
@@ -165,7 +162,9 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
 
           {isDatePickerOpen && (
             <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-surface border border-border rounded-xl shadow-lg space-y-1">
-              <span className="text-[11px] font-bold text-text-muted px-2 block">Quick Date Select</span>
+              <span className="text-[11px] font-bold text-text-muted px-2 block">
+                Quick Date Select
+              </span>
               {[
                 { label: 'Today (03 Nov 2026)', val: '2026-11-03' },
                 { label: 'Yesterday (02 Nov 2026)', val: '2026-11-02' },
@@ -249,11 +248,7 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
           <Skeleton variant="rectangular" height={240} className="w-full" />
         </div>
       ) : error ? (
-        <ErrorState
-          title="Could not load attendance data"
-          message={error}
-          onRetry={loadData}
-        />
+        <ErrorState title="Could not load attendance data" message={error} onRetry={loadData} />
       ) : (
         <>
           {activeTab === 'on-duty' && (

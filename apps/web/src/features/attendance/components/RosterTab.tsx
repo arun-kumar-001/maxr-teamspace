@@ -6,7 +6,16 @@ import { assignShift } from '../../shifts/api/shifts';
 
 function IconChevronLeft({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="15 18 9 12 15 6" />
     </svg>
   );
@@ -14,7 +23,16 @@ function IconChevronLeft({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
@@ -22,7 +40,16 @@ function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconCalendar({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -105,13 +132,17 @@ export function RosterTab({
         effectiveFrom: monday.dateStr,
         effectiveTo: sunday.dateStr,
       });
-      setSuccessMessage(`Shift successfully assigned to ${assigningEmployee.firstName} ${assigningEmployee.lastName}`);
+      setSuccessMessage(
+        `Shift successfully assigned to ${assigningEmployee.firstName} ${assigningEmployee.lastName}`,
+      );
       setAssigningEmployee(null);
       onRefresh?.();
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch {
       // Local fallback in test/mock environment
-      setSuccessMessage(`Shift assignment updated for ${assigningEmployee.firstName} ${assigningEmployee.lastName}`);
+      setSuccessMessage(
+        `Shift assignment updated for ${assigningEmployee.firstName} ${assigningEmployee.lastName}`,
+      );
       setAssigningEmployee(null);
       setTimeout(() => setSuccessMessage(null), 4000);
     } finally {
@@ -125,7 +156,13 @@ export function RosterTab({
       {successMessage && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-between">
           <span>{successMessage}</span>
-          <button type="button" onClick={() => setSuccessMessage(null)} className="text-emerald-700">✕</button>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="text-emerald-700"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -204,7 +241,11 @@ export function RosterTab({
                   Employee
                 </th>
                 {weekDays.map((wd) => (
-                  <th key={wd.dateStr} scope="col" className="px-3 py-3.5 text-center min-w-[110px]">
+                  <th
+                    key={wd.dateStr}
+                    scope="col"
+                    className="px-3 py-3.5 text-center min-w-[110px]"
+                  >
                     <span className="block font-bold">{wd.dayName}</span>
                     <span className="block text-[10px] font-normal text-text-subtle font-mono">
                       {wd.formatted}
@@ -280,9 +321,7 @@ export function RosterTab({
                       })}
 
                       {/* Total Scheduled Hours */}
-                      <td className="px-3 py-3 text-center font-bold text-text">
-                        40h
-                      </td>
+                      <td className="px-3 py-3 text-center font-bold text-text">40h</td>
                     </tr>
                   );
                 })
@@ -301,7 +340,10 @@ export function RosterTab({
         >
           <form onSubmit={handleAssignSubmit} className="space-y-4 pt-2">
             <div>
-              <label htmlFor="shift-select" className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">
+              <label
+                htmlFor="shift-select"
+                className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1"
+              >
                 Select Shift
               </label>
               <select

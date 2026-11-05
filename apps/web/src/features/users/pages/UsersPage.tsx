@@ -1,12 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES, type Role } from '@maxr/shared';
-import {
-  Button,
-  ErrorState,
-  ForbiddenState,
-  Skeleton,
-} from '../../../components/ui';
+import { Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { useUsers } from '../hooks/useUsers';
 import { useRolesAndPermissions } from '../hooks/useRolesAndPermissions';
@@ -20,7 +15,16 @@ import type { UserAccount } from '../types';
 
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -31,7 +35,16 @@ function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconUser({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
@@ -40,7 +53,16 @@ function IconUser({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconUserCheck({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <polyline points="16 11 18 13 22 9" />
@@ -50,7 +72,16 @@ function IconUserCheck({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconUserMinus({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <line x1="22" y1="11" x2="16" y2="11" />
@@ -60,7 +91,16 @@ function IconUserMinus({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconShield({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
@@ -68,7 +108,16 @@ function IconShield({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconShieldCheck({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       <polyline points="9 12 11 14 15 10" />
     </svg>
@@ -77,7 +126,16 @@ function IconShieldCheck({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconClock({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
@@ -86,7 +144,16 @@ function IconClock({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -95,7 +162,16 @@ function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconSearch({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
@@ -104,7 +180,16 @@ function IconSearch({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconFilter({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
     </svg>
   );
@@ -112,7 +197,16 @@ function IconFilter({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconCrown({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
       <path d="M5 20h14" />
     </svg>
@@ -121,7 +215,16 @@ function IconCrown({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconBriefcase({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
     </svg>
@@ -130,7 +233,16 @@ function IconBriefcase({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconBuilding({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
       <path d="M9 22v-4h6v4" />
       <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
@@ -140,7 +252,16 @@ function IconBuilding({ className = 'w-3.5 h-3.5' }: { className?: string }) {
 
 function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
     </svg>
   );
@@ -148,7 +269,16 @@ function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="1" />
       <circle cx="12" cy="5" r="1" />
       <circle cx="12" cy="19" r="1" />
@@ -158,7 +288,16 @@ function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconZap({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   );
@@ -166,7 +305,16 @@ function IconZap({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -176,7 +324,16 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
@@ -184,7 +341,9 @@ function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
 
 export function UsersPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'accounts' | 'roles-permissions' | 'access-history'>('accounts');
+  const [activeTab, setActiveTab] = useState<'accounts' | 'roles-permissions' | 'access-history'>(
+    'accounts',
+  );
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
 
   // Safe auth hook handling
@@ -260,7 +419,15 @@ export function UsersPage() {
   };
 
   const exportUserListAsCsv = () => {
-    const headers = ['Name', 'Email', 'Employee Code', 'Roles', 'Department', 'Status', 'Last Login'];
+    const headers = [
+      'Name',
+      'Email',
+      'Employee Code',
+      'Roles',
+      'Department',
+      'Status',
+      'Last Login',
+    ];
     const rows = users.map((u) => [
       `"${u.name}"`,
       `"${u.email}"`,
@@ -271,7 +438,8 @@ export function UsersPage() {
       u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never',
     ]);
     const csvContent =
-      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -282,7 +450,10 @@ export function UsersPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none" data-testid="users-page">
+    <div
+      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
+      data-testid="users-page"
+    >
       {/* Scoped Keyframes for smooth animations - Zero Hex compliant */}
       <style>{`
         @keyframes maxrPageFadeIn {
@@ -350,9 +521,7 @@ export function UsersPage() {
               </span>
             </div>
           </div>
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">
-            &uarr; 0%
-          </span>
+          <span className="text-xs font-semibold text-emerald-600 shrink-0">&uarr; 0%</span>
         </div>
 
         {/* Card 2: Active Users */}
@@ -373,9 +542,7 @@ export function UsersPage() {
               </span>
             </div>
           </div>
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">
-            &uarr; 100%
-          </span>
+          <span className="text-xs font-semibold text-emerald-600 shrink-0">&uarr; 100%</span>
         </div>
 
         {/* Card 3: Inactive Users */}
@@ -396,9 +563,7 @@ export function UsersPage() {
               </span>
             </div>
           </div>
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">
-            &uarr; 0%
-          </span>
+          <span className="text-xs font-semibold text-emerald-600 shrink-0">&uarr; 0%</span>
         </div>
 
         {/* Card 4: Total Roles */}
@@ -541,7 +706,9 @@ export function UsersPage() {
 
                 {/* Status Filter Dropdown */}
                 <select
-                  value={filters.isActive === true ? 'true' : filters.isActive === false ? 'false' : ''}
+                  value={
+                    filters.isActive === true ? 'true' : filters.isActive === false ? 'false' : ''
+                  }
                   onChange={(e) => {
                     const val = e.target.value;
                     setIsActive(val === 'true' ? true : val === 'false' ? false : '');
@@ -632,7 +799,10 @@ export function UsersPage() {
 
                           {/* Role Pill */}
                           <td className="py-3.5 px-3">
-                            <div className="flex flex-wrap gap-1.5" data-testid={`table-roles-${u.id}`}>
+                            <div
+                              className="flex flex-wrap gap-1.5"
+                              data-testid={`table-roles-${u.id}`}
+                            >
                               {u.roles.map((r) => {
                                 if (r === ROLES.ADMIN) {
                                   return (
@@ -811,9 +981,7 @@ export function UsersPage() {
                     <IconCrown className="w-4 h-4" />
                     <span className="font-bold text-xs">Admin</span>
                   </div>
-                  <p className="text-[11px] text-text-muted leading-tight">
-                    Full system access
-                  </p>
+                  <p className="text-[11px] text-text-muted leading-tight">Full system access</p>
                   <div>
                     <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100/80 text-emerald-800">
                       {roles.find((r) => r.key === 'admin')?.activeUsers || 1} User
@@ -939,7 +1107,9 @@ export function UsersPage() {
               </span>
               <div>
                 <h3 className="text-base font-bold text-text">Access & Security History</h3>
-                <p className="text-xs text-text-muted">Real-time authentication and permission modification events.</p>
+                <p className="text-xs text-text-muted">
+                  Real-time authentication and permission modification events.
+                </p>
               </div>
             </div>
             <Button
@@ -954,7 +1124,10 @@ export function UsersPage() {
           </div>
 
           <div className="p-4 rounded-xl bg-surface-muted/60 border border-border/80 text-xs text-text-muted">
-            <p>Access audit tracking is active. All login attempts, credential changes, and role reassignments are recorded with tamper-evident cryptographic sequencing.</p>
+            <p>
+              Access audit tracking is active. All login attempts, credential changes, and role
+              reassignments are recorded with tamper-evident cryptographic sequencing.
+            </p>
           </div>
         </div>
       )}

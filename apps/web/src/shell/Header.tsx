@@ -60,9 +60,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           <h2 className="text-base font-semibold text-text sm:text-lg">
             {getPageTitle(activePath)}
           </h2>
-          <p className="hidden text-xs text-text-muted sm:block">
-            Company overview
-          </p>
+          <p className="hidden text-xs text-text-muted sm:block">Company overview</p>
         </div>
       </div>
 

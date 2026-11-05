@@ -1,12 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Badge,
-  Button,
-  ErrorState,
-  ForbiddenState,
-  Skeleton,
-} from '../../../components/ui';
+import { Badge, Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
@@ -18,7 +12,16 @@ import type { EmployeeDirectoryItem } from '../types';
 
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -29,7 +32,16 @@ function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconUserCheck({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <polyline points="16 11 18 13 22 9" />
@@ -39,7 +51,16 @@ function IconUserCheck({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconUserMinus({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <line x1="22" y1="11" x2="16" y2="11" />
@@ -49,7 +70,16 @@ function IconUserMinus({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconBuilding({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
       <path d="M9 22v-4h6v4" />
       <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
@@ -59,7 +89,16 @@ function IconBuilding({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconNetwork({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="9" y="2" width="6" height="6" rx="1" />
       <rect x="2" y="16" width="6" height="6" rx="1" />
       <rect x="16" y="16" width="6" height="6" rx="1" />
@@ -70,7 +109,16 @@ function IconNetwork({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconLayers({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polygon points="12 2 2 7 12 12 22 7 12 2" />
       <polyline points="2 17 12 22 22 17" />
       <polyline points="2 12 12 17 22 12" />
@@ -80,7 +128,16 @@ function IconLayers({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -90,7 +147,16 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -99,7 +165,16 @@ function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -108,7 +183,16 @@ function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
     </svg>
   );
@@ -116,7 +200,16 @@ function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconList({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <line x1="8" y1="6" x2="21" y2="6" />
       <line x1="8" y1="12" x2="21" y2="12" />
       <line x1="8" y1="18" x2="21" y2="18" />
@@ -129,7 +222,16 @@ function IconList({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconGrid({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="3" y="3" width="7" height="7" />
       <rect x="14" y="3" width="7" height="7" />
       <rect x="14" y="14" width="7" height="7" />
@@ -140,7 +242,16 @@ function IconGrid({ className = 'w-4 h-4' }: { className?: string }) {
 
 function IconAward({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="8" r="7" />
       <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
     </svg>
@@ -253,8 +364,12 @@ export function EmployeeDirectoryPage() {
     // Fallback when rendered outside Router in isolated tests
   }
 
-  const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'department' | 'designation' | 'hierarchy'>('all');
+  const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(
+    null,
+  );
+  const [activeTab, setActiveTab] = useState<'all' | 'department' | 'designation' | 'hierarchy'>(
+    'all',
+  );
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -266,8 +381,10 @@ export function EmployeeDirectoryPage() {
   const inactiveEmployees = useMemo(() => {
     return employees.filter((e) => e.status === 'deactivated' || e.status === 'pending').length;
   }, [employees]);
-  const activePercentage = totalEmployees > 0 ? ((activeEmployees / totalEmployees) * 100).toFixed(1) : '100.0';
-  const inactivePercentage = totalEmployees > 0 ? ((inactiveEmployees / totalEmployees) * 100).toFixed(1) : '0.0';
+  const activePercentage =
+    totalEmployees > 0 ? ((activeEmployees / totalEmployees) * 100).toFixed(1) : '100.0';
+  const inactivePercentage =
+    totalEmployees > 0 ? ((inactiveEmployees / totalEmployees) * 100).toFixed(1) : '0.0';
 
   // Toggle selection
   const handleSelectAll = () => {
@@ -315,7 +432,8 @@ export function EmployeeDirectoryPage() {
       `"${emp.joiningDate || ''}"`,
     ]);
     const csvContent =
-      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -460,9 +578,7 @@ export function EmployeeDirectoryPage() {
               <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
                 <IconUsers className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-text-muted truncate">
-                Total Employees
-              </span>
+              <span className="text-xs font-bold text-text-muted truncate">Total Employees</span>
             </div>
             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 shrink-0">
               ↑ +6%
@@ -484,8 +600,17 @@ export function EmployeeDirectoryPage() {
                   <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <path d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10" fill="none" stroke="rgb(16, 185, 129)" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10 L160,30 L0,30 Z" fill="url(#wave-green)" />
+              <path
+                d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10"
+                fill="none"
+                stroke="rgb(16, 185, 129)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10 L160,30 L0,30 Z"
+                fill="url(#wave-green)"
+              />
             </svg>
           </div>
         </div>
@@ -497,13 +622,9 @@ export function EmployeeDirectoryPage() {
               <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 shadow-xs">
                 <IconUserCheck className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-text-muted truncate">
-                Active Employees
-              </span>
+              <span className="text-xs font-bold text-text-muted truncate">Active Employees</span>
             </div>
-            <span className="text-xs font-semibold text-text-muted">
-              ({activePercentage}%)
-            </span>
+            <span className="text-xs font-semibold text-text-muted">({activePercentage}%)</span>
           </div>
 
           <div className="flex items-baseline justify-between mt-1">
@@ -521,8 +642,17 @@ export function EmployeeDirectoryPage() {
                   <stop offset="100%" stopColor="rgb(20, 184, 166)" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <path d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14" fill="none" stroke="rgb(20, 184, 166)" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14 L160,30 L0,30 Z" fill="url(#wave-teal)" />
+              <path
+                d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14"
+                fill="none"
+                stroke="rgb(20, 184, 166)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14 L160,30 L0,30 Z"
+                fill="url(#wave-teal)"
+              />
             </svg>
           </div>
         </div>
@@ -534,13 +664,9 @@ export function EmployeeDirectoryPage() {
               <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
                 <IconUserMinus className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-text-muted truncate">
-                Inactive Employees
-              </span>
+              <span className="text-xs font-bold text-text-muted truncate">Inactive Employees</span>
             </div>
-            <span className="text-xs font-semibold text-text-muted">
-              ({inactivePercentage}%)
-            </span>
+            <span className="text-xs font-semibold text-text-muted">({inactivePercentage}%)</span>
           </div>
 
           <div className="flex items-baseline justify-between mt-1">
@@ -558,8 +684,17 @@ export function EmployeeDirectoryPage() {
                   <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <path d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18" fill="none" stroke="rgb(249, 115, 22)" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18 L160,30 L0,30 Z" fill="url(#wave-coral)" />
+              <path
+                d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18"
+                fill="none"
+                stroke="rgb(249, 115, 22)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18 L160,30 L0,30 Z"
+                fill="url(#wave-coral)"
+              />
             </svg>
           </div>
         </div>
@@ -571,9 +706,7 @@ export function EmployeeDirectoryPage() {
               <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-xs">
                 <IconNetwork className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-text-muted truncate">
-                Departments
-              </span>
+              <span className="text-xs font-bold text-text-muted truncate">Departments</span>
             </div>
           </div>
 
@@ -592,8 +725,17 @@ export function EmployeeDirectoryPage() {
                   <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <path d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10" fill="none" stroke="rgb(168, 85, 247)" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10 L160,30 L0,30 Z" fill="url(#wave-purple)" />
+              <path
+                d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10"
+                fill="none"
+                stroke="rgb(168, 85, 247)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10 L160,30 L0,30 Z"
+                fill="url(#wave-purple)"
+              />
             </svg>
           </div>
         </div>
@@ -666,7 +808,9 @@ export function EmployeeDirectoryPage() {
             type="button"
             onClick={() => setDepartmentId(undefined)}
             className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-              !query.departmentId ? 'bg-primary-deep text-white' : 'bg-surface text-text-muted hover:bg-surface-muted'
+              !query.departmentId
+                ? 'bg-primary-deep text-white'
+                : 'bg-surface text-text-muted hover:bg-surface-muted'
             }`}
           >
             All
@@ -695,7 +839,9 @@ export function EmployeeDirectoryPage() {
             type="button"
             onClick={() => setDesignationId(undefined)}
             className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-              !query.designationId ? 'bg-primary-deep text-white' : 'bg-surface text-text-muted hover:bg-surface-muted'
+              !query.designationId
+                ? 'bg-primary-deep text-white'
+                : 'bg-surface text-text-muted hover:bg-surface-muted'
             }`}
           >
             All
@@ -863,7 +1009,9 @@ export function EmployeeDirectoryPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-11 h-11 rounded-full ${avatarBg} font-bold flex items-center justify-center shrink-0 text-sm`}>
+                    <div
+                      className={`w-11 h-11 rounded-full ${avatarBg} font-bold flex items-center justify-center shrink-0 text-sm`}
+                    >
                       {initials}
                     </div>
                     <div className="min-w-0">
@@ -902,14 +1050,20 @@ export function EmployeeDirectoryPage() {
                             : 'bg-rose-500'
                       }`}
                     />
-                    {emp.status === 'active' ? 'Active' : emp.status === 'pending' ? 'Pending' : 'Deactivated'}
+                    {emp.status === 'active'
+                      ? 'Active'
+                      : emp.status === 'pending'
+                        ? 'Pending'
+                        : 'Deactivated'}
                   </span>
                 </div>
 
                 <div className="my-3 py-2.5 border-t border-b border-border/60 space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Department:</span>
-                    <span className="font-semibold text-text">{emp.department?.name || '\u2014'}</span>
+                    <span className="font-semibold text-text">
+                      {emp.department?.name || '\u2014'}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-muted">Designation:</span>
@@ -927,7 +1081,10 @@ export function EmployeeDirectoryPage() {
 
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-text-muted">
-                    Joined: <span className="font-medium text-text">{formatJoiningDate(emp.joiningDate)}</span>
+                    Joined:{' '}
+                    <span className="font-medium text-text">
+                      {formatJoiningDate(emp.joiningDate)}
+                    </span>
                   </span>
 
                   <div className="flex items-center gap-1.5">
@@ -942,7 +1099,9 @@ export function EmployeeDirectoryPage() {
                     {isAdmin && (
                       <>
                         {isSelf ? (
-                          <span className="text-xs text-text-subtle font-medium">(Current User)</span>
+                          <span className="text-xs text-text-subtle font-medium">
+                            (Current User)
+                          </span>
                         ) : isDeactivated ? (
                           <span className="text-xs text-text-subtle font-mono">Deactivated</span>
                         ) : (
@@ -968,7 +1127,10 @@ export function EmployeeDirectoryPage() {
 
       {/* 9. Desktop & Tablet Data Table (Shown on Screen: >=640px) */}
       {!isLoading && employees.length > 0 && viewMode === 'list' && (
-        <div className="hidden sm:block bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden dir-fade-in">
+        <div
+          data-testid="datatable-desktop-table"
+          className="hidden sm:block bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden dir-fade-in"
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm" aria-label="Employee directory listing">
               <thead className="bg-surface-muted/60 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
@@ -1005,14 +1167,20 @@ export function EmployeeDirectoryPage() {
                       onClick={() =>
                         setSort(
                           'employeeCode',
-                          query.sortBy === 'employeeCode' && query.sortOrder === 'asc' ? 'desc' : 'asc',
+                          query.sortBy === 'employeeCode' && query.sortOrder === 'asc'
+                            ? 'desc'
+                            : 'asc',
                         )
                       }
                       className="inline-flex items-center gap-1 font-bold uppercase tracking-wider text-text-muted hover:text-text min-h-[44px]"
                     >
                       CODE
                       <span aria-hidden="true" className="text-xs">
-                        {query.sortBy === 'employeeCode' ? (query.sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                        {query.sortBy === 'employeeCode'
+                          ? query.sortOrder === 'asc'
+                            ? '▲'
+                            : '▼'
+                          : '↕'}
                       </span>
                     </button>
                   </th>
@@ -1034,14 +1202,20 @@ export function EmployeeDirectoryPage() {
                       onClick={() =>
                         setSort(
                           'joiningDate',
-                          query.sortBy === 'joiningDate' && query.sortOrder === 'asc' ? 'desc' : 'asc',
+                          query.sortBy === 'joiningDate' && query.sortOrder === 'asc'
+                            ? 'desc'
+                            : 'asc',
                         )
                       }
                       className="inline-flex items-center gap-1 font-bold uppercase tracking-wider text-text-muted hover:text-text min-h-[44px]"
                     >
                       JOINED
                       <span aria-hidden="true" className="text-xs">
-                        {query.sortBy === 'joiningDate' ? (query.sortOrder === 'asc' ? '▲' : '▼') : '↕'}
+                        {query.sortBy === 'joiningDate'
+                          ? query.sortOrder === 'asc'
+                            ? '▲'
+                            : '▼'
+                          : '↕'}
                       </span>
                     </button>
                   </th>
@@ -1053,7 +1227,8 @@ export function EmployeeDirectoryPage() {
               <tbody className="divide-y divide-border text-text">
                 {employees.map((emp) => {
                   const avatarBg = getAvatarColors(`${emp.firstName} ${emp.lastName}`);
-                  const initials = `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
+                  const initials =
+                    `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
                   const isSelf = emp.id === user?.employeeId;
                   const isDeactivated = emp.status === 'deactivated';
 
@@ -1092,7 +1267,10 @@ export function EmployeeDirectoryPage() {
                               className="font-semibold text-text hover:text-primary-deep hover:underline truncate block"
                               data-testid={`employee-link-${emp.id}`}
                             >
-                              {emp.firstName} {emp.lastName}
+                              {emp.firstName} {emp.lastName}{' '}
+                              <span className="font-mono text-xs text-text-muted font-normal">
+                                {emp.employeeCode}
+                              </span>
                             </a>
                             <div className="text-xs text-text-muted truncate">
                               {emp.email || `${emp.firstName.toLowerCase()}@maxr.internal`}
@@ -1155,7 +1333,11 @@ export function EmployeeDirectoryPage() {
                                   : 'bg-rose-500'
                             }`}
                           />
-                          {emp.status === 'active' ? 'Active' : emp.status === 'pending' ? 'Pending' : 'Deactivated'}
+                          {emp.status === 'active'
+                            ? 'Active'
+                            : emp.status === 'pending'
+                              ? 'Pending'
+                              : 'Deactivated'}
                         </span>
                       </td>
 
@@ -1221,9 +1403,7 @@ export function EmployeeDirectoryPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 bg-surface-muted/40 border-t border-border text-xs text-text-muted">
             <div>
               Showing{' '}
-              <span className="font-semibold text-text">
-                {(meta.page - 1) * meta.pageSize + 1}
-              </span>{' '}
+              <span className="font-semibold text-text">{(meta.page - 1) * meta.pageSize + 1}</span>{' '}
               –{' '}
               <span className="font-semibold text-text">
                 {Math.min(meta.page * meta.pageSize, meta.total)}

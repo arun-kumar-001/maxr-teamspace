@@ -9,7 +9,16 @@ import type { LeaveCalendarEntry } from '../../leave/types';
 // Code-based SVG icons (Zero Raw Hex compliant)
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -20,7 +29,16 @@ function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="9" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
@@ -29,7 +47,16 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconUserX({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <line x1="17" y1="8" x2="22" y2="13" />
@@ -40,7 +67,16 @@ function IconUserX({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -51,7 +87,16 @@ function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconLayers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <polygon points="12 2 2 7 12 12 22 7 12 2" />
       <polyline points="2 17 12 22 22 17" />
       <polyline points="2 12 12 17 22 12" />
@@ -61,7 +106,16 @@ function IconLayers({ className = 'w-5 h-5' }: { className?: string }) {
 
 function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="1" />
       <circle cx="12" cy="5" r="1" />
       <circle cx="12" cy="19" r="1" />
@@ -185,7 +239,10 @@ export function OnDutyTab({
         checkInTime: formatTimeDisplay(r.checkInTime),
         checkOutTime: formatTimeDisplay(r.checkOutTime),
         hoursWorked: formatDurationDisplay(r.durationMinutes),
-        status: (r.status === 'present' || r.status === 'late' || r.status === 'on_leave' ? r.status : 'present'),
+        status:
+          r.status === 'present' || r.status === 'late' || r.status === 'on_leave'
+            ? r.status
+            : 'present',
         notes: r.notes,
         rawRecord: r,
       }));
@@ -225,10 +282,16 @@ export function OnDutyTab({
 
   // KPI Calculations
   const totalCount = allRows.length || 1;
-  const onDutyCount = useMemo(() => allRows.filter((r) => r.status === 'present' || r.status === 'late').length, [allRows]);
+  const onDutyCount = useMemo(
+    () => allRows.filter((r) => r.status === 'present' || r.status === 'late').length,
+    [allRows],
+  );
   const lateCount = useMemo(() => allRows.filter((r) => r.status === 'late').length, [allRows]);
   const absentCount = useMemo(() => allRows.filter((r) => r.status === 'absent').length, [allRows]);
-  const onLeaveCount = useMemo(() => allRows.filter((r) => r.status === 'on_leave').length, [allRows]);
+  const onLeaveCount = useMemo(
+    () => allRows.filter((r) => r.status === 'on_leave').length,
+    [allRows],
+  );
 
   const onDutyPercent = ((onDutyCount / totalCount) * 100).toFixed(1);
   const lateAbsentCount = lateCount + absentCount;
@@ -237,7 +300,10 @@ export function OnDutyTab({
   const filteredRows = useMemo(() => {
     return allRows.filter((row) => {
       // Department filter
-      if (departmentFilter !== 'all' && row.departmentName.toLowerCase() !== departmentFilter.toLowerCase()) {
+      if (
+        departmentFilter !== 'all' &&
+        row.departmentName.toLowerCase() !== departmentFilter.toLowerCase()
+      ) {
         return false;
       }
       // Late & Absent toggle
@@ -341,9 +407,7 @@ export function OnDutyTab({
               <span className="text-2xl font-extrabold text-text font-display leading-tight block">
                 {absentCount}
               </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                Not checked in yet
-              </span>
+              <span className="text-[11px] text-text-muted block truncate">Not checked in yet</span>
             </div>
           </div>
         </div>
@@ -448,7 +512,10 @@ export function OnDutyTab({
           {/* Table Container */}
           <div className="bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm" aria-label="On Duty Attendance Table">
+              <table
+                className="w-full text-left text-xs sm:text-sm"
+                aria-label="On Duty Attendance Table"
+              >
                 <thead className="bg-surface-muted/50 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
                   <tr>
                     <th scope="col" className="px-4 py-3.5">
@@ -496,7 +563,9 @@ export function OnDutyTab({
                           {/* Employee */}
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full ${avatarBg} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}>
+                              <div
+                                className={`w-8 h-8 rounded-full ${avatarBg} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}
+                              >
                                 {initials}
                               </div>
                               <div className="min-w-0">
@@ -526,7 +595,9 @@ export function OnDutyTab({
                           {/* Shift */}
                           <td className="px-4 py-3.5">
                             <span className="font-semibold text-text block">{row.shiftName}</span>
-                            <span className="text-[11px] text-text-muted block">({row.shiftHours})</span>
+                            <span className="text-[11px] text-text-muted block">
+                              ({row.shiftHours})
+                            </span>
                           </td>
 
                           {/* Check-in */}
@@ -540,9 +611,7 @@ export function OnDutyTab({
                           </td>
 
                           {/* Hours */}
-                          <td className="px-4 py-3.5 font-bold text-text">
-                            {row.hoursWorked}
-                          </td>
+                          <td className="px-4 py-3.5 font-bold text-text">{row.hoursWorked}</td>
 
                           {/* Status */}
                           <td className="px-4 py-3.5">
@@ -613,9 +682,12 @@ export function OnDutyTab({
             {/* Pagination */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-border text-xs text-text-muted">
               <div>
-                Showing <span className="font-semibold text-text">{(page - 1) * pageSize + 1}</span> –{' '}
-                <span className="font-semibold text-text">{Math.min(page * pageSize, filteredRows.length)}</span> of{' '}
-                <span className="font-semibold text-text">{filteredRows.length}</span> employees
+                Showing <span className="font-semibold text-text">{(page - 1) * pageSize + 1}</span>{' '}
+                –{' '}
+                <span className="font-semibold text-text">
+                  {Math.min(page * pageSize, filteredRows.length)}
+                </span>{' '}
+                of <span className="font-semibold text-text">{filteredRows.length}</span> employees
               </div>
 
               <div className="flex items-center gap-1">
@@ -635,7 +707,9 @@ export function OnDutyTab({
                       type="button"
                       onClick={() => setPage(p)}
                       className={`w-7 h-7 rounded-lg font-bold text-xs ${
-                        p === page ? 'bg-primary-deep text-white shadow-xs' : 'border border-border text-text hover:bg-surface-muted'
+                        p === page
+                          ? 'bg-primary-deep text-white shadow-xs'
+                          : 'border border-border text-text hover:bg-surface-muted'
                       }`}
                     >
                       {p}
@@ -704,7 +778,9 @@ export function OnDutyTab({
 
             <div className="space-y-3 pt-1">
               {onLeaveEmployees.length === 0 ? (
-                <p className="text-xs text-text-muted text-center py-2">No employees on leave today.</p>
+                <p className="text-xs text-text-muted text-center py-2">
+                  No employees on leave today.
+                </p>
               ) : (
                 onLeaveEmployees.map((emp) => {
                   const avatarBg = getAvatarColors(emp.name);
@@ -717,12 +793,18 @@ export function OnDutyTab({
 
                   return (
                     <div key={emp.id} className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full ${avatarBg} text-xs font-bold flex items-center justify-center shrink-0 shadow-xs`}>
+                      <div
+                        className={`w-8 h-8 rounded-full ${avatarBg} text-xs font-bold flex items-center justify-center shrink-0 shadow-xs`}
+                      >
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-xs text-text block truncate">{emp.name}</span>
-                        <span className="text-[11px] text-text-muted block truncate">{emp.leaveType}</span>
+                        <span className="font-semibold text-xs text-text block truncate">
+                          {emp.name}
+                        </span>
+                        <span className="text-[11px] text-text-muted block truncate">
+                          {emp.leaveType}
+                        </span>
                       </div>
                     </div>
                   );
