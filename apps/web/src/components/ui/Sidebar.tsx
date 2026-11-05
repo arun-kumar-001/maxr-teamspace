@@ -32,7 +32,7 @@ export interface SidebarProps {
   /** Icon rail mode (88px). */
   collapsed: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
-  user?: { name: string; role: string; initials: string };
+  user?: { name: string; role: string; initials: string; avatarUrl?: string };
   onUserMenu?: () => void;
   /** Optional card above the user (expanded only), e.g. a monthly summary. */
   footer?: React.ReactNode;
@@ -345,17 +345,25 @@ export function Sidebar({
               onClick={onUserMenu}
               aria-label={`Account menu, ${user.name}`}
               {...tooltipHandlers(user.name)}
-              className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold ${focusRing}`}
+              className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden ${focusRing}`}
             >
-              {user.initials}
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user.initials
+              )}
             </button>
           ) : (
             <>
               <span
-                className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold"
+                className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden"
                 aria-hidden="true"
               >
-                {user.initials}
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.initials
+                )}
               </span>
               <span className="flex-1 min-w-0">
                 <span className="block font-semibold text-sidebar-strong truncate">

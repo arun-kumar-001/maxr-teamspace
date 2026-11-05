@@ -37,6 +37,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         name: user.name,
         role: ROLE_DISPLAY_NAMES[user.role] ?? user.role,
         initials: user.avatarInitials,
+        avatarUrl: user.avatarUrl,
       }
     : undefined;
 

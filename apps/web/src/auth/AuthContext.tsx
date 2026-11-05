@@ -14,9 +14,10 @@ export interface AuthContextValue {
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   switchRole: (newRole: Role) => void;
+  updateUserAvatar?: (avatarUrl: string | null) => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'maxr_auth_session';
 
@@ -221,6 +222,29 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     }
   };
 
+  const updateUserAvatar = (avatarUrl: string | null) => {
+    setUser((prev) => (prev ? { ...prev, avatarUrl: avatarUrl || undefined } : null));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const key = `maxr_avatar_${user?.role || 'admin'}`;
+      if (avatarUrl) {
+        localStorage.setItem(key, avatarUrl);
+      } else {
+        localStorage.removeItem(key);
+      }
+    }
+  };
+
+  // Sync saved avatar from localStorage if available
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && window.localStorage) {
+      const key = `maxr_avatar_${user.role}`;
+      const saved = localStorage.getItem(key);
+      if (saved && user.avatarUrl !== saved) {
+        setUser((prev) => (prev ? { ...prev, avatarUrl: saved } : null));
+      }
+    }
+  }, [user?.role]);
+
   const value: AuthContextValue = {
     user,
     role: user ? user.role : null,
@@ -229,6 +253,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     login,
     logout,
     switchRole,
+    updateUserAvatar,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
