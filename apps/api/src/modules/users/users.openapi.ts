@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
 import {
+  createUserSchema,
   permissionSummarySchema,
   replaceRolesSchema,
   roleSummarySchema,
+  updateUserStatusSchema,
   userAccountSchema,
   userIdParamsSchema,
   userQueryObject,
@@ -48,6 +50,24 @@ registerRoute({
 });
 
 registerRoute({
+  method: 'post',
+  path: '/users',
+  tags,
+  summary: 'Create a user account directly with assigned roles (Admin; audited)',
+  permission: 'users.create',
+  body: createUserSchema,
+  extraResponses: { 409: 'A user with this email already exists' },
+  success: {
+    status: 201,
+    description: 'The created account (includes temporaryPassword when auto-generated)',
+    schema: z.object({
+      data: userAccountSchema,
+      meta: z.object({ temporaryPassword: z.string() }).optional(),
+    }),
+  },
+});
+
+registerRoute({
   method: 'put',
   path: '/users/{id}/roles',
   tags,
@@ -60,6 +80,23 @@ registerRoute({
   success: {
     status: 200,
     description: 'The account after the change (unchanged when the roles were already these)',
+    schema: z.object({ data: userAccountSchema }),
+  },
+});
+
+registerRoute({
+  method: 'put',
+  path: '/users/{id}/status',
+  tags,
+  summary:
+    'Activate or deactivate a user account (Admin; audited). Revokes active sessions on deactivation.',
+  permission: 'users.deactivate',
+  params: userIdParamsSchema,
+  body: updateUserStatusSchema,
+  extraResponses: { 422: 'Cannot deactivate yourself or the last active Admin' },
+  success: {
+    status: 200,
+    description: 'The updated account',
     schema: z.object({ data: userAccountSchema }),
   },
 });

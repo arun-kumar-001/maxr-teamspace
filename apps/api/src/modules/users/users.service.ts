@@ -1,7 +1,9 @@
+import { randomBytes } from 'node:crypto';
 import { PaginatedResponse, Role } from '@maxr/shared';
-import { notFound, unprocessable } from '../../http/errors';
+import { conflict, notFound, unprocessable } from '../../http/errors';
 import { buildPage, toOffsetLimit } from '../../http/pagination';
 import type { PlatformServices } from '../../platform';
+import { PasswordHasher, createArgon2Hasher } from '../auth/password-hasher';
 import { PERMISSION_CATALOG, PERMISSION_KEYS } from '../rbac';
 import { RequestContext } from '../employees/types';
 import { IUsersRepository } from './users.repository';
@@ -23,13 +25,41 @@ export interface PermissionSummary {
   grants: Record<string, string>;
 }
 
+export interface CreateUserCommand {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: readonly Role[];
+  password?: string;
+  isActive: boolean;
+  departmentId?: string;
+  designationId?: string;
+}
+
+export interface CreateUserOutput {
+  user: UserAccount;
+  temporaryPassword?: string;
+}
+
+export interface UsersServiceOptions {
+  hasher?: PasswordHasher;
+  revokeSessionsForUser?: (userId: string) => Promise<number>;
+}
+
 type Deps = Pick<PlatformServices, 'audit'>;
 
 export class UsersService {
+  private readonly hasher: PasswordHasher;
+  private readonly revokeSessionsForUser?: (userId: string) => Promise<number>;
+
   constructor(
     private readonly repository: IUsersRepository,
     private readonly platform: Deps,
-  ) {}
+    options: UsersServiceOptions = {},
+  ) {
+    this.hasher = options.hasher ?? createArgon2Hasher();
+    this.revokeSessionsForUser = options.revokeSessionsForUser;
+  }
 
   async list(query: UserListQuery): Promise<PaginatedResponse<UserAccount>> {
     const { page, pageSize, ...rest } = query;
@@ -96,6 +126,94 @@ export class UsersService {
         entityType: 'user',
         entityId: id,
         metadata: { requestedRoles: roles },
+      });
+      throw err;
+    }
+  }
+
+  async createUser(input: CreateUserCommand, ctx: RequestContext): Promise<CreateUserOutput> {
+    const audit = this.platform.audit.withContext(ctx);
+    const temporaryPassword = input.password
+      ? undefined
+      : `Maxr#${randomBytes(9).toString('base64url')}1!`;
+    const rawPassword = input.password ?? (temporaryPassword as string);
+    const passwordHash = await this.hasher.hash(rawPassword);
+
+    try {
+      const result = await this.repository.createUser({
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email: input.email,
+        roles: input.roles,
+        passwordHash,
+        isActive: input.isActive,
+        departmentId: input.departmentId,
+        designationId: input.designationId,
+      });
+      switch (result.status) {
+        case 'duplicate_email':
+          throw conflict('A user with this email address already exists');
+        case 'missing_reference':
+          throw unprocessable(result.message);
+        case 'created':
+          await audit.record({
+            action: 'users.create',
+            outcome: 'success',
+            entityType: 'user',
+            entityId: result.user.id,
+            changes: {
+              email: { from: null, to: result.user.email },
+              roles: { from: [], to: result.user.roles },
+              isActive: { from: null, to: result.user.isActive },
+            },
+          });
+          return { user: result.user, temporaryPassword };
+      }
+    } catch (err) {
+      await audit.tryRecord({
+        action: 'users.create',
+        outcome: 'failure',
+        entityType: 'user',
+        metadata: { email: input.email.trim().toLowerCase(), roles: input.roles },
+      });
+      throw err;
+    }
+  }
+
+  async updateStatus(id: string, isActive: boolean, ctx: RequestContext): Promise<UserAccount> {
+    const audit = this.platform.audit.withContext(ctx);
+    const action = isActive ? 'users.update' : 'users.deactivate';
+    try {
+      const result = await this.repository.setStatus(id, isActive, ctx.actorId);
+      switch (result.status) {
+        case 'not_found':
+          throw notFound('User not found');
+        case 'self_deactivate':
+          throw unprocessable('You cannot deactivate your own account');
+        case 'last_admin':
+          throw unprocessable('The last active Admin cannot be deactivated');
+        case 'unchanged':
+          return result.user;
+        case 'changed':
+          if (!isActive && this.revokeSessionsForUser) {
+            await this.revokeSessionsForUser(id);
+          }
+          await audit.record({
+            action,
+            outcome: 'success',
+            entityType: 'user',
+            entityId: id,
+            changes: { isActive: { from: result.before, to: result.user.isActive } },
+          });
+          return result.user;
+      }
+    } catch (err) {
+      await audit.tryRecord({
+        action,
+        outcome: 'failure',
+        entityType: 'user',
+        entityId: id,
+        metadata: { requestedActive: isActive },
       });
       throw err;
     }

@@ -159,4 +159,46 @@ describe('PgUsersRepository (PostgreSQL)', () => {
     await outer.query(`UPDATE users SET is_active = true WHERE id = $1`, [ids.zed]);
     expect((await repo.replaceRoles(ids.root as string, [ROLES.STAFF])).status).toBe('changed');
   });
+
+  it('creates a linked employee + user + roles transactionally and rejects duplicate email', async () => {
+    const created = await repo.createUser({
+      firstName: 'Nova',
+      lastName: 'Patel',
+      email: 'nova@users.test',
+      roles: [ROLES.HR_MANAGER, ROLES.STAFF],
+      passwordHash: 'hashed-pw',
+      isActive: true,
+    });
+    expect(created.status).toBe('created');
+    if (created.status === 'created') {
+      expect(created.user.name).toBe('Nova Patel');
+      expect(created.user.roles).toEqual([ROLES.HR_MANAGER, ROLES.STAFF]);
+      expect(created.user.isActive).toBe(true);
+    }
+
+    const dup = await repo.createUser({
+      firstName: 'Nova',
+      lastName: 'Patel',
+      email: 'NOVA@users.test',
+      roles: [ROLES.STAFF],
+      passwordHash: 'hashed-pw',
+      isActive: true,
+    });
+    expect(dup.status).toBe('duplicate_email');
+  });
+
+  it('toggles status cleanly and blocks self-deactivation or deactivating the last active Admin', async () => {
+    const selfRes = await repo.setStatus(ids.zed as string, false, ids.zed as string);
+    expect(selfRes.status).toBe('self_deactivate');
+
+    const offYara = await repo.setStatus(ids.yara as string, false, ids.zed as string);
+    expect(offYara.status).toBe('changed');
+    if (offYara.status === 'changed') {
+      expect(offYara.user.isActive).toBe(false);
+    }
+
+    // zed is the only active Admin after test #10
+    const offZed = await repo.setStatus(ids.zed as string, false, ids.root as string);
+    expect(offZed.status).toBe('last_admin');
+  });
 });

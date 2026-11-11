@@ -429,7 +429,31 @@ function AppRoutes() {
         path="/attendance"
         element={
           <ShellLayout>
-            <AttendancePage />
+            <AttendancePage initialTab="on-duty" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/on-duty"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="on-duty" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/roster"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="roster" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/timesheets"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="timesheets" />
           </ShellLayout>
         }
       />
@@ -445,7 +469,7 @@ function AppRoutes() {
         path="/lead/attendance"
         element={
           <ShellLayout>
-            <AttendancePage />
+            <AttendancePage initialTab="on-duty" />
           </ShellLayout>
         }
       />
