@@ -184,12 +184,11 @@ export function Sidebar({
     item.count ? <span className="sr-only">, {countText(item.count)} new</span> : null;
 
   return (
-    <div className="relative flex shrink-0 h-full">
-      <aside
+    <aside className="relative flex shrink-0 h-full" aria-label="Main">
+      <div
         className={`relative flex flex-col h-full bg-sidebar text-sidebar-text rounded-card overflow-hidden transition-[width] duration-200 ${
           collapsed ? 'w-rail' : 'w-sidebar'
         } ${className}`}
-        aria-label="Main"
       >
         {/* Brand */}
         <div
@@ -404,7 +403,7 @@ export function Sidebar({
             {tooltip.label}
           </span>
         )}
-      </aside>
+      </div>
 
       {/* Collapse / Expand toggle button positioned OUTSIDE the side navbar */}
       {onCollapsedChange && (
@@ -420,7 +419,7 @@ export function Sidebar({
           <PanelIcon collapsed={collapsed} />
         </button>
       )}
-    </div>
+    </aside>
   );
 }
 

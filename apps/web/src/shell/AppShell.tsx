@@ -22,11 +22,8 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
 
   const brand = {
     name: (
-      <span>
-        <span className="sr-only">MAXR Teamspace</span>
-        <span aria-hidden="true">
-          Max<span className="text-primary font-bold">R</span> Teamspace
-        </span>
+      <span aria-label="MAXR Teamspace">
+        Max<span className="text-primary font-bold">R</span> Teamspace
       </span>
     ),
     subtitle: 'Staff Management',
