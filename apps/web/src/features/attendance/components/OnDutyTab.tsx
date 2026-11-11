@@ -6,23 +6,23 @@ import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/type
 import type { Shift } from '../../shifts/types';
 import type { LeaveCalendarEntry } from '../../leave/types';
 
-// Code-based SVG icons (Zero Raw Hex compliant)
+// Code-based Modern Duotone SVG icons (Zero Raw Hex compliant)
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <circle cx="9.5" cy="7.5" r="3.5" fill="currentColor" fillOpacity="0.18" />
+      <path d="M3 19.5c0-3 2.9-5 6.5-5s6.5 2 6.5 5" fill="currentColor" fillOpacity="0.14" />
+      <path d="M16.5 4.7a3.2 3.2 0 0 1 0 5.6" />
+      <path d="M21 19.5c0-2.3-1.8-4.1-4.3-4.7" />
     </svg>
   );
 }
@@ -33,14 +33,15 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="9" />
-      <polyline points="12 6 12 12 16 14" />
+      <circle cx="12" cy="12" r="9.25" fill="currentColor" fillOpacity="0.15" />
+      <path d="M12 7v5.2l3.4 2" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -51,16 +52,15 @@ function IconUserX({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <line x1="17" y1="8" x2="22" y2="13" />
-      <line x1="22" y1="8" x2="17" y2="13" />
+      <circle cx="9.5" cy="7.5" r="3.5" fill="currentColor" fillOpacity="0.18" />
+      <path d="M3 19.5c0-3 2.9-5 6.5-5s6.5 2 6.5 5" fill="currentColor" fillOpacity="0.14" />
+      <path d="m17.25 8.25 4 4M21.25 8.25l-4 4" />
     </svg>
   );
 }
@@ -71,16 +71,26 @@ function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
+      <rect
+        x="3.25"
+        y="4.75"
+        width="17.5"
+        height="16"
+        rx="4"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <path d="M3.25 9.75h17.5" />
+      <path d="M8 2.75v3.5M16 2.75v3.5" />
+      <circle cx="8.5" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="14" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -355,10 +365,10 @@ export function OnDutyTab({
       {/* 1. Four Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* On Duty */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-emerald-300 rounded-card shadow-card flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconUsers className="w-5 h-5" />
+            <div className="text-emerald-600 flex items-center justify-center shrink-0">
+              <IconUsers className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -375,10 +385,10 @@ export function OnDutyTab({
         </div>
 
         {/* Late Today */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-sky-300 rounded-card shadow-card flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconClock className="w-5 h-5" />
+            <div className="text-sky-600 flex items-center justify-center shrink-0">
+              <IconClock className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -395,10 +405,10 @@ export function OnDutyTab({
         </div>
 
         {/* Absent Today */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-rose-300 rounded-card shadow-card flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconUserX className="w-5 h-5" />
+            <div className="text-rose-600 flex items-center justify-center shrink-0">
+              <IconUserX className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -413,10 +423,10 @@ export function OnDutyTab({
         </div>
 
         {/* On Leave */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-purple-300 rounded-card shadow-card flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconCalendar className="w-5 h-5" />
+            <div className="text-purple-600 flex items-center justify-center shrink-0">
+              <IconCalendar className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
