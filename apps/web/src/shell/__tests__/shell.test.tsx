@@ -54,7 +54,7 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('data-testid="dashboard-content"');
     });
 
-    it('should render admin navigation groups for Admin role', () => {
+    it('should render consolidated admin navigation groups for Admin role', () => {
       const html = renderToStaticMarkup(
         <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
           <AppShell currentPath="/admin/users" onNavigate={() => {}}>
@@ -63,10 +63,23 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
         </AuthProvider>,
       );
 
+      expect(html).toContain('Workforce');
+      expect(html).toContain('Employee Directory');
+      expect(html).toContain('Attendance');
+      expect(html).toContain('Leave');
+      expect(html).toContain('Approvals');
+      expect(html).toContain('Tasks');
+      expect(html).toContain('Projects');
+      expect(html).toContain('Meetings');
+      expect(html).toContain('Expenses');
+      expect(html).toContain('Reports');
       expect(html).toContain('Administration');
       expect(html).toContain('Users &amp; Roles');
+      expect(html).toContain('Organization');
+      expect(html).toContain('Policies');
+      expect(html).toContain('Settings');
       expect(html).toContain('Audit Logs');
-      expect(html).toContain('Company Config');
+      expect(html).toContain('94.2%');
       // Deny by default: staff-only items not leaked
       expect(html).not.toContain('My Leave');
     });

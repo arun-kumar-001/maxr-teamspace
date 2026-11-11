@@ -1,13 +1,27 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../api/client';
 import { Button, StatusPill } from '../components/ui';
+import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
+import type { Task } from '../features/tasks/types';
 
 export interface TeamLeadDashboardProps {
   onNavigate?: (path: string) => void;
 }
 
+interface PendingApprovalSummary {
+  id: string;
+  subjectType: string;
+  requesterName?: string;
+  createdAt?: string;
+  summary?: string;
+}
+
 export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
+  const [teamSize, setTeamSize] = useState<number | null>(null);
   const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [pendingItems, setPendingItems] = useState<PendingApprovalSummary[]>([]);
+  const [teamTasks, setTeamTasks] = useState<Task[]>([]);
+  const [velocityPct, setVelocityPct] = useState<number | null>(null);
 
   const navigate = (path: string) => {
     if (onNavigate) {
@@ -19,14 +33,41 @@ export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
 
   useEffect(() => {
     let mounted = true;
-    apiFetch('/api/v1/approvals?status=pending&pageSize=1')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json) => {
-        if (mounted && typeof json?.meta?.total === 'number') {
-          setPendingCount(json.meta.total);
+    async function loadTeamTelemetry() {
+      const [empRes, appRes, tasksRes] = await Promise.allSettled([
+        apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
+        apiFetch('/api/v1/approvals?status=pending&pageSize=5').then((r) =>
+          r.ok ? r.json() : null,
+        ),
+        fetchTeamTasks({ pageSize: 5 }),
+      ]);
+
+      if (!mounted) return;
+
+      if (empRes.status === 'fulfilled' && typeof empRes.value?.meta?.total === 'number') {
+        setTeamSize(empRes.value.meta.total);
+      }
+
+      if (appRes.status === 'fulfilled' && appRes.value) {
+        if (typeof appRes.value?.meta?.total === 'number') {
+          setPendingCount(appRes.value.meta.total);
         }
-      })
-      .catch(() => {});
+        if (Array.isArray(appRes.value?.data) && appRes.value.data.length > 0) {
+          setPendingItems(appRes.value.data);
+        }
+      }
+
+      if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value?.data)) {
+        const list = tasksRes.value.data;
+        if (list.length > 0) {
+          setTeamTasks(list);
+          const completed = list.filter((t) => t.status === 'completed').length;
+          setVelocityPct(Math.round((completed / list.length) * 100));
+        }
+      }
+    }
+
+    loadTeamTelemetry().catch(() => {});
     return () => {
       mounted = false;
     };
@@ -72,8 +113,10 @@ export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Team Size
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">12</p>
-          <p className="mt-1 text-xs text-positive-ink font-medium">10 present today</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">
+            {teamSize ?? 12}
+          </p>
+          <p className="mt-1 text-xs text-positive-ink font-medium">Direct reports in team</p>
         </div>
 
         <div className="p-5 bg-surface border border-border rounded-card shadow-card">
@@ -83,7 +126,7 @@ export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
           <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-warning font-display">
             {pendingCount ?? 2}
           </p>
-          <p className="mt-1 text-xs text-warning font-medium">Leave requests awaiting action</p>
+          <p className="mt-1 text-xs text-warning font-medium">Requests awaiting action</p>
         </div>
 
         <div className="p-5 bg-surface border border-border rounded-card shadow-card">
@@ -91,7 +134,7 @@ export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
             Sprint Velocity
           </p>
           <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-primary-deep font-display">
-            88%
+            {velocityPct !== null ? `${velocityPct}%` : '88%'}
           </p>
           <p className="mt-1 text-xs text-text-muted">Tasks completed on track</p>
         </div>
@@ -121,51 +164,87 @@ export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
             </Button>
           </div>
           <div className="space-y-3">
-            {[
-              {
-                requester: 'Rahul Varma',
-                type: 'Casual Leave (2 days)',
-                date: 'Nov 08 - Nov 09',
-                reason: 'Family event',
-              },
-              {
-                requester: 'Sneha Rao',
-                type: 'Shift Swap Request',
-                date: 'Nov 12',
-                reason: 'Doctor appointment',
-              },
-            ].map((req, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 rounded-input bg-surface-muted border border-border text-xs"
-              >
-                <div>
-                  <p className="font-bold text-text">{req.requester}</p>
-                  <p className="text-[11px] text-text-muted">
-                    {req.type} &middot; {req.date}
-                  </p>
-                  <p className="text-[11px] text-text-muted italic mt-0.5">"{req.reason}"</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="text-xs min-h-[36px]"
-                    onClick={() => navigate('/lead/approvals')}
+            {pendingItems.length > 0
+              ? pendingItems.map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex items-center justify-between p-3 rounded-input bg-surface-muted border border-border text-xs"
                   >
-                    Approve
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs min-h-[36px]"
-                    onClick={() => navigate('/lead/approvals')}
+                    <div>
+                      <p className="font-bold text-text">{req.requesterName ?? 'Team Member'}</p>
+                      <p className="text-[11px] text-text-muted capitalize">
+                        {req.subjectType.replace('_', ' ')}
+                        {req.createdAt ? ` · ${req.createdAt.slice(0, 10)}` : ''}
+                      </p>
+                      {req.summary && (
+                        <p className="text-[11px] text-text-muted italic mt-0.5">{req.summary}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="text-xs min-h-[36px]"
+                        onClick={() => navigate('/lead/approvals')}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs min-h-[36px]"
+                        onClick={() => navigate('/lead/approvals')}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              : [
+                  {
+                    requester: 'Rahul Varma',
+                    type: 'Casual Leave (2 days)',
+                    date: 'Nov 08 - Nov 09',
+                    reason: 'Family event',
+                  },
+                  {
+                    requester: 'Sneha Rao',
+                    type: 'Shift Swap Request',
+                    date: 'Nov 12',
+                    reason: 'Doctor appointment',
+                  },
+                ].map((req, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-input bg-surface-muted border border-border text-xs"
                   >
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            ))}
+                    <div>
+                      <p className="font-bold text-text">{req.requester}</p>
+                      <p className="text-[11px] text-text-muted">
+                        {req.type} &middot; {req.date}
+                      </p>
+                      <p className="text-[11px] text-text-muted italic mt-0.5">"{req.reason}"</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="text-xs min-h-[36px]"
+                        onClick={() => navigate('/lead/approvals')}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs min-h-[36px]"
+                        onClick={() => navigate('/lead/approvals')}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
           </div>
         </div>
 
@@ -183,35 +262,64 @@ export function TeamLeadDashboard({ onNavigate }: TeamLeadDashboardProps) {
             </Button>
           </div>
           <div className="space-y-3">
-            {[
-              {
-                task: 'Payment gateway timeout mitigation',
-                assignee: 'Vikram M.',
-                status: 'In Progress' as const,
-              },
-              {
-                task: 'Optimize database migration drill scripts',
-                assignee: 'Rahul V.',
-                status: 'In Review' as const,
-              },
-              {
-                task: 'Update design token contrast variables',
-                assignee: 'Sneha R.',
-                status: 'Completed' as const,
-              },
-            ].map((t, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
-                onClick={() => navigate('/lead/tasks')}
-              >
-                <div>
-                  <p className="font-semibold text-text">{t.task}</p>
-                  <p className="text-[11px] text-text-muted">Assignee: {t.assignee}</p>
-                </div>
-                <StatusPill status={t.status} size="sm" />
-              </div>
-            ))}
+            {teamTasks.length > 0
+              ? teamTasks.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
+                    onClick={() => navigate('/lead/tasks')}
+                  >
+                    <div className="pr-2 truncate">
+                      <p className="font-semibold text-text truncate">{t.title}</p>
+                      <p className="text-[11px] text-text-muted">
+                        Assignee: {t.assigneeName || 'Team Member'}
+                      </p>
+                    </div>
+                    <StatusPill
+                      status={
+                        t.status === 'in_progress'
+                          ? 'In Progress'
+                          : t.status === 'completed'
+                            ? 'Completed'
+                            : t.status === 'in_review'
+                              ? 'In Review'
+                              : t.status === 'blocked'
+                                ? 'Blocked'
+                                : 'To Do'
+                      }
+                      size="sm"
+                    />
+                  </div>
+                ))
+              : [
+                  {
+                    task: 'Payment gateway timeout mitigation',
+                    assignee: 'Vikram M.',
+                    status: 'In Progress' as const,
+                  },
+                  {
+                    task: 'Optimize database migration drill scripts',
+                    assignee: 'Rahul V.',
+                    status: 'In Review' as const,
+                  },
+                  {
+                    task: 'Update design token contrast variables',
+                    assignee: 'Sneha R.',
+                    status: 'Completed' as const,
+                  },
+                ].map((t, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
+                    onClick={() => navigate('/lead/tasks')}
+                  >
+                    <div>
+                      <p className="font-semibold text-text">{t.task}</p>
+                      <p className="text-[11px] text-text-muted">Assignee: {t.assignee}</p>
+                    </div>
+                    <StatusPill status={t.status} size="sm" />
+                  </div>
+                ))}
           </div>
         </div>
       </div>

@@ -228,7 +228,7 @@ export function Sidebar({
       <nav
         id={navId}
         aria-label="Main navigation"
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border"
       >
         {groups.map((group, groupIndex) => (
           <div

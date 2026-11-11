@@ -492,15 +492,27 @@ export function UsersPage() {
           </p>
         </div>
 
-        {/* Decorative Glass Badge Graphic (from reference image) */}
-        <div className="hidden lg:flex items-center gap-3 p-3 rounded-2xl bg-surface/80 backdrop-blur-md border border-border/80 shadow-card">
-          <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0">
-            <IconShieldCheck className="w-6 h-6 text-emerald-600" />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Decorative Glass Badge Graphic */}
+          <div className="hidden lg:flex items-center gap-3 p-3 rounded-2xl bg-surface/80 backdrop-blur-md border border-border/80 shadow-card">
+            <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0">
+              <IconShieldCheck className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div className="text-left text-xs pr-2">
+              <span className="block font-bold text-text">RBAC Enforcement</span>
+              <span className="text-[11px] text-text-muted">4 Active System Roles</span>
+            </div>
           </div>
-          <div className="text-left text-xs pr-2">
-            <span className="block font-bold text-text">RBAC Enforcement</span>
-            <span className="text-[11px] text-text-muted">4 Active System Roles</span>
-          </div>
+
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => navigate('/admin/employees/new')}
+            className="min-h-[44px] shadow-xs hover:shadow-md transition-all duration-200"
+            data-testid="add-user-btn"
+          >
+            + Add User
+          </Button>
         </div>
       </section>
 

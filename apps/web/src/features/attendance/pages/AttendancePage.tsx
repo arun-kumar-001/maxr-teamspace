@@ -31,6 +31,10 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
   const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   // Data states
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);

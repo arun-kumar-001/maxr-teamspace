@@ -41,12 +41,29 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       }
     : undefined;
 
-  const activeNavPath =
-    currentPath === '/attendance/on-duty'
-      ? '/attendance'
-      : currentPath === '/staff/attendance' || currentPath === '/lead/attendance'
-        ? '/attendance'
-        : currentPath;
+  const activeNavPath = (() => {
+    if (currentPath === '/attendance/on-duty') return '/attendance';
+    if (currentPath === '/lead/attendance') return '/attendance';
+    if (currentPath === '/admin/audit-logs') return '/admin/audit';
+    if (currentPath === '/settings') return '/admin/settings';
+    if (currentPath.startsWith('/projects/')) return '/projects';
+    if (currentPath.startsWith('/admin/employees/')) return '/admin/employees';
+    if (currentPath.startsWith('/hr/employees/')) return '/hr/employees';
+    return currentPath;
+  })();
+
+  const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long' });
+  const sidebarFooter = (
+    <div className="p-3.5 rounded-card bg-sidebar-raised/70 border border-sidebar-border/80 space-y-2">
+      <p className="text-xs text-sidebar-muted">{monthLabel} attendance</p>
+      <p className="font-display text-xl font-bold text-sidebar-strong tabular-nums leading-none">
+        94.2%
+      </p>
+      <div className="h-1.5 w-full rounded-full bg-sidebar-border overflow-hidden">
+        <div className="h-full rounded-full bg-primary" style={{ width: '94.2%' }} />
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-bg flex overflow-x-hidden" data-testid="app-shell">
@@ -63,6 +80,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
             onNavigate(id);
           }}
           onUserMenu={() => onNavigate('/profile')}
+          footer={sidebarFooter}
           user={sidebarUser}
         />
       </div>

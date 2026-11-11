@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../api/client';
+import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
+import {
+  checkIn,
+  checkOut,
+  fetchTeamAttendance,
+  fetchTodayAttendance,
+} from '../features/attendance/api/attendance';
+import { fetchMeetings } from '../features/meetings/api/meetingsApi';
+import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 
 // --- Shared Code-Based Lucide SVG Icons ---
 
@@ -213,6 +222,19 @@ interface ApprovalItem {
   status: 'pending' | 'approved';
 }
 
+interface PriorityTaskItem {
+  title: string;
+  owner: string;
+  badge: string;
+  badgeClass: string;
+}
+
+interface UpcomingMeetingItem {
+  time: string;
+  title: string;
+  desc: string;
+}
+
 export function AdminDashboard() {
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined') {
@@ -220,19 +242,66 @@ export function AdminDashboard() {
     }
   };
 
-  // State: My Watch Timer (4 hours 20 mins 57 secs = 15657 seconds)
+  // State: My Watch Timer (synced with active attendance session if checked in)
   const [watchSeconds, setWatchSeconds] = useState(15657);
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [isSignedOff, setIsSignedOff] = useState(false);
+  const [isWatchSubmitting, setIsWatchSubmitting] = useState(false);
 
-  // State: Metrics (Initialized with verified baseline values)
+  // State: Live Metrics (Initialized with baseline defaults)
   const [metrics, setMetrics] = useState({
     teamMembers: 128,
     presentToday: 112,
     leaveRequests: 7,
     openTasks: 42,
-    activeSessions: 42,
+    pendingApprovalsTotal: 14,
   });
+
+  const [attendanceStats, setAttendanceStats] = useState({
+    present: 112,
+    late: 9,
+    onLeave: 7,
+    absent: 0,
+  });
+
+  const [taskStats, setTaskStats] = useState({
+    completed: 142,
+    pending: 36,
+    overdue: 8,
+  });
+
+  const [priorityTasks, setPriorityTasks] = useState<PriorityTaskItem[]>([
+    {
+      title: 'Website UI review',
+      owner: 'Owner: Rajesh Patel',
+      badge: 'In progress',
+      badgeClass: 'bg-primary-soft text-primary-strong',
+    },
+    {
+      title: 'Automation workflow QA',
+      owner: 'Owner: Priya Sharma',
+      badge: 'Review',
+      badgeClass: 'bg-purple-100 text-purple-700',
+    },
+    {
+      title: 'Social media campaign',
+      owner: 'Owner: Karthik M',
+      badge: 'To do',
+      badgeClass: 'bg-surface-muted text-text-muted border border-border',
+    },
+    {
+      title: 'Research summary',
+      owner: 'Owner: Divya N',
+      badge: 'Due today',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
+    },
+  ]);
+
+  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeetingItem[]>([
+    { time: '10:30', title: 'Daily team sync', desc: 'All teams • 30 mins' },
+    { time: '13:00', title: 'Marketing review', desc: 'Campaign planning • 45 mins' },
+    { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
+  ]);
 
   // State: Approvals
   const [approvals, setApprovals] = useState<ApprovalItem[]>([
@@ -276,28 +345,149 @@ export function AdminDashboard() {
     return () => clearInterval(timer);
   }, [isOnBreak, isSignedOff]);
 
-  // Fetch live metrics gracefully from API if available
+  // Fetch live metrics gracefully from backend APIs
   useEffect(() => {
     let mounted = true;
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const nextWeekIso = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
     async function loadData() {
-      try {
-        const empRes = await apiFetch('/api/v1/employees?pageSize=1');
-        if (mounted && empRes.ok) {
-          const empJson = await empRes.json();
-          if (typeof empJson?.meta?.total === 'number' && empJson.meta.total > 0) {
-            setMetrics((prev) => ({
-              ...prev,
-              teamMembers: empJson.meta.total,
-            }));
-          }
+      const [empRes, appRes, taskRes, meetRes, todayAttRes, teamAttRes] = await Promise.allSettled([
+        apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
+        fetchApprovals({ status: 'pending', pageSize: 4 }),
+        fetchTeamTasks({ pageSize: 50 }),
+        fetchMeetings({ from: todayIso, to: nextWeekIso, pageSize: 4 }),
+        fetchTodayAttendance(),
+        fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
+      ]);
+
+      if (!mounted) return;
+
+      if (empRes.status === 'fulfilled' && typeof empRes.value?.meta?.total === 'number') {
+        setMetrics((prev) => ({
+          ...prev,
+          teamMembers: empRes.value.meta.total,
+        }));
+      }
+
+      if (appRes.status === 'fulfilled') {
+        const list = appRes.value.data || [];
+        const total = appRes.value.meta?.total ?? list.length;
+        setMetrics((prev) => ({
+          ...prev,
+          leaveRequests: total,
+          pendingApprovalsTotal: total,
+        }));
+        if (list.length > 0) {
+          const avatars = [
+            'bg-purple-100 text-purple-700',
+            'bg-emerald-100 text-emerald-700',
+            'bg-slate-200 text-slate-800',
+          ];
+          setApprovals(
+            list.slice(0, 3).map((item, idx) => {
+              const name = item.requesterName || 'Employee';
+              const parts = name.split(' ').filter(Boolean);
+              const initial =
+                parts
+                  .slice(0, 2)
+                  .map((p) => p[0]?.toUpperCase() ?? '')
+                  .join('') || 'EM';
+              return {
+                id: item.id,
+                name,
+                type: item.subjectType.includes('expense') ? 'expense' : 'leave',
+                detail: `${item.subjectType.replace('_', ' ')} • ${item.createdAt.slice(0, 10)}`,
+                initial,
+                avatarBg: avatars[idx % avatars.length] ?? 'bg-purple-100 text-purple-700',
+                status: 'pending',
+              };
+            }),
+          );
         }
-      } catch {
-        // Retain verified baseline defaults gracefully
+      }
+
+      if (taskRes.status === 'fulfilled') {
+        const list = taskRes.value.data || [];
+        if (list.length > 0) {
+          const completed = list.filter((t) => t.status === 'completed').length;
+          const overdue = list.filter((t) => t.isOverdue && t.status !== 'completed').length;
+          const open = list.filter((t) => t.status !== 'completed').length;
+          setMetrics((prev) => ({ ...prev, openTasks: open }));
+          setTaskStats({ completed, pending: open, overdue });
+          setPriorityTasks(
+            list.slice(0, 4).map((t) => ({
+              title: t.title,
+              owner: `Owner: ${t.assigneeName || 'Unassigned'}`,
+              badge:
+                t.status === 'in_progress'
+                  ? 'In progress'
+                  : t.status === 'in_review'
+                    ? 'Review'
+                    : t.status === 'completed'
+                      ? 'Completed'
+                      : t.status === 'blocked'
+                        ? 'Blocked'
+                        : 'To do',
+              badgeClass:
+                t.status === 'in_progress'
+                  ? 'bg-primary-soft text-primary-strong'
+                  : t.status === 'in_review'
+                    ? 'bg-purple-100 text-purple-700'
+                    : t.status === 'completed'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : t.status === 'blocked'
+                        ? 'bg-rose-100 text-danger'
+                        : 'bg-surface-muted text-text-muted border border-border',
+            })),
+          );
+        }
+      }
+
+      if (meetRes.status === 'fulfilled' && meetRes.value.data.length > 0) {
+        setUpcomingMeetings(
+          meetRes.value.data.slice(0, 3).map((m) => ({
+            time: new Date(m.startsAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }),
+            title: m.title,
+            desc: `Host: ${m.organizerName} • ${m.attendeeCount} attendees`,
+          })),
+        );
+      }
+
+      if (todayAttRes.status === 'fulfilled' && todayAttRes.value) {
+        const summary = todayAttRes.value;
+        const active = summary.activeSession;
+        if (active) {
+          const elapsed = Math.max(
+            0,
+            Math.floor((Date.now() - new Date(active.checkInTime).getTime()) / 1000),
+          );
+          setWatchSeconds(elapsed + (summary.totalDurationMinutes ?? 0) * 60);
+          setIsSignedOff(false);
+        } else if ((summary.totalDurationMinutes ?? 0) > 0) {
+          setWatchSeconds(summary.totalDurationMinutes * 60);
+          setIsSignedOff(true);
+        }
+      }
+
+      if (teamAttRes.status === 'fulfilled' && teamAttRes.value.data.length > 0) {
+        const recs = teamAttRes.value.data;
+        const late = recs.filter((r) => r.isLate).length;
+        const present = recs.length;
+        setMetrics((prev) => ({ ...prev, presentToday: present }));
+        setAttendanceStats((prev) => ({
+          ...prev,
+          present,
+          late,
+        }));
       }
     }
 
-    loadData();
+    loadData().catch(() => {});
 
     return () => {
       mounted = false;
@@ -311,10 +501,40 @@ export function AdminDashboard() {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
     setApprovals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
+    if (!id.startsWith('app-')) {
+      try {
+        await approveRequest(id, 'Approved via Admin Dashboard');
+        setMetrics((prev) => ({
+          ...prev,
+          pendingApprovalsTotal: Math.max(0, prev.pendingApprovalsTotal - 1),
+          leaveRequests: Math.max(0, prev.leaveRequests - 1),
+        }));
+      } catch {
+        setApprovals((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, status: 'pending' } : item)),
+        );
+      }
+    }
+  };
+
+  const handleWatchSignToggle = async () => {
+    if (isWatchSubmitting) return;
+    setIsWatchSubmitting(true);
+    const nextSignedOff = !isSignedOff;
+    try {
+      if (nextSignedOff) {
+        await checkOut().catch(() => undefined);
+      } else {
+        await checkIn().catch(() => undefined);
+      }
+      setIsSignedOff(nextSignedOff);
+    } finally {
+      setIsWatchSubmitting(false);
+    }
   };
 
   // Timer circle math: radius 42, circumference ~263.89, daily target 8.5h = 30600s
@@ -324,6 +544,20 @@ export function AdminDashboard() {
   const watchDashOffset = isSignedOff
     ? watchCircumference
     : watchCircumference * (1 - watchProgress);
+
+  // Live Donut calculations
+  const totalTaskCount = Math.max(1, taskStats.completed + taskStats.pending);
+  const taskCompletedPct = Math.round((taskStats.completed / totalTaskCount) * 100);
+  const totalAttendanceTarget = Math.max(
+    1,
+    attendanceStats.present + attendanceStats.onLeave + attendanceStats.absent,
+  );
+  const attendancePresentPct = ((attendanceStats.present / totalAttendanceTarget) * 100).toFixed(1);
+  const donutCircumference = 251.32;
+  const attendancePresentOffset =
+    donutCircumference * (1 - Math.min(1, attendanceStats.present / totalAttendanceTarget));
+  const taskCompletedOffset =
+    donutCircumference * (1 - Math.min(1, taskStats.completed / totalTaskCount));
 
   return (
     <div
@@ -481,13 +715,13 @@ export function AdminDashboard() {
                 Leave Requests
               </span>
               <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                0{metrics.leaveRequests}
+                {String(metrics.leaveRequests).padStart(2, '0')}
               </span>
             </div>
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              3 pending review
+              {metrics.pendingApprovalsTotal} pending review
             </span>
           </div>
         </div>
@@ -513,7 +747,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              8 due soon
+              {taskStats.overdue} due soon
             </span>
           </div>
         </div>
@@ -605,8 +839,9 @@ export function AdminDashboard() {
               </button>
               <button
                 type="button"
-                onClick={() => setIsSignedOff(!isSignedOff)}
-                className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap"
+                disabled={isWatchSubmitting}
+                onClick={() => void handleWatchSignToggle()}
+                className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap disabled:opacity-60"
               >
                 <span>&harr;</span>
                 <span>{isSignedOff ? 'Sign on' : 'Sign off'}</span>
@@ -686,7 +921,7 @@ export function AdminDashboard() {
                   stroke="var(--surface-muted, rgb(242, 245, 244))"
                   strokeWidth="8"
                 />
-                {/* Present (89.0%) */}
+                {/* Present */}
                 <circle
                   cx="50"
                   cy="50"
@@ -695,9 +930,9 @@ export function AdminDashboard() {
                   stroke="var(--primary, rgb(70, 199, 184))"
                   strokeWidth="8"
                   strokeDasharray="251.32"
-                  strokeDashoffset="27.6"
+                  strokeDashoffset={attendancePresentOffset}
                   strokeLinecap="round"
-                  className="maxr-draw-attendance"
+                  className="maxr-draw-attendance transition-[stroke-dashoffset] duration-700"
                 />
                 {/* Late (7.1%) */}
                 <circle
@@ -726,7 +961,7 @@ export function AdminDashboard() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
                 <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                  89.0%
+                  {attendancePresentPct}%
                 </span>
                 <span className="text-[10.5px] text-text-muted mt-1 font-medium">Present</span>
               </div>
@@ -740,7 +975,10 @@ export function AdminDashboard() {
                   Present
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  112 <span className="font-normal text-text-subtle text-[10px]">(89.0%)</span>
+                  {attendanceStats.present}{' '}
+                  <span className="font-normal text-text-subtle text-[10px]">
+                    ({attendancePresentPct}%)
+                  </span>
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -749,7 +987,10 @@ export function AdminDashboard() {
                   Late
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  9 <span className="font-normal text-text-subtle text-[10px]">(7.1%)</span>
+                  {attendanceStats.late}{' '}
+                  <span className="font-normal text-text-subtle text-[10px]">
+                    ({((attendanceStats.late / totalAttendanceTarget) * 100).toFixed(1)}%)
+                  </span>
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -758,7 +999,10 @@ export function AdminDashboard() {
                   On Leave
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  7 <span className="font-normal text-text-subtle text-[10px]">(5.5%)</span>
+                  {attendanceStats.onLeave}{' '}
+                  <span className="font-normal text-text-subtle text-[10px]">
+                    ({((attendanceStats.onLeave / totalAttendanceTarget) * 100).toFixed(1)}%)
+                  </span>
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -767,7 +1011,10 @@ export function AdminDashboard() {
                   Absent
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  0 <span className="font-normal text-text-subtle text-[10px]">(0.0%)</span>
+                  {attendanceStats.absent}{' '}
+                  <span className="font-normal text-text-subtle text-[10px]">
+                    ({((attendanceStats.absent / totalAttendanceTarget) * 100).toFixed(1)}%)
+                  </span>
                 </span>
               </div>
             </div>
@@ -775,9 +1022,9 @@ export function AdminDashboard() {
 
           {/* Subtext info for balanced vertical card spacing */}
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted">
-            <span className="truncate">Target: 124 staff</span>
+            <span className="truncate">Target: {metrics.teamMembers} staff</span>
             <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
-              90.3% avg this week
+              {attendancePresentPct}% today
             </span>
           </div>
         </div>
@@ -812,7 +1059,7 @@ export function AdminDashboard() {
                   stroke="var(--surface-muted, rgb(242, 245, 244))"
                   strokeWidth="8"
                 />
-                {/* Completed (76%) */}
+                {/* Completed */}
                 <circle
                   cx="50"
                   cy="50"
@@ -821,9 +1068,9 @@ export function AdminDashboard() {
                   stroke="var(--primary, rgb(70, 199, 184))"
                   strokeWidth="8"
                   strokeDasharray="251.32"
-                  strokeDashoffset="60.3"
+                  strokeDashoffset={taskCompletedOffset}
                   strokeLinecap="round"
-                  className="maxr-draw-tasks"
+                  className="maxr-draw-tasks transition-[stroke-dashoffset] duration-700"
                 />
                 {/* Pending (19%) */}
                 <circle
@@ -852,7 +1099,7 @@ export function AdminDashboard() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
                 <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                  76%
+                  {taskCompletedPct}%
                 </span>
                 <span className="text-[10.5px] text-text-muted mt-1 font-medium">Completed</span>
               </div>
@@ -866,7 +1113,7 @@ export function AdminDashboard() {
                   Completed
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  142
+                  {taskStats.completed}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -875,7 +1122,7 @@ export function AdminDashboard() {
                   Pending
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  36
+                  {taskStats.pending}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -884,7 +1131,7 @@ export function AdminDashboard() {
                   Overdue
                 </span>
                 <span className="font-bold font-mono text-danger text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  8
+                  {taskStats.overdue}
                 </span>
               </div>
             </div>
@@ -894,12 +1141,12 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between gap-2.5 text-xs">
             <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
               <div
-                className="maxr-progress-fill h-full rounded-full bg-primary"
-                style={{ width: '76%' }}
+                className="maxr-progress-fill h-full rounded-full bg-primary transition-[width] duration-700"
+                style={{ width: `${taskCompletedPct}%` }}
               />
             </div>
             <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
-              142 / 186 Tasks
+              {taskStats.completed} / {totalTaskCount} Tasks
             </span>
           </div>
         </div>
@@ -920,7 +1167,7 @@ export function AdminDashboard() {
               </span>
               <h2 className="text-sm font-bold text-text truncate">Pending Approvals</h2>
               <span className="px-1.5 py-0.2 rounded-full text-[10.5px] font-bold bg-purple-600 text-white shadow-xs shrink-0">
-                14
+                {metrics.pendingApprovalsTotal}
               </span>
             </div>
             <button
@@ -965,7 +1212,7 @@ export function AdminDashboard() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => handleApprove(item.id)}
+                    onClick={() => void handleApprove(item.id)}
                     className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap ${
                       item.status === 'approved'
                         ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
@@ -987,7 +1234,7 @@ export function AdminDashboard() {
               onClick={() => navigateTo('/approvals')}
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
-              <span>View all 14 approvals</span>
+              <span>View all {metrics.pendingApprovalsTotal} approvals</span>
               <span className="transition-transform duration-200 group-hover:translate-x-1">
                 &rarr;
               </span>
@@ -1019,32 +1266,7 @@ export function AdminDashboard() {
 
           {/* Task Rows - Fitted & Clean */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
-            {[
-              {
-                title: 'Website UI review',
-                owner: 'Owner: Rajesh Patel',
-                badge: 'In progress',
-                badgeClass: 'bg-primary-soft text-primary-strong',
-              },
-              {
-                title: 'Automation workflow QA',
-                owner: 'Owner: Priya Sharma',
-                badge: 'Review',
-                badgeClass: 'bg-purple-100 text-purple-700',
-              },
-              {
-                title: 'Social media campaign',
-                owner: 'Owner: Karthik M',
-                badge: 'To do',
-                badgeClass: 'bg-surface-muted text-text-muted border border-border',
-              },
-              {
-                title: 'Research summary',
-                owner: 'Owner: Divya N',
-                badge: 'Due today',
-                badgeClass: 'bg-emerald-100 text-emerald-700',
-              },
-            ].map((task) => (
+            {priorityTasks.map((task) => (
               <div
                 key={task.title}
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
@@ -1084,7 +1306,7 @@ export function AdminDashboard() {
 
         {/* Card 3: Upcoming Meetings - Perfectly Balanced */}
         <div
-          onClick={() => navigateTo('/calendar')}
+          onClick={() => navigateTo('/meetings')}
           style={{ animationDelay: '500ms' }}
           className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
         >
@@ -1104,13 +1326,9 @@ export function AdminDashboard() {
 
           {/* Meeting Rows */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
-            {[
-              { time: '10:30', title: 'Daily team sync', desc: 'All teams • 30 mins' },
-              { time: '13:00', title: 'Marketing review', desc: 'Campaign planning • 45 mins' },
-              { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
-            ].map((m) => (
+            {upcomingMeetings.map((m, idx) => (
               <div
-                key={m.time}
+                key={`${m.time}-${idx}`}
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -1134,7 +1352,7 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80">
             <button
               type="button"
-              onClick={() => navigateTo('/calendar')}
+              onClick={() => navigateTo('/meetings')}
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>View full calendar</span>

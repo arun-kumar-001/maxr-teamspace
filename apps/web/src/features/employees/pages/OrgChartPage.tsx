@@ -36,6 +36,7 @@ export function OrgChartPage() {
     version: number;
     manager?: { id: string; name?: string; employeeCode?: string } | null;
   } | null>(null);
+  const [zoom, setZoom] = useState<number>(100);
 
   const handleOpenManagerModal = (node: OrgNode) => {
     setManagingEmployee({
@@ -137,6 +138,59 @@ export function OrgChartPage() {
             </button>
           </div>
 
+          {/* Zoom Controls */}
+          <div
+            className="flex items-center bg-surface-muted p-1 rounded-control border border-border text-xs"
+            data-testid="org-chart-zoom-controls"
+          >
+            <button
+              type="button"
+              onClick={() => setZoom((z) => Math.max(75, z - 25))}
+              disabled={zoom <= 75}
+              className="px-2.5 py-1 rounded-sm font-semibold text-text hover:bg-surface disabled:opacity-40 transition-colors"
+              title="Zoom out"
+              aria-label="Zoom out"
+              data-testid="org-zoom-out"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoom(100)}
+              className="px-2.5 py-1 rounded-sm font-mono font-medium text-text hover:bg-surface transition-colors"
+              title="Reset zoom"
+              data-testid="org-zoom-reset"
+            >
+              {zoom}%
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoom((z) => Math.min(125, z + 25))}
+              disabled={zoom >= 125}
+              className="px-2.5 py-1 rounded-sm font-semibold text-text hover:bg-surface disabled:opacity-40 transition-colors"
+              title="Zoom in"
+              aria-label="Zoom in"
+              data-testid="org-zoom-in"
+            >
+              +
+            </button>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (typeof window !== 'undefined' && typeof window.print === 'function') {
+                window.print();
+              }
+            }}
+            className="text-xs min-h-[38px]"
+            data-testid="export-org-chart-btn"
+          >
+            Print / Export
+          </Button>
+
           {/* Action buttons */}
           {expandedNodeIds.size > 0 && (
             <Button
@@ -194,7 +248,17 @@ export function OrgChartPage() {
             no reporting manager):
           </div>
 
-          <div className="space-y-6">{roots.map((root) => renderRecursiveNode(root))}</div>
+          <div className="overflow-x-auto pb-4">
+            <div
+              className="space-y-6 transition-transform duration-200 origin-top-left"
+              style={{
+                transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+                width: zoom !== 100 ? `${Math.round((100 / zoom) * 100)}%` : undefined,
+              }}
+            >
+              {roots.map((root) => renderRecursiveNode(root))}
+            </div>
+          </div>
         </div>
       )}
 

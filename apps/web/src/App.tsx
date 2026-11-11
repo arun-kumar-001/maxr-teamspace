@@ -725,7 +725,15 @@ function AppRoutes() {
         path="/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/calendar"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
