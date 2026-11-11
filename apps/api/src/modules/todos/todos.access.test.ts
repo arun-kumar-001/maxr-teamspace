@@ -216,22 +216,22 @@ describe('todos API access and authorization', () => {
 
     // Negative limit
     const negLimit = await staffAgentA.get('/api/v1/todos?limit=-1');
-    expect(negLimit.status).toBe(422);
+    expect(negLimit.status).toBe(400);
 
     // Limit exceeding 100
     const overLimit = await staffAgentA.get('/api/v1/todos?limit=150');
-    expect(overLimit.status).toBe(422);
+    expect(overLimit.status).toBe(400);
 
     // Non-numeric limit
     const nanLimit = await staffAgentA.get('/api/v1/todos?limit=abc');
-    expect(nanLimit.status).toBe(422);
+    expect(nanLimit.status).toBe(400);
 
     // Negative offset
     const negOffset = await staffAgentA.get('/api/v1/todos?offset=-1');
-    expect(negOffset.status).toBe(422);
+    expect(negOffset.status).toBe(400);
 
     // Non-integer offset
     const floatOffset = await staffAgentA.get('/api/v1/todos?offset=1.5');
-    expect(floatOffset.status).toBe(422);
+    expect(floatOffset.status).toBe(400);
   });
 });

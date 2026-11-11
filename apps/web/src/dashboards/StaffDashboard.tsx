@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, StatusPill } from '../components/ui';
+import { Badge, Button, StatusPill } from '../components/ui';
 import { AttendanceWidget } from '../features/attendance';
 import { fetchMyLeaveBalances } from '../features/leave/api/leave';
 import type { LeaveBalance } from '../features/leave/types';
@@ -224,6 +224,7 @@ export function StaffDashboard({ onNavigate }: StaffDashboardProps) {
             <h2 className="text-base font-bold text-text font-display">
               Recent Payslips (Read-Only)
             </h2>
+            <Badge variant="neutral">Sample data</Badge>
           </div>
           <p className="text-xs text-text-muted">
             Read-only payroll statements per AGENTS.md §1 scope.
