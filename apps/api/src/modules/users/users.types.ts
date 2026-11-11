@@ -43,3 +43,26 @@ export type ReplaceRolesResult =
   | { status: 'last_admin' }
   | { status: 'unchanged'; user: UserAccount }
   | { status: 'changed'; user: UserAccount; before: Role[] };
+
+export interface CreateUserInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: readonly Role[];
+  passwordHash: string;
+  isActive?: boolean;
+  departmentId?: string;
+  designationId?: string;
+}
+
+export type CreateUserResult =
+  | { status: 'created'; user: UserAccount }
+  | { status: 'duplicate_email' }
+  | { status: 'missing_reference'; message: string };
+
+export type UpdateUserStatusResult =
+  | { status: 'not_found' }
+  | { status: 'self_deactivate' }
+  | { status: 'last_admin' }
+  | { status: 'unchanged'; user: UserAccount }
+  | { status: 'changed'; user: UserAccount; before: boolean };

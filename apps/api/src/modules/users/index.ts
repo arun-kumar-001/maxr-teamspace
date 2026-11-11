@@ -2,6 +2,7 @@ import { RequestHandler, Router } from 'express';
 import type { Pool } from 'pg';
 import { getPool } from '../../db/client';
 import type { PlatformServices } from '../../platform';
+import type { PasswordHasher } from '../auth/password-hasher';
 import { IUsersRepository, PgUsersRepository } from './users.repository';
 import { createPermissionsRouter, createRolesRouter, createUsersRouter } from './users.routes';
 import { UsersService } from './users.service';
@@ -11,9 +12,14 @@ export function createUsers(options: {
   authenticate: RequestHandler;
   repository?: IUsersRepository;
   getPool?: () => Pool;
+  hasher?: PasswordHasher;
+  revokeSessionsForUser?: (userId: string) => Promise<number>;
 }): { usersRouter: Router; rolesRouter: Router; permissionsRouter: Router } {
   const repository = options.repository ?? new PgUsersRepository(options.getPool ?? getPool);
-  const service = new UsersService(repository, options.platform);
+  const service = new UsersService(repository, options.platform, {
+    hasher: options.hasher,
+    revokeSessionsForUser: options.revokeSessionsForUser,
+  });
   return {
     usersRouter: createUsersRouter(service, options.authenticate),
     rolesRouter: createRolesRouter(service, options.authenticate),

@@ -1,3 +1,5 @@
+import { useContext } from 'react';
+import { AuthContext } from '../../../auth/AuthContext';
 import { Badge } from '../../../components/ui/StatusPill';
 import type { EmployeeProfile } from '../types';
 
@@ -6,6 +8,8 @@ export interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
+  const auth = useContext(AuthContext);
+  const user = auth?.user;
   const initials =
     `${profile.firstName.charAt(0) || ''}${profile.lastName.charAt(0) || ''}`.toUpperCase();
 
@@ -28,11 +32,19 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
         <div className="flex items-center gap-5 min-w-0">
           {/* Avatar Placeholder */}
           <div
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-soft text-primary-ink font-display font-bold text-2xl flex items-center justify-center shrink-0 border-2 border-primary-strong/20 shadow-sm"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-soft text-primary-ink font-display font-bold text-2xl flex items-center justify-center shrink-0 border-2 border-primary-strong/20 shadow-sm overflow-hidden"
             aria-hidden="true"
             data-testid="profile-avatar-initials"
           >
-            {initials}
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={profile.firstName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </div>
 
           {/* Name & Titles */}

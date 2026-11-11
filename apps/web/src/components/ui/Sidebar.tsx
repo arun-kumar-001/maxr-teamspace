@@ -23,7 +23,7 @@ export interface SidebarGroup {
 }
 
 export interface SidebarProps {
-  brand: { name: string; subtitle?: string; logo: React.ReactNode };
+  brand: { name: React.ReactNode; subtitle?: React.ReactNode; logo: React.ReactNode };
   groups: SidebarGroup[];
   /** Id of the current page (a top-level item or a child). */
   activeId: string;
@@ -32,7 +32,7 @@ export interface SidebarProps {
   /** Icon rail mode (88px). */
   collapsed: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
-  user?: { name: string; role: string; initials: string };
+  user?: { name: string; role: string; initials: string; avatarUrl?: string };
   onUserMenu?: () => void;
   /** Optional card above the user (expanded only), e.g. a monthly summary. */
   footer?: React.ReactNode;
@@ -184,218 +184,240 @@ export function Sidebar({
     item.count ? <span className="sr-only">, {countText(item.count)} new</span> : null;
 
   return (
-    <aside
-      className={`relative flex flex-col h-full bg-sidebar text-sidebar-text rounded-card overflow-hidden transition-[width] duration-200 ${
-        collapsed ? 'w-rail' : 'w-sidebar'
-      } ${className}`}
-      aria-label="Main"
-    >
-      {/* Brand and collapse */}
+    <aside className="relative flex shrink-0 h-full" aria-label="Main">
       <div
-        className={`flex shrink-0 gap-3 p-4 ${collapsed ? 'flex-col items-center' : 'items-center'}`}
+        className={`relative flex flex-col h-full bg-sidebar text-sidebar-text rounded-card overflow-hidden transition-[width] duration-200 ${
+          collapsed ? 'w-rail' : 'w-sidebar'
+        } ${className}`}
       >
-        <span
-          className="flex items-center justify-center w-12 h-12 shrink-0 rounded-[14px] bg-primary text-sidebar shadow-sidebar-active"
-          aria-hidden="true"
+        {/* Brand */}
+        <div
+          className={`flex shrink-0 gap-3 p-4 ${collapsed ? 'flex-col items-center' : 'items-center'}`}
         >
-          {brand.logo}
-        </span>
-        {!collapsed && (
-          <span className="flex-1 min-w-0">
-            <span className="block font-display text-lg font-semibold leading-tight text-sidebar-strong break-words">
-              {brand.name}
-            </span>
-            {brand.subtitle && (
-              <span className="block text-sm text-sidebar-muted truncate">{brand.subtitle}</span>
-            )}
+          <span
+            className="flex items-center justify-center w-10 h-10 shrink-0 select-none"
+            aria-hidden="true"
+          >
+            {brand.logo}
           </span>
-        )}
-        {onCollapsedChange && (
-          <button
-            type="button"
-            onClick={() => onCollapsedChange(!collapsed)}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-controls={navId}
-            aria-expanded={!collapsed}
-            className={`flex items-center justify-center w-11 h-11 shrink-0 rounded-input border border-sidebar-border text-sidebar-text hover:bg-sidebar-raised hover:text-sidebar-strong ${focusRing}`}
-          >
-            <PanelIcon collapsed={collapsed} />
-          </button>
-        )}
-      </div>
+          {!collapsed && (
+            <span className="flex-1 min-w-0">
+              <span className="block font-display text-[17px] font-bold leading-tight text-sidebar-strong tracking-tight break-words">
+                {brand.name}
+              </span>
+              {brand.subtitle && (
+                <span className="block text-[10px] font-bold tracking-[0.14em] text-sidebar-muted uppercase truncate">
+                  {brand.subtitle}
+                </span>
+              )}
+            </span>
+          )}
+        </div>
 
-      {/* Navigation */}
-      <nav
-        id={navId}
-        aria-label="Main navigation"
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3"
-      >
-        {groups.map((group, groupIndex) => (
-          <div
-            key={group.id}
-            className={groupIndex > 0 ? 'mt-3 pt-3 border-t border-sidebar-border' : ''}
-          >
-            {group.label && !collapsed && (
-              <p className="px-3.5 pt-1 pb-2 text-[13px] font-medium text-sidebar-muted">
-                {group.label}
-              </p>
-            )}
-            {group.label && collapsed && <span className="sr-only">{group.label}</span>}
-            <ul className="flex flex-col gap-1">
-              {group.items.map((item) => {
-                const hasChildren = Boolean(item.children?.length);
-                const childActive = item.children?.some((c) => c.id === activeId) ?? false;
-                const active = item.id === activeId || (collapsed && childActive);
-                const open = !collapsed && openGroups.has(item.id);
-                const subId = `${navId}-${item.id}`;
+        {/* Navigation */}
+        <nav
+          id={navId}
+          aria-label="Main navigation"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3 sidebar-scroll"
+        >
+          {groups.map((group, groupIndex) => (
+            <div
+              key={group.id}
+              className={groupIndex > 0 ? 'mt-3 pt-3 border-t border-sidebar-border' : ''}
+            >
+              {group.label && !collapsed && (
+                <p className="px-3.5 pt-1 pb-2 text-[13px] font-medium text-sidebar-muted">
+                  {group.label}
+                </p>
+              )}
+              {group.label && collapsed && <span className="sr-only">{group.label}</span>}
+              <ul className="flex flex-col gap-1">
+                {group.items.map((item) => {
+                  const hasChildren = Boolean(item.children?.length);
+                  const childActive = item.children?.some((c) => c.id === activeId) ?? false;
+                  const active = item.id === activeId || (collapsed && childActive);
+                  const open = !collapsed && openGroups.has(item.id);
+                  const subId = `${navId}-${item.id}`;
 
-                if (hasChildren) {
+                  if (hasChildren) {
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(item.id)}
+                          aria-expanded={collapsed ? false : open}
+                          aria-controls={collapsed ? undefined : subId}
+                          aria-label={collapsed ? item.label : undefined}
+                          {...tooltipHandlers(item.label)}
+                          className={`${itemBase} ${itemLayout} ${
+                            active
+                              ? activeStyle
+                              : open
+                                ? 'bg-sidebar-raised text-sidebar-strong'
+                                : idleStyle
+                          }`}
+                        >
+                          <span className="shrink-0" aria-hidden="true">
+                            {item.icon}
+                          </span>
+                          {!collapsed && <span className="truncate">{item.label}</span>}
+                          {renderCount(item, active)}
+                          {!collapsed && (
+                            <span className={item.count ? 'ml-2' : 'ml-auto'}>
+                              <Chevron open={open} />
+                            </span>
+                          )}
+                          {collapsed && srCount(item)}
+                        </button>
+                        {open && (
+                          <ul
+                            id={subId}
+                            className="mt-1 ml-[22px] pl-4 border-l border-sidebar-border flex flex-col gap-1"
+                          >
+                            {item.children?.map((child) => {
+                              const childIsActive = child.id === activeId;
+                              return (
+                                <li key={child.id}>
+                                  <a
+                                    href={child.href ?? '#'}
+                                    aria-current={childIsActive ? 'page' : undefined}
+                                    onClick={(e) => onNavigate?.(child.id, e)}
+                                    className={`${itemBase} px-3.5 text-sm ${childIsActive ? activeStyle : idleStyle}`}
+                                  >
+                                    <span className="truncate">{child.label}</span>
+                                    {renderCount(child, childIsActive)}
+                                    {srCount(child)}
+                                  </a>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={item.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggleGroup(item.id)}
-                        aria-expanded={collapsed ? false : open}
-                        aria-controls={collapsed ? undefined : subId}
+                      <a
+                        href={item.href ?? '#'}
+                        aria-current={item.id === activeId ? 'page' : undefined}
                         aria-label={collapsed ? item.label : undefined}
+                        onClick={(e) => onNavigate?.(item.id, e)}
                         {...tooltipHandlers(item.label)}
-                        className={`${itemBase} ${itemLayout} ${
-                          active
-                            ? activeStyle
-                            : open
-                              ? 'bg-sidebar-raised text-sidebar-strong'
-                              : idleStyle
-                        }`}
+                        className={`${itemBase} ${itemLayout} ${active ? activeStyle : idleStyle}`}
                       >
                         <span className="shrink-0" aria-hidden="true">
                           {item.icon}
                         </span>
                         {!collapsed && <span className="truncate">{item.label}</span>}
                         {renderCount(item, active)}
-                        {!collapsed && (
-                          <span className={item.count ? 'ml-2' : 'ml-auto'}>
-                            <Chevron open={open} />
-                          </span>
-                        )}
-                        {collapsed && srCount(item)}
-                      </button>
-                      {open && (
-                        <ul
-                          id={subId}
-                          className="mt-1 ml-[22px] pl-4 border-l border-sidebar-border flex flex-col gap-1"
-                        >
-                          {item.children?.map((child) => {
-                            const childIsActive = child.id === activeId;
-                            return (
-                              <li key={child.id}>
-                                <a
-                                  href={child.href ?? '#'}
-                                  aria-current={childIsActive ? 'page' : undefined}
-                                  onClick={(e) => onNavigate?.(child.id, e)}
-                                  className={`${itemBase} px-3.5 text-sm ${childIsActive ? activeStyle : idleStyle}`}
-                                >
-                                  <span className="truncate">{child.label}</span>
-                                  {renderCount(child, childIsActive)}
-                                  {srCount(child)}
-                                </a>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
+                        {srCount(item)}
+                      </a>
                     </li>
                   );
-                }
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
-                return (
-                  <li key={item.id}>
-                    <a
-                      href={item.href ?? '#'}
-                      aria-current={item.id === activeId ? 'page' : undefined}
-                      aria-label={collapsed ? item.label : undefined}
-                      onClick={(e) => onNavigate?.(item.id, e)}
-                      {...tooltipHandlers(item.label)}
-                      className={`${itemBase} ${itemLayout} ${active ? activeStyle : idleStyle}`}
-                    >
-                      <span className="shrink-0" aria-hidden="true">
-                        {item.icon}
-                      </span>
-                      {!collapsed && <span className="truncate">{item.label}</span>}
-                      {renderCount(item, active)}
-                      {srCount(item)}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </nav>
+        {footer && !collapsed && <div className="shrink-0 px-3 pb-3">{footer}</div>}
 
-      {footer && !collapsed && <div className="shrink-0 px-3 pb-3">{footer}</div>}
-
-      {/* User */}
-      {user && (
-        <div
-          className={`shrink-0 flex items-center gap-3 p-4 border-t border-sidebar-border ${collapsed ? 'justify-center' : ''}`}
-        >
-          {collapsed ? (
-            <button
-              type="button"
-              onClick={onUserMenu}
-              aria-label={`Account menu, ${user.name}`}
-              {...tooltipHandlers(user.name)}
-              className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold ${focusRing}`}
-            >
-              {user.initials}
-            </button>
-          ) : (
-            <>
-              <span
-                className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold"
-                aria-hidden="true"
+        {/* User */}
+        {user && (
+          <div
+            className={`shrink-0 flex items-center gap-3 p-4 border-t border-sidebar-border ${collapsed ? 'justify-center' : ''}`}
+          >
+            {collapsed ? (
+              <button
+                type="button"
+                onClick={onUserMenu}
+                aria-label={`Account menu, ${user.name}`}
+                {...tooltipHandlers(user.name)}
+                className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden ${focusRing}`}
               >
-                {user.initials}
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block font-semibold text-sidebar-strong truncate">
-                  {user.name}
-                </span>
-                <span className="block text-sm text-sidebar-muted truncate">{user.role}</span>
-              </span>
-              {onUserMenu && (
-                <button
-                  type="button"
-                  onClick={onUserMenu}
-                  aria-label="Account menu"
-                  className={`flex items-center justify-center w-11 h-11 rounded-input text-sidebar-text hover:bg-sidebar-raised ${focusRing}`}
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user.initials
+                )}
+              </button>
+            ) : (
+              <>
+                <span
+                  className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden"
+                  aria-hidden="true"
                 >
-                  <svg
-                    viewBox="0 0 20 20"
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    aria-hidden="true"
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user.initials
+                  )}
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-semibold text-sidebar-strong truncate">
+                    {user.name}
+                  </span>
+                  <span className="block text-sm text-sidebar-muted truncate">{user.role}</span>
+                </span>
+                {onUserMenu && (
+                  <button
+                    type="button"
+                    onClick={onUserMenu}
+                    aria-label="Account menu"
+                    className={`flex items-center justify-center w-11 h-11 rounded-input text-sidebar-text hover:bg-sidebar-raised ${focusRing}`}
                   >
-                    <circle cx="10" cy="4.5" r="1.5" />
-                    <circle cx="10" cy="10" r="1.5" />
-                    <circle cx="10" cy="15.5" r="1.5" />
-                  </svg>
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                    <svg
+                      viewBox="0 0 20 20"
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <circle cx="10" cy="4.5" r="1.5" />
+                      <circle cx="10" cy="10" r="1.5" />
+                      <circle cx="10" cy="15.5" r="1.5" />
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
-      {/* Rail tooltip: fixed so the scrolling nav cannot clip it; shown on hover and keyboard focus. */}
-      {collapsed && tooltip && (
-        <span
-          className="fixed z-50 -translate-y-1/2 px-2.5 py-1.5 rounded-lg bg-sidebar text-sidebar-strong text-sm font-medium shadow-raised pointer-events-none whitespace-nowrap"
-          style={{ top: tooltip.top, left: tooltip.left }}
-          aria-hidden="true"
+        {/* Rail tooltip: fixed so the scrolling nav cannot clip it; shown on hover and keyboard focus. */}
+        {collapsed && tooltip && (
+          <span
+            className="fixed z-50 -translate-y-1/2 px-2.5 py-1.5 rounded-lg bg-sidebar text-sidebar-strong text-sm font-medium shadow-raised pointer-events-none whitespace-nowrap"
+            style={{ top: tooltip.top, left: tooltip.left }}
+            aria-hidden="true"
+          >
+            {tooltip.label}
+          </span>
+        )}
+      </div>
+
+      {/* Collapse / Expand toggle button positioned OUTSIDE the side navbar */}
+      {onCollapsedChange && (
+        <button
+          type="button"
+          onClick={() => onCollapsedChange(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-controls={navId}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={`absolute -right-3.5 top-6 z-40 flex items-center justify-center w-7 h-7 rounded-full bg-surface border border-border text-text hover:text-primary hover:border-primary shadow-card transition-all hover:scale-105 cursor-pointer ${focusRing}`}
         >
-          {tooltip.label}
-        </span>
+          <PanelIcon collapsed={collapsed} />
+        </button>
       )}
     </aside>
   );
