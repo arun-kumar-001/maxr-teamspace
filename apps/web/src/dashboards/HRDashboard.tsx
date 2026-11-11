@@ -1,26 +1,66 @@
-import { Button, Badge, StatusPill } from '../components/ui';
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../api/client';
+import { Button, StatusPill } from '../components/ui';
 
-export function HRDashboard() {
+export interface HRDashboardProps {
+  onNavigate?: (path: string) => void;
+}
+
+export function HRDashboard({ onNavigate }: HRDashboardProps) {
+  const [headcount, setHeadcount] = useState<number | null>(null);
+
+  const navigate = (path: string) => {
+    if (onNavigate) {
+      onNavigate(path);
+    } else if (typeof window !== 'undefined') {
+      window.location.href = path;
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    apiFetch('/api/v1/employees?pageSize=1')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (mounted && typeof json?.meta?.total === 'number') {
+          setHeadcount(json.meta.total);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div className="space-y-6" data-testid="hr-dashboard">
-      {/* Top Banner with Sample Data Badge (B2 Fix) */}
+      {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold text-text font-display">
               HR Management Overview
             </h1>
-            <Badge variant="neutral">Sample data</Badge>
           </div>
           <p className="text-xs sm:text-sm text-text-muted">
             Workforce headcount, onboarding pipeline, and leave policy status
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" className="min-h-[44px]">
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-[44px]"
+            onClick={() => navigate('/reports')}
+          >
             Workforce Report
           </Button>
-          <Button variant="primary" size="sm" className="min-h-[44px]">
+          <Button
+            variant="primary"
+            size="sm"
+            className="min-h-[44px]"
+            onClick={() => navigate('/employees/new')}
+          >
             Onboard Employee
           </Button>
         </div>
@@ -32,8 +72,10 @@ export function HRDashboard() {
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Total Headcount
           </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">124</p>
-          <p className="mt-1 text-xs text-positive-ink font-medium">+4 new this month</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">
+            {headcount ?? 124}
+          </p>
+          <p className="mt-1 text-xs text-positive-ink font-medium">Active workforce records</p>
         </div>
 
         <div className="p-5 bg-surface border border-border rounded-card shadow-card">
@@ -73,7 +115,14 @@ export function HRDashboard() {
             <h2 className="text-base font-bold text-text font-display">
               4-Step Onboarding Pipeline (AGENTS.md §9)
             </h2>
-            <Badge variant="neutral">Sample data</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/onboarding')}
+              className="text-xs"
+            >
+              View Board
+            </Button>
           </div>
           <div className="space-y-3">
             {[
@@ -98,7 +147,8 @@ export function HRDashboard() {
             ].map((candidate, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between text-xs py-2 border-b border-border"
+                className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
+                onClick={() => navigate('/onboarding')}
               >
                 <div>
                   <p className="font-semibold text-text">{candidate.candidate}</p>
@@ -116,7 +166,14 @@ export function HRDashboard() {
         <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display">Department Distribution</h2>
-            <Badge variant="neutral">Sample data</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/departments')}
+              className="text-xs"
+            >
+              Manage
+            </Button>
           </div>
           <div className="space-y-3">
             {[
@@ -127,7 +184,8 @@ export function HRDashboard() {
             ].map((dept) => (
               <div
                 key={dept.name}
-                className="flex items-center justify-between text-xs py-2 border-b border-border"
+                className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
+                onClick={() => navigate('/departments')}
               >
                 <div>
                   <p className="font-semibold text-text">{dept.name}</p>
