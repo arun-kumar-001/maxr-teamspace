@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
+import { DonutChart, type DonutChartSegment } from '../components/ui';
+import { cn } from '@/lib/utils';
 
-// --- Shared Code-Based Lucide SVG Icons ---
+// --- Shared Code-Based Modern Duotone SVG Icons ---
 
 function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -15,8 +18,7 @@ function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
+      <path d="M12 5v14M5 12h14" />
     </svg>
   );
 }
@@ -27,16 +29,16 @@ function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <circle cx="9.5" cy="7.5" r="3.5" fill="currentColor" fillOpacity="0.18" />
+      <path d="M3 19.5c0-3 2.9-5 6.5-5s6.5 2 6.5 5" fill="currentColor" fillOpacity="0.14" />
+      <path d="M16.5 4.7a3.2 3.2 0 0 1 0 5.6" />
+      <path d="M21 19.5c0-2.3-1.8-4.1-4.3-4.7" />
     </svg>
   );
 }
@@ -47,14 +49,15 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
+      <circle cx="12" cy="12" r="9.25" fill="currentColor" fillOpacity="0.15" />
+      <path d="M12 7v5.2l3.4 2" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -65,16 +68,26 @@ function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
+      <rect
+        x="3.25"
+        y="4.75"
+        width="17.5"
+        height="16"
+        rx="4"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <path d="M3.25 9.75h17.5" />
+      <path d="M8 2.75v3.5M16 2.75v3.5" />
+      <circle cx="8.5" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="14" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -85,14 +98,59 @@ function IconCheckSquare({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect
+        x="3.25"
+        y="3.25"
+        width="17.5"
+        height="17.5"
+        rx="5"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <path d="m8.25 12.25 2.6 2.6 5.15-5.35" />
+    </svg>
+  );
+}
+
+function IconCoffee({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <polyline points="9 11 12 14 22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      <path d="M17 8h1.5a3.5 3.5 0 0 1 0 7H17" />
+      <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z" fill="currentColor" fillOpacity="0.15" />
+      <path d="M8 3.5v2M12 3.5v2" />
+    </svg>
+  );
+}
+
+function IconSwitch({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 3v8" />
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
     </svg>
   );
 }
@@ -103,13 +161,17 @@ function IconFolder({ className = 'w-4 h-4' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+      <path
+        d="M3.5 18.5a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5V9.25a2.5 2.5 0 0 0-2.5-2.5h-6.1a2 2 0 0 1-1.6-.8L9 4.3a2 2 0 0 0-1.6-.8H6A2.5 2.5 0 0 0 3.5 6v12.5Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
     </svg>
   );
 }
@@ -120,15 +182,19 @@ function IconClipboardCheck({ className = 'w-4 h-4' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-      <path d="m9 14 2 2 4-4" />
+      <rect x="8" y="2.5" width="8" height="3.5" rx="1.25" fill="currentColor" fillOpacity="0.2" />
+      <path
+        d="M16 4.25h2a2.25 2.25 0 0 1 2.25 2.25v12.5A2.25 2.25 0 0 1 18 21.25H6a2.25 2.25 0 0 1-2.25-2.25V6.5A2.25 2.25 0 0 1 6 4.25h2"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <path d="m9.25 13.5 2 2 4-4.25" />
     </svg>
   );
 }
@@ -145,7 +211,7 @@ function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <polyline points="9 18 15 12 9 6" />
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }
@@ -162,7 +228,7 @@ function IconCheck({ className = 'w-3.5 h-3.5' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <polyline points="20 6 9 17 4 12" />
+      <path d="m5 12.5 4.2 4.2L19 7" />
     </svg>
   );
 }
@@ -179,8 +245,12 @@ function IconEye({ className = 'w-3.5 h-3.5' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M2.2 12S5.8 5.5 12 5.5 21.8 12 21.8 12 18.2 18.5 12 18.5 2.2 12 2.2 12Z"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <circle cx="12" cy="12" r="2.75" fill="currentColor" fillOpacity="0.25" />
     </svg>
   );
 }
@@ -191,14 +261,26 @@ function IconVideo({ className = 'w-3.5 h-3.5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="m22 8-6 4 6 4V8Z" />
-      <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+      <rect
+        x="2.5"
+        y="6.25"
+        width="13.5"
+        height="11.5"
+        rx="3"
+        fill="currentColor"
+        fillOpacity="0.16"
+      />
+      <path
+        d="m16 10.2 5.2-3a.6.6 0 0 1 .9.52v8.56a.6.6 0 0 1-.9.52l-5.2-3v-3.6Z"
+        fill="currentColor"
+        fillOpacity="0.22"
+      />
     </svg>
   );
 }
@@ -224,6 +306,9 @@ export function AdminDashboard() {
   const [watchSeconds, setWatchSeconds] = useState(15657);
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [isSignedOff, setIsSignedOff] = useState(false);
+  const [hoveredAttendance, setHoveredAttendance] = useState<string | null>(null);
+  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   // State: Metrics (Initialized with verified baseline values)
   const [metrics, setMetrics] = useState({
@@ -317,13 +402,83 @@ export function AdminDashboard() {
     );
   };
 
-  // Timer circle math: radius 42, circumference ~263.89, daily target 8.5h = 30600s
-  const watchCircumference = 263.89;
+  // Daily target 8.5h = 30600s for MY WATCH DonutChart
   const watchTargetSeconds = 30600;
-  const watchProgress = Math.min(1, Math.max(0, watchSeconds / watchTargetSeconds));
-  const watchDashOffset = isSignedOff
-    ? watchCircumference
-    : watchCircumference * (1 - watchProgress);
+  const watchChartData: DonutChartSegment[] = [
+    {
+      label: 'Shift Progress',
+      value: isSignedOff ? 0 : Math.min(watchSeconds, watchTargetSeconds),
+      color: isOnBreak ? 'var(--chart-5)' : 'var(--primary)',
+    },
+  ];
+
+  const attendanceChartData: Array<
+    DonutChartSegment & { pctLabel: string; inkColor: string; pillClass: string }
+  > = [
+    {
+      label: 'Present',
+      value: 112,
+      color: 'var(--primary)',
+      inkColor: 'var(--primary-ink)',
+      pctLabel: '89.0%',
+      pillClass: 'bg-primary-soft',
+    },
+    {
+      label: 'Late',
+      value: 9,
+      color: 'var(--chart-5)',
+      inkColor: 'var(--chart-ink-5)',
+      pctLabel: '7.1%',
+      pillClass: 'bg-amber-50',
+    },
+    {
+      label: 'On Leave',
+      value: 7,
+      color: 'var(--chart-4)',
+      inkColor: 'var(--chart-ink-4)',
+      pctLabel: '5.5%',
+      pillClass: 'bg-purple-50',
+    },
+    {
+      label: 'Absent',
+      value: 0,
+      color: 'var(--chart-7)',
+      inkColor: 'var(--chart-ink-7)',
+      pctLabel: '0.0%',
+      pillClass: 'bg-rose-50',
+    },
+  ];
+  const activeAttendance = attendanceChartData.find((s) => s.label === hoveredAttendance);
+
+  const taskChartData: Array<
+    DonutChartSegment & { pct: number; inkColor: string; pillClass: string }
+  > = [
+    {
+      label: 'Completed',
+      value: 142,
+      color: 'var(--primary)',
+      inkColor: 'var(--primary-ink)',
+      pct: 76,
+      pillClass: 'bg-primary-soft',
+    },
+    {
+      label: 'Pending',
+      value: 36,
+      color: 'var(--chart-4)',
+      inkColor: 'var(--chart-ink-4)',
+      pct: 19,
+      pillClass: 'bg-purple-50',
+    },
+    {
+      label: 'Overdue',
+      value: 8,
+      color: 'var(--chart-7)',
+      inkColor: 'var(--chart-ink-7)',
+      pct: 5,
+      pillClass: 'bg-rose-50',
+    },
+  ];
+  const activeTask = taskChartData.find((s) => s.label === hoveredTask);
 
   return (
     <div
@@ -340,11 +495,6 @@ export function AdminDashboard() {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-        @keyframes maxrDrawCircle {
-          from {
-            stroke-dashoffset: 251.32;
           }
         }
         @keyframes maxrBarGrow {
@@ -368,12 +518,6 @@ export function AdminDashboard() {
         .maxr-card-entrance {
           animation: maxrFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
-        .maxr-draw-attendance {
-          animation: maxrDrawCircle 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .maxr-draw-tasks {
-          animation: maxrDrawCircle 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
         .maxr-bar-grow {
           transform-origin: bottom;
           animation: maxrBarGrow 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -383,8 +527,6 @@ export function AdminDashboard() {
         }
         @media (prefers-reduced-motion: reduce) {
           .maxr-card-entrance,
-          .maxr-draw-attendance,
-          .maxr-draw-tasks,
           .maxr-bar-grow,
           .maxr-progress-fill {
             animation: none !important;
@@ -418,11 +560,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/employees')}
           style={{ animationDelay: '50ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-emerald-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconUsers className="w-5 h-5" />
+            <div className="text-emerald-600 flex items-center justify-center shrink-0">
+              <IconUsers className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -444,11 +586,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/attendance')}
           style={{ animationDelay: '100ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-purple-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconClock className="w-5 h-5" />
+            <div className="text-purple-600 flex items-center justify-center shrink-0">
+              <IconClock className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -470,11 +612,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/approvals')}
           style={{ animationDelay: '150ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-teal-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconCalendar className="w-5 h-5" />
+            <div className="text-teal-600 flex items-center justify-center shrink-0">
+              <IconCalendar className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -496,11 +638,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '200ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-rose-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconCheckSquare className="w-5 h-5" />
+            <div className="text-rose-600 flex items-center justify-center shrink-0">
+              <IconCheckSquare className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -549,45 +691,45 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Circular Timer Ring & Actions - Perfectly Fitted */}
+          {/* Circular Timer Ring & Actions - Powered by DonutChart */}
           <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            {/* SVG Circular Progress Ring */}
-            <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  fill="none"
-                  stroke="var(--surface-muted, rgb(242, 245, 244))"
-                  strokeWidth="6.5"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  fill="none"
-                  stroke={
-                    isOnBreak
-                      ? 'var(--warning, rgb(217, 119, 6))'
-                      : 'var(--primary, rgb(70, 199, 184))'
-                  }
-                  strokeWidth="6.5"
-                  strokeDasharray="263.89"
-                  strokeDashoffset={watchDashOffset}
-                  strokeLinecap="round"
-                  className="transition-[stroke-dashoffset] duration-1000 ease-linear"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-mono text-base sm:text-lg font-extrabold text-text tracking-tight">
-                  {formatTimer(watchSeconds)}
-                </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">
-                  of 8.5h today
-                </span>
-              </div>
-            </div>
+            <DonutChart
+              data={watchChartData}
+              totalValue={watchTargetSeconds}
+              size={126}
+              strokeWidth={9}
+              segmentGap={0}
+              showInnerRing={true}
+              animationDuration={0.6}
+              highlightOnHover={false}
+              trackColor="var(--track)"
+              aria-label="My watch progress"
+              className="shrink-0"
+              centerContent={
+                <div className="flex flex-col items-center justify-center text-center leading-none">
+                  <span
+                    className="font-mono text-base sm:text-lg font-extrabold tracking-tight"
+                    style={{
+                      color: isSignedOff
+                        ? 'var(--text-muted)'
+                        : isOnBreak
+                          ? 'var(--chart-ink-5)'
+                          : 'var(--text)',
+                    }}
+                  >
+                    {formatTimer(watchSeconds)}
+                  </span>
+                  <span
+                    className="text-[10px] mt-1 font-semibold"
+                    style={{
+                      color: isOnBreak ? 'var(--chart-ink-5)' : 'var(--primary-ink)',
+                    }}
+                  >
+                    of 8.5h today
+                  </span>
+                </div>
+              }
+            />
 
             {/* Action Buttons */}
             <div className="flex-1 min-w-0 space-y-2">
@@ -600,7 +742,7 @@ export function AdminDashboard() {
                     : 'bg-surface-raised text-text border-border hover:bg-surface-muted'
                 }`}
               >
-                <span>☕</span>
+                <IconCoffee className="w-3.5 h-3.5 shrink-0" />
                 <span>{isOnBreak ? 'Resume work' : 'Take a break'}</span>
               </button>
               <button
@@ -608,7 +750,7 @@ export function AdminDashboard() {
                 onClick={() => setIsSignedOff(!isSignedOff)}
                 className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap"
               >
-                <span>&harr;</span>
+                <IconSwitch className="w-3.5 h-3.5 shrink-0" />
                 <span>{isSignedOff ? 'Sign on' : 'Sign off'}</span>
               </button>
             </div>
@@ -673,103 +815,89 @@ export function AdminDashboard() {
             <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
           </div>
 
-          {/* Segmented Donut Chart & Legend - Centered & Fitted */}
+          {/* Interactive Segmented Donut Chart & Matched Legend - Attendance Overview */}
           <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            {/* SVG Donut */}
-            <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--surface-muted, rgb(242, 245, 244))"
-                  strokeWidth="8"
-                />
-                {/* Present (89.0%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--primary, rgb(70, 199, 184))"
-                  strokeWidth="8"
-                  strokeDasharray="251.32"
-                  strokeDashoffset="27.6"
-                  strokeLinecap="round"
-                  className="maxr-draw-attendance"
-                />
-                {/* Late (7.1%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--warning, rgb(217, 119, 6))"
-                  strokeWidth="8"
-                  strokeDasharray="17.8 233.52"
-                  strokeDashoffset="-223.7"
-                  strokeLinecap="round"
-                />
-                {/* On Leave (5.5%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--chart-4, rgb(139, 92, 246))"
-                  strokeWidth="8"
-                  strokeDasharray="13.8 237.52"
-                  strokeDashoffset="-241.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                  89.0%
-                </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">Present</span>
-              </div>
-            </div>
+            <DonutChart
+              data={attendanceChartData}
+              size={128}
+              strokeWidth={9}
+              segmentGap={5}
+              showInnerRing={true}
+              animationDuration={0.9}
+              animationDelayPerSegment={0.05}
+              highlightOnHover={true}
+              hoveredLabel={hoveredAttendance}
+              onSegmentHover={(seg) => setHoveredAttendance(seg?.label ?? null)}
+              trackColor="var(--track)"
+              aria-label="Attendance overview breakdown"
+              className="shrink-0"
+              centerContent={
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeAttendance?.label ?? 'default'}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.92 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: 'circOut' }}
+                    className="flex flex-col items-center justify-center text-center leading-none"
+                  >
+                    <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                      {activeAttendance ? activeAttendance.value : '89.0%'}
+                    </span>
+                    <span
+                      className="text-[10.5px] mt-1 font-bold truncate max-w-[78px]"
+                      style={{
+                        color: activeAttendance ? activeAttendance.inkColor : 'var(--primary-ink)',
+                      }}
+                    >
+                      {activeAttendance ? activeAttendance.label : 'Present'}
+                    </span>
+                    {activeAttendance && (
+                      <span className="text-[9.5px] font-mono text-text-subtle mt-0.5">
+                        {activeAttendance.pctLabel}
+                      </span>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              }
+            />
 
-            {/* Legend Stats */}
+            {/* Matched Legend Stats */}
             <div className="flex-1 min-w-0 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                  Present
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  112 <span className="font-normal text-text-subtle text-[10px]">(89.0%)</span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
-                  Late
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  9 <span className="font-normal text-text-subtle text-[10px]">(7.1%)</span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                  On Leave
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  7 <span className="font-normal text-text-subtle text-[10px]">(5.5%)</span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-danger shrink-0" />
-                  Absent
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  0 <span className="font-normal text-text-subtle text-[10px]">(0.0%)</span>
-                </span>
-              </div>
+              {attendanceChartData.map((segment) => {
+                const isHovered = hoveredAttendance === segment.label;
+                return (
+                  <div
+                    key={segment.label}
+                    tabIndex={0}
+                    onMouseEnter={() => setHoveredAttendance(segment.label)}
+                    onMouseLeave={() => setHoveredAttendance(null)}
+                    onFocus={() => setHoveredAttendance(segment.label)}
+                    onBlur={() => setHoveredAttendance(null)}
+                    className={cn(
+                      'flex items-center justify-between gap-1.5 px-2 py-1 rounded-lg transition-all min-w-0 outline-none focus-visible:ring-1 focus-visible:ring-primary-strong',
+                      isHovered ? segment.pillClass : 'hover:bg-surface-muted',
+                    )}
+                  >
+                    <span
+                      className="flex items-center gap-1.5 font-semibold truncate text-[11px] sm:text-xs transition-colors"
+                      style={{ color: segment.inkColor }}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      {segment.label}
+                    </span>
+                    <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                      {segment.value}{' '}
+                      <span className="font-normal text-text-subtle text-[10px]">
+                        ({segment.pctLabel})
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -799,94 +927,89 @@ export function AdminDashboard() {
             <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
           </div>
 
-          {/* Segmented Donut Chart & Legend - Centered & Fitted */}
+          {/* Interactive Segmented Donut Chart & Matched Legend - Task Overview */}
           <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            {/* SVG Donut */}
-            <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--surface-muted, rgb(242, 245, 244))"
-                  strokeWidth="8"
-                />
-                {/* Completed (76%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--primary, rgb(70, 199, 184))"
-                  strokeWidth="8"
-                  strokeDasharray="251.32"
-                  strokeDashoffset="60.3"
-                  strokeLinecap="round"
-                  className="maxr-draw-tasks"
-                />
-                {/* Pending (19%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--chart-4, rgb(139, 92, 246))"
-                  strokeWidth="8"
-                  strokeDasharray="47.7 203.62"
-                  strokeDashoffset="-191.0"
-                  strokeLinecap="round"
-                />
-                {/* Overdue (5%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--danger, rgb(220, 38, 38))"
-                  strokeWidth="8"
-                  strokeDasharray="12.5 238.82"
-                  strokeDashoffset="-238.7"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                  76%
-                </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">Completed</span>
-              </div>
-            </div>
+            <DonutChart
+              data={taskChartData}
+              size={128}
+              strokeWidth={9}
+              segmentGap={5}
+              showInnerRing={true}
+              animationDuration={0.9}
+              animationDelayPerSegment={0.05}
+              highlightOnHover={true}
+              hoveredLabel={hoveredTask}
+              onSegmentHover={(seg) => setHoveredTask(seg?.label ?? null)}
+              trackColor="var(--track)"
+              aria-label="Task overview breakdown"
+              className="shrink-0"
+              centerContent={
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTask?.label ?? 'default'}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.92 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: 'circOut' }}
+                    className="flex flex-col items-center justify-center text-center leading-none"
+                  >
+                    <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                      {activeTask ? activeTask.value : '76%'}
+                    </span>
+                    <span
+                      className="text-[10.5px] mt-1 font-bold truncate max-w-[78px]"
+                      style={{
+                        color: activeTask ? activeTask.inkColor : 'var(--primary-ink)',
+                      }}
+                    >
+                      {activeTask ? activeTask.label : 'Completed'}
+                    </span>
+                    {activeTask && (
+                      <span className="text-[9.5px] font-mono text-text-subtle mt-0.5">
+                        {activeTask.pct}%
+                      </span>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              }
+            />
 
-            {/* Legend Stats */}
+            {/* Matched Legend Stats */}
             <div className="flex-1 min-w-0 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                  Completed
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  142
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                  Pending
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  36
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-danger shrink-0" />
-                  Overdue
-                </span>
-                <span className="font-bold font-mono text-danger text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  8
-                </span>
-              </div>
+              {taskChartData.map((segment) => {
+                const isHovered = hoveredTask === segment.label;
+                return (
+                  <div
+                    key={segment.label}
+                    tabIndex={0}
+                    onMouseEnter={() => setHoveredTask(segment.label)}
+                    onMouseLeave={() => setHoveredTask(null)}
+                    onFocus={() => setHoveredTask(segment.label)}
+                    onBlur={() => setHoveredTask(null)}
+                    className={cn(
+                      'flex items-center justify-between gap-1.5 px-2 py-1 rounded-lg transition-all min-w-0 outline-none focus-visible:ring-1 focus-visible:ring-primary-strong',
+                      isHovered ? segment.pillClass : 'hover:bg-surface-muted',
+                    )}
+                  >
+                    <span
+                      className="flex items-center gap-1.5 font-semibold truncate text-[11px] sm:text-xs transition-colors"
+                      style={{ color: segment.inkColor }}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      {segment.label}
+                    </span>
+                    <span
+                      className="font-bold font-mono text-[11px] sm:text-xs whitespace-nowrap shrink-0"
+                      style={{ color: isHovered ? segment.inkColor : 'var(--text)' }}
+                    >
+                      {segment.value}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
