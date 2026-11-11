@@ -7,7 +7,9 @@ import { Select } from '../../../components/ui/Select';
 import type {
   CreateProjectInput,
   ProjectDetail,
+  ProjectPriority,
   ProjectStatus,
+  ProjectWorkflowStatus,
   UpdateProjectInput,
 } from '../types';
 
@@ -34,6 +36,12 @@ export function ProjectFormModal({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState<ProjectStatus>('active');
+  const [priority, setPriority] = useState<ProjectPriority>('medium');
+  const [workflowStatus, setWorkflowStatus] = useState<ProjectWorkflowStatus>('in_progress');
+  const [progressPercent, setProgressPercent] = useState('0');
+  const [objectives, setObjectives] = useState('');
+  const [scope, setScope] = useState('');
+  const [technologiesText, setTechnologiesText] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +58,12 @@ export function ProjectFormModal({
         setStartDate(initialProject.startDate ?? '');
         setEndDate(initialProject.endDate ?? '');
         setStatus(initialProject.status);
+        setPriority(initialProject.priority ?? 'medium');
+        setWorkflowStatus(initialProject.workflowStatus ?? 'in_progress');
+        setProgressPercent(String(initialProject.progressPercent ?? 0));
+        setObjectives(initialProject.objectives ?? '');
+        setScope(initialProject.scope ?? '');
+        setTechnologiesText((initialProject.technologies ?? []).join(', '));
       } else {
         setCode('');
         setName('');
@@ -57,6 +71,12 @@ export function ProjectFormModal({
         setStartDate('');
         setEndDate('');
         setStatus('active');
+        setPriority('medium');
+        setWorkflowStatus('in_progress');
+        setProgressPercent('0');
+        setObjectives('');
+        setScope('');
+        setTechnologiesText('');
       }
     }
   }, [isOpen, mode, initialProject]);
@@ -97,6 +117,11 @@ export function ProjectFormModal({
       newErrors.endDate = 'End date must be on or after start date';
     }
 
+    const parsedProgress = Number(progressPercent);
+    if (Number.isNaN(parsedProgress) || parsedProgress < 0 || parsedProgress > 100) {
+      newErrors.progressPercent = 'Progress must be between 0 and 100';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -108,6 +133,12 @@ export function ProjectFormModal({
     setSubmitting(true);
     setServerError(null);
 
+    const parsedTech = technologiesText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const parsedProgress = Math.round(Number(progressPercent) || 0);
+
     try {
       if (mode === 'create') {
         if (!onSubmitCreate) return;
@@ -117,6 +148,12 @@ export function ProjectFormModal({
           description: description.trim() || undefined,
           startDate: startDate || undefined,
           endDate: endDate || undefined,
+          priority,
+          workflowStatus,
+          progressPercent: parsedProgress,
+          ...(objectives.trim() ? { objectives: objectives.trim() } : {}),
+          ...(scope.trim() ? { scope: scope.trim() } : {}),
+          ...(parsedTech.length > 0 ? { technologies: parsedTech } : {}),
         };
         await onSubmitCreate(input);
       } else {
@@ -127,6 +164,12 @@ export function ProjectFormModal({
           status,
           startDate: startDate || null,
           endDate: endDate || null,
+          priority,
+          workflowStatus,
+          progressPercent: parsedProgress,
+          objectives: objectives.trim() || null,
+          scope: scope.trim() || null,
+          technologies: parsedTech,
         };
         await onSubmitEdit(input);
       }
@@ -209,6 +252,7 @@ export function ProjectFormModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={submitting}
+            autoFocus={!isCreate}
           />
         </FormField>
 
@@ -216,18 +260,61 @@ export function ProjectFormModal({
           label="Description"
           htmlFor="project-description"
           error={errors.description}
-          helperText="Optional context or objectives (up to 1000 characters)"
+          helperText="Brief overview of goals, scope, or team deliverables."
         >
           <textarea
             id="project-description"
             rows={3}
-            className="w-full px-3 py-2 text-sm text-text bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-strong disabled:bg-surface-muted disabled:text-text-muted"
-            placeholder="Describe the purpose, scope, or goals of this project..."
+            className="w-full px-3 py-2 text-sm text-text bg-surface-raised border border-border rounded-input focus:outline-none focus:ring-2 focus:ring-primary-strong disabled:opacity-50"
+            placeholder="Describe what this project achieves..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={submitting}
           />
         </FormField>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <FormField label="Priority" htmlFor="project-priority">
+            <Select
+              id="project-priority"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as ProjectPriority)}
+              disabled={submitting}
+              options={[
+                { value: 'high', label: 'High Priority' },
+                { value: 'medium', label: 'Medium Priority' },
+                { value: 'low', label: 'Low Priority' },
+              ]}
+            />
+          </FormField>
+
+          <FormField label="Project Status" htmlFor="project-workflow-status">
+            <Select
+              id="project-workflow-status"
+              value={workflowStatus}
+              onChange={(e) => setWorkflowStatus(e.target.value as ProjectWorkflowStatus)}
+              disabled={submitting}
+              options={[
+                { value: 'not_started', label: 'Not Started' },
+                { value: 'in_progress', label: 'In Progress' },
+                { value: 'on_hold', label: 'On Hold' },
+                { value: 'completed', label: 'Completed' },
+              ]}
+            />
+          </FormField>
+
+          <FormField label="Progress (%)" htmlFor="project-progress" error={errors.progressPercent}>
+            <Input
+              id="project-progress"
+              type="number"
+              min={0}
+              max={100}
+              value={progressPercent}
+              onChange={(e) => setProgressPercent(e.target.value)}
+              disabled={submitting}
+            />
+          </FormField>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label="Start Date" htmlFor="project-start-date" error={errors.startDate}>
@@ -240,7 +327,7 @@ export function ProjectFormModal({
             />
           </FormField>
 
-          <FormField label="End Date" htmlFor="project-end-date" error={errors.endDate}>
+          <FormField label="Deadline" htmlFor="project-end-date" error={errors.endDate}>
             <Input
               id="project-end-date"
               type="date"
@@ -251,8 +338,46 @@ export function ProjectFormModal({
           </FormField>
         </div>
 
+        <FormField label="Objectives" htmlFor="project-objectives">
+          <textarea
+            id="project-objectives"
+            rows={2}
+            className="w-full px-3 py-2 text-sm text-text bg-surface-raised border border-border rounded-input focus:outline-none focus:ring-2 focus:ring-primary-strong disabled:opacity-50"
+            placeholder="Key business and technical objectives..."
+            value={objectives}
+            onChange={(e) => setObjectives(e.target.value)}
+            disabled={submitting}
+          />
+        </FormField>
+
+        <FormField label="Scope" htmlFor="project-scope">
+          <textarea
+            id="project-scope"
+            rows={2}
+            className="w-full px-3 py-2 text-sm text-text bg-surface-raised border border-border rounded-input focus:outline-none focus:ring-2 focus:ring-primary-strong disabled:opacity-50"
+            placeholder="Deliverables included and boundaries..."
+            value={scope}
+            onChange={(e) => setScope(e.target.value)}
+            disabled={submitting}
+          />
+        </FormField>
+
+        <FormField
+          label="Technologies Used"
+          htmlFor="project-technologies"
+          helperText="Comma-separated (e.g. React 18, TypeScript, PostgreSQL)"
+        >
+          <Input
+            id="project-technologies"
+            placeholder="React 18, TypeScript, Node.js"
+            value={technologiesText}
+            onChange={(e) => setTechnologiesText(e.target.value)}
+            disabled={submitting}
+          />
+        </FormField>
+
         {!isCreate && (
-          <FormField label="Status" htmlFor="project-status">
+          <FormField label="Lifecycle Status" htmlFor="project-status">
             <Select
               id="project-status"
               value={status}

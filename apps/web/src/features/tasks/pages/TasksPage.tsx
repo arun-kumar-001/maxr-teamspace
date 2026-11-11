@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { EmptyState, ErrorState } from '../../../components/ui/StateCards';
+import { EmptyState } from '../../../components/ui/StateCards';
+import { TaskCalendar } from '../components/TaskCalendar';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { TaskFilters } from '../components/TaskFilters';
 import { TaskFormModal } from '../components/TaskFormModal';
@@ -93,69 +94,53 @@ export function TasksPage({ initialScope }: TasksPageProps) {
       className="flex flex-col gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full"
       data-testid="tasks-page"
     >
-      {/* Page Header */}
-      <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-text tracking-tight">
-          {scope === 'team' ? 'Team Tasks' : 'My Tasks'}
-        </h1>
-        <p className="text-sm text-text-muted mt-1">
-          {scope === 'team'
-            ? 'Manage delegation, assignments, and workflow stages across your team.'
-            : 'Track your assigned responsibilities, update progress, and hit milestones.'}
-        </p>
-      </div>
+      {/* Page Header Row: My Tasks (Left) + Img 1 Content Filters/Actions on the Right Side */}
+      <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+        {/* Left: Title & Subtitle (Img 2) */}
+        <div className="shrink-0 max-w-sm pt-1">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-text tracking-tight">
+            {scope === 'team' ? 'Team Tasks' : 'My Tasks'}
+          </h1>
+          <p className="text-sm text-text-muted mt-1">
+            {scope === 'team'
+              ? 'Manage delegation, assignments, and workflow stages across your team.'
+              : 'Track your assigned responsibilities, update progress, and hit milestones.'}
+          </p>
+        </div>
 
-      {/* Metrics Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-text-subtle uppercase block">Total</span>
-          <span className="text-xl font-display font-bold text-text mt-0.5 block">
-            {totalCount}
-          </span>
-        </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-primary-ink uppercase block">In Flight</span>
-          <span className="text-xl font-display font-bold text-primary-ink mt-0.5 block">
-            {inProgressCount}
-          </span>
-        </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-rose-800 uppercase block">Blocked</span>
-          <span className="text-xl font-display font-bold text-danger mt-0.5 block">
-            {blockedCount}
-          </span>
-        </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
-          <span className="text-xs font-semibold text-emerald-800 uppercase block">Completed</span>
-          <span className="text-xl font-display font-bold text-emerald-700 mt-0.5 block">
-            {completedCount}
-          </span>
-        </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card col-span-2 sm:col-span-1">
-          <span className="text-xs font-semibold text-danger uppercase block">Overdue</span>
-          <span className="text-xl font-display font-bold text-danger mt-0.5 block">
-            {overdueCount}
-          </span>
+        {/* Right Side: Img 1 Content (Filters, View Mode & Add Task Controls) */}
+        <div className="flex-1 w-full xl:max-w-3xl">
+          <TaskFilters
+            search={search}
+            onSearchChange={setSearch}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            scope={scope}
+            onScopeChange={setScope}
+            showScopeToggle={canManage}
+            priority={priority}
+            onPriorityChange={setPriority}
+            status={status}
+            onStatusChange={setStatus}
+            overdueOnly={overdueOnly}
+            onOverdueOnlyToggle={() => setOverdueOnly(!overdueOnly)}
+            canCreate={true}
+            onCreateClick={() => setIsCreateOpen(true)}
+          />
         </div>
       </div>
 
-      {/* Filters and Controls */}
-      <TaskFilters
-        search={search}
-        onSearchChange={setSearch}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        scope={scope}
-        onScopeChange={setScope}
-        showScopeToggle={canManage}
-        priority={priority}
-        onPriorityChange={setPriority}
-        status={status}
-        onStatusChange={setStatus}
-        overdueOnly={overdueOnly}
-        onOverdueOnlyToggle={() => setOverdueOnly(!overdueOnly)}
-        canCreate={canManage}
-        onCreateClick={() => setIsCreateOpen(true)}
+      {/* Task Calendar */}
+      <TaskCalendar
+        tasks={allTasks}
+        onSelectTask={handleSelectTask}
+        metrics={{
+          total: totalCount,
+          inProgress: inProgressCount,
+          blocked: blockedCount,
+          completed: completedCount,
+          overdue: overdueCount,
+        }}
       />
 
       {/* Main Content Area */}
@@ -169,7 +154,36 @@ export function TasksPage({ initialScope }: TasksPageProps) {
           ))}
         </div>
       ) : error ? (
-        <ErrorState title="Could not load tasks" message={error} onRetry={() => void refetch()} />
+        <div className="space-y-4">
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs sm:text-sm">
+            <span className="font-medium">API Connection: {error}. Showing local task board.</span>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="px-3 py-1.5 text-xs font-bold rounded-lg border border-amber-300 bg-white hover:bg-amber-100/50 transition-colors shrink-0"
+            >
+              Retry Sync
+            </button>
+          </div>
+          {viewMode === 'board' ? (
+            <TaskKanbanBoard
+              columns={boardColumns}
+              onSelectTask={handleSelectTask}
+              onStatusChange={handleStatusChange}
+              onAddTask={() => setIsCreateOpen(true)}
+              currentEmployeeId={user?.employeeId}
+              isAdmin={isAdmin}
+            />
+          ) : (
+            <TaskTableView
+              tasks={allTasks}
+              onSelectTask={handleSelectTask}
+              onStatusChange={handleStatusChange}
+              currentEmployeeId={user?.employeeId}
+              isAdmin={isAdmin}
+            />
+          )}
+        </div>
       ) : tasks.length === 0 ? (
         <EmptyState
           title={
@@ -190,6 +204,7 @@ export function TasksPage({ initialScope }: TasksPageProps) {
           columns={boardColumns}
           onSelectTask={handleSelectTask}
           onStatusChange={handleStatusChange}
+          onAddTask={() => setIsCreateOpen(true)}
           currentEmployeeId={user?.employeeId}
           isAdmin={isAdmin}
         />

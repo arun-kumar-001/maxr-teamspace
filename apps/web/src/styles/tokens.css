@@ -104,9 +104,102 @@
   --navy-950: #0a1429;
   --navy-900: #0e2042;
   --navy-800: #1e2f50;
+
+  /* 3D Glassmorphism Palette & Lighting (Deep Black, Mint Teal, Soft White) */
+  --deep-black: #080b0c;
+  --mint-teal: #55cdb3;
+  --soft-white: #f4f7f6;
+  --glass-card-bg: rgba(255, 255, 255, 0.74);
+  --glass-card-border: rgba(255, 255, 255, 0.65);
+  --glass-card-shadow: 0 10px 32px 0 rgba(85, 205, 179, 0.07), 0 2px 6px 0 rgba(8, 11, 12, 0.03);
+  --glass-glow-teal: 0 0 20px rgba(85, 205, 179, 0.45);
+}
+
+html,
+body,
+#root {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--soft-white);
+  color: var(--deep-black);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 10px 32px rgba(85, 205, 179, 0.06),
+    0 2px 6px rgba(8, 11, 12, 0.03);
+  border-radius: 20px;
+}
+
+.main-glass-rectangle {
+  background: rgba(244, 247, 246, 0.3);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 28px;
+  box-shadow:
+    0 24px 60px rgba(8, 11, 12, 0.08),
+    0 0 35px rgba(85, 205, 179, 0.08),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -1.5px 2px rgba(255, 255, 255, 0.4);
+}
+
+/* Clean scrollbar suppression for sidebar navigation & dashboard: eliminates ugly native scrollbars while preserving full accessibility */
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+  scrollbar-color: transparent transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.no-scrollbar::-webkit-scrollbar-track,
+.no-scrollbar::-webkit-scrollbar-track-piece,
+.no-scrollbar::-webkit-scrollbar-thumb,
+.no-scrollbar::-webkit-scrollbar-corner {
+  display: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Premium Glassmorphic Sidebar & Dock */
+.glass-sidebar {
+  background: rgba(8, 11, 12, 0.88);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(244, 247, 246, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 16px 40px rgba(8, 11, 12, 0.22);
 }

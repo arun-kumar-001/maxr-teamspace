@@ -372,6 +372,20 @@ export const PERMISSION_CATALOG = {
     description: 'View active expense categories',
     grants: everyone(ALL),
   },
+
+  // Read-only employee monthly payslips
+  'payslips.read_own': {
+    description: 'View and download own published payslips',
+    grants: everyone(OWN),
+  },
+  'payslips.read_all': {
+    description: 'View and download employee payslips across the company',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
+  'payslips.manage': {
+    description: 'Create, update, and publish employee payslips',
+    grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;

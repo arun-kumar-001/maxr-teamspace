@@ -39,6 +39,13 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
         ref={dialogRef}
         tabIndex={-1}
         className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.78)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderColor: 'rgba(255, 255, 255, 0.7)',
+          boxShadow: '0 24px 64px rgba(8, 11, 12, 0.15), 0 0 32px rgba(85, 205, 179, 0.1)',
+        }}
       >
         {/* Mobile handle indicator */}
         <div

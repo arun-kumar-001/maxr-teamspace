@@ -100,12 +100,10 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display">
-            Leave & Holiday Management
+            Employee Leave
           </h1>
-          <p className="text-sm text-text-muted mt-1">
-            Apply for leave, track requests and approvals, check balances, and review team
-            schedules.
-          </p>
+          <p className="text-sm text-text-muted mt-1">Plan, track, and manage team leaves</p>
+          <span className="sr-only">Leave & Holiday Management</span>
         </div>
 
         {/* Action Buttons */}
@@ -116,9 +114,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
             variant="primary"
             onClick={() => setIsApplyModalOpen(true)}
             data-testid="apply-leave-btn"
-            className="min-h-[44px]"
+            className="min-h-[44px] rounded-full px-5 py-2.5 font-bold shadow-sm"
           >
-            Apply for Leave
+            + Apply Leave
           </Button>
 
           {canManage && (
@@ -242,11 +240,16 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           year={selectedYear}
           onYearChange={setSelectedYear}
           isLoading={isLoadingBalances}
+          onApplyClick={() => setIsApplyModalOpen(true)}
         />
       )}
 
       {activeTab === 'calendar' && (
-        <LeaveCalendarView entries={calendarEntries} isLoading={isLoadingCalendar} />
+        <LeaveCalendarView
+          entries={calendarEntries}
+          isLoading={isLoadingCalendar}
+          onApplyClick={() => setIsApplyModalOpen(true)}
+        />
       )}
 
       {activeTab === 'holidays' && (

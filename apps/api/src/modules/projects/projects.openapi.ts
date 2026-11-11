@@ -2,13 +2,22 @@ import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
 import {
   addMemberSchema,
+  createMilestoneSchema,
   createProjectSchema,
+  createProjectUpdateSchema,
   listProjectsQuerySchema,
+  milestoneSchema,
   projectDetailSchema,
+  projectDocumentParamsSchema,
+  projectDocumentSchema,
   projectIdParamsSchema,
   projectMemberParamsSchema,
+  projectMilestoneParamsSchema,
   projectSchema,
+  projectUpdateResponseSchema,
+  updateMilestoneSchema,
   updateProjectSchema,
+  uploadDocumentQuerySchema,
 } from './projects.schemas';
 
 const tags = ['Projects'];
@@ -20,12 +29,12 @@ registerRoute({
   method: 'get',
   path: '/projects',
   tags,
-  summary: 'The projects you own or belong to (an Admin sees all), by status and name',
+  summary: 'The projects you own or belong to (an Admin sees all), with summary overview counts',
   permission: 'projects.read',
   query: listProjectsQuerySchema,
   success: {
     status: 200,
-    description: 'A page of projects',
+    description: 'A page of projects with overview counts',
     schema: z.object({
       data: z.array(projectSchema),
       meta: z.object({
@@ -33,6 +42,13 @@ registerRoute({
         pageSize: z.number().int(),
         total: z.number().int(),
         totalPages: z.number().int(),
+      }),
+      summary: z.object({
+        totalAssigned: z.number().int(),
+        inProgress: z.number().int(),
+        completed: z.number().int(),
+        upcoming: z.number().int(),
+        onHold: z.number().int(),
       }),
     }),
   },
@@ -43,7 +59,7 @@ registerRoute({
   path: '/projects',
   tags,
   summary:
-    'Create a project (Team Lead, Admin). A Team Lead owns it; an Admin may name another Team Lead or Admin as owner. Members must be the owner or the owner’s direct reports',
+    'Create a project (Team Lead, Admin). A Team Lead owns it; an Admin may name another Team Lead or Admin as owner.',
   permission: 'projects.manage',
   idempotent: true,
   body: createProjectSchema,
@@ -59,7 +75,7 @@ registerRoute({
   method: 'get',
   path: '/projects/{id}',
   tags,
-  summary: 'One project with its members',
+  summary: 'One project with its members, milestones, updates, and documents',
   permission: 'projects.read',
   params: projectIdParamsSchema,
   extraResponses: notVisible,
@@ -71,7 +87,7 @@ registerRoute({
   path: '/projects/{id}',
   tags,
   summary:
-    'Change a project, or archive and reactivate it with `status`. Send the `version` you read. An archived project is read-only except for reactivating it',
+    'Change a project, or archive and reactivate it with `status`. Send the `version` you read.',
   permission: 'projects.manage',
   params: projectIdParamsSchema,
   body: updateProjectSchema,
@@ -114,4 +130,110 @@ registerRoute({
     422: 'The owner, or the project is archived',
   },
   success: { status: 200, description: 'The project with its members', schema: one },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/projects/{id}/milestones',
+  tags,
+  summary: 'Create a project milestone (project owner or Admin)',
+  permission: 'projects.manage',
+  params: projectIdParamsSchema,
+  body: createMilestoneSchema,
+  extraResponses: { ...notVisible, ...ownerOnly, 422: 'Project archived or invalid dates' },
+  success: {
+    status: 201,
+    description: 'The created milestone',
+    schema: z.object({ data: milestoneSchema }),
+  },
+});
+
+registerRoute({
+  method: 'put',
+  path: '/projects/{id}/milestones/{milestoneId}',
+  tags,
+  summary: 'Update a project milestone (project owner or Admin)',
+  permission: 'projects.manage',
+  params: projectMilestoneParamsSchema,
+  body: updateMilestoneSchema,
+  extraResponses: { ...notVisible, ...ownerOnly, 422: 'Project archived or invalid dates' },
+  success: {
+    status: 200,
+    description: 'The updated milestone',
+    schema: z.object({ data: milestoneSchema }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/projects/{id}/updates',
+  tags,
+  summary: 'Post a progress update, comment, or manager update on a visible project',
+  permission: 'projects.read',
+  params: projectIdParamsSchema,
+  body: createProjectUpdateSchema,
+  extraResponses: {
+    ...notVisible,
+    403: 'Only the project owner or an Admin can post manager updates',
+    422: 'The project is archived',
+  },
+  success: {
+    status: 201,
+    description: 'The posted project update',
+    schema: z.object({ data: projectUpdateResponseSchema }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/projects/{id}/documents',
+  tags,
+  summary: 'Upload a project document (PDF, PNG, or JPEG up to 10 MB)',
+  permission: 'projects.read',
+  params: projectIdParamsSchema,
+  query: uploadDocumentQuerySchema,
+  extraResponses: {
+    ...notVisible,
+    409: 'This document is already attached to the project',
+    422: 'The project is archived or file validation failed',
+  },
+  success: {
+    status: 201,
+    description: 'The uploaded document metadata',
+    schema: z.object({ data: projectDocumentSchema }),
+  },
+});
+
+registerRoute({
+  method: 'get',
+  path: '/projects/{id}/documents/{documentId}/download-link',
+  tags,
+  summary: 'Get a short-lived signed download URL for a project document',
+  permission: 'projects.read',
+  params: projectDocumentParamsSchema,
+  extraResponses: notVisible,
+  success: {
+    status: 200,
+    description: 'Signed download link',
+    schema: z.object({ data: z.object({ url: z.string(), expiresAt: z.string() }) }),
+  },
+});
+
+registerRoute({
+  method: 'delete',
+  path: '/projects/{id}/documents/{documentId}',
+  tags,
+  summary: 'Remove a project document (uploader, project owner, or Admin)',
+  permission: 'projects.read',
+  params: projectDocumentParamsSchema,
+  extraResponses: {
+    ...notVisible,
+    403: 'Only the uploader, project manager, or an Admin can remove it',
+    422: 'The project is archived',
+  },
+  success: {
+    status: 200,
+    description: 'Removed',
+    schema: z.object({ data: z.object({ removed: z.boolean() }) }),
+  },
 });

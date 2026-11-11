@@ -2,10 +2,12 @@ import { randomUUID } from 'crypto';
 import { conflict } from '../../http/errors';
 import { ScopeFilter, scopeAllows } from '../rbac';
 import {
+  AttendanceBreak,
   AttendanceLocation,
   AttendanceRecord,
   AttendanceStatus,
   CheckInDto,
+  TeamCalendarData,
 } from './attendance.types';
 import { AttendanceFindManyParams, IAttendanceRepository } from './attendance.repository';
 
@@ -89,6 +91,8 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       checkInTime,
       checkOutTime: null,
       durationMinutes: null,
+      breaks: [],
+      breakMinutes: 0,
       status,
       location: (dto.location as AttendanceLocation) ?? null,
       notes: dto.notes ?? null,
@@ -121,6 +125,34 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
 
     this.items.set(sessionId, updated);
     return updated;
+  }
+
+  async updateBreaks(
+    sessionId: string,
+    breaks: AttendanceBreak[],
+    breakMinutes: number,
+  ): Promise<AttendanceRecord | null> {
+    const record = this.items.get(sessionId);
+    if (!record || record.checkOutTime !== null) {
+      return null;
+    }
+    const updated: AttendanceRecord = {
+      ...record,
+      breaks,
+      breakMinutes,
+      updatedAt: new Date().toISOString(),
+    };
+    this.items.set(sessionId, updated);
+    return updated;
+  }
+
+  async getTeamCalendar(): Promise<TeamCalendarData> {
+    return {
+      employees: [],
+      departments: [],
+      holidays: [],
+      entries: [],
+    };
   }
 
   async findMany(

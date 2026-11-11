@@ -19,13 +19,14 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     const adminPaths = adminItems.map((i) => i.path);
 
     expect(adminPaths).toContain('/dashboard');
+    expect(adminItems.find((i) => i.path === '/dashboard')?.label).toBe('My Profile');
     expect(adminPaths).toContain('/admin/users');
     expect(adminPaths).toContain('/admin/employees');
     expect(adminPaths).toContain('/admin/departments');
     expect(adminPaths).toContain('/admin/designations');
     expect(adminPaths).toContain('/admin/audit');
     expect(adminPaths).toContain('/admin/settings');
-    expect(adminPaths).toContain('/profile');
+    expect(adminPaths).not.toContain('/profile');
 
     // Must NOT contain HR, Lead, or Staff specific paths
     expect(adminPaths).not.toContain('/hr/employees');
@@ -47,7 +48,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(hrPaths).toContain('/hr/lifecycle');
     expect(hrPaths).toContain('/hr/policies');
     expect(hrPaths).toContain('/hr/reports');
-    expect(hrPaths).toContain('/profile');
+    expect(hrPaths).not.toContain('/profile');
 
     // Must NOT contain Admin or Staff specific paths
     expect(hrPaths).not.toContain('/admin/users');
@@ -67,7 +68,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(leadPaths).toContain('/lead/approvals');
     expect(leadPaths).toContain('/lead/tasks');
     expect(leadPaths).toContain('/lead/reports');
-    expect(leadPaths).toContain('/profile');
+    expect(leadPaths).not.toContain('/profile');
 
     // Must NOT contain Admin or HR specific paths
     expect(leadPaths).not.toContain('/admin/users');
@@ -84,7 +85,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     const staffPaths = staffItems.map((i) => i.path);
 
     expect(staffPaths).toContain('/dashboard');
-    expect(staffPaths).toContain('/profile');
+    expect(staffPaths).not.toContain('/profile');
     expect(staffPaths).toContain('/staff/attendance');
     expect(staffPaths).toContain('/staff/leave');
     expect(staffPaths).toContain('/staff/tasks');

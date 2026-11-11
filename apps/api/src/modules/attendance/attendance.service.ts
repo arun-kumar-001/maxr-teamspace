@@ -8,9 +8,16 @@ import {
   CheckInInput,
   CheckOutInput,
   ListAttendanceQuery,
+  TeamCalendarQuery,
 } from './attendance.schemas';
 import { IAttendanceRepository } from './attendance.repository';
-import { AttendanceRecord, AttendanceStatus, TodayAttendanceSummary } from './attendance.types';
+import {
+  AttendanceBreak,
+  AttendanceRecord,
+  AttendanceStatus,
+  TeamCalendarData,
+  TodayAttendanceSummary,
+} from './attendance.types';
 
 import { CompanySettingsReader } from '../settings';
 import type { ShiftResolver, ShiftSummary } from '../shifts';
@@ -183,8 +190,24 @@ export class AttendanceService {
 
     const now = new Date();
     const nowIso = now.toISOString();
+    const existingBreaks: AttendanceBreak[] = [...(openSession.breaks ?? [])];
+    let totalBreakMinutes = openSession.breakMinutes ?? 0;
+
+    // Close any ongoing break automatically on checkout
+    const lastBreak = existingBreaks[existingBreaks.length - 1];
+    if (lastBreak && lastBreak.endTime === null) {
+      lastBreak.endTime = nowIso;
+      const addedBreak = Math.max(
+        0,
+        Math.round((now.getTime() - new Date(lastBreak.startTime).getTime()) / 60000),
+      );
+      totalBreakMinutes += addedBreak;
+      await this.repo.updateBreaks(openSession.id, existingBreaks, totalBreakMinutes);
+    }
+
     const checkInMs = new Date(openSession.checkInTime).getTime();
-    const durationMinutes = Math.max(0, Math.round((now.getTime() - checkInMs) / 60000));
+    const rawMinutes = Math.max(0, Math.round((now.getTime() - checkInMs) / 60000));
+    const durationMinutes = Math.max(0, rawMinutes - totalBreakMinutes);
 
     const updated = await this.repo.createCheckOut(
       openSession.id,
@@ -245,5 +268,101 @@ export class AttendanceService {
     scope: ScopeFilter,
   ): Promise<PaginatedResponse<AttendanceRecord>> {
     return this.list({ ...query, employeeId }, scope);
+  }
+
+  async startBreak(employeeId: string, ctx: RequestContext): Promise<AttendanceRecord> {
+    const activeSession = await this.repo.findActiveSession(employeeId);
+    if (!activeSession) {
+      throw badRequest('You must be checked in to start a break');
+    }
+
+    const breaks: AttendanceBreak[] = [...(activeSession.breaks ?? [])];
+    const openBreak = breaks.find((b) => b.endTime === null);
+    if (openBreak) {
+      throw conflict('A break is already in progress');
+    }
+
+    breaks.push({ startTime: new Date().toISOString(), endTime: null });
+    const updated = await this.repo.updateBreaks(
+      activeSession.id,
+      breaks,
+      activeSession.breakMinutes ?? 0,
+    );
+    if (!updated) {
+      throw badRequest('No active attendance session found');
+    }
+
+    await this.audit?.tryRecord({
+      action: 'attendance.break_start',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: updated.id,
+      requestId: ctx.requestId,
+    });
+
+    return updated;
+  }
+
+  async endBreak(employeeId: string, ctx: RequestContext): Promise<AttendanceRecord> {
+    const activeSession = await this.repo.findActiveSession(employeeId);
+    if (!activeSession) {
+      throw badRequest('You must be checked in to end a break');
+    }
+
+    const breaks: AttendanceBreak[] = [...(activeSession.breaks ?? [])];
+    const openIndex = breaks.findIndex((b) => b.endTime === null);
+    if (openIndex === -1) {
+      throw badRequest('No active break to end');
+    }
+
+    const now = new Date();
+    const current = breaks[openIndex]!;
+    breaks[openIndex] = { ...current, endTime: now.toISOString() };
+    const added = Math.max(
+      0,
+      Math.round((now.getTime() - new Date(current.startTime).getTime()) / 60000),
+    );
+    const totalBreakMinutes = (activeSession.breakMinutes ?? 0) + added;
+
+    const updated = await this.repo.updateBreaks(activeSession.id, breaks, totalBreakMinutes);
+    if (!updated) {
+      throw badRequest('No active attendance session found');
+    }
+
+    await this.audit?.tryRecord({
+      action: 'attendance.break_end',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: updated.id,
+      metadata: { addedBreakMinutes: added, totalBreakMinutes },
+      requestId: ctx.requestId,
+    });
+
+    return updated;
+  }
+
+  async getTeamCalendar(query: TeamCalendarQuery, ctx: RequestContext): Promise<TeamCalendarData> {
+    if (!ctx.employeeId) {
+      return { employees: [], departments: [], holidays: [], entries: [] };
+    }
+    const today = await this.getWorkDate();
+    const year = Number(today.slice(0, 4));
+    const month = Number(today.slice(5, 7));
+    const defaultStart = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const defaultEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    return this.repo.getTeamCalendar({
+      callerEmployeeId: ctx.employeeId,
+      callerRole: ctx.actorRole,
+      startDate: query.startDate ?? defaultStart,
+      endDate: query.endDate ?? defaultEnd,
+      departmentId: query.departmentId,
+      employeeId: query.employeeId,
+    });
   }
 }

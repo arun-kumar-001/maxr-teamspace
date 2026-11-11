@@ -42,6 +42,7 @@ import { TasksPage } from './features/tasks';
 import { CompanySettingsPage } from './features/settings';
 import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
+import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
 
 // The gallery is a developer tool; it must not ship to production.
@@ -693,7 +694,7 @@ function AppRoutes() {
         path="/staff/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
@@ -701,7 +702,7 @@ function AppRoutes() {
         path="/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
@@ -777,6 +778,38 @@ function AppRoutes() {
       />
 
       {/* Staff Member Protected Routes */}
+      <Route
+        path="/staff/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
       <Route
         path="/staff/*"
         element={

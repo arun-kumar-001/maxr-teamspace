@@ -33,7 +33,20 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-bg/90 backdrop-blur px-4 sm:px-6 lg:px-8">
+    <header
+      className="md:hidden sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b px-4 sm:px-6 lg:px-8 transition-colors no-scrollbar"
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.65)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderColor: 'rgba(255, 255, 255, 0.6)',
+        boxShadow: '0 4px 20px rgba(85, 205, 179, 0.04), 0 1px 3px rgba(8, 11, 12, 0.02)',
+        borderRight: 'none',
+        overflowX: 'hidden',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}
+    >
       {/* Left: Mobile Toggle & Page Title */}
       <div className="flex items-center gap-3">
         <button
@@ -57,7 +70,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
         </button>
 
         <div>
-          <h2 className="text-base font-semibold text-text sm:text-lg">
+          <h2 className="text-base font-semibold sm:text-lg" style={{ color: 'rgb(8, 11, 12)' }}>
             {getPageTitle(activePath)}
           </h2>
           <p className="hidden text-xs text-text-muted sm:block">
@@ -82,7 +95,11 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
         {user && (
           <div className="flex items-center gap-2.5 pl-2 sm:border-l sm:border-border">
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold shadow-sm"
+              style={{
+                backgroundColor: 'rgb(85, 205, 179)',
+                color: 'rgb(8, 11, 12)',
+              }}
               title={`${user.name} (${user.email})`}
             >
               {user.avatarInitials}
@@ -95,11 +112,17 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           </div>
         )}
 
-        {/* Logout button */}
+        {/* Logout button with glass style */}
         <button
           type="button"
           onClick={logout}
-          className="inline-flex items-center justify-center rounded-input border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-surface-raised hover:text-danger hover:border-danger focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
+          className="inline-flex items-center justify-center rounded-input border px-3 py-1.5 text-xs font-semibold hover:border-danger hover:text-danger focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] transition-all"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.65)',
+            backdropFilter: 'blur(12px)',
+            borderColor: 'rgba(255, 255, 255, 0.8)',
+            color: 'rgb(8, 11, 12)',
+          }}
           data-testid="logout-button"
         >
           Sign Out

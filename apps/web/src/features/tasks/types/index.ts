@@ -42,6 +42,11 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string | null;
+  startDate?: string | null;
+  category?: string;
+  attachmentCount?: number;
+  commentCount?: number;
+  completionPercentage?: number;
   isOverdue: boolean;
   completedAt: string | null;
   version: number;

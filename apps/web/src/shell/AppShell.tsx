@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Header } from './Header';
 import { Sidebar, SidebarDrawer, PageContainer } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
@@ -9,12 +9,45 @@ export interface AppShellProps {
   currentPath: string;
   onNavigate: (path: string) => void;
   children: ReactNode;
+  initialCollapsed?: boolean;
 }
 
-export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
-  const { user, role } = useAuth();
+export function AppShell({
+  currentPath,
+  onNavigate,
+  children,
+  initialCollapsed = false,
+}: AppShellProps) {
+  const { user, role, logout } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // In the browser, start in dock mode for the auto-hover dock experience
+  useEffect(() => {
+    setCollapsed(true);
+  }, []);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 180);
+  };
+
+  const effectiveCollapsed = isPinned ? false : !isHovered && collapsed;
 
   const groups = role ? getSidebarGroupsForRole(role) : [];
   const roleNavItems = role ? getNavItemsForRole(role) : [];
@@ -25,9 +58,15 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     name: 'MAXR Teamspace',
     subtitle: 'Staff Management',
     logo: (
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sidebar font-display font-bold shadow-sm">
-        <span className="text-xl font-black">M</span>
-        <span className="text-xl font-black text-brand-red">1</span>
+      <div
+        className="flex h-8 w-8 items-center justify-center rounded-lg font-display font-bold shadow-sm"
+        style={{
+          background: 'rgb(85, 205, 179)',
+          color: 'rgb(8, 11, 12)',
+        }}
+      >
+        <span className="text-lg font-black">M</span>
+        <span className="text-lg font-black text-brand-red">1</span>
       </div>
     ),
   };
@@ -41,23 +80,69 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     : undefined;
 
   return (
-    <div className="min-h-screen bg-bg flex overflow-x-hidden" data-testid="app-shell">
-      {/* Desktop / Tablet Persistent Floating Sidebar (DESIGN.md §5) */}
-      <div className="hidden md:flex p-4 shrink-0 h-screen sticky top-0" data-testid="app-sidebar">
+    <div
+      className="h-screen w-screen bg-bg flex overflow-hidden relative"
+      style={{
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+        ['--sidebar-width' as string]: effectiveCollapsed ? '76px' : '260px',
+        ['--divider-left' as string]: effectiveCollapsed ? '76px' : '260px',
+        ['--content-margin' as string]: effectiveCollapsed ? '76px' : '260px',
+      }}
+      data-testid="app-shell"
+    >
+      {/* 1. LEFT SIDEBAR – FIXED (100vh, permanently fixed at top-0 left-0) */}
+      <div
+        className="hidden md:flex fixed top-0 left-0 h-screen z-30 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex-col"
+        style={{
+          width: 'var(--sidebar-width)',
+          height: '100vh',
+          top: 0,
+          bottom: 0,
+          padding: 0,
+          margin: 0,
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        data-testid="app-sidebar"
+      >
         <Sidebar
           brand={brand}
           groups={groups}
           activeId={currentPath}
-          collapsed={collapsed}
-          onCollapsedChange={setCollapsed}
+          collapsed={effectiveCollapsed}
+          onCollapsedChange={(val) => {
+            setIsPinned(!val);
+            setCollapsed(val);
+          }}
           onNavigate={(id, e) => {
             e?.preventDefault?.();
             onNavigate(id);
           }}
           onUserMenu={() => onNavigate('/profile')}
+          onSignOut={logout}
           user={sidebarUser}
         />
       </div>
+
+      {/* 2. VERTICAL DIVIDER – FIXED (Preserved structurally, invisible appearance) */}
+      <div
+        className="hidden md:block fixed top-0 bottom-0 h-screen z-25 pointer-events-none transition-[left] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          left: 'var(--divider-left)',
+          width: '3px',
+          height: '100vh',
+          top: 0,
+          bottom: 0,
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+          opacity: 0,
+        }}
+        aria-hidden="true"
+        data-testid="sidebar-vertical-separator"
+      />
 
       {/* Phone Drawer (DESIGN.md §5) */}
       <SidebarDrawer
@@ -75,19 +160,40 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
           onNavigate('/profile');
           setIsMobileNavOpen(false);
         }}
+        onSignOut={() => {
+          logout?.();
+          setIsMobileNavOpen(false);
+        }}
         user={sidebarUser}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* 3. RIGHT MAIN CONTENT – INDEPENDENT SCROLL */}
+      <div
+        className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto overflow-x-hidden md:[margin-left:var(--content-margin)] transition-[margin-left] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-10 no-scrollbar"
+        style={{
+          height: '100vh',
+          top: 0,
+          bottom: 0,
+          paddingTop: 0,
+          marginTop: 0,
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          scrollbarColor: 'transparent transparent',
+          borderRight: 'none',
+        }}
+      >
         <Header
           onToggleMobileNav={() => setIsMobileNavOpen(true)}
           activePath={currentPath}
           onNavigate={onNavigate}
         />
 
-        <main className="flex-1 pb-20 md:pb-12">
-          <PageContainer maxWidth="dashboard" className="py-6 sm:py-8">
+        <main className="flex-1 pb-10 pt-0" style={{ paddingTop: 0, marginTop: 0 }}>
+          <PageContainer
+            maxWidth="dashboard"
+            className="pt-0 pb-6 px-3 sm:px-4 lg:px-5 md:!pl-[10px] lg:!pl-[14px]"
+            style={{ paddingTop: 0, marginTop: 0 }}
+          >
             {children}
           </PageContainer>
         </main>
@@ -95,7 +201,13 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
 
       {/* Phone Bottom Navigation Bar (DESIGN.md §5) */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-20 bg-surface border-t border-border flex items-center justify-around px-2 py-1 shadow-card"
+        className="md:hidden fixed bottom-0 inset-x-0 z-20 flex items-center justify-around px-2 py-1 shadow-card"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.72)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.6)',
+        }}
         aria-label="Mobile Navigation"
         data-testid="bottom-nav"
       >

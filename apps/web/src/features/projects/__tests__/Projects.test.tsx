@@ -20,6 +20,12 @@ vi.mock('../api/projectsApi', async () => {
     updateProject: vi.fn(),
     addProjectMember: vi.fn(),
     removeProjectMember: vi.fn(),
+    createProjectMilestone: vi.fn(),
+    updateProjectMilestone: vi.fn(),
+    createProjectUpdate: vi.fn(),
+    uploadProjectDocument: vi.fn(),
+    getProjectDocumentDownloadLink: vi.fn(),
+    deleteProjectDocument: vi.fn(),
   };
 });
 
@@ -168,7 +174,7 @@ describe('Projects Feature (Issue #42)', () => {
   });
 
   it('allows Admin to open Create Project modal and submits creation', async () => {
-    const createdProject: Project = {
+    const createdProject: ProjectDetail = {
       id: '88888888-8888-8888-8888-888888888888',
       code: 'PRJ-GAMMA',
       name: 'Gamma Testing Platform',
@@ -180,6 +186,7 @@ describe('Projects Feature (Issue #42)', () => {
       endDate: '2026-09-01',
       version: 1,
       memberCount: 1,
+      members: [],
       createdAt: '2026-03-01T00:00:00Z',
       updatedAt: '2026-03-01T00:00:00Z',
     };
@@ -368,6 +375,140 @@ describe('Projects Feature (Issue #42)', () => {
         expect.objectContaining({
           status: 'archived',
           version: 1,
+        }),
+      );
+    });
+  });
+
+  it('displays Staff overview KPIs, filters, and supports grid/list layout switching', async () => {
+    vi.mocked(projectsApi.fetchProjects).mockResolvedValue({
+      data: mockProjects,
+      meta: { page: 1, pageSize: 20, total: 2 },
+      summary: {
+        totalAssigned: 4,
+        inProgress: 2,
+        completed: 1,
+        upcoming: 1,
+        onHold: 0,
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/staff/projects']}>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <ProjectsListPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('projects-overview-cards')).toBeInTheDocument();
+      expect(screen.getByText('Total Assigned Projects')).toBeInTheDocument();
+      expect(screen.getByTestId('overview-count-total-assigned')).toHaveTextContent('4');
+      expect(screen.getByTestId('overview-count-in-progress')).toHaveTextContent('2');
+      expect(screen.getByTestId('overview-count-completed')).toHaveTextContent('1');
+      expect(screen.getByTestId('overview-count-upcoming')).toHaveTextContent('1');
+    });
+
+    // Switch to List View and verify table renders
+    fireEvent.click(screen.getByTestId('view-list-btn'));
+    expect(screen.getByTestId('projects-list-view')).toBeInTheDocument();
+
+    // Filter by priority triggers fetchProjects with priority filter
+    fireEvent.change(screen.getByLabelText('Filter by priority'), { target: { value: 'high' } });
+    await waitFor(() => {
+      expect(projectsApi.fetchProjects).toHaveBeenCalledWith(
+        expect.objectContaining({ priority: 'high' }),
+        expect.any(AbortSignal),
+      );
+    });
+  });
+
+  it('lets Staff inspect milestones and post a progress update on ProjectDetailPage', async () => {
+    const detailedWithWorkspace: ProjectDetail = {
+      ...mockProjectDetail,
+      priority: 'high',
+      workflowStatus: 'in_progress',
+      progressPercent: 60,
+      objectives: 'Complete portal redesign.',
+      scope: 'Frontend and API integration.',
+      technologies: ['React 18', 'PostgreSQL 16'],
+      milestones: [
+        {
+          id: 'm1',
+          projectId: mockProjectDetail.id,
+          title: 'Milestone 1: UI Kit',
+          description: 'Deliver reusable cards.',
+          startDate: '2026-01-01',
+          dueDate: '2026-02-01',
+          status: 'completed',
+          completionPercent: 100,
+          sortOrder: 1,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-15T00:00:00Z',
+        },
+      ],
+      updates: [
+        {
+          id: 'u1',
+          projectId: mockProjectDetail.id,
+          authorEmployeeId: '22222222-2222-2222-2222-222222222222',
+          authorName: 'Sarah Connor',
+          updateType: 'manager_update',
+          content: 'Great progress this sprint.',
+          progressPercent: 60,
+          createdAt: '2026-02-01T10:00:00Z',
+        },
+      ],
+      documents: [],
+    };
+
+    vi.mocked(projectsApi.fetchProjectById).mockResolvedValue(detailedWithWorkspace);
+    vi.mocked(projectsApi.createProjectUpdate).mockResolvedValue({
+      id: 'u2',
+      projectId: mockProjectDetail.id,
+      authorEmployeeId: '44444444-4444-4444-4444-444444444444',
+      authorName: 'Kyle Reese',
+      updateType: 'progress_update',
+      content: 'Finished milestone 2 integration.',
+      progressPercent: 75,
+      createdAt: '2026-02-02T10:00:00Z',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/projects/11111111-1111-1111-1111-111111111111']}>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <Routes>
+            <Route path="/projects/:id" element={<ProjectDetailPage />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Complete portal redesign.')).toBeInTheDocument();
+      expect(screen.getByText('React 18')).toBeInTheDocument();
+    });
+
+    // Switch to Milestones tab
+    fireEvent.click(screen.getByRole('tab', { name: /Milestones/i }));
+    expect(screen.getByText('Milestone 1: UI Kit')).toBeInTheDocument();
+
+    // Switch to Updates & Activity tab
+    fireEvent.click(screen.getByRole('tab', { name: /Updates & Activity/i }));
+    expect(screen.getAllByText('Great progress this sprint.').length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.change(screen.getByLabelText(/Progress Details/i), {
+      target: { value: 'Finished milestone 2 integration.' },
+    });
+    fireEvent.click(screen.getByTestId('submit-project-update-btn'));
+
+    await waitFor(() => {
+      expect(projectsApi.createProjectUpdate).toHaveBeenCalledWith(
+        mockProjectDetail.id,
+        expect.objectContaining({
+          updateType: 'progress_update',
+          content: 'Finished milestone 2 integration.',
         }),
       );
     });
