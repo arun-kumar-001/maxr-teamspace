@@ -3,7 +3,6 @@ import { Header } from './Header';
 import { Sidebar, SidebarDrawer, PageContainer } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
 import { getSidebarGroupsForRole, getNavItemsForRole } from './navigation';
-import { ROLE_DISPLAY_NAMES } from '@maxr/shared';
 
 export interface AppShellProps {
   currentPath: string;
@@ -12,7 +11,7 @@ export interface AppShellProps {
 }
 
 export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -40,30 +39,28 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     ),
   };
 
-  const sidebarUser = user
-    ? {
-        name: user.name,
-        role: ROLE_DISPLAY_NAMES[user.role] ?? user.role,
-        initials: user.avatarInitials,
-      }
-    : undefined;
+  const activeNavPath =
+    currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance'
+      ? '/attendance'
+      : currentPath;
 
   return (
-    <div className="h-screen bg-bg flex overflow-hidden overflow-x-hidden" data-testid="app-shell">
+    <div
+      className="fixed inset-0 h-dvh w-full bg-bg flex overflow-hidden overflow-x-hidden"
+      data-testid="app-shell"
+    >
       {/* Desktop / Tablet Persistent Floating Sidebar (DESIGN.md §5) */}
       <div className="hidden md:flex p-4 shrink-0 h-full" data-testid="app-sidebar">
         <Sidebar
           brand={brand}
           groups={groups}
-          activeId={currentPath}
+          activeId={activeNavPath}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
           onNavigate={(id, e) => {
             e?.preventDefault?.();
             onNavigate(id);
           }}
-          onUserMenu={() => onNavigate('/profile')}
-          user={sidebarUser}
         />
       </div>
 
@@ -73,17 +70,12 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         onClose={() => setIsMobileNavOpen(false)}
         brand={brand}
         groups={groups}
-        activeId={currentPath}
+        activeId={activeNavPath}
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);
           setIsMobileNavOpen(false);
         }}
-        onUserMenu={() => {
-          onNavigate('/profile');
-          setIsMobileNavOpen(false);
-        }}
-        user={sidebarUser}
       />
 
       {/* Main Content Area */}

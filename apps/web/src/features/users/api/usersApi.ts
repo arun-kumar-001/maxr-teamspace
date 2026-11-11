@@ -1,5 +1,6 @@
 import { apiFetch } from '../../../api/client';
 import type { Role } from '@maxr/shared';
+import type { CreateUserPayload, CreateUserResult } from '../types';
 import type {
   PermissionSummary,
   RoleSummary,
@@ -128,5 +129,53 @@ export async function getPermissions(): Promise<PermissionSummary[]> {
   }
 
   const json = (await res.json()) as { data: PermissionSummary[] };
+  return json.data;
+}
+
+/**
+ * Creates a user account directly with assigned roles. Admin only.
+ * POST /api/v1/users
+ */
+export async function createUser(payload: CreateUserPayload): Promise<CreateUserResult> {
+  const res = await apiFetch('/api/v1/users', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, 'Failed to create user account');
+  }
+
+  const json = (await res.json()) as {
+    data: UserAccount;
+    meta?: { temporaryPassword?: string };
+  };
+  return {
+    user: json.data,
+    temporaryPassword: json.meta?.temporaryPassword,
+  };
+}
+
+/**
+ * Activates or deactivates a user account. Admin only.
+ * PUT /api/v1/users/:id/status
+ */
+export async function updateUserStatus(id: string, isActive: boolean): Promise<UserAccount> {
+  const res = await apiFetch(`/api/v1/users/${encodeURIComponent(id)}/status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ isActive }),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, 'Failed to update user status');
+  }
+
+  const json = (await res.json()) as { data: UserAccount };
   return json.data;
 }

@@ -31,6 +31,31 @@ export const replaceRolesSchema = z
   })
   .strict();
 
+/** Body for `POST /users`: directly provisions an account + linked employee record in one transaction. */
+export const createUserSchema = z
+  .object({
+    firstName: z.string().trim().min(1, 'First name is required').max(100),
+    lastName: z.string().trim().min(1, 'Last name is required').max(100),
+    email: z.string().trim().email('Valid email address is required').max(255),
+    roles: z
+      .array(roleKey)
+      .min(1, 'An account needs at least one role')
+      .max(Object.keys(ROLES).length)
+      .refine((roles) => new Set(roles).size === roles.length, 'Each role may be listed once'),
+    password: z.string().min(12, 'Password must be at least 12 characters').max(128).optional(),
+    isActive: z.boolean().default(true),
+    departmentId: z.string().uuid().optional(),
+    designationId: z.string().uuid().optional(),
+  })
+  .strict();
+
+/** Body for `PATCH /users/{id}/status`: activate or deactivate a user account. */
+export const updateUserStatusSchema = z
+  .object({
+    isActive: z.boolean(),
+  })
+  .strict();
+
 export const userAccountSchema = z
   .object({
     id: z.string().uuid(),

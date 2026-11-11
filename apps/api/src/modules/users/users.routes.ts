@@ -3,7 +3,13 @@ import { asyncHandler } from '../../http/async-handler';
 import { validate, validated } from '../../http/validate';
 import { RequestContext } from '../employees/types';
 import { requirePermission } from '../rbac';
-import { replaceRolesSchema, userIdParamsSchema, userQueryObject } from './users.schemas';
+import {
+  createUserSchema,
+  replaceRolesSchema,
+  updateUserStatusSchema,
+  userIdParamsSchema,
+  userQueryObject,
+} from './users.schemas';
 import { UsersService } from './users.service';
 
 function context(req: Request): RequestContext {
@@ -37,6 +43,20 @@ export function createUsersRouter(service: UsersService, authenticate: RequestHa
     }),
   );
 
+  router.post(
+    '/',
+    requirePermission('users.create'),
+    validate({ body: createUserSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { body } = validated(req, { body: createUserSchema });
+      const { user, temporaryPassword } = await service.createUser(body, context(req));
+      res.status(201).json({
+        data: user,
+        ...(temporaryPassword ? { meta: { temporaryPassword } } : {}),
+      });
+    }),
+  );
+
   router.put(
     '/:id/roles',
     requirePermission('users.assign_role'),
@@ -49,6 +69,21 @@ export function createUsersRouter(service: UsersService, authenticate: RequestHa
       res
         .status(200)
         .json({ data: await service.replaceRoles(params.id, body.roles, context(req)) });
+    }),
+  );
+
+  router.put(
+    '/:id/status',
+    requirePermission('users.deactivate'),
+    validate({ params: userIdParamsSchema, body: updateUserStatusSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params, body } = validated(req, {
+        params: userIdParamsSchema,
+        body: updateUserStatusSchema,
+      });
+      res
+        .status(200)
+        .json({ data: await service.updateStatus(params.id, body.isActive, context(req)) });
     }),
   );
 

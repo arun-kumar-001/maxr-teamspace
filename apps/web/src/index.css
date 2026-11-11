@@ -16,10 +16,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ensure no horizontal overflow on small devices */
+/* Ensure no horizontal overflow on small devices without creating a body vertical scrollbox */
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
 }
 
