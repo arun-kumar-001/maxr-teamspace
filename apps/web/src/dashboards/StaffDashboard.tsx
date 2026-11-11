@@ -476,7 +476,7 @@ export function StaffDashboard() {
 
         {/* Card 2: Progress Card with Floating Tooltip & Interactive Bars */}
         <div
-          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72"
+          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out min-h-64 sm:min-h-72"
           style={{
             backgroundColor: 'rgb(255, 255, 255)',
             border: '1px solid rgba(8, 11, 12, 0.08)',
@@ -588,7 +588,7 @@ export function StaffDashboard() {
 
         {/* Card 3: Time Tracker Card with Real-time Clock, Pulse Ring & Attendance Check In/Out */}
         <div
-          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72"
+          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out min-h-64 sm:min-h-72"
           style={{
             backgroundColor: 'rgb(255, 255, 255)',
             border: '1px solid rgba(8, 11, 12, 0.08)',
@@ -714,7 +714,7 @@ export function StaffDashboard() {
               type="button"
               onClick={handleAttendanceToggle}
               data-testid="attendance-toggle-button"
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 ${
+              className={`min-h-[46px] sm:min-h-[36px] shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 ${
                 isCheckedIn && timeTrackerRunning ? 'animate-pulse-ring' : 'hover:opacity-90'
               }`}
               style={{
@@ -777,7 +777,7 @@ export function StaffDashboard() {
 
         {/* Card 4: Onboarding Card with Floating Task Pill */}
         <div
-          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72"
+          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out min-h-64 sm:min-h-72"
           style={{
             backgroundColor: 'rgb(255, 255, 255)',
             border: '1px solid rgba(8, 11, 12, 0.08)',

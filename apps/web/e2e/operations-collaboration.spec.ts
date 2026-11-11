@@ -420,6 +420,8 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
         testInfo.project.name !== 'desktop',
         'reference viewports are driven from desktop project',
       );
+      // Four sequential route navigations + full-DOM audits can exceed the 30s default under parallel Vite load.
+      testInfo.setTimeout(60_000);
 
       await page.setViewportSize({ width, height });
       await setupOperationsMockRoutes(page);

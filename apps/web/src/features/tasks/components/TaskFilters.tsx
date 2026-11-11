@@ -42,9 +42,9 @@ export function TaskFilters({
       data-testid="task-filters"
     >
       {/* Row 1 (Image 5): Search on Left, View Mode Toggle on Right */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-lg">
+        <div className="relative flex-1 min-w-0 xl:max-w-lg">
           <input
             type="search"
             placeholder="Search tasks by title, project, assignee..."
@@ -55,10 +55,10 @@ export function TaskFilters({
           />
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto min-w-0 max-w-full">
           {/* Scope Toggle (My Tasks vs Team Tasks) */}
           {showScopeToggle && (
-            <div className="w-full sm:w-auto">
+            <div className="max-w-full">
               <SegmentedControl
                 ariaLabel="Task Scope"
                 options={[
@@ -72,7 +72,7 @@ export function TaskFilters({
           )}
 
           {/* View Mode Toggle: [Kanban Board] [List View] */}
-          <div className="w-full sm:w-auto">
+          <div className="max-w-full">
             <SegmentedControl
               ariaLabel="View Mode"
               options={[
