@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { getNavItemsForRole, isPathAuthorizedForRole, NAVIGATION_REGISTRY } from '../navigation';
+import {
+  getNavItemsForRole,
+  getSidebarGroupsForRole,
+  isPathAuthorizedForRole,
+  NAVIGATION_REGISTRY,
+} from '../navigation';
 import { ROLES, type Role } from '@maxr/shared';
 
 describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
@@ -207,6 +212,102 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.STAFF)).toBe(false);
       expect(isPathAuthorizedForRole('/hr/employees/emp-123', ROLES.TEAM_LEAD)).toBe(false);
+
+      // Consolidated permissions: /settings, /leave/policies, /shifts
+      expect(isPathAuthorizedForRole('/settings', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/settings', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/settings', ROLES.HR_MANAGER)).toBe(false);
+      expect(isPathAuthorizedForRole('/leave/policies', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/leave/policies', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/leave/policies', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/leave/policies', ROLES.TEAM_LEAD)).toBe(false);
+      expect(isPathAuthorizedForRole('/shifts', ROLES.ADMIN)).toBe(true);
+      expect(isPathAuthorizedForRole('/shifts', ROLES.HR_MANAGER)).toBe(true);
+      expect(isPathAuthorizedForRole('/shifts', ROLES.STAFF)).toBe(false);
+      expect(isPathAuthorizedForRole('/leave/calendar', ROLES.STAFF)).toBe(true);
+    });
+  });
+
+  describe('Consolidated Sidebar Structure & Zero Duplicates', () => {
+    it('Admin sidebar matches clean Workforce & Administration hierarchy without duplicates', () => {
+      const groups = getSidebarGroupsForRole(ROLES.ADMIN);
+      const groupLabels = groups.map((g) => g.label).filter(Boolean);
+
+      expect(groupLabels).toContain('Workforce');
+      expect(groupLabels).toContain('Administration');
+
+      const workforceGroup = groups.find((g) => g.label === 'Workforce');
+      expect(workforceGroup?.items.map((i) => i.label)).toEqual([
+        'Overview',
+        'Employee Directory',
+        'Attendance',
+        'Leave',
+        'Approvals',
+        'Tasks',
+        'Projects',
+        'Meetings',
+        'Expenses',
+        'Reports',
+      ]);
+
+      const attItem = workforceGroup?.items.find((i) => i.label === 'Attendance');
+      expect(attItem?.children?.map((c) => c.label)).toEqual(['On Duty', 'Roster', 'Timesheets']);
+      const leaveItem = workforceGroup?.items.find((i) => i.label === 'Leave');
+      expect(leaveItem?.children?.map((c) => c.label)).toEqual([
+        'Leave Requests',
+        'Leave Calendar',
+      ]);
+
+      const adminGroup = groups.find((g) => g.label === 'Administration');
+      expect(adminGroup?.items.map((i) => i.label)).toEqual([
+        'Users & Roles',
+        'Organization',
+        'Policies',
+        'Settings',
+        'Audit Logs',
+      ]);
+      const orgItem = adminGroup?.items.find((i) => i.label === 'Organization');
+      expect(orgItem?.children?.map((c) => c.label)).toEqual([
+        'Onboarding',
+        'Departments',
+        'Designations',
+        'Org Chart',
+      ]);
+      const policyItem = adminGroup?.items.find((i) => i.label === 'Policies');
+      expect(policyItem?.children?.map((c) => c.label)).toEqual([
+        'Attendance Policies',
+        'Leave Policies',
+      ]);
+
+      // Ensure no duplicate item IDs across Admin sidebar
+      const allIds = groups.flatMap((g) =>
+        g.items.flatMap((i) => [i.id, ...(i.children?.map((c) => c.id) ?? [])]),
+      );
+      expect(new Set(allIds).size).toBe(allIds.length);
+    });
+
+    it('HR, Team Lead, and Staff sidebars have zero duplicate item IDs and exclude unauthorized menus', () => {
+      for (const role of [ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF]) {
+        const groups = getSidebarGroupsForRole(role);
+        const allIds = groups.flatMap((g) =>
+          g.items.flatMap((i) => [i.id, ...(i.children?.map((c) => c.id) ?? [])]),
+        );
+        expect(new Set(allIds).size).toBe(allIds.length);
+      }
+
+      const hrLabels = getSidebarGroupsForRole(ROLES.HR_MANAGER).flatMap((g) =>
+        g.items.map((i) => i.label),
+      );
+      expect(hrLabels).not.toContain('Users & Roles');
+      expect(hrLabels).not.toContain('Settings');
+      expect(hrLabels).not.toContain('Audit Logs');
+
+      const staffLabels = getSidebarGroupsForRole(ROLES.STAFF).flatMap((g) =>
+        g.items.map((i) => i.label),
+      );
+      expect(staffLabels).not.toContain('Users & Roles');
+      expect(staffLabels).not.toContain('Employee Directory');
+      expect(staffLabels).not.toContain('Approvals');
     });
   });
 });

@@ -25,7 +25,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:pointer-events-none rounded-input select-none';
+    'inline-flex items-center justify-center whitespace-nowrap font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:pointer-events-none rounded-input select-none';
 
   // Touch targets: minimum 44px on phone (AGENTS.md §8)
   const sizeStyles: Record<ButtonSize, string> = {
@@ -59,9 +59,11 @@ export function Button({
           aria-label="Loading"
         />
       )}
-      {!isLoading && leftIcon && <span className="icon-left">{leftIcon}</span>}
-      <span>{children}</span>
-      {!isLoading && rightIcon && <span className="icon-right">{rightIcon}</span>}
+      {!isLoading && leftIcon && <span className="icon-left shrink-0">{leftIcon}</span>}
+      <span className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
+        {children}
+      </span>
+      {!isLoading && rightIcon && <span className="icon-right shrink-0">{rightIcon}</span>}
     </button>
   );
 }

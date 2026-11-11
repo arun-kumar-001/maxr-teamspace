@@ -372,6 +372,12 @@ export const PERMISSION_CATALOG = {
     description: 'View active expense categories',
     grants: everyone(ALL),
   },
+
+  // Personal To-Do List (Module 6)
+  'todos.manage': {
+    description: 'Manage personal to-do list',
+    grants: everyone(OWN),
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;

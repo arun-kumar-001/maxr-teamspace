@@ -10,10 +10,13 @@ import { CompanyProfileSection } from '../components/CompanyProfileSection';
 import { WorkWeekSection } from '../components/WorkWeekSection';
 import { IntegrationsSection } from '../components/IntegrationsSection';
 import { SecuritySettingsSection } from '../components/SecuritySettingsSection';
+import { SystemHealthSection } from '../components/SystemHealthSection';
+import { AdminProfilePhotoSection } from '../components/AdminProfilePhotoSection';
 
 export function CompanySettingsPage() {
   const { role, isLoading: authLoading } = useAuth();
   const [showToast, setShowToast] = useState(false);
+  const [photoToastMessage, setPhotoToastMessage] = useState<string | null>(null);
 
   const {
     draft,
@@ -60,6 +63,18 @@ export function CompanySettingsPage() {
             message="Company configuration and schedule parameters updated successfully."
             autoDismissMs={4000}
             onClose={() => setShowToast(false)}
+          />
+        </div>
+      )}
+
+      {photoToastMessage && (
+        <div className="fixed top-5 right-5 z-50">
+          <Toast
+            variant="success"
+            title="Profile Photo"
+            message={photoToastMessage}
+            autoDismissMs={4000}
+            onClose={() => setPhotoToastMessage(null)}
           />
         </div>
       )}
@@ -117,6 +132,8 @@ export function CompanySettingsPage() {
             </div>
           )}
 
+          <AdminProfilePhotoSection onNotify={(msg) => setPhotoToastMessage(msg)} />
+
           <CompanyProfileSection draft={draft} onUpdate={updateDraft} disabled={isSaving} />
 
           <WorkWeekSection
@@ -134,6 +151,8 @@ export function CompanySettingsPage() {
           />
 
           <SecuritySettingsSection />
+
+          <SystemHealthSection />
 
           {/* Sticky Action Footer */}
           <div className="sticky bottom-4 z-20 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-surface border border-border rounded-card shadow-raised">

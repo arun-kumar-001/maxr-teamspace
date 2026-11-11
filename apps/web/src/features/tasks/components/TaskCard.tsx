@@ -7,6 +7,9 @@ export interface TaskCardProps {
   task: Task;
   onSelect: (task: Task) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onDragStart?: (task: Task, canCompleteOrReopen: boolean) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
   currentEmployeeId?: string;
   isAdmin?: boolean;
   className?: string;
@@ -16,6 +19,9 @@ export function TaskCard({
   task,
   onSelect,
   onStatusChange,
+  onDragStart,
+  onDragEnd,
+  isDragging = false,
   currentEmployeeId,
   isAdmin = false,
   className = '',
@@ -52,13 +58,21 @@ export function TaskCard({
           onSelect(task);
         }
       }}
+      draggable={Boolean(onStatusChange)}
+      onDragStart={(e) => {
+        if (!onStatusChange) return;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', task.id);
+        onDragStart?.(task, canCompleteOrReopen);
+      }}
+      onDragEnd={() => onDragEnd?.()}
       tabIndex={0}
       role="button"
       aria-label={`Task: ${task.title}. Status: ${task.status}. Priority: ${task.priority}.`}
       data-testid={`task-card-${task.id}`}
-      className={`group relative flex flex-col justify-between p-4 bg-surface rounded-card border border-border shadow-card hover:border-primary-strong/40 hover:shadow-raised transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong min-h-[44px] ${
+      className={`group relative flex flex-col justify-between p-4 bg-surface rounded-card border border-border shadow-card hover:border-primary-strong/40 hover:shadow-raised hover:-translate-y-0.5 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong min-h-[44px] ${
         task.isOverdue ? 'border-rose-300 bg-rose-50/10' : ''
-      } ${className}`}
+      } ${isDragging ? 'opacity-50 scale-[0.98] ring-2 ring-primary' : ''} ${className}`}
     >
       <div>
         {/* Top Badges */}
