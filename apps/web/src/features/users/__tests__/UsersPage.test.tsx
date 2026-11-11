@@ -6,6 +6,7 @@ import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { UsersPage } from '../pages/UsersPage';
 import * as usersApi from '../api/usersApi';
+import * as auditLogsApi from '../../audit-logs/api/auditLogsApi';
 import * as authContext from '../../../auth/AuthContext';
 import type { PermissionSummary, RoleSummary, UserAccount, UserListResponse } from '../types';
 
@@ -145,9 +146,10 @@ describe('UsersPage Component Suite (Issue #27)', () => {
       expect(screen.getAllByText('Eleanor Vance').length).toBeGreaterThan(0);
     });
 
-    // Role assignment action must NOT be rendered for HR Manager
+    // Role assignment and admin-only provisioning actions must NOT be rendered for HR Manager
     expect(screen.queryByTestId('assign-roles-btn-table-u-1')).toBeNull();
     expect(screen.queryByTestId('assign-roles-btn-card-u-1')).toBeNull();
+    expect(screen.queryByTestId('add-user-btn')).toBeNull();
   });
 
   it('renders ForbiddenState for unauthorized roles (Staff or Team Lead)', async () => {
@@ -212,6 +214,96 @@ describe('UsersPage Component Suite (Issue #27)', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('role-assignment-modal')).toBeInTheDocument();
+    });
+  });
+
+  it('opens AddUserModal when Admin clicks Add User', async () => {
+    setupAuth('admin');
+    vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);
+    vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
+    vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    const addBtn = await screen.findByTestId('add-user-btn');
+    fireEvent.click(addBtn);
+
+    expect(await screen.findByTestId('add-user-modal')).toBeInTheDocument();
+  });
+
+  it('toggles another user account status and disables self-deactivation', async () => {
+    setupAuth('admin');
+    vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);
+    vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
+    vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
+    const statusSpy = vi.spyOn(usersApi, 'updateUserStatus').mockResolvedValue({
+      ...mockUsers[1]!,
+      isActive: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('toggle-status-btn-table-u-1')).toBeDisabled();
+      expect(screen.getByTestId('toggle-status-btn-table-u-2')).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByTestId('toggle-status-btn-table-u-2'));
+    expect(await screen.findByTestId('user-status-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('confirm-status-toggle-btn'));
+    await waitFor(() => {
+      expect(statusSpy).toHaveBeenCalledWith('u-2', true);
+    });
+  });
+
+  it('loads and displays live audit events on the Access History tab', async () => {
+    setupAuth('admin');
+    vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);
+    vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
+    vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
+    const auditSpy = vi.spyOn(auditLogsApi, 'getAuditLogs').mockResolvedValue({
+      data: [
+        {
+          id: 'aud-1',
+          occurredAt: '2026-11-11T10:00:00Z',
+          action: 'users.create',
+          outcome: 'success',
+          actor: { id: 'u-1', name: 'Eleanor Vance', role: 'admin' },
+          entityType: 'user',
+          entityId: 'u-2',
+          requestId: 'req-1',
+          changes: null,
+          metadata: null,
+        },
+      ],
+      meta: { page: 1, pageSize: 10, total: 1 },
+    });
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByText('Access History'));
+
+    await waitFor(() => {
+      expect(auditSpy).toHaveBeenCalledWith({
+        module: 'users',
+        page: 1,
+        pageSize: 10,
+        sortOrder: 'desc',
+      });
+      expect(screen.getByText('users.create')).toBeInTheDocument();
     });
   });
 });

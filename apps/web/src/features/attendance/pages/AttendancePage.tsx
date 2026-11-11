@@ -28,6 +28,7 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
   const canManage = isAdmin || isHr || isLead;
 
   const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets'>(initialTab);
+<<<<<<< HEAD
   const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
@@ -35,6 +36,14 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
     setActiveTab(initialTab);
   }, [initialTab]);
 
+=======
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+  const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+>>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   // Data states
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);

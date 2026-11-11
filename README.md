@@ -233,3 +233,4 @@ curl http://localhost:4000/api/health
 ---
 
 *Detailed local setup guide: [docs/development/local-setup.md](docs/development/local-setup.md).*
+

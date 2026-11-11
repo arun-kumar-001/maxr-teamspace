@@ -258,3 +258,165 @@ describe('users and roles API: changing roles', () => {
     expect(repo.users[0]?.roles).toEqual([ROLES.STAFF]);
   });
 });
+
+describe('users and roles API: creating accounts', () => {
+  it('answers 401 without a session', async () => {
+    const { app } = await setup([target]);
+    expect((await request(app).post('/api/v1/users').send({})).status).toBe(401);
+  });
+
+  it.each(['hr_manager', 'team_lead', 'staff'] as const)(
+    '%s creating a user gets 403',
+    async (role) => {
+      const { as, repo } = await setup([target]);
+      const res = await as[role].post('/api/v1/users', {
+        firstName: 'Nadia',
+        lastName: 'Roy',
+        email: 'nadia@maxr.internal',
+        roles: [ROLES.STAFF],
+      });
+      expect(res.status).toBe(403);
+      expect(repo.users).toHaveLength(1);
+    },
+  );
+
+  it('creates an active user with an auto-generated temporary password and audits it', async () => {
+    const { as, repo, auditStore } = await setup([target]);
+    const res = await as.admin.post('/api/v1/users', {
+      firstName: 'Nadia',
+      lastName: 'Roy',
+      email: 'Nadia.Roy@MAXR.internal',
+      roles: [ROLES.TEAM_LEAD, ROLES.STAFF],
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({
+      name: 'Nadia Roy',
+      email: 'nadia.roy@maxr.internal',
+      isActive: true,
+      roles: [ROLES.STAFF, ROLES.TEAM_LEAD],
+    });
+    expect(res.body.meta?.temporaryPassword).toBeTypeOf('string');
+    expect(res.body.meta?.temporaryPassword.length).toBeGreaterThanOrEqual(8);
+    expect(JSON.stringify(res.body.data)).not.toMatch(/password|hash/i);
+    expect(repo.users).toHaveLength(2);
+
+    const [entry] = auditStore.find((e) => e.action === 'users.create');
+    expect(entry).toMatchObject({
+      outcome: 'success',
+      entityType: 'user',
+      entityId: res.body.data.id,
+      actorId: as.admin.userId,
+    });
+  });
+
+  it('creates an account with an explicit password without echoing temporaryPassword', async () => {
+    const { as } = await setup([target]);
+    const res = await as.admin.post('/api/v1/users', {
+      firstName: 'Vikram',
+      lastName: 'Sen',
+      email: 'vikram@maxr.internal',
+      roles: [ROLES.HR_MANAGER],
+      password: 'Password123!',
+      isActive: true,
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.meta).toBeUndefined();
+    expect(res.body.data.roles).toEqual([ROLES.HR_MANAGER]);
+  });
+
+  it('rejects duplicate email with 409', async () => {
+    const { as } = await setup([target]);
+    const res = await as.admin.post('/api/v1/users', {
+      firstName: 'Dup',
+      lastName: 'User',
+      email: target.email.toUpperCase(),
+      roles: [ROLES.STAFF],
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it.each([
+    ['empty roles', { firstName: 'A', lastName: 'B', email: 'a@maxr.internal', roles: [] }],
+    ['invalid email', { firstName: 'A', lastName: 'B', email: 'not-email', roles: [ROLES.STAFF] }],
+    [
+      'short password',
+      {
+        firstName: 'A',
+        lastName: 'B',
+        email: 'a@maxr.internal',
+        roles: [ROLES.STAFF],
+        password: '123',
+      },
+    ],
+    [
+      'unexpected field',
+      { firstName: 'A', lastName: 'B', email: 'a@maxr.internal', roles: [ROLES.STAFF], extra: 1 },
+    ],
+  ])('rejects %s with 400', async (_name, body) => {
+    const { as } = await setup([target]);
+    const res = await as.admin.post('/api/v1/users', body);
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('users and roles API: activating and deactivating accounts', () => {
+  it('answers 401 without a session', async () => {
+    const { app } = await setup([target]);
+    expect(
+      (await request(app).put(`/api/v1/users/${target.id}/status`).send({ isActive: false }))
+        .status,
+    ).toBe(401);
+  });
+
+  it.each(['hr_manager', 'team_lead', 'staff'] as const)(
+    '%s changing status gets 403',
+    async (role) => {
+      const { as, repo } = await setup([target]);
+      const res = await as[role].put(`/api/v1/users/${target.id}/status`, { isActive: false });
+      expect(res.status).toBe(403);
+      expect(repo.users[0]?.isActive).toBe(true);
+    },
+  );
+
+  it('deactivates and reactivates an account with audit records', async () => {
+    const { as, repo, auditStore } = await setup([target]);
+    const off = await as.admin.put(`/api/v1/users/${target.id}/status`, { isActive: false });
+    expect(off.status).toBe(200);
+    expect(off.body.data.isActive).toBe(false);
+    expect(repo.users[0]?.isActive).toBe(false);
+    expect(auditStore.find((e) => e.action === 'users.deactivate')).toHaveLength(1);
+
+    // Repeating same state is idempotent and writes no extra audit
+    const same = await as.admin.put(`/api/v1/users/${target.id}/status`, { isActive: false });
+    expect(same.status).toBe(200);
+    expect(auditStore.find((e) => e.action === 'users.deactivate')).toHaveLength(1);
+
+    const on = await as.admin.put(`/api/v1/users/${target.id}/status`, { isActive: true });
+    expect(on.status).toBe(200);
+    expect(on.body.data.isActive).toBe(true);
+    expect(auditStore.find((e) => e.action === 'users.update')).toHaveLength(1);
+  });
+
+  it('refuses self-deactivation with 422', async () => {
+    const { as, repo } = await setup([account(1, [ROLES.ADMIN]), account(2, [ROLES.ADMIN])]);
+    const selfAccount = account(90, [ROLES.ADMIN], { id: as.admin.userId });
+    repo.users.push(selfAccount);
+    const res = await as.admin.put(`/api/v1/users/${as.admin.userId}/status`, { isActive: false });
+    expect(res.status).toBe(422);
+    expect(selfAccount.isActive).toBe(true);
+  });
+
+  it('refuses to deactivate the last active Admin with 422', async () => {
+    const { as, repo } = await setup([lonelyAdmin, target]);
+    const res = await as.admin.put(`/api/v1/users/${lonelyAdmin.id}/status`, { isActive: false });
+    expect(res.status).toBe(422);
+    expect(repo.users[0]?.isActive).toBe(true);
+  });
+
+  it('answers 404 for an unknown account', async () => {
+    const { as } = await setup([target]);
+    expect((await as.admin.put(`/api/v1/users/${id(99)}/status`, { isActive: false })).status).toBe(
+      404,
+    );
+  });
+});

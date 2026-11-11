@@ -1,6 +1,5 @@
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { Badge } from '../components/ui';
-import { ROLE_DISPLAY_NAMES } from '@maxr/shared';
 import { NotificationBell } from '../features/notifications';
 
 export interface HeaderProps {
@@ -10,7 +9,32 @@ export interface HeaderProps {
 }
 
 export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigate }: HeaderProps) {
-  const { user, role, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
 
   const getPageTitle = (path: string): string => {
     if (path.includes('users')) return 'Users & Roles Administration';
@@ -36,11 +60,17 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('profile')) return 'My Employee Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
     if (path.includes('components')) return 'Shared UI Component Gallery';
+<<<<<<< HEAD
     return 'Dashboard';
+=======
+    return '';
+>>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   };
 
+  const title = getPageTitle(activePath);
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-bg/90 backdrop-blur px-4 sm:px-6 lg:px-8">
+    <header className="flex h-16 w-full items-center justify-between bg-transparent px-4 sm:px-6 lg:px-8 shrink-0">
       {/* Left: Mobile Toggle & Page Title */}
       <div className="flex items-center gap-3">
         <button
@@ -63,28 +93,29 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           </svg>
         </button>
 
+<<<<<<< HEAD
         <div>
           <h2 className="text-base font-semibold text-text sm:text-lg">
             {getPageTitle(activePath)}
           </h2>
           <p className="hidden text-xs text-text-muted sm:block">Company overview</p>
         </div>
+=======
+        {title ? (
+          <div>
+            <h2 className="text-base font-semibold text-text sm:text-lg">{title}</h2>
+          </div>
+        ) : null}
+>>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       </div>
 
-      {/* Right: Role indicator, Notifications & User Profile */}
+      {/* Right: Notifications & User Profile Menu with Dropdown */}
       <div className="flex items-center gap-3">
         {user && <NotificationBell onNavigate={onNavigate} />}
 
-        {role && (
-          <div className="hidden sm:flex items-center">
-            <Badge variant="primary" className="uppercase tracking-wider text-[11px]">
-              {ROLE_DISPLAY_NAMES[role] || role}
-            </Badge>
-          </div>
-        )}
-
-        {/* User initials & details */}
+        {/* User avatar dropdown trigger */}
         {user && (
+<<<<<<< HEAD
           <div className="flex items-center gap-2.5 pl-2 sm:border-l sm:border-border">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm overflow-hidden shrink-0"
@@ -96,23 +127,105 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
                 user.avatarInitials
               )}
             </div>
+=======
+          <div className="relative pl-2 sm:border-l sm:border-border" ref={userMenuRef}>
+            <button
+              type="button"
+              id="user-menu-button"
+              onClick={() => setIsUserMenuOpen((prev) => !prev)}
+              aria-expanded={isUserMenuOpen}
+              aria-haspopup="menu"
+              aria-label={`User menu, ${user.name}`}
+              className="group flex items-center gap-1.5 p-1 rounded-full hover:bg-surface-raised focus:outline-none focus:ring-2 focus:ring-primary transition-colors cursor-pointer"
+              data-testid="user-menu-trigger"
+            >
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform"
+                title={`${user.name} (${user.email})`}
+              >
+                {user.avatarInitials}
+              </div>
+              <svg
+                viewBox="0 0 16 16"
+                className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-text' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m4 6 4 4 4-4" />
+              </svg>
+            </button>
+>>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
-            <div className="hidden text-left lg:block">
-              <p className="text-xs font-semibold text-text leading-tight">{user.name}</p>
-              <p className="text-[11px] text-text-muted leading-tight">{user.title}</p>
+            {/* Dropdown Menu (revealed when avatar clicked) */}
+            <div
+              role="menu"
+              aria-orientation="vertical"
+              aria-labelledby="user-menu-button"
+              className={`absolute right-0 top-full mt-2 w-56 rounded-card bg-surface border border-border shadow-raised py-2 z-50 transition-all duration-150 origin-top-right ${
+                isUserMenuOpen
+                  ? 'opacity-100 visible scale-100 pointer-events-auto'
+                  : 'opacity-0 invisible scale-95 pointer-events-none'
+              }`}
+            >
+              {/* User details header */}
+              <div className="px-4 py-2 border-b border-border">
+                <p className="text-xs font-bold text-text truncate">{user.name}</p>
+                <p className="text-[11px] text-text-muted truncate">{user.email}</p>
+              </div>
+
+              {/* My Profile Link */}
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    onNavigate('/profile');
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs font-medium text-text hover:bg-surface-raised flex items-center gap-2.5 transition-colors cursor-pointer"
+                  role="menuitem"
+                >
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    className="w-4 h-4 text-text-muted"
+                  >
+                    <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-7 9a7 7 0 1 1 14 0H3z" />
+                  </svg>
+                  <span>My Profile</span>
+                </button>
+              )}
+
+              {/* Sign Out Action */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  logout();
+                }}
+                className="w-full text-left px-4 py-2 text-xs font-medium text-danger hover:bg-negative-soft flex items-center gap-2.5 transition-colors cursor-pointer"
+                role="menuitem"
+                data-testid="logout-button"
+              >
+                <svg
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  className="w-4 h-4 text-danger"
+                >
+                  <path d="M13 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M9 14l4-4-4-4M13 10H3" />
+                </svg>
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
         )}
-
-        {/* Logout button */}
-        <button
-          type="button"
-          onClick={logout}
-          className="inline-flex items-center justify-center rounded-input border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-surface-raised hover:text-danger hover:border-danger focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]"
-          data-testid="logout-button"
-        >
-          Sign Out
-        </button>
       </div>
     </header>
   );

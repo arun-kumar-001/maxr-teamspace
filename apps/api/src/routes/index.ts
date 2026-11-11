@@ -153,7 +153,11 @@ export function createApiRouter({
       appUrl: loadNotificationsConfig().appUrl,
     }).router,
   );
-  const users = createUsers({ platform, authenticate: auth.authenticate });
+  const users = createUsers({
+    platform,
+    authenticate: auth.authenticate,
+    revokeSessionsForUser: (userId) => auth.sessions.revokeAllForUser(userId),
+  });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);
   router.use('/permissions', users.permissionsRouter);

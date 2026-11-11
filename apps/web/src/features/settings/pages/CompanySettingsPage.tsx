@@ -10,7 +10,10 @@ import { CompanyProfileSection } from '../components/CompanyProfileSection';
 import { WorkWeekSection } from '../components/WorkWeekSection';
 import { IntegrationsSection } from '../components/IntegrationsSection';
 import { SecuritySettingsSection } from '../components/SecuritySettingsSection';
+<<<<<<< HEAD
 import { SystemHealthSection } from '../components/SystemHealthSection';
+=======
+>>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 import { AdminProfilePhotoSection } from '../components/AdminProfilePhotoSection';
 
 export function CompanySettingsPage() {
