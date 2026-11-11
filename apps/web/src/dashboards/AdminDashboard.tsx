@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../api/client';
-<<<<<<< HEAD
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
 import {
   checkIn,
@@ -10,8 +9,6 @@ import {
 } from '../features/attendance/api/attendance';
 import { fetchMeetings } from '../features/meetings/api/meetingsApi';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
-=======
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
 // --- Shared Code-Based Lucide SVG Icons ---
 
@@ -224,7 +221,6 @@ interface ApprovalItem {
   avatarBg: string;
   status: 'pending' | 'approved';
 }
-<<<<<<< HEAD
 
 interface PriorityTaskItem {
   title: string;
@@ -238,8 +234,6 @@ interface UpcomingMeetingItem {
   title: string;
   desc: string;
 }
-=======
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
 export function AdminDashboard() {
   const navigateTo = (path: string) => {
@@ -248,7 +242,6 @@ export function AdminDashboard() {
     }
   };
 
-<<<<<<< HEAD
   // State: My Watch Timer (synced with active attendance session if checked in)
   const [watchSeconds, setWatchSeconds] = useState(15657);
   const [isOnBreak, setIsOnBreak] = useState(false);
@@ -256,20 +249,11 @@ export function AdminDashboard() {
   const [isWatchSubmitting, setIsWatchSubmitting] = useState(false);
 
   // State: Live Metrics (Initialized with baseline defaults)
-=======
-  // State: My Watch Timer (4 hours 20 mins 57 secs = 15657 seconds)
-  const [watchSeconds, setWatchSeconds] = useState(15657);
-  const [isOnBreak, setIsOnBreak] = useState(false);
-  const [isSignedOff, setIsSignedOff] = useState(false);
-
-  // State: Metrics (Initialized with verified baseline values)
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   const [metrics, setMetrics] = useState({
     teamMembers: 128,
     presentToday: 112,
     leaveRequests: 7,
     openTasks: 42,
-<<<<<<< HEAD
     pendingApprovalsTotal: 14,
   });
 
@@ -319,11 +303,6 @@ export function AdminDashboard() {
     { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
   ]);
 
-=======
-    activeSessions: 42,
-  });
-
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   // State: Approvals
   const [approvals, setApprovals] = useState<ApprovalItem[]>([
     {
@@ -366,7 +345,6 @@ export function AdminDashboard() {
     return () => clearInterval(timer);
   }, [isOnBreak, isSignedOff]);
 
-<<<<<<< HEAD
   // Fetch live metrics gracefully from backend APIs
   useEffect(() => {
     let mounted = true;
@@ -510,30 +488,6 @@ export function AdminDashboard() {
     }
 
     loadData().catch(() => {});
-=======
-  // Fetch live metrics gracefully from API if available
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadData() {
-      try {
-        const empRes = await apiFetch('/api/v1/employees?pageSize=1');
-        if (mounted && empRes.ok) {
-          const empJson = await empRes.json();
-          if (typeof empJson?.meta?.total === 'number' && empJson.meta.total > 0) {
-            setMetrics((prev) => ({
-              ...prev,
-              teamMembers: empJson.meta.total,
-            }));
-          }
-        }
-      } catch {
-        // Retain verified baseline defaults gracefully
-      }
-    }
-
-    loadData();
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
     return () => {
       mounted = false;
@@ -547,7 +501,6 @@ export function AdminDashboard() {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-<<<<<<< HEAD
   const handleApprove = async (id: string) => {
     setApprovals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
@@ -582,12 +535,6 @@ export function AdminDashboard() {
     } finally {
       setIsWatchSubmitting(false);
     }
-=======
-  const handleApprove = (id: string) => {
-    setApprovals((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
-    );
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   };
 
   // Timer circle math: radius 42, circumference ~263.89, daily target 8.5h = 30600s
@@ -598,7 +545,6 @@ export function AdminDashboard() {
     ? watchCircumference
     : watchCircumference * (1 - watchProgress);
 
-<<<<<<< HEAD
   // Live Donut calculations
   const totalTaskCount = Math.max(1, taskStats.completed + taskStats.pending);
   const taskCompletedPct = Math.round((taskStats.completed / totalTaskCount) * 100);
@@ -613,8 +559,6 @@ export function AdminDashboard() {
   const taskCompletedOffset =
     donutCircumference * (1 - Math.min(1, taskStats.completed / totalTaskCount));
 
-=======
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   return (
     <div
       className="space-y-5 sm:space-y-6 font-sans select-none w-full min-w-0"
@@ -771,21 +715,13 @@ export function AdminDashboard() {
                 Leave Requests
               </span>
               <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-<<<<<<< HEAD
                 {String(metrics.leaveRequests).padStart(2, '0')}
-=======
-                0{metrics.leaveRequests}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               </span>
             </div>
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-<<<<<<< HEAD
               {metrics.pendingApprovalsTotal} pending review
-=======
-              3 pending review
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             </span>
           </div>
         </div>
@@ -811,11 +747,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-<<<<<<< HEAD
               {taskStats.overdue} due soon
-=======
-              8 due soon
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             </span>
           </div>
         </div>
@@ -907,14 +839,9 @@ export function AdminDashboard() {
               </button>
               <button
                 type="button"
-<<<<<<< HEAD
                 disabled={isWatchSubmitting}
                 onClick={() => void handleWatchSignToggle()}
                 className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap disabled:opacity-60"
-=======
-                onClick={() => setIsSignedOff(!isSignedOff)}
-                className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               >
                 <span>&harr;</span>
                 <span>{isSignedOff ? 'Sign on' : 'Sign off'}</span>
@@ -994,11 +921,7 @@ export function AdminDashboard() {
                   stroke="var(--surface-muted, rgb(242, 245, 244))"
                   strokeWidth="8"
                 />
-<<<<<<< HEAD
                 {/* Present */}
-=======
-                {/* Present (89.0%) */}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 <circle
                   cx="50"
                   cy="50"
@@ -1007,15 +930,9 @@ export function AdminDashboard() {
                   stroke="var(--primary, rgb(70, 199, 184))"
                   strokeWidth="8"
                   strokeDasharray="251.32"
-<<<<<<< HEAD
                   strokeDashoffset={attendancePresentOffset}
                   strokeLinecap="round"
                   className="maxr-draw-attendance transition-[stroke-dashoffset] duration-700"
-=======
-                  strokeDashoffset="27.6"
-                  strokeLinecap="round"
-                  className="maxr-draw-attendance"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 />
                 {/* Late (7.1%) */}
                 <circle
@@ -1044,11 +961,7 @@ export function AdminDashboard() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
                 <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-<<<<<<< HEAD
                   {attendancePresentPct}%
-=======
-                  89.0%
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
                 <span className="text-[10.5px] text-text-muted mt-1 font-medium">Present</span>
               </div>
@@ -1062,14 +975,10 @@ export function AdminDashboard() {
                   Present
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {attendanceStats.present}{' '}
                   <span className="font-normal text-text-subtle text-[10px]">
                     ({attendancePresentPct}%)
                   </span>
-=======
-                  112 <span className="font-normal text-text-subtle text-[10px]">(89.0%)</span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -1078,14 +987,10 @@ export function AdminDashboard() {
                   Late
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {attendanceStats.late}{' '}
                   <span className="font-normal text-text-subtle text-[10px]">
                     ({((attendanceStats.late / totalAttendanceTarget) * 100).toFixed(1)}%)
                   </span>
-=======
-                  9 <span className="font-normal text-text-subtle text-[10px]">(7.1%)</span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -1094,14 +999,10 @@ export function AdminDashboard() {
                   On Leave
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {attendanceStats.onLeave}{' '}
                   <span className="font-normal text-text-subtle text-[10px]">
                     ({((attendanceStats.onLeave / totalAttendanceTarget) * 100).toFixed(1)}%)
                   </span>
-=======
-                  7 <span className="font-normal text-text-subtle text-[10px]">(5.5%)</span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -1110,14 +1011,10 @@ export function AdminDashboard() {
                   Absent
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {attendanceStats.absent}{' '}
                   <span className="font-normal text-text-subtle text-[10px]">
                     ({((attendanceStats.absent / totalAttendanceTarget) * 100).toFixed(1)}%)
                   </span>
-=======
-                  0 <span className="font-normal text-text-subtle text-[10px]">(0.0%)</span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
             </div>
@@ -1125,15 +1022,9 @@ export function AdminDashboard() {
 
           {/* Subtext info for balanced vertical card spacing */}
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted">
-<<<<<<< HEAD
             <span className="truncate">Target: {metrics.teamMembers} staff</span>
             <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
               {attendancePresentPct}% today
-=======
-            <span className="truncate">Target: 124 staff</span>
-            <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
-              90.3% avg this week
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             </span>
           </div>
         </div>
@@ -1168,11 +1059,7 @@ export function AdminDashboard() {
                   stroke="var(--surface-muted, rgb(242, 245, 244))"
                   strokeWidth="8"
                 />
-<<<<<<< HEAD
                 {/* Completed */}
-=======
-                {/* Completed (76%) */}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 <circle
                   cx="50"
                   cy="50"
@@ -1181,15 +1068,9 @@ export function AdminDashboard() {
                   stroke="var(--primary, rgb(70, 199, 184))"
                   strokeWidth="8"
                   strokeDasharray="251.32"
-<<<<<<< HEAD
                   strokeDashoffset={taskCompletedOffset}
                   strokeLinecap="round"
                   className="maxr-draw-tasks transition-[stroke-dashoffset] duration-700"
-=======
-                  strokeDashoffset="60.3"
-                  strokeLinecap="round"
-                  className="maxr-draw-tasks"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 />
                 {/* Pending (19%) */}
                 <circle
@@ -1218,11 +1099,7 @@ export function AdminDashboard() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
                 <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-<<<<<<< HEAD
                   {taskCompletedPct}%
-=======
-                  76%
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
                 <span className="text-[10.5px] text-text-muted mt-1 font-medium">Completed</span>
               </div>
@@ -1236,11 +1113,7 @@ export function AdminDashboard() {
                   Completed
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {taskStats.completed}
-=======
-                  142
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -1249,11 +1122,7 @@ export function AdminDashboard() {
                   Pending
                 </span>
                 <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {taskStats.pending}
-=======
-                  36
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
               <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
@@ -1262,11 +1131,7 @@ export function AdminDashboard() {
                   Overdue
                 </span>
                 <span className="font-bold font-mono text-danger text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-<<<<<<< HEAD
                   {taskStats.overdue}
-=======
-                  8
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </span>
               </div>
             </div>
@@ -1276,21 +1141,12 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between gap-2.5 text-xs">
             <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
               <div
-<<<<<<< HEAD
                 className="maxr-progress-fill h-full rounded-full bg-primary transition-[width] duration-700"
                 style={{ width: `${taskCompletedPct}%` }}
               />
             </div>
             <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
               {taskStats.completed} / {totalTaskCount} Tasks
-=======
-                className="maxr-progress-fill h-full rounded-full bg-primary"
-                style={{ width: '76%' }}
-              />
-            </div>
-            <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
-              142 / 186 Tasks
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             </span>
           </div>
         </div>
@@ -1311,11 +1167,7 @@ export function AdminDashboard() {
               </span>
               <h2 className="text-sm font-bold text-text truncate">Pending Approvals</h2>
               <span className="px-1.5 py-0.2 rounded-full text-[10.5px] font-bold bg-purple-600 text-white shadow-xs shrink-0">
-<<<<<<< HEAD
                 {metrics.pendingApprovalsTotal}
-=======
-                14
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               </span>
             </div>
             <button
@@ -1360,11 +1212,7 @@ export function AdminDashboard() {
                 ) : (
                   <button
                     type="button"
-<<<<<<< HEAD
                     onClick={() => void handleApprove(item.id)}
-=======
-                    onClick={() => handleApprove(item.id)}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                     className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap ${
                       item.status === 'approved'
                         ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
@@ -1386,11 +1234,7 @@ export function AdminDashboard() {
               onClick={() => navigateTo('/approvals')}
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
-<<<<<<< HEAD
               <span>View all {metrics.pendingApprovalsTotal} approvals</span>
-=======
-              <span>View all 14 approvals</span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               <span className="transition-transform duration-200 group-hover:translate-x-1">
                 &rarr;
               </span>
@@ -1422,36 +1266,7 @@ export function AdminDashboard() {
 
           {/* Task Rows - Fitted & Clean */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
-<<<<<<< HEAD
             {priorityTasks.map((task) => (
-=======
-            {[
-              {
-                title: 'Website UI review',
-                owner: 'Owner: Rajesh Patel',
-                badge: 'In progress',
-                badgeClass: 'bg-primary-soft text-primary-strong',
-              },
-              {
-                title: 'Automation workflow QA',
-                owner: 'Owner: Priya Sharma',
-                badge: 'Review',
-                badgeClass: 'bg-purple-100 text-purple-700',
-              },
-              {
-                title: 'Social media campaign',
-                owner: 'Owner: Karthik M',
-                badge: 'To do',
-                badgeClass: 'bg-surface-muted text-text-muted border border-border',
-              },
-              {
-                title: 'Research summary',
-                owner: 'Owner: Divya N',
-                badge: 'Due today',
-                badgeClass: 'bg-emerald-100 text-emerald-700',
-              },
-            ].map((task) => (
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               <div
                 key={task.title}
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
@@ -1491,11 +1306,7 @@ export function AdminDashboard() {
 
         {/* Card 3: Upcoming Meetings - Perfectly Balanced */}
         <div
-<<<<<<< HEAD
           onClick={() => navigateTo('/meetings')}
-=======
-          onClick={() => navigateTo('/calendar')}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           style={{ animationDelay: '500ms' }}
           className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
         >
@@ -1515,19 +1326,9 @@ export function AdminDashboard() {
 
           {/* Meeting Rows */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
-<<<<<<< HEAD
             {upcomingMeetings.map((m, idx) => (
               <div
                 key={`${m.time}-${idx}`}
-=======
-            {[
-              { time: '10:30', title: 'Daily team sync', desc: 'All teams • 30 mins' },
-              { time: '13:00', title: 'Marketing review', desc: 'Campaign planning • 45 mins' },
-              { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
-            ].map((m) => (
-              <div
-                key={m.time}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -1551,11 +1352,7 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80">
             <button
               type="button"
-<<<<<<< HEAD
               onClick={() => navigateTo('/meetings')}
-=======
-              onClick={() => navigateTo('/calendar')}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>View full calendar</span>

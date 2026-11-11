@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
+import { fetchEmployeeDirectory } from '../../employees/api/employees';
+import type { EmployeeDirectoryItem } from '../../employees/types';
 import { TaskAttachmentsList } from './TaskAttachmentsList';
 import { TaskCommentsThread } from './TaskCommentsThread';
 import { TaskPriorityBadge } from './TaskPriorityBadge';
 import { TaskStatusPill } from './TaskStatusPill';
 import type { Task, TaskStatus } from '../types';
-import { TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
+import { TASK_STATUSES, TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
 
 export interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   task: Task | null;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => Promise<unknown>;
+  onReassign?: (taskId: string, assigneeEmployeeId: string) => Promise<unknown>;
   onEditClick?: (task: Task) => void;
   currentEmployeeId?: string;
   isAdmin?: boolean;
@@ -24,6 +27,7 @@ export function TaskDetailModal({
   onClose,
   task,
   onStatusChange,
+  onReassign,
   onEditClick,
   currentEmployeeId,
   isAdmin = false,
@@ -31,6 +35,7 @@ export function TaskDetailModal({
   const [activeTab, setActiveTab] = useState<'overview' | 'comments' | 'attachments'>('overview');
   const [transitioning, setTransitioning] = useState(false);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,12 +44,23 @@ export function TaskDetailModal({
     }
   }, [isOpen, task?.id]);
 
-  if (!task) return null;
-
-  const isAssigner = Boolean(currentEmployeeId && task.assignerEmployeeId === currentEmployeeId);
-  const isAssignee = Boolean(currentEmployeeId && task.assigneeEmployeeId === currentEmployeeId);
+  const isAssigner = Boolean(
+    task && currentEmployeeId && task.assignerEmployeeId === currentEmployeeId,
+  );
+  const isAssignee = Boolean(
+    task && currentEmployeeId && task.assigneeEmployeeId === currentEmployeeId,
+  );
   const canCompleteOrReopen = Boolean(isAdmin || isAssigner);
-  const canEdit = Boolean((isAdmin || isAssigner) && task.status !== 'completed');
+  const canEdit = Boolean(task && (isAdmin || isAssigner) && task.status !== 'completed');
+
+  useEffect(() => {
+    if (!isOpen || !canEdit || !onReassign) return;
+    void fetchEmployeeDirectory({ status: 'active', pageSize: 20 })
+      .then((res) => setEmployees(res.data || []))
+      .catch(() => setEmployees([]));
+  }, [isOpen, canEdit, onReassign]);
+
+  if (!task) return null;
 
   const allowedMoves = (TASK_TRANSITIONS[task.status] || []).filter((target) => {
     if (target === 'completed' || task.status === 'completed') {
@@ -54,7 +70,7 @@ export function TaskDetailModal({
   });
 
   const handleTransition = async (newStatus: TaskStatus) => {
-    if (!onStatusChange) return;
+    if (!onStatusChange || newStatus === task.status) return;
     setTransitioning(true);
     setTransitionError(null);
 
@@ -71,28 +87,40 @@ export function TaskDetailModal({
     }
   };
 
-  const formatDate = (isoStr: string | null) => {
-    if (!isoStr) return 'None';
+  const handleReassignClick = async (employeeId: string) => {
+    if (!onReassign || employeeId === task.assigneeEmployeeId) return;
+    setTransitioning(true);
+    setTransitionError(null);
     try {
-      return new Date(isoStr).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return isoStr;
+      await onReassign(task.id, employeeId);
+    } catch (err: unknown) {
+      setTransitionError(err instanceof Error ? err.message : 'Failed to reassign task.');
+    } finally {
+      setTransitioning(false);
     }
   };
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+
+  const primaryQuickMove = allowedMoves.includes('completed') ? 'completed' : allowedMoves[0];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      position="drawer"
       title="Task Details"
+      subtitle={`${task.projectName ?? 'Standalone task'} · ${TASK_STATUS_LABELS[task.status]}`}
       maxWidth="lg"
       footer={
-        <div className="flex items-center justify-between w-full">
-          <div>
+        <div className="flex items-center justify-between w-full gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             {canEdit && onEditClick && (
               <Button
                 variant="outline"
@@ -107,9 +135,24 @@ export function TaskDetailModal({
               </Button>
             )}
           </div>
-          <Button variant="primary" size="sm" onClick={onClose}>
-            Close
-          </Button>
+          <div className="flex items-center gap-2">
+            {onStatusChange && primaryQuickMove && (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={transitioning}
+                onClick={() => void handleTransition(primaryQuickMove)}
+                data-testid={`detail-quick-primary-${primaryQuickMove}`}
+              >
+                {primaryQuickMove === 'completed'
+                  ? '✓ Done'
+                  : `Move to ${TASK_STATUS_LABELS[primaryQuickMove]}`}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Close
+            </Button>
+          </div>
         </div>
       }
     >
@@ -124,10 +167,10 @@ export function TaskDetailModal({
                 Overdue
               </span>
             )}
-            <span className="text-xs text-text-subtle ml-auto">Version {task.version}</span>
+            <span className="text-xs text-text-subtle ml-auto">v{task.version}</span>
           </div>
 
-          <h2 className="font-display text-xl font-bold text-text mb-2">{task.title}</h2>
+          <h3 className="font-display text-xl font-bold text-text leading-snug">{task.title}</h3>
         </div>
 
         {/* Tab Navigation */}
@@ -165,81 +208,119 @@ export function TaskDetailModal({
               </div>
             )}
 
-            {/* Lifecycle Transitions Control */}
+            {/* Lane / Lifecycle Switcher */}
             {onStatusChange && (
-              <div className="p-3 bg-surface-muted rounded-card border border-border flex flex-col gap-2">
-                <span className="text-xs font-semibold text-text-subtle uppercase tracking-wider">
-                  Change Status (Legal Transitions)
+              <div className="space-y-2">
+                <span className="text-[11px] font-semibold text-text-subtle uppercase tracking-wider block">
+                  Lane
                 </span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {allowedMoves.length === 0 ? (
-                    <span className="text-xs text-text-subtle italic">
-                      No further status transitions available for this task.
-                    </span>
-                  ) : (
-                    allowedMoves.map((target) => (
-                      <Button
-                        key={target}
-                        variant={target === 'completed' ? 'primary' : 'outline'}
-                        size="sm"
-                        disabled={transitioning}
-                        onClick={() => handleTransition(target)}
-                        data-testid={`detail-transition-to-${target}`}
+                <div className="flex items-center gap-1.5 flex-wrap p-1.5 rounded-control bg-surface-muted border border-border">
+                  {TASK_STATUSES.map((lane) => {
+                    const isCurrent = lane === task.status;
+                    const isAllowed = allowedMoves.includes(lane);
+                    return (
+                      <button
+                        key={lane}
+                        type="button"
+                        disabled={!isAllowed || transitioning}
+                        onClick={() => void handleTransition(lane)}
+                        data-testid={
+                          isAllowed ? `detail-transition-to-${lane}` : `detail-lane-${lane}`
+                        }
+                        title={
+                          isCurrent
+                            ? 'Current status'
+                            : isAllowed
+                              ? `Move to ${TASK_STATUS_LABELS[lane]}`
+                              : `Cannot transition directly from ${TASK_STATUS_LABELS[task.status]} to ${TASK_STATUS_LABELS[lane]}`
+                        }
+                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-input transition-colors ${
+                          isCurrent
+                            ? 'bg-surface text-text shadow-card ring-1 ring-border'
+                            : isAllowed
+                              ? 'text-text-muted hover:text-text hover:bg-surface/70 cursor-pointer'
+                              : 'text-text-subtle/50 cursor-not-allowed'
+                        }`}
                       >
-                        → Move to {TASK_STATUS_LABELS[target]}
-                      </Button>
-                    ))
-                  )}
+                        {TASK_STATUS_LABELS[lane]}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Metadata Details Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-surface rounded-lg border border-border">
-                <span className="font-semibold text-text-subtle block mb-1">Assignee</span>
-                <span className="font-medium text-text text-sm">{task.assigneeName}</span>
-                {isAssignee && (
-                  <span className="text-[11px] text-text-subtle block mt-0.5">(You)</span>
-                )}
-              </div>
-
-              <div className="p-3 bg-surface rounded-lg border border-border">
-                <span className="font-semibold text-text-subtle block mb-1">Assigned By</span>
-                <span className="font-medium text-text text-sm">{task.assignerName}</span>
-                {isAssigner && (
-                  <span className="text-[11px] text-text-subtle block mt-0.5">(You)</span>
-                )}
-              </div>
-
-              <div className="p-3 bg-surface rounded-lg border border-border">
-                <span className="font-semibold text-text-subtle block mb-1">Project</span>
-                <span className="font-medium text-text text-sm">
+            {/* Metadata Rows */}
+            <div className="divide-y divide-border border-y border-border text-xs">
+              <div className="flex items-center justify-between py-2.5">
+                <span className="text-text-subtle">Project</span>
+                <span className="font-medium text-text">
                   {task.projectName ?? 'Standalone Task'}
                 </span>
               </div>
 
-              <div className="p-3 bg-surface rounded-lg border border-border">
-                <span className="font-semibold text-text-subtle block mb-1">Due Date</span>
+              <div className="flex items-center justify-between py-2.5">
+                <span className="text-text-subtle">Assignee</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-semibold text-[10px]">
+                    {getInitials(task.assigneeName)}
+                  </span>
+                  <span className="font-medium text-text">
+                    {task.assigneeName}
+                    {isAssignee ? ' (You)' : ''}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between py-2.5">
+                <span className="text-text-subtle">Assigned By</span>
+                <span className="font-medium text-text">
+                  {task.assignerName}
+                  {isAssigner ? ' (You)' : ''}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2.5">
+                <span className="text-text-subtle">Due</span>
                 <span
-                  className={`font-medium text-sm ${
+                  className={`font-medium ${
                     task.isOverdue ? 'text-danger font-semibold' : 'text-text'
                   }`}
                 >
                   {task.dueDate ?? 'Not scheduled'}
                 </span>
               </div>
-
-              <div className="p-3 bg-surface rounded-lg border border-border">
-                <span className="font-semibold text-text-subtle block mb-1">Created At</span>
-                <span className="text-text">{formatDate(task.createdAt)}</span>
-              </div>
-
-              <div className="p-3 bg-surface rounded-lg border border-border">
-                <span className="font-semibold text-text-subtle block mb-1">Last Updated</span>
-                <span className="text-text">{formatDate(task.updatedAt)}</span>
-              </div>
             </div>
+
+            {/* Quick Reassign Pills */}
+            {canEdit && onReassign && employees.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[11px] font-semibold text-text-subtle uppercase tracking-wider block">
+                  Reassign
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {employees.slice(0, 8).map((emp) => {
+                    const fullName = `${emp.firstName} ${emp.lastName}`.trim();
+                    const isSelected = emp.id === task.assigneeEmployeeId;
+                    return (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        disabled={transitioning}
+                        onClick={() => void handleReassignClick(emp.id)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                          isSelected
+                            ? 'bg-sidebar text-sidebar-strong border-sidebar'
+                            : 'bg-surface text-text-muted border-border hover:bg-surface-muted hover:text-text'
+                        }`}
+                      >
+                        {emp.firstName || fullName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

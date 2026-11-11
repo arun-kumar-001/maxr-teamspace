@@ -245,7 +245,7 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
         'Approvals',
         'Tasks',
         'Projects',
-        'Meetings',
+        'Calendar',
         'Expenses',
         'Reports',
       ]);

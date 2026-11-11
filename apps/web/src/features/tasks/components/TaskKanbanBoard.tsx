@@ -7,6 +7,8 @@ export interface TaskKanbanBoardProps {
   columns: Record<TaskStatus, Task[]>;
   onSelectTask: (task: Task) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onQuickCreateClick?: () => void;
+  canCreate?: boolean;
   currentEmployeeId?: string;
   isAdmin?: boolean;
   className?: string;
@@ -26,6 +28,8 @@ export function TaskKanbanBoard({
   columns,
   onSelectTask,
   onStatusChange,
+  onQuickCreateClick,
+  canCreate = false,
   currentEmployeeId,
   isAdmin = false,
   className = '',
@@ -98,7 +102,7 @@ export function TaskKanbanBoard({
         className="w-full overflow-x-auto pb-4 snap-x snap-mandatory"
         data-testid="task-kanban-board"
       >
-        <div className="flex gap-4 min-w-[1300px] xl:min-w-full items-start">
+        <div className="flex gap-3.5 min-w-[1300px] xl:min-w-full items-start">
           {COLUMN_KEYS.map((colKey) => {
             const tasksInCol = columns[colKey] || [];
             const tone = COLUMN_HEADER_TONES[colKey];
@@ -120,27 +124,37 @@ export function TaskKanbanBoard({
                   if (dragOverCol === colKey) setDragOverCol(null);
                 }}
                 onDrop={(e) => handleDrop(e, colKey)}
-                className={`flex-1 min-w-[260px] rounded-card border border-border border-t-4 ${tone.border} p-3.5 flex flex-col gap-3 snap-start transition-all duration-200 ${
+                className={`flex-1 min-w-[250px] rounded-card border border-border border-t-4 ${tone.border} p-3 flex flex-col gap-2.5 snap-start transition-all duration-200 ${
                   validTarget
                     ? 'bg-primary-surface/50 ring-2 ring-primary scale-[1.01] shadow-raised'
                     : invalidTarget
                       ? 'bg-rose-50/40 ring-2 ring-danger/40'
-                      : 'bg-surface-muted/60'
+                      : 'bg-surface-muted/70'
                 }`}
                 data-testid={`kanban-column-${colKey}`}
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-border">
+                <div className="flex items-center justify-between pb-2 border-b border-border/80">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${tone.dot}`} aria-hidden="true" />
                     <h3 className="font-semibold text-sm text-text">{label}</h3>
+                    <span
+                      className="px-2 py-0.5 text-xs font-semibold rounded-full bg-surface text-text-subtle border border-border tabular-nums"
+                      data-testid={`column-count-${colKey}`}
+                    >
+                      {tasksInCol.length}
+                    </span>
                   </div>
-                  <span
-                    className="px-2 py-0.5 text-xs font-semibold rounded-full bg-surface text-text-subtle border border-border tabular-nums"
-                    data-testid={`column-count-${colKey}`}
-                  >
-                    {tasksInCol.length}
-                  </span>
+                  {canCreate && onQuickCreateClick && colKey !== 'completed' && (
+                    <button
+                      type="button"
+                      onClick={onQuickCreateClick}
+                      aria-label={`Add task to ${label}`}
+                      className="w-7 h-7 rounded-input text-text-muted hover:text-text hover:bg-surface flex items-center justify-center transition-colors"
+                    >
+                      +
+                    </button>
+                  )}
                 </div>
 
                 {/* Cards Container */}

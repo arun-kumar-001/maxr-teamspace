@@ -214,37 +214,11 @@ export function Sidebar({
           )}
         </div>
 
-<<<<<<< HEAD
-      {/* Navigation */}
-      <nav
-        id={navId}
-        aria-label="Main navigation"
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border"
-      >
-        {groups.map((group, groupIndex) => (
-          <div
-            key={group.id}
-            className={groupIndex > 0 ? 'mt-3 pt-3 border-t border-sidebar-border' : ''}
-          >
-            {group.label && !collapsed && (
-              <p className="px-3.5 pt-1 pb-2 text-[13px] font-medium text-sidebar-muted">
-                {group.label}
-              </p>
-            )}
-            {group.label && collapsed && <span className="sr-only">{group.label}</span>}
-            <ul className="flex flex-col gap-1">
-              {group.items.map((item) => {
-                const hasChildren = Boolean(item.children?.length);
-                const childActive = item.children?.some((c) => c.id === activeId) ?? false;
-                const active = item.id === activeId || (collapsed && childActive);
-                const open = !collapsed && openGroups.has(item.id);
-                const subId = `${navId}-${item.id}`;
-=======
         {/* Navigation */}
         <nav
           id={navId}
           aria-label="Main navigation"
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3 sidebar-scroll"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 pb-3 sidebar-scroll [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-sidebar-border"
         >
           {groups.map((group, groupIndex) => (
             <div
@@ -322,7 +296,6 @@ export function Sidebar({
                       </li>
                     );
                   }
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
                   return (
                     <li key={item.id}>
@@ -351,34 +324,6 @@ export function Sidebar({
 
         {footer && !collapsed && <div className="shrink-0 px-3 pb-3">{footer}</div>}
 
-<<<<<<< HEAD
-      {footer && !collapsed && <div className="shrink-0 px-3 pb-3">{footer}</div>}
-
-      {/* User */}
-      {user && (
-        <div
-          className={`shrink-0 flex items-center gap-3 p-4 border-t border-sidebar-border ${collapsed ? 'justify-center' : ''}`}
-        >
-          {collapsed ? (
-            <button
-              type="button"
-              onClick={onUserMenu}
-              aria-label={`Account menu, ${user.name}`}
-              {...tooltipHandlers(user.name)}
-              className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden ${focusRing}`}
-            >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                user.initials
-              )}
-            </button>
-          ) : (
-            <>
-              <span
-                className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden"
-                aria-hidden="true"
-=======
         {/* User */}
         {user && (
           <div
@@ -391,7 +336,6 @@ export function Sidebar({
                 aria-label={`Account menu, ${user.name}`}
                 {...tooltipHandlers(user.name)}
                 className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden ${focusRing}`}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               >
                 {user.avatarUrl ? (
                   <img
@@ -402,28 +346,12 @@ export function Sidebar({
                 ) : (
                   user.initials
                 )}
-<<<<<<< HEAD
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block font-semibold text-sidebar-strong truncate">
-                  {user.name}
-                </span>
-                <span className="block text-sm text-sidebar-muted truncate">{user.role}</span>
-              </span>
-              {onUserMenu && (
-                <button
-                  type="button"
-                  onClick={onUserMenu}
-                  aria-label="Account menu"
-                  className={`flex items-center justify-center w-11 h-11 rounded-input text-sidebar-text hover:bg-sidebar-raised ${focusRing}`}
-=======
               </button>
             ) : (
               <>
                 <span
                   className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden"
                   aria-hidden="true"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 >
                   {user.avatarUrl ? (
                     <img

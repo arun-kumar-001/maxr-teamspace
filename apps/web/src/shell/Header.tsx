@@ -55,16 +55,12 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('leave')) return 'Leave Management';
     if (path.includes('projects')) return 'Projects';
     if (path.includes('tasks')) return 'Tasks & Work Management';
-    if (path.includes('meetings')) return 'Calendar & Meetings';
+    if (path.includes('meetings') || path.includes('calendar')) return 'Calendar';
     if (path.includes('expenses')) return 'Expenses & Claims';
     if (path.includes('profile')) return 'My Employee Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
     if (path.includes('components')) return 'Shared UI Component Gallery';
-<<<<<<< HEAD
     return 'Dashboard';
-=======
-    return '';
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   };
 
   const title = getPageTitle(activePath);
@@ -93,20 +89,11 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           </svg>
         </button>
 
-<<<<<<< HEAD
-        <div>
-          <h2 className="text-base font-semibold text-text sm:text-lg">
-            {getPageTitle(activePath)}
-          </h2>
-          <p className="hidden text-xs text-text-muted sm:block">Company overview</p>
-        </div>
-=======
         {title ? (
           <div>
             <h2 className="text-base font-semibold text-text sm:text-lg">{title}</h2>
           </div>
         ) : null}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       </div>
 
       {/* Right: Notifications & User Profile Menu with Dropdown */}
@@ -115,19 +102,6 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
 
         {/* User avatar dropdown trigger */}
         {user && (
-<<<<<<< HEAD
-          <div className="flex items-center gap-2.5 pl-2 sm:border-l sm:border-border">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm overflow-hidden shrink-0"
-              title={`${user.name} (${user.email})`}
-            >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-              ) : (
-                user.avatarInitials
-              )}
-            </div>
-=======
           <div className="relative pl-2 sm:border-l sm:border-border" ref={userMenuRef}>
             <button
               type="button"
@@ -140,10 +114,18 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
               data-testid="user-menu-trigger"
             >
               <div
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
                 title={`${user.name} (${user.email})`}
               >
-                {user.avatarInitials}
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  user.avatarInitials
+                )}
               </div>
               <svg
                 viewBox="0 0 16 16"
@@ -158,7 +140,6 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
                 <path d="m4 6 4 4 4-4" />
               </svg>
             </button>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
             {/* Dropdown Menu (revealed when avatar clicked) */}
             <div

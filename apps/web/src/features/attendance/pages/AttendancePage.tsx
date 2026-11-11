@@ -9,12 +9,29 @@ import { RequestCorrectionModal } from '../components/RequestCorrectionModal';
 import { useAttendanceCorrections } from '../hooks/useAttendanceCorrections';
 import { fetchTeamAttendance, fetchMyAttendanceHistory } from '../api/attendance';
 import { fetchEmployeeDirectory, fetchDepartments } from '../../employees/api/employees';
-import { fetchShifts } from '../../shifts/api/shifts';
+import { fetchShifts, fetchAttendancePolicy } from '../../shifts/api/shifts';
 import { fetchLeaveCalendar } from '../../leave/api/leave';
 import type { AttendanceRecord } from '../types';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
-import type { Shift } from '../../shifts/types';
+import type { AttendancePolicy, Shift } from '../../shifts/types';
 import type { LeaveCalendarEntry } from '../../leave/types';
+
+function getLocalTodayIso(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function addDaysIso(baseIso: string, offsetDays: number): string {
+  const dt = new Date(`${baseIso}T00:00:00`);
+  dt.setDate(dt.getDate() + offsetDays);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 export interface AttendancePageProps {
   initialTab?: 'on-duty' | 'roster' | 'timesheets';
@@ -28,27 +45,18 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
   const canManage = isAdmin || isHr || isLead;
 
   const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets'>(initialTab);
-<<<<<<< HEAD
-  const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
+  const [selectedDate, setSelectedDate] = useState<string>(() => getLocalTodayIso());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
-
-=======
-  useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
-  const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
   // Data states
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [departments, setDepartments] = useState<DepartmentItem[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [attendancePolicy, setAttendancePolicy] = useState<AttendancePolicy | null>(null);
   const [leaveEntries, setLeaveEntries] = useState<LeaveCalendarEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,12 +81,13 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
         ? fetchTeamAttendance({ startDate: selectedDate, endDate: selectedDate })
         : fetchMyAttendanceHistory({ startDate: selectedDate, endDate: selectedDate });
 
-      // 2. Auxiliary data (employees, departments, shifts, leave)
-      const [recRes, empRes, deptRes, shiftRes, leaveRes] = await Promise.allSettled([
+      // 2. Auxiliary data (employees, departments, shifts, policy, leave)
+      const [recRes, empRes, deptRes, shiftRes, policyRes, leaveRes] = await Promise.allSettled([
         fetchRecordsPromise,
         fetchEmployeeDirectory({ pageSize: 100 }),
         fetchDepartments(),
         fetchShifts(),
+        fetchAttendancePolicy(),
         fetchLeaveCalendar(selectedDate, selectedDate),
       ]);
 
@@ -93,6 +102,9 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
       }
       if (shiftRes.status === 'fulfilled') {
         setShifts(shiftRes.value || []);
+      }
+      if (policyRes.status === 'fulfilled') {
+        setAttendancePolicy(policyRes.value || null);
       }
       if (leaveRes.status === 'fulfilled') {
         setLeaveEntries(leaveRes.value || []);
@@ -174,15 +186,15 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
           </button>
 
           {isDatePickerOpen && (
-            <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-surface border border-border rounded-xl shadow-lg space-y-1">
+            <div className="absolute right-0 mt-2 z-20 w-56 p-2.5 bg-surface border border-border rounded-xl shadow-lg space-y-1.5">
               <span className="text-[11px] font-bold text-text-muted px-2 block">
                 Quick Date Select
               </span>
               {[
-                { label: 'Today (03 Nov 2026)', val: '2026-11-03' },
-                { label: 'Yesterday (02 Nov 2026)', val: '2026-11-02' },
-                { label: 'Friday (31 Oct 2026)', val: '2026-10-31' },
-                { label: 'Thursday (30 Oct 2026)', val: '2026-10-30' },
+                { label: 'Today', val: getLocalTodayIso() },
+                { label: 'Yesterday', val: addDaysIso(getLocalTodayIso(), -1) },
+                { label: '2 Days Ago', val: addDaysIso(getLocalTodayIso(), -2) },
+                { label: '3 Days Ago', val: addDaysIso(getLocalTodayIso(), -3) },
               ].map((d) => (
                 <button
                   key={d.val}
@@ -191,15 +203,33 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
                     setSelectedDate(d.val);
                     setIsDatePickerOpen(false);
                   }}
-                  className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
                     selectedDate === d.val
                       ? 'bg-primary-soft text-primary-deep font-bold'
                       : 'text-text hover:bg-surface-muted'
                   }`}
                 >
-                  {d.label}
+                  <span>{d.label}</span>
+                  <span className="font-mono text-[10px] text-text-muted">{d.val}</span>
                 </button>
               ))}
+              <div className="pt-1.5 border-t border-border">
+                <label className="text-[10px] font-semibold text-text-muted px-1 block mb-1">
+                  Pick Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setSelectedDate(e.target.value);
+                      setIsDatePickerOpen(false);
+                    }
+                  }}
+                  aria-label="Pick attendance date"
+                  className="w-full px-2 py-1.5 text-xs rounded-lg border border-border bg-surface text-text"
+                />
+              </div>
             </div>
           )}
         </div>
@@ -282,6 +312,10 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
               employees={employees}
               departments={departments}
               shifts={shifts}
+              attendancePolicy={attendancePolicy}
+              selectedDate={selectedDate}
+              initialRecords={records}
+              initialLeaves={leaveEntries}
               canManageRoster={canManage}
               onRefresh={loadData}
             />

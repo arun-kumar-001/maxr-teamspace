@@ -50,11 +50,13 @@ const ALL_ROLE_OPTIONS: RoleOption[] = [
 export interface UseCreateEmployeeOptions {
   callerRole?: Role | null;
   onSuccess?: (created: CreatedEmployee) => void;
+  initialPrefill?: Partial<CreateEmployeeFormState>;
 }
 
 export function useCreateEmployee({
   callerRole = ROLES.ADMIN,
   onSuccess,
+  initialPrefill,
 }: UseCreateEmployeeOptions = {}) {
   const isAdmin = callerRole === ROLES.ADMIN;
   const isHRManager = callerRole === ROLES.HR_MANAGER;
@@ -67,16 +69,16 @@ export function useCreateEmployee({
   const getInitialDate = () => new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<CreateEmployeeFormState>({
-    employeeCode: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    departmentId: '',
-    designationId: '',
-    managerId: '',
-    joiningDate: getInitialDate(),
-    role: ROLES.STAFF,
+    employeeCode: initialPrefill?.employeeCode ?? '',
+    firstName: initialPrefill?.firstName ?? '',
+    lastName: initialPrefill?.lastName ?? '',
+    email: initialPrefill?.email ?? '',
+    phone: initialPrefill?.phone ?? '',
+    departmentId: initialPrefill?.departmentId ?? '',
+    designationId: initialPrefill?.designationId ?? '',
+    managerId: initialPrefill?.managerId ?? '',
+    joiningDate: initialPrefill?.joiningDate ?? getInitialDate(),
+    role: initialPrefill?.role ?? ROLES.STAFF,
   });
 
   const [errors, setErrors] = useState<CreateEmployeeValidationErrors>({});

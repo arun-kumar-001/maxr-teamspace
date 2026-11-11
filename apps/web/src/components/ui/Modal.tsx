@@ -5,12 +5,23 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
+  position?: 'center' | 'drawer';
 }
 
-export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  maxWidth = 'md',
+  position = 'center',
+}: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(isOpen, dialogRef, onClose);
@@ -24,9 +35,15 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
     xl: 'sm:max-w-xl',
   };
 
+  const isDrawer = position === 'drawer';
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-overlay backdrop-blur-sm transition-opacity"
+      className={`fixed inset-0 z-50 flex bg-overlay backdrop-blur-sm transition-opacity ${
+        isDrawer
+          ? 'justify-end items-stretch p-0'
+          : 'items-end sm:items-center justify-center p-0 sm:p-4'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
@@ -34,11 +51,15 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
       {/* Background click to dismiss */}
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
-      {/* Modal Dialog: Full-width sheet on mobile (<640px), Centered Card on desktop */}
+      {/* Modal Dialog or Right Slide-Over Drawer */}
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
+        className={
+          isDrawer
+            ? `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-t-none sm:rounded-l-card shadow-raised overflow-hidden flex flex-col h-[92dvh] sm:h-full mt-auto sm:mt-0 z-10 border-t sm:border-t-0 sm:border-l border-border`
+            : `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`
+        }
       >
         {/* Mobile handle indicator */}
         <div
@@ -48,13 +69,16 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
 
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 id={titleId} className="text-base sm:text-lg font-semibold text-text">
-              {title}
-            </h2>
+          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-border shrink-0">
+            <div className="min-w-0">
+              <h2 id={titleId} className="text-base sm:text-lg font-semibold text-text truncate">
+                {title}
+              </h2>
+              {subtitle && <p className="text-xs text-text-muted mt-0.5 truncate">{subtitle}</p>}
+            </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
               aria-label="Close modal"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">

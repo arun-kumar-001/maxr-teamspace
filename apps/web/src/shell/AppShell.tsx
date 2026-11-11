@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { ROLE_DISPLAY_NAMES } from '@maxr/shared';
 import { Header } from './Header';
 import { Sidebar, SidebarDrawer, PageContainer } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
@@ -11,7 +12,7 @@ export interface AppShellProps {
 }
 
 export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -36,7 +37,6 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     ),
   };
 
-<<<<<<< HEAD
   const sidebarUser = user
     ? {
         name: user.name,
@@ -45,12 +45,6 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         avatarUrl: user.avatarUrl,
       }
     : undefined;
-=======
-  const activeNavPath =
-    currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance'
-      ? '/attendance'
-      : currentPath;
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 
   const activeNavPath = (() => {
     if (currentPath === '/attendance/on-duty') return '/attendance';
@@ -93,12 +87,9 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
             e?.preventDefault?.();
             onNavigate(id);
           }}
-<<<<<<< HEAD
           onUserMenu={() => onNavigate('/profile')}
           footer={sidebarFooter}
           user={sidebarUser}
-=======
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         />
       </div>
 
@@ -114,6 +105,11 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
           onNavigate(id);
           setIsMobileNavOpen(false);
         }}
+        onUserMenu={() => {
+          onNavigate('/profile');
+          setIsMobileNavOpen(false);
+        }}
+        user={sidebarUser}
       />
 
       {/* Main Content Area */}

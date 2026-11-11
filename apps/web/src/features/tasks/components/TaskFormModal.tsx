@@ -16,6 +16,7 @@ export interface TaskFormModalProps {
   mode: 'create' | 'edit';
   initialTask?: Task | null;
   defaultAssigneeId?: string;
+  defaultProjectId?: string;
   onSubmitCreate?: (input: CreateTaskInput) => Promise<unknown>;
   onSubmitEdit?: (input: Omit<UpdateTaskInput, 'version'>) => Promise<unknown>;
 }
@@ -26,6 +27,7 @@ export function TaskFormModal({
   mode,
   initialTask,
   defaultAssigneeId,
+  defaultProjectId,
   onSubmitCreate,
   onSubmitEdit,
 }: TaskFormModalProps) {
@@ -60,7 +62,7 @@ export function TaskFormModal({
       setDescription('');
       setPriority('medium');
       setDueDate('');
-      setProjectId('');
+      setProjectId(defaultProjectId ?? '');
       setAssigneeId(defaultAssigneeId ?? '');
     }
 
@@ -72,7 +74,7 @@ export function TaskFormModal({
     void fetchEmployeeDirectory({ status: 'active', pageSize: 100 })
       .then((res) => setEmployees(res.data))
       .catch(() => setEmployees([]));
-  }, [isOpen, mode, initialTask, defaultAssigneeId]);
+  }, [isOpen, mode, initialTask, defaultAssigneeId, defaultProjectId]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};

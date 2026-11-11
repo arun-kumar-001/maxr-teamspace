@@ -70,7 +70,7 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('Approvals');
       expect(html).toContain('Tasks');
       expect(html).toContain('Projects');
-      expect(html).toContain('Meetings');
+      expect(html).toContain('Calendar');
       expect(html).toContain('Expenses');
       expect(html).toContain('Reports');
       expect(html).toContain('Administration');

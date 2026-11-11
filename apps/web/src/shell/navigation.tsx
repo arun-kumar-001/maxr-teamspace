@@ -238,7 +238,7 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
   },
   {
     id: 'meetings',
-    label: 'Calendar & Meetings',
+    label: 'Calendar',
     path: '/meetings',
     iconName: 'calendar',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
@@ -402,7 +402,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   }
 
-<<<<<<< HEAD
   // Shifts and Policies routes - Admin & HR Manager only
   if (path === '/shifts' || path.startsWith('/shifts/') || path.startsWith('/hr/policies')) {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
@@ -415,15 +414,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
 
   // Leave canonical routes (requests, balances, calendar, holidays)
   if (path === '/leave' || path.startsWith('/leave/') || path === '/hr/holidays') {
-=======
-  // Shifts and Policies routes
-  if (path === '/shifts' || path.startsWith('/shifts/')) {
-    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
-  }
-
-  // Leave canonical routes
-  if (path === '/leave' || path.startsWith('/leave/')) {
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
     return true;
   }
 
@@ -503,11 +493,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path.startsWith('/attendance/') ||
     path.startsWith('/staff/attendance')
   ) {
-    return true;
-  }
-
-  // Attendance canonical routes
-  if (path === '/attendance' || path.startsWith('/attendance/')) {
     return true;
   }
 
@@ -646,7 +631,6 @@ function NavSvgIcon({ name }: { name: NavItem['iconName'] | 'gallery' }) {
 }
 
 /**
-<<<<<<< HEAD
  * Centralized role-based Sidebar group generator.
  * Admin matches consolidated enterprise hierarchy:
  * 1. Overview
@@ -655,25 +639,15 @@ function NavSvgIcon({ name }: { name: NavItem['iconName'] | 'gallery' }) {
  * 4. Work Management (Tasks, Projects, Calendar & Meetings)
  * 5. Expenses & Claims, Approvals, Reports & Analytics
  * 6. Settings & Security (Users & Roles, Company Configuration, Audit Logs)
-=======
- * Maps authorized navigation items into Petalo-styled Sidebar groups conforming to DESIGN.md §5 and MASTER PROMPT §3.
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
  */
 export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
   const groups: SidebarGroup[] = [];
 
   const attendanceItem: SidebarItem = {
-<<<<<<< HEAD
     id: 'attendance-group',
     label: 'Attendance',
     href: '/attendance',
     icon: <NavSvgIcon name="clock" />,
-=======
-    id: '/attendance',
-    label: 'Attendance',
-    href: '/attendance',
-    icon: <NavSvgIcon name="calendar" />,
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
     children: [
       { id: '/attendance', label: 'On Duty', href: '/attendance' },
       { id: '/attendance/roster', label: 'Roster', href: '/attendance/roster' },
@@ -681,7 +655,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
     ],
   };
 
-<<<<<<< HEAD
   const leaveManagementItem: SidebarItem = {
     id: 'leave-group',
     label: 'Leave',
@@ -698,13 +671,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
     groups.push({
       id: 'admin-workforce',
       label: 'Workforce',
-=======
-  if (role === ROLES.ADMIN) {
-    // 1. WORKSPACE
-    groups.push({
-      id: 'admin-workspace',
-      label: 'Workspace',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       items: [
         {
           id: '/dashboard',
@@ -712,7 +678,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
-<<<<<<< HEAD
         {
           id: '/admin/employees',
           label: 'Employee Directory',
@@ -741,7 +706,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         },
         {
           id: '/meetings',
-          label: 'Meetings',
+          label: 'Calendar',
           href: '/meetings',
           icon: <NavSvgIcon name="calendar" />,
         },
@@ -756,109 +721,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Reports',
           href: '/admin/reports',
           icon: <NavSvgIcon name="file-text" />,
-=======
-        attendanceItem,
-        {
-          id: '/leave',
-          label: 'Leave Management',
-          href: '/leave',
-          icon: <NavSvgIcon name="calendar" />,
-          children: [
-            { id: '/leave', label: 'Leave Requests', href: '/leave' },
-            { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
-          ],
-        },
-        {
-          id: '/tasks',
-          label: 'Tasks & Projects',
-          href: '/tasks',
-          icon: <NavSvgIcon name="check" />,
-          children: [
-            { id: '/tasks', label: 'Tasks', href: '/tasks' },
-            { id: '/projects', label: 'Projects', href: '/projects' },
-          ],
-        },
-        {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
-          id: '/expenses',
-          label: 'Expenses & Claims',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         },
       ],
     });
 
-<<<<<<< HEAD
     // 2. Administration
     groups.push({
-=======
-    // 2. PEOPLE MANAGEMENT
-    groups.push({
-      id: 'admin-people',
-      label: 'People Management',
-      items: [
-        {
-          id: '/admin/employees',
-          label: 'Employee Directory',
-          href: '/admin/employees',
-          icon: <NavSvgIcon name="users" />,
-        },
-        {
-          id: '/onboarding',
-          label: 'Onboarding',
-          href: '/onboarding',
-          icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/admin/departments',
-          label: 'Departments',
-          href: '/admin/departments',
-          icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/admin/designations',
-          label: 'Designations',
-          href: '/admin/designations',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-        {
-          id: '/admin/org-chart',
-          label: 'Reporting Hierarchy',
-          href: '/admin/org-chart',
-          icon: <NavSvgIcon name="users" />,
-        },
-      ],
-    });
-
-    // 3. MANAGEMENT
-    groups.push({
-      id: 'admin-management',
-      label: 'Management',
-      items: [
-        {
-          id: '/approvals',
-          label: 'Approvals',
-          href: '/approvals',
-          icon: <NavSvgIcon name="check" />,
-        },
-        {
-          id: '/admin/reports',
-          label: 'Company Reports',
-          href: '/admin/reports',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-      ],
-    });
-
-    // 4. ADMINISTRATION
-    groups.push({
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       id: 'admin-administration',
       label: 'Administration',
       items: [
@@ -869,7 +737,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="users" />,
         },
         {
-<<<<<<< HEAD
           id: 'admin-organization',
           label: 'Organization',
           icon: <NavSvgIcon name="briefcase" />,
@@ -892,22 +759,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         {
           id: '/admin/settings',
           label: 'Settings',
-=======
-          id: '/shifts',
-          label: 'Attendance Policies',
-          href: '/shifts',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
-          id: '/leave/policies',
-          label: 'Leave Policies',
-          href: '/leave/policies',
-          icon: <NavSvgIcon name="calendar" />,
-        },
-        {
-          id: '/admin/settings',
-          label: 'Company Config',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           href: '/admin/settings',
           icon: <NavSvgIcon name="settings" />,
         },
@@ -920,16 +771,9 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       ],
     });
   } else if (role === ROLES.HR_MANAGER) {
-<<<<<<< HEAD
     groups.push({
       id: 'hr-workforce',
       label: 'Workforce',
-=======
-    // HR Manager Groups
-    groups.push({
-      id: 'hr-workspace',
-      label: 'Workspace',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       items: [
         {
           id: '/dashboard',
@@ -937,41 +781,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
-<<<<<<< HEAD
-=======
-        attendanceItem,
-        {
-          id: '/leave',
-          label: 'Leave Requests',
-          href: '/leave',
-          icon: <NavSvgIcon name="calendar" />,
-        },
-        {
-          id: '/tasks',
-          label: 'Tasks & Projects',
-          href: '/tasks',
-          icon: <NavSvgIcon name="check" />,
-        },
-        {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
-          id: '/expenses',
-          label: 'Expenses',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-      ],
-    });
-
-    groups.push({
-      id: 'hr-people',
-      label: 'People & Organization',
-      items: [
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         {
           id: '/hr/employees',
           label: 'Employee Directory',
@@ -980,44 +789,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         },
         {
           id: '/hr/lifecycle',
-<<<<<<< HEAD
           label: 'Onboarding',
           href: '/hr/lifecycle',
           icon: <NavSvgIcon name="briefcase" />,
         },
         attendanceItem,
         leaveManagementItem,
-=======
-          label: 'Onboarding / Offboarding',
-          href: '/hr/lifecycle',
-          icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/hr/departments',
-          label: 'Departments',
-          href: '/hr/departments',
-          icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/hr/designations',
-          label: 'Designations',
-          href: '/hr/designations',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-        {
-          id: '/hr/org-chart',
-          label: 'Reporting Hierarchy',
-          href: '/hr/org-chart',
-          icon: <NavSvgIcon name="users" />,
-        },
-      ],
-    });
-
-    groups.push({
-      id: 'hr-management',
-      label: 'Management',
-      items: [
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         {
           id: '/approvals',
           label: 'Approvals',
@@ -1025,7 +802,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="check" />,
         },
         {
-<<<<<<< HEAD
           id: '/tasks',
           label: 'Tasks',
           href: '/tasks',
@@ -1039,7 +815,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         },
         {
           id: '/meetings',
-          label: 'Meetings',
+          label: 'Calendar',
           href: '/meetings',
           icon: <NavSvgIcon name="calendar" />,
         },
@@ -1052,10 +828,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         {
           id: '/hr/reports',
           label: 'Reports',
-=======
-          id: '/hr/reports',
-          label: 'HR Reports',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           href: '/hr/reports',
           icon: <NavSvgIcon name="file-text" />,
         },
@@ -1067,7 +839,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       label: 'Administration',
       items: [
         {
-<<<<<<< HEAD
           id: 'hr-organization',
           label: 'Organization',
           icon: <NavSvgIcon name="briefcase" />,
@@ -1085,26 +856,13 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
             { id: '/hr/policies', label: 'Attendance Policies', href: '/hr/policies' },
             { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
           ],
-=======
-          id: '/hr/policies',
-          label: 'Leave & Shift Policies',
-          href: '/hr/policies',
-          icon: <NavSvgIcon name="calendar" />,
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         },
       ],
     });
   } else if (role === ROLES.TEAM_LEAD) {
-<<<<<<< HEAD
     groups.push({
       id: 'lead-workforce',
       label: 'Workforce',
-=======
-    // Team Lead Groups
-    groups.push({
-      id: 'lead-workspace',
-      label: 'Workspace',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       items: [
         {
           id: '/dashboard',
@@ -1119,7 +877,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="users" />,
         },
         attendanceItem,
-<<<<<<< HEAD
         leaveManagementItem,
         {
           id: '/lead/approvals',
@@ -1132,11 +889,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         {
           id: '/lead/tasks',
           label: 'Tasks',
-=======
-        {
-          id: '/lead/tasks',
-          label: 'Team Tasks',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           href: '/lead/tasks',
           icon: <NavSvgIcon name="check" />,
         },
@@ -1148,15 +900,9 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         },
         {
           id: '/meetings',
-<<<<<<< HEAD
-          label: 'Meetings',
+          label: 'Calendar',
           href: '/meetings',
           icon: <NavSvgIcon name="calendar" />,
-=======
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         },
         {
           id: '/expenses',
@@ -1164,41 +910,16 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/expenses',
           icon: <NavSvgIcon name="file-text" />,
         },
-<<<<<<< HEAD
         {
           id: '/lead/reports',
           label: 'Reports',
-=======
-      ],
-    });
-
-    groups.push({
-      id: 'lead-management',
-      label: 'Team Operations',
-      items: [
-        {
-          id: '/lead/approvals',
-          label: 'Leave Approvals',
-          href: '/lead/approvals',
-          icon: <NavSvgIcon name="check" />,
-          count: 2,
-          countTone: 'attention',
-        },
-        {
-          id: '/lead/reports',
-          label: 'Team Reports',
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           href: '/lead/reports',
           icon: <NavSvgIcon name="file-text" />,
         },
       ],
     });
   } else {
-<<<<<<< HEAD
     // Staff / Employee Self-Service Workspace
-=======
-    // Staff Groups
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
     groups.push({
       id: 'staff-workspace',
       label: 'My Workspace',
@@ -1234,7 +955,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="check" />,
         },
         {
-<<<<<<< HEAD
           id: '/projects',
           label: 'Projects',
           href: '/projects',
@@ -1242,15 +962,9 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         },
         {
           id: '/meetings',
-          label: 'Meetings',
+          label: 'Calendar',
           href: '/meetings',
           icon: <NavSvgIcon name="calendar" />,
-=======
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         },
         {
           id: '/expenses',

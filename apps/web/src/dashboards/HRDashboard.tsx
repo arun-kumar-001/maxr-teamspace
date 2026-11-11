@@ -1,7 +1,6 @@
-<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../api/client';
-import { Button, StatusPill } from '../components/ui';
+import { Button, StatusPill, SegmentedControl } from '../components/ui';
 import { fetchDepartments, fetchEmployeeDirectory } from '../features/employees/api/employees';
 
 export interface HRDashboardProps {
@@ -11,71 +10,13 @@ export interface HRDashboardProps {
 interface DeptDistributionItem {
   name: string;
   count: number;
-  status: string;
+  percentage: number;
+  barColor: string;
+  turnout: string;
+  budget: string;
 }
 
-export function HRDashboard({ onNavigate }: HRDashboardProps) {
-  const [headcount, setHeadcount] = useState<number | null>(null);
-  const [deptDistribution, setDeptDistribution] = useState<DeptDistributionItem[]>([]);
-  const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
-
-  const navigate = (path: string) => {
-    if (onNavigate) {
-      onNavigate(path);
-    } else if (typeof window !== 'undefined') {
-      window.location.href = path;
-    }
-  };
-
-  useEffect(() => {
-    let mounted = true;
-    async function loadHrTelemetry() {
-      const [empRes, deptRes, appRes] = await Promise.allSettled([
-        fetchEmployeeDirectory({ pageSize: 100 }),
-        fetchDepartments(),
-        apiFetch('/api/v1/approvals?status=pending&pageSize=1').then((r) =>
-          r.ok ? r.json() : null,
-        ),
-      ]);
-
-      if (!mounted) return;
-
-      if (empRes.status === 'fulfilled') {
-        const employees = empRes.value.data || [];
-        setHeadcount(empRes.value.meta?.total ?? employees.length);
-
-        if (deptRes.status === 'fulfilled' && deptRes.value.length > 0) {
-          const counts = new Map<string, number>();
-          for (const emp of employees) {
-            const name = emp.department?.name || 'Unassigned';
-            counts.set(name, (counts.get(name) ?? 0) + 1);
-          }
-          const items: DeptDistributionItem[] = deptRes.value.map((d) => ({
-            name: d.name,
-            count: counts.get(d.name) ?? 0,
-            status: 'Active',
-          }));
-          setDeptDistribution(items);
-        }
-      }
-
-      if (appRes.status === 'fulfilled' && typeof appRes.value?.meta?.total === 'number') {
-        setPendingApprovals(appRes.value.meta.total);
-      }
-    }
-
-    loadHrTelemetry().catch(() => {});
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  return (
-    <div className="space-y-6" data-testid="hr-dashboard">
-      {/* Top Banner */}
-=======
-import { useState } from 'react';
-import { Button, StatusPill, SegmentedControl } from '../components/ui';
+const DEPT_BAR_COLORS = ['bg-primary', 'bg-chart-1', 'bg-chart-4', 'bg-chart-3'];
 
 // Outline SVG icons matching DESIGN.md style (zero external dependencies)
 function UsersIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -272,17 +213,73 @@ function SparklesIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-export function HRDashboard() {
+export function HRDashboard({ onNavigate }: HRDashboardProps) {
   const [timeRange, setTimeRange] = useState('week');
   const [activeChartMetric, setActiveChartMetric] = useState<'attendance' | 'turnout' | 'leaves'>(
     'attendance',
   );
+  const [headcount, setHeadcount] = useState<number | null>(null);
+  const [deptDistribution, setDeptDistribution] = useState<DeptDistributionItem[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
 
   const navigateTo = (path: string) => {
-    if (typeof window !== 'undefined') {
+    if (onNavigate) {
+      onNavigate(path);
+    } else if (typeof window !== 'undefined') {
       window.location.assign(path);
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadHrTelemetry() {
+      const [empRes, deptRes, appRes] = await Promise.allSettled([
+        fetchEmployeeDirectory({ pageSize: 100 }),
+        fetchDepartments(),
+        apiFetch('/api/v1/approvals?status=pending&pageSize=1').then((r) =>
+          r.ok ? r.json() : null,
+        ),
+      ]);
+
+      if (!mounted) return;
+
+      if (empRes.status === 'fulfilled') {
+        const employees = empRes.value.data || [];
+        const total = empRes.value.meta?.total ?? employees.length;
+        setHeadcount(total);
+
+        if (deptRes.status === 'fulfilled' && deptRes.value.length > 0) {
+          const counts = new Map<string, number>();
+          for (const emp of employees) {
+            const name = emp.department?.name || 'Unassigned';
+            counts.set(name, (counts.get(name) ?? 0) + 1);
+          }
+          const denom = Math.max(total, employees.length, 1);
+          const items: DeptDistributionItem[] = deptRes.value.map((d, idx) => {
+            const count = counts.get(d.name) ?? 0;
+            return {
+              name: d.name,
+              count,
+              percentage: Math.round((count / denom) * 100),
+              barColor: DEPT_BAR_COLORS[idx % DEPT_BAR_COLORS.length] ?? 'bg-primary',
+              turnout: 'Active',
+              budget: 'On track',
+            };
+          });
+          setDeptDistribution(items);
+        }
+      }
+
+      if (appRes.status === 'fulfilled' && typeof appRes.value?.meta?.total === 'number') {
+        setPendingApprovals(appRes.value.meta.total);
+      }
+    }
+
+    loadHrTelemetry().catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // 7-day attendance trend data points (Mon - Sun)
   const attendanceTrendData = [
@@ -296,15 +293,9 @@ export function HRDashboard() {
   return (
     <div className="space-y-6 max-w-[1536px] mx-auto pb-10" data-testid="hr-dashboard">
       {/* Top Page Header */}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-<<<<<<< HEAD
-            <h1 className="text-xl sm:text-2xl font-bold text-text font-display">
-              HR Management Overview
-            </h1>
-=======
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-soft text-primary-strong border border-primary-soft-border">
               <CalendarIcon className="w-3.5 h-3.5" />
               <span>Thursday &middot; Nov 5, 2026</span>
@@ -313,7 +304,6 @@ export function HRDashboard() {
               <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
               Shift Active (09:00 - 18:00)
             </span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-text font-display tracking-tight">
             HR Management Overview
@@ -322,14 +312,6 @@ export function HRDashboard() {
             Workforce headcount, onboarding pipeline, and leave policy status
           </p>
         </div>
-<<<<<<< HEAD
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="min-h-[44px]"
-            onClick={() => navigate('/hr/reports')}
-=======
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Button
@@ -338,7 +320,6 @@ export function HRDashboard() {
             className="min-h-[44px] shadow-sm"
             leftIcon={<FileTextIcon />}
             onClick={() => navigateTo('/hr/reports')}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           >
             Workforce Report
           </Button>
@@ -346,12 +327,8 @@ export function HRDashboard() {
             variant="primary"
             size="sm"
             className="min-h-[44px]"
-<<<<<<< HEAD
-            onClick={() => navigate('/hr/employees/new')}
-=======
             leftIcon={<PlusIcon />}
             onClick={() => navigateTo('/employees/new')}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           >
             Onboard Employee
           </Button>
@@ -360,16 +337,6 @@ export function HRDashboard() {
 
       {/* 4 Core HR Operational KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-<<<<<<< HEAD
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Total Headcount
-          </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">
-            {headcount ?? 124}
-          </p>
-          <p className="mt-1 text-xs text-positive-ink font-medium">Active workforce records</p>
-=======
         {/* Card 1: Total Headcount */}
         <div className="p-5 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
           <div className="flex items-center justify-between">
@@ -383,7 +350,7 @@ export function HRDashboard() {
           <div className="mt-4">
             <div className="flex items-baseline gap-2">
               <span className="text-3xl sm:text-4xl font-bold text-text font-display tabular-nums">
-                124
+                {headcount ?? 124}
               </span>
               <span className="text-xs font-medium text-text-muted">active employees</span>
             </div>
@@ -395,7 +362,6 @@ export function HRDashboard() {
               <span className="text-text-muted">118 Full-time &middot; 6 Contract</span>
             </div>
           </div>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         </div>
 
         {/* Card 2: Today's Turnout / Attendance */}
@@ -427,16 +393,6 @@ export function HRDashboard() {
           </div>
         </div>
 
-<<<<<<< HEAD
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Pending Approvals
-          </p>
-          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-primary-ink font-display">
-            {pendingApprovals ?? 6}
-          </p>
-          <p className="mt-1 text-xs text-text-muted">Leave &amp; correction queue</p>
-=======
         {/* Card 3: Onboarding Pipeline */}
         <div className="p-5 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
           <div className="flex items-center justify-between">
@@ -459,7 +415,6 @@ export function HRDashboard() {
               <span className="font-semibold text-primary-ink">2 Join next week</span>
             </div>
           </div>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         </div>
 
         {/* Card 4: Pending HR Approvals (Action Center) */}
@@ -475,7 +430,7 @@ export function HRDashboard() {
           <div className="mt-4">
             <div className="flex items-baseline gap-2">
               <span className="text-3xl sm:text-4xl font-bold text-negative-ink font-display tabular-nums">
-                7
+                {pendingApprovals ?? 7}
               </span>
               <span className="text-xs font-medium text-text-muted">require HR review</span>
             </div>
@@ -483,7 +438,7 @@ export function HRDashboard() {
               <span className="font-semibold text-text">4 Leave &middot; 3 Correction</span>
               <button
                 type="button"
-                onClick={() => navigateTo('/hr/policies')}
+                onClick={() => navigateTo('/approvals')}
                 className="text-primary-ink font-semibold hover:underline"
               >
                 Review &rarr;
@@ -679,21 +634,6 @@ export function HRDashboard() {
       {/* Main Two Column Layout: Onboarding Pipeline & Department Capacity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Onboarding Checklist Summary (4-step per AGENTS.md §9) */}
-<<<<<<< HEAD
-        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-text font-display">
-              4-Step Onboarding Pipeline (AGENTS.md §9)
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/hr/lifecycle')}
-              className="text-xs"
-            >
-              View Board
-            </Button>
-=======
         <div className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -716,7 +656,6 @@ export function HRDashboard() {
               <span>View Lifecycle</span>
               <ArrowUpRightIcon className="w-3.5 h-3.5" />
             </button>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
           </div>
 
           {/* 4-Step Visual Progress Breadcrumb */}
@@ -780,12 +719,7 @@ export function HRDashboard() {
             ].map((candidate, idx) => (
               <div
                 key={idx}
-<<<<<<< HEAD
-                className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
-                onClick={() => navigate('/hr/lifecycle')}
-=======
                 className="p-3 bg-surface-raised border border-border rounded-tile flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-border-strong transition-colors"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="w-9 h-9 rounded-full bg-primary-soft text-primary-strong flex items-center justify-center font-bold text-xs shrink-0">
@@ -822,43 +756,6 @@ export function HRDashboard() {
           </div>
         </div>
 
-<<<<<<< HEAD
-        {/* Department Distribution */}
-        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-text font-display">Department Distribution</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/hr/departments')}
-              className="text-xs"
-            >
-              Manage
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {(deptDistribution.length > 0
-              ? deptDistribution
-              : [
-                  { name: 'Engineering', count: 62, status: 'On track' },
-                  { name: 'Product & Design', count: 18, status: 'On track' },
-                  { name: 'Human Resources', count: 12, status: 'Optimal' },
-                  { name: 'Operations & Support', count: 32, status: 'On track' },
-                ]
-            ).map((dept) => (
-              <div
-                key={dept.name}
-                className="flex items-center justify-between text-xs py-2 border-b border-border last:border-b-0 cursor-pointer hover:bg-surface-muted/30 px-1 rounded transition-colors"
-                onClick={() => navigate('/hr/departments')}
-              >
-                <div>
-                  <p className="font-semibold text-text">{dept.name}</p>
-                  <p className="text-[11px] text-text-muted">{dept.count} team members</p>
-                </div>
-                <span className="text-[11px] font-medium text-positive-ink bg-positive-soft px-2 py-0.5 rounded-full">
-                  {dept.status}
-                </span>
-=======
         {/* Department Distribution & Capacity */}
         <div className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5">
           <div className="flex items-start justify-between gap-3">
@@ -881,40 +778,43 @@ export function HRDashboard() {
           </div>
 
           <div className="space-y-4">
-            {[
-              {
-                name: 'Engineering',
-                count: 62,
-                percentage: 50,
-                barColor: 'bg-primary',
-                turnout: '98% present',
-                budget: 'Optimal',
-              },
-              {
-                name: 'Operations & Support',
-                count: 32,
-                percentage: 26,
-                barColor: 'bg-chart-1',
-                turnout: '94% present',
-                budget: 'On track',
-              },
-              {
-                name: 'Product & Design',
-                count: 18,
-                percentage: 15,
-                barColor: 'bg-chart-4',
-                turnout: '94% present',
-                budget: 'On track',
-              },
-              {
-                name: 'Human Resources',
-                count: 12,
-                percentage: 9,
-                barColor: 'bg-chart-3',
-                turnout: '100% present',
-                budget: 'Optimal',
-              },
-            ].map((dept) => (
+            {(deptDistribution.length > 0
+              ? deptDistribution
+              : [
+                  {
+                    name: 'Engineering',
+                    count: 62,
+                    percentage: 50,
+                    barColor: 'bg-primary',
+                    turnout: '98% present',
+                    budget: 'Optimal',
+                  },
+                  {
+                    name: 'Operations & Support',
+                    count: 32,
+                    percentage: 26,
+                    barColor: 'bg-chart-1',
+                    turnout: '94% present',
+                    budget: 'On track',
+                  },
+                  {
+                    name: 'Product & Design',
+                    count: 18,
+                    percentage: 15,
+                    barColor: 'bg-chart-4',
+                    turnout: '94% present',
+                    budget: 'On track',
+                  },
+                  {
+                    name: 'Human Resources',
+                    count: 12,
+                    percentage: 9,
+                    barColor: 'bg-chart-3',
+                    turnout: '100% present',
+                    budget: 'Optimal',
+                  },
+                ]
+            ).map((dept) => (
               <div key={dept.name} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
@@ -938,15 +838,14 @@ export function HRDashboard() {
                     style={{ width: `${dept.percentage}%` }}
                   />
                 </div>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
               </div>
             ))}
           </div>
 
           {/* Department Breakdown Footnote */}
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-text-muted">
-            <span>4 Departments &middot; 8 Designations</span>
-            <span className="font-semibold text-text">124 Total Headcount</span>
+            <span>{deptDistribution.length || 4} Departments &middot; 8 Designations</span>
+            <span className="font-semibold text-text">{headcount ?? 124} Total Headcount</span>
           </div>
         </div>
       </div>

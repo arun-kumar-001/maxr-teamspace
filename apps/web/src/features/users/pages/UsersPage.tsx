@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ROLES, type Role } from '@maxr/shared';
-import { Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
-import { useAuth } from '../../../auth/AuthContext';
-import { useUsers } from '../hooks/useUsers';
-import { useRolesAndPermissions } from '../hooks/useRolesAndPermissions';
-=======
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES, type Role } from '@maxr/shared';
@@ -25,7 +16,6 @@ import { useRolesAndPermissions } from '../hooks/useRolesAndPermissions';
 import { updateUserStatus, UsersApiError } from '../api/usersApi';
 import { getAuditLogs } from '../../audit-logs/api/auditLogsApi';
 import type { AuditLogItem } from '../../audit-logs/types';
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
 import { UserCard } from '../components/UserCard';
 import { RoleAssignmentModal } from '../components/RoleAssignmentModal';
 import { AddUserModal } from '../components/AddUserModal';
@@ -553,29 +543,6 @@ export function UsersPage() {
           </p>
         </div>
 
-<<<<<<< HEAD
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Decorative Glass Badge Graphic */}
-          <div className="hidden lg:flex items-center gap-3 p-3 rounded-2xl bg-surface/80 backdrop-blur-md border border-border/80 shadow-card">
-            <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0">
-              <IconShieldCheck className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div className="text-left text-xs pr-2">
-              <span className="block font-bold text-text">RBAC Enforcement</span>
-              <span className="text-[11px] text-text-muted">4 Active System Roles</span>
-            </div>
-          </div>
-
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => navigate('/admin/employees/new')}
-            className="min-h-[44px] shadow-xs hover:shadow-md transition-all duration-200"
-            data-testid="add-user-btn"
-          >
-            + Add User
-          </Button>
-=======
         {/* Decorative Glass Badge Graphic (from reference image) */}
         <div className="hidden lg:flex items-center gap-3 p-3 rounded-2xl bg-surface/80 backdrop-blur-md border border-border/80 shadow-card">
           <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0">
@@ -585,7 +552,6 @@ export function UsersPage() {
             <span className="block font-bold text-text">RBAC Enforcement</span>
             <span className="text-[11px] text-text-muted">4 Active System Roles</span>
           </div>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         </div>
       </section>
 
@@ -606,11 +572,7 @@ export function UsersPage() {
               </span>
             </div>
           </div>
-<<<<<<< HEAD
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">&uarr; 0%</span>
-=======
           <span className="text-xs font-medium text-text-muted shrink-0">Accounts</span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         </div>
 
         {/* Card 2: Active Users */}
@@ -631,13 +593,9 @@ export function UsersPage() {
               </span>
             </div>
           </div>
-<<<<<<< HEAD
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">&uarr; 100%</span>
-=======
           <span className="text-xs font-semibold text-emerald-600 shrink-0">
             {users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'}
           </span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         </div>
 
         {/* Card 3: Inactive Users */}
@@ -658,13 +616,9 @@ export function UsersPage() {
               </span>
             </div>
           </div>
-<<<<<<< HEAD
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">&uarr; 0%</span>
-=======
           <span className="text-xs font-medium text-text-muted shrink-0">
             {users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'}
           </span>
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
         </div>
 
         {/* Card 4: Total Roles */}
@@ -737,18 +691,11 @@ export function UsersPage() {
         </div>
 
         {/* Add User Action Button */}
-<<<<<<< HEAD
-        {hasAccess && (
-          <Button
-            variant="primary"
-            onClick={() => navigate('/employees/new')}
-=======
         {isAdmin && (
           <Button
             variant="primary"
             onClick={() => setIsAddUserOpen(true)}
             data-testid="add-user-btn"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             className="bg-primary hover:bg-primary-deep text-sidebar font-semibold px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all duration-200 hover:scale-102 hover:shadow-md active:scale-95 shrink-0"
           >
             <IconPlus className="w-4 h-4" />
@@ -1003,16 +950,6 @@ export function UsersPage() {
                                   <span className="sr-only">Manage Roles</span>
                                 </button>
                               )}
-<<<<<<< HEAD
-                              <button
-                                type="button"
-                                onClick={() => setEditingUser(u)}
-                                title="Account Options"
-                                className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-raised transition-all duration-150 shadow-2xs active:scale-95"
-                              >
-                                <IconMoreVertical className="w-3.5 h-3.5" />
-                              </button>
-=======
                               {isAdmin && (
                                 <button
                                   type="button"
@@ -1037,7 +974,6 @@ export function UsersPage() {
                                   </span>
                                 </button>
                               )}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                             </div>
                           </td>
                         </tr>
@@ -1057,15 +993,12 @@ export function UsersPage() {
                     user={u}
                     canAssignRoles={isAdmin}
                     onAssignRoles={(target) => setEditingUser(target)}
-<<<<<<< HEAD
-=======
                     canToggleStatus={isAdmin}
                     disableDeactivate={u.id === currentUserId}
                     onToggleStatus={(target) => {
                       setStatusError(null);
                       setStatusTarget(target);
                     }}
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                   />
                 ))}
               </div>
@@ -1244,16 +1177,11 @@ export function UsersPage() {
 
       {/* TAB 3: Access History (Supported by Audit Logs) */}
       {activeTab === 'access-history' && isAdmin && (
-<<<<<<< HEAD
-        <div className="bg-surface/90 backdrop-blur-md border border-border/80 rounded-card shadow-card p-6 space-y-4 maxr-fade-in">
-          <div className="flex items-center justify-between">
-=======
         <div
           className="bg-surface/90 backdrop-blur-md border border-border/80 rounded-card shadow-card p-6 space-y-4 maxr-fade-in"
           data-testid="users-access-history-tab"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             <div className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <IconClock className="w-5 h-5" />
@@ -1261,11 +1189,7 @@ export function UsersPage() {
               <div>
                 <h3 className="text-base font-bold text-text">Access & Security History</h3>
                 <p className="text-xs text-text-muted">
-<<<<<<< HEAD
-                  Real-time authentication and permission modification events.
-=======
                   Recent user provisioning, status updates, and role modification events.
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
                 </p>
               </div>
             </div>
@@ -1273,28 +1197,13 @@ export function UsersPage() {
               variant="outline"
               size="sm"
               onClick={() => navigate('/admin/audit')}
-<<<<<<< HEAD
-              className="text-xs flex items-center gap-1.5"
-=======
               className="text-xs flex items-center gap-1.5 self-start sm:self-auto"
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
             >
               <span>View Full Audit Logs</span>
               <IconChevronRight className="w-3.5 h-3.5" />
             </Button>
           </div>
 
-<<<<<<< HEAD
-          <div className="p-4 rounded-xl bg-surface-muted/60 border border-border/80 text-xs text-text-muted">
-            <p>
-              Access audit tracking is active. All login attempts, credential changes, and role
-              reassignments are recorded with tamper-evident cryptographic sequencing.
-            </p>
-          </div>
-        </div>
-      )}
-
-=======
           {isAccessLogsLoading ? (
             <div className="space-y-2.5" data-testid="access-history-loading">
               <Skeleton className="h-12 w-full rounded-xl" />
@@ -1468,7 +1377,6 @@ export function UsersPage() {
         </Modal>
       )}
 
->>>>>>> 010aed118b9fd3e192272912cefe1b071d362820
       {/* Role Assignment Modal */}
       {editingUser && (
         <RoleAssignmentModal
