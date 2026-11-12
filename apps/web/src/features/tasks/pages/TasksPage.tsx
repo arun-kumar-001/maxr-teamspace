@@ -51,6 +51,7 @@ export function TasksPage({ initialScope }: TasksPageProps) {
     createTask,
     updateTask,
     changeStatus,
+    toggleDailyDone,
   } = useTasks({ scope: defaultScope, autoFetch: true });
 
   // Dynamic assignee quick-filter list derived from real loaded CRM tasks
@@ -90,6 +91,13 @@ export function TasksPage({ initialScope }: TasksPageProps) {
 
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
     const updated = await changeStatus(taskId, newStatus);
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask(updated);
+    }
+  };
+
+  const handleToggleDailyDone = async (taskId: string) => {
+    const updated = await toggleDailyDone(taskId);
     if (selectedTask && selectedTask.id === taskId) {
       setSelectedTask(updated);
     }
@@ -262,6 +270,7 @@ export function TasksPage({ initialScope }: TasksPageProps) {
           tasks={allTasks}
           onSelectTask={handleSelectTask}
           onStatusChange={handleStatusChange}
+          onToggleDailyDone={handleToggleDailyDone}
           currentEmployeeId={user?.employeeId ?? undefined}
           isAdmin={isAdmin}
         />
@@ -270,6 +279,7 @@ export function TasksPage({ initialScope }: TasksPageProps) {
           columns={visibleBoardColumns}
           onSelectTask={handleSelectTask}
           onStatusChange={handleStatusChange}
+          onToggleDailyDone={handleToggleDailyDone}
           onQuickCreateClick={() => setIsCreateOpen(true)}
           canCreate={canManage}
           currentEmployeeId={user?.employeeId ?? undefined}

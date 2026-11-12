@@ -50,7 +50,7 @@ export const createEmployeeSchema = z
       .optional(),
     permanentAddress: z.string().trim().max(500).optional(),
     currentAddress: z.string().trim().max(500).optional(),
-    bloodGroup: z.enum(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']).optional(),
+    bloodGroup: z.string().trim().min(1).max(10).optional(),
     panNumber: z
       .string()
       .trim()
@@ -62,6 +62,20 @@ export const createEmployeeSchema = z
       .trim()
       .regex(/^\d{12}$/, 'Aadhaar number must be 12 digits')
       .optional(),
+    bankAccountHolder: z.string().trim().min(1).max(150).optional(),
+    bankName: z.string().trim().min(1).max(150).optional(),
+    bankAccountNumber: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9]{6,30}$/, 'Account number must be 6 to 30 letters or digits')
+      .optional(),
+    bankIfscCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Use 11-character IFSC format (e.g. HDFC0001234)')
+      .optional(),
+    bankBranch: z.string().trim().min(1).max(150).optional(),
   })
   .strict();
 

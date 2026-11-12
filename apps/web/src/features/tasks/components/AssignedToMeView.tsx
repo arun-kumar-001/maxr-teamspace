@@ -7,6 +7,7 @@ export interface AssignedToMeViewProps {
   tasks: Task[];
   onSelectTask: (task: Task) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onToggleDailyDone?: (taskId: string) => void;
   currentEmployeeId?: string;
   isAdmin?: boolean;
 }
@@ -15,6 +16,7 @@ export function AssignedToMeView({
   tasks,
   onSelectTask,
   onStatusChange,
+  onToggleDailyDone,
   currentEmployeeId,
   isAdmin = false,
 }: AssignedToMeViewProps) {
@@ -27,10 +29,10 @@ export function AssignedToMeView({
   const completedCount = myTasks.filter((t) => t.status === 'completed').length;
 
   const todayTasks = openMine.filter(
-    (t) => t.isOverdue || (t.dueDate !== null && t.dueDate <= todayStr),
+    (t) => t.isOverdue || t.isDaily || (t.dueDate !== null && t.dueDate <= todayStr),
   );
   const laterTasks = openMine.filter(
-    (t) => !t.isOverdue && (t.dueDate === null || t.dueDate > todayStr),
+    (t) => !t.isDaily && !t.isOverdue && (t.dueDate === null || t.dueDate > todayStr),
   );
 
   const renderAgendaList = (title: string, items: Task[], emptyLabel: string) => (
@@ -58,6 +60,9 @@ export function AssignedToMeView({
               return true;
             });
 
+            const isDoneToday = Boolean(task.isDaily && task.dailyLastDoneDate === todayStr);
+            const isInProgress = task.status === 'in_progress';
+
             return (
               <li
                 key={task.id}
@@ -73,7 +78,20 @@ export function AssignedToMeView({
                     aria-hidden="true"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-text truncate">{task.title}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-sm font-semibold text-text truncate">{task.title}</p>
+                      {task.isDaily && (
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 ${
+                            isDoneToday
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-primary-soft text-primary-ink border-primary-strong/20'
+                          }`}
+                        >
+                          {isDoneToday ? 'Daily ✓' : 'Daily'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-text-muted truncate mt-0.5">
                       {task.projectName ?? 'Standalone task'} ·{' '}
                       <span className={task.isOverdue ? 'text-danger font-semibold' : ''}>
@@ -87,16 +105,77 @@ export function AssignedToMeView({
                   className="flex items-center gap-2 shrink-0"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  {task.isDaily && onToggleDailyDone && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleDailyDone(task.id)}
+                      className={`px-2 py-1 rounded-input border text-[11px] font-medium transition-colors ${
+                        isDoneToday
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          : 'border-primary-strong/30 bg-primary-soft/60 text-primary-ink hover:bg-primary-soft'
+                      }`}
+                      data-testid={`assigned-daily-done-${task.id}`}
+                    >
+                      {isDoneToday ? '✓ Done Today' : 'Mark Done Today'}
+                    </button>
+                  )}
                   <TaskStatusPill status={task.status} size="sm" />
                   {onStatusChange && nextMove && (
                     <button
                       type="button"
                       onClick={() => onStatusChange(task.id, nextMove)}
-                      title={`Move to ${TASK_STATUS_LABELS[nextMove]}`}
-                      aria-label={`Move ${task.title} to ${TASK_STATUS_LABELS[nextMove]}`}
-                      className="w-7 h-7 rounded-input border border-border bg-surface-muted hover:bg-primary-soft hover:text-primary-ink flex items-center justify-center transition-colors text-xs"
+                      title={
+                        isInProgress
+                          ? 'Pause (Move to To Do)'
+                          : `Move to ${TASK_STATUS_LABELS[nextMove]}`
+                      }
+                      aria-label={
+                        isInProgress
+                          ? `Pause ${task.title} and move to To Do`
+                          : `Move ${task.title} to ${TASK_STATUS_LABELS[nextMove]}`
+                      }
+                      data-testid={`assigned-toggle-${task.id}`}
+                      className={`w-7 h-7 rounded-input border flex items-center justify-center transition-colors text-xs ${
+                        isInProgress
+                          ? 'border-primary-strong/40 bg-primary-soft text-primary-ink hover:bg-surface-muted hover:text-text'
+                          : 'border-border bg-surface-muted hover:bg-primary-soft hover:text-primary-ink'
+                      }`}
                     >
-                      ▶
+                      {isInProgress ? (
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <rect x="6" y="5" width="4" height="14" rx="1" />
+                          <rect x="14" y="5" width="4" height="14" rx="1" />
+                        </svg>
+                      ) : nextMove === 'completed' ? (
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2.2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M7 5v14l11-7z" />
+                        </svg>
+                      )}
                     </button>
                   )}
                 </div>

@@ -20,6 +20,8 @@ export interface Task {
   dueDate: string | null;
   /** Past its due date on the company calendar and not completed. */
   isOverdue: boolean;
+  isDaily: boolean;
+  dailyLastDoneDate: string | null;
   completedAt: string | null;
   /** Compare-and-set token for edits. */
   version: number;
@@ -41,6 +43,7 @@ export interface NewTask {
   assignerEmployeeId: string;
   priority: TaskPriority;
   dueDate: string | null;
+  isDaily?: boolean;
 }
 
 export interface TaskValues {
@@ -51,6 +54,7 @@ export interface TaskValues {
   priority: TaskPriority;
   dueDate: string | null;
   status: TaskStatus;
+  isDaily?: boolean;
 }
 
 export interface AssigneeRow {

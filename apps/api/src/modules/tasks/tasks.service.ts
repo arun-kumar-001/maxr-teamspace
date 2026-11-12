@@ -120,6 +120,7 @@ export class TasksService {
         assignerEmployeeId: caller.employeeId,
         priority: input.priority,
         dueDate: input.dueDate ?? null,
+        isDaily: input.isDaily ?? false,
       });
       // The title is left out of the trail: tasks can name people and clients.
       await audit.record(
@@ -193,6 +194,7 @@ export class TasksService {
         priority: input.priority ?? current.priority,
         dueDate: input.dueDate === undefined ? current.dueDate : input.dueDate,
         status: reassigned ? 'todo' : current.status,
+        isDaily: input.isDaily === undefined ? current.isDaily : input.isDaily,
       };
       if (next.dueDate && next.dueDate !== current.dueDate && next.dueDate < today) {
         throw unprocessable('The due date cannot be in the past');
@@ -290,6 +292,7 @@ export class TasksService {
         priority: current.priority,
         dueDate: current.dueDate,
         status: to,
+        isDaily: current.isDaily,
       });
       await audit.record(
         {
@@ -316,6 +319,46 @@ export class TasksService {
       });
     });
     await events.flush(this.platform.events);
+    return this.get(id, viewer);
+  }
+
+  /**
+   * Toggles whether a daily recurring task has been completed for today.
+   * Available to the assignee, assigner, or an Admin.
+   */
+  async toggleDailyDone(id: string, caller: TaskCaller, viewer: TaskViewer): Promise<Task> {
+    await this.get(id, viewer);
+    const today = await this.today();
+    const audit = this.platform.audit.withContext({
+      actorId: caller.actorId,
+      requestId: caller.requestId,
+    });
+    await this.repository.transaction(async (tx) => {
+      const current = await this.repository.lockForUpdate(tx, id);
+      if (!current) throw notFound('Task not found');
+      if (!current.isDaily) {
+        throw unprocessable('Only daily recurring tasks can be marked done for today');
+      }
+      if (
+        !viewer.all &&
+        current.assigneeEmployeeId !== caller.employeeId &&
+        current.assignerEmployeeId !== caller.employeeId
+      ) {
+        throw forbidden('Only the assignee, assigner, or an Admin can update daily completion');
+      }
+      const nextDate = current.dailyLastDoneDate === today ? null : today;
+      await this.repository.setDailyLastDoneDate(tx, id, nextDate);
+      await audit.record(
+        {
+          action: 'task.daily_done',
+          outcome: 'success',
+          entityType: 'task',
+          entityId: id,
+          changes: { dailyLastDoneDate: { from: current.dailyLastDoneDate, to: nextDate } },
+        },
+        { transaction: tx },
+      );
+    });
     return this.get(id, viewer);
   }
 

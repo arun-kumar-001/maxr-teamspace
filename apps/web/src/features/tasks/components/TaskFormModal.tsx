@@ -37,6 +37,7 @@ export function TaskFormModal({
   const [dueDate, setDueDate] = useState('');
   const [projectId, setProjectId] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
+  const [isDaily, setIsDaily] = useState(false);
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
@@ -57,6 +58,7 @@ export function TaskFormModal({
       setDueDate(initialTask.dueDate ?? '');
       setProjectId(initialTask.projectId ?? '');
       setAssigneeId(initialTask.assigneeEmployeeId);
+      setIsDaily(Boolean(initialTask.isDaily));
     } else {
       setTitle('');
       setDescription('');
@@ -64,6 +66,7 @@ export function TaskFormModal({
       setDueDate('');
       setProjectId(defaultProjectId ?? '');
       setAssigneeId(defaultAssigneeId ?? '');
+      setIsDaily(false);
     }
 
     // Load available projects and employees for dropdowns
@@ -118,6 +121,7 @@ export function TaskFormModal({
           priority,
           dueDate: dueDate || undefined,
           projectId: projectId || undefined,
+          isDaily,
         };
         await onSubmitCreate(input);
       } else {
@@ -129,6 +133,7 @@ export function TaskFormModal({
           priority,
           dueDate: dueDate || null,
           projectId: projectId || null,
+          isDaily,
         };
         await onSubmitEdit(input);
       }
@@ -267,6 +272,28 @@ export function TaskFormModal({
             />
           </FormField>
         </div>
+
+        <label
+          htmlFor="task-is-daily"
+          className="flex items-start gap-3 p-3 rounded-card border border-border bg-surface-muted/50 cursor-pointer hover:border-primary-strong/40 transition-colors"
+        >
+          <input
+            id="task-is-daily"
+            type="checkbox"
+            checked={isDaily}
+            onChange={(e) => setIsDaily(e.target.checked)}
+            disabled={submitting}
+            data-testid="checkbox-task-daily"
+            className="mt-0.5 rounded border-border text-primary-deep focus:ring-primary"
+          />
+          <div className="space-y-0.5">
+            <span className="text-sm font-medium text-text block">Daily Recurring Task</span>
+            <span className="text-xs text-text-muted block">
+              Repeats every day (e.g. social media posts, daily updates) and stays in your Today /
+              Daily Updates list.
+            </span>
+          </div>
+        </label>
       </form>
     </Modal>
   );

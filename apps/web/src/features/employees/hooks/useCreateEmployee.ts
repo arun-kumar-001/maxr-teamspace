@@ -82,6 +82,11 @@ export function useCreateEmployee({
     bloodGroup: initialPrefill?.bloodGroup ?? '',
     panNumber: initialPrefill?.panNumber ?? '',
     aadhaarNumber: initialPrefill?.aadhaarNumber ?? '',
+    bankAccountHolder: initialPrefill?.bankAccountHolder ?? '',
+    bankName: initialPrefill?.bankName ?? '',
+    bankAccountNumber: initialPrefill?.bankAccountNumber ?? '',
+    bankIfscCode: initialPrefill?.bankIfscCode ?? '',
+    bankBranch: initialPrefill?.bankBranch ?? '',
     departmentId: initialPrefill?.departmentId ?? '',
     designationId: initialPrefill?.designationId ?? '',
     managerId: initialPrefill?.managerId ?? '',
@@ -357,6 +362,22 @@ export function useCreateEmployee({
         }
         return undefined;
       }
+      case 'bankAccountNumber': {
+        const cleaned = value.replace(/\s+/g, '');
+        if (!cleaned) return undefined;
+        if (!/^[A-Za-z0-9]{6,30}$/.test(cleaned)) {
+          return 'Account number must be 6 to 30 letters or digits.';
+        }
+        return undefined;
+      }
+      case 'bankIfscCode': {
+        const trimmed = value.trim().toUpperCase();
+        if (!trimmed) return undefined;
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(trimmed)) {
+          return 'IFSC code must be 11 characters (e.g. HDFC0001234).';
+        }
+        return undefined;
+      }
       case 'departmentId': {
         if (!value.trim()) return 'Department is required.';
         return undefined;
@@ -429,6 +450,12 @@ export function useCreateEmployee({
 
       const aadhaarErr = validateField('aadhaarNumber', formData.aadhaarNumber);
       if (aadhaarErr) newErrors.aadhaarNumber = aadhaarErr;
+
+      const bankAccErr = validateField('bankAccountNumber', formData.bankAccountNumber);
+      if (bankAccErr) newErrors.bankAccountNumber = bankAccErr;
+
+      const bankIfscErr = validateField('bankIfscCode', formData.bankIfscCode);
+      if (bankIfscErr) newErrors.bankIfscCode = bankIfscErr;
     } else if (stepNumber === 2) {
       const codeErr = validateField('employeeCode', formData.employeeCode);
       if (codeErr) newErrors.employeeCode = codeErr;
@@ -460,6 +487,8 @@ export function useCreateEmployee({
       'phone',
       'panNumber',
       'aadhaarNumber',
+      'bankAccountNumber',
+      'bankIfscCode',
       'departmentId',
       'designationId',
       'joiningDate',
@@ -494,9 +523,7 @@ export function useCreateEmployee({
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep((prev) => Math.min(prev + 1, 3));
-    }
+    setCurrentStep((prev) => Math.min(prev + 1, 3));
   };
 
   const prevStep = () => {
@@ -517,7 +544,9 @@ export function useCreateEmployee({
         validation.errors.phone ||
         validation.errors.additionalPhones ||
         validation.errors.panNumber ||
-        validation.errors.aadhaarNumber
+        validation.errors.aadhaarNumber ||
+        validation.errors.bankAccountNumber ||
+        validation.errors.bankIfscCode
       ) {
         setCurrentStep(1);
       } else if (
@@ -578,6 +607,21 @@ export function useCreateEmployee({
     if (formData.aadhaarNumber.trim()) {
       payload.aadhaarNumber = formData.aadhaarNumber.replace(/\s+/g, '');
     }
+    if (formData.bankAccountHolder.trim()) {
+      payload.bankAccountHolder = formData.bankAccountHolder.trim();
+    }
+    if (formData.bankName.trim()) {
+      payload.bankName = formData.bankName.trim();
+    }
+    if (formData.bankAccountNumber.trim()) {
+      payload.bankAccountNumber = formData.bankAccountNumber.replace(/\s+/g, '');
+    }
+    if (formData.bankIfscCode.trim()) {
+      payload.bankIfscCode = formData.bankIfscCode.trim().toUpperCase();
+    }
+    if (formData.bankBranch.trim()) {
+      payload.bankBranch = formData.bankBranch.trim();
+    }
 
     try {
       const result = await createEmployee(payload, idempotencyKeyRef.current);
@@ -634,6 +678,11 @@ export function useCreateEmployee({
       bloodGroup: '',
       panNumber: '',
       aadhaarNumber: '',
+      bankAccountHolder: '',
+      bankName: '',
+      bankAccountNumber: '',
+      bankIfscCode: '',
+      bankBranch: '',
       departmentId: '',
       designationId: '',
       managerId: '',
