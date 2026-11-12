@@ -63,6 +63,18 @@ export const employeeDetailSchema = z
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
     version: z.number().int(),
+    additionalEmails: z.array(z.string()).optional(),
+    additionalPhones: z.array(z.string()).optional(),
+    permanentAddress: z.string().nullable().optional(),
+    currentAddress: z.string().nullable().optional(),
+    bloodGroup: z.string().nullable().optional(),
+    panNumber: z.string().nullable().optional(),
+    aadhaarNumber: z.string().nullable().optional(),
+    bankAccountHolder: z.string().nullable().optional(),
+    bankName: z.string().nullable().optional(),
+    bankAccountNumber: z.string().nullable().optional(),
+    bankIfscCode: z.string().nullable().optional(),
+    bankBranch: z.string().nullable().optional(),
     account: z
       .object({
         userId: z.string().uuid().nullable(),

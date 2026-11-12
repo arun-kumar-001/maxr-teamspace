@@ -5,6 +5,7 @@ import {
   fetchMyTasks,
   fetchTeamTasks,
   TasksApiError,
+  toggleTaskDailyDone,
   updateTask,
 } from '../api/tasksApi';
 import type {
@@ -152,6 +153,12 @@ export function useTasks(options: UseTasksOptions = {}) {
     return updated;
   };
 
+  const handleToggleDailyDone = async (id: string): Promise<Task> => {
+    const updated = await toggleTaskDailyDone(id);
+    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    return updated;
+  };
+
   const switchScope = (newScope: 'mine' | 'team') => {
     setCurrentScope(newScope);
     setPage(1);
@@ -188,5 +195,6 @@ export function useTasks(options: UseTasksOptions = {}) {
     createTask: handleCreateTask,
     updateTask: handleUpdateTask,
     changeStatus: handleChangeStatus,
+    toggleDailyDone: handleToggleDailyDone,
   };
 }

@@ -12,12 +12,14 @@ const STEPS: StepItem[] = [
 
 export interface CreateEmployeeStepperProps {
   currentStep: number;
+  stepStatus?: Record<number, 'complete' | 'incomplete' | 'error'>;
   onStepClick?: (step: number) => void;
   className?: string;
 }
 
 export function CreateEmployeeStepper({
   currentStep,
+  stepStatus,
   onStepClick,
   className = '',
 }: CreateEmployeeStepperProps) {
@@ -56,7 +58,9 @@ export function CreateEmployeeStepper({
       <ol className="hidden sm:grid grid-cols-3 gap-3">
         {STEPS.map((step) => {
           const isCurrent = step.number === currentStep;
-          const isCompleted = step.number < currentStep;
+          const status = stepStatus?.[step.number];
+          const isError = status === 'error';
+          const isCompleted = status === 'complete' || (!status && step.number < currentStep);
 
           return (
             <li key={step.number} className="relative">
@@ -65,24 +69,32 @@ export function CreateEmployeeStepper({
                 disabled={!onStepClick}
                 onClick={() => onStepClick?.(step.number)}
                 aria-current={isCurrent ? 'step' : undefined}
-                className={`w-full text-left p-3.5 rounded-card border transition-all duration-300 flex items-center gap-3 select-none ${
+                className={`w-full text-left p-3.5 rounded-card border transition-all duration-200 flex items-center gap-3 select-none ${
                   isCurrent
-                    ? 'bg-primary-soft border-primary-strong ring-2 ring-primary/20 shadow-raised cursor-pointer'
-                    : isCompleted
-                      ? 'bg-surface border-border hover:bg-surface-muted hover:border-primary-strong/40 cursor-pointer'
-                      : 'bg-surface-muted border-border/70 hover:bg-surface hover:border-border-strong cursor-pointer'
+                    ? isError
+                      ? 'bg-rose-50/70 border-rose-400 ring-2 ring-rose-500/20 shadow-raised cursor-pointer'
+                      : 'bg-primary-soft border-primary-strong ring-2 ring-primary/20 shadow-raised cursor-pointer'
+                    : isError
+                      ? 'bg-rose-50/40 border-rose-300 hover:bg-rose-50 cursor-pointer'
+                      : isCompleted
+                        ? 'bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer'
+                        : 'bg-surface border-border hover:bg-surface-muted hover:border-border-strong cursor-pointer'
                 }`}
               >
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs shrink-0 transition-colors ${
-                    isCurrent
-                      ? 'bg-primary-deep text-white'
-                      : isCompleted
-                        ? 'bg-primary-strong text-white'
-                        : 'bg-border text-text-muted'
+                    isError
+                      ? 'bg-rose-600 text-white'
+                      : isCurrent
+                        ? 'bg-primary-deep text-white'
+                        : isCompleted
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-surface-muted border border-border-strong text-text-muted'
                   }`}
                 >
-                  {isCompleted ? (
+                  {isError ? (
+                    '!'
+                  ) : isCompleted ? (
                     <svg
                       className="w-4 h-4 stroke-current stroke-2 fill-none"
                       viewBox="0 0 24 24"
@@ -94,10 +106,16 @@ export function CreateEmployeeStepper({
                     step.number
                   )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p
                     className={`text-xs font-bold truncate ${
-                      isCurrent ? 'text-primary-ink' : 'text-text'
+                      isError
+                        ? 'text-rose-800'
+                        : isCurrent
+                          ? 'text-primary-ink'
+                          : isCompleted
+                            ? 'text-emerald-900'
+                            : 'text-text'
                     }`}
                   >
                     {step.label}

@@ -74,8 +74,10 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
       `INSERT INTO employees
          (employee_code, first_name, last_name, email, phone, department_id, designation_id,
           manager_id, status, joining_date, additional_emails, additional_phones,
-          permanent_address, current_address, blood_group, pan_number, aadhaar_number)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $13, $14, $15, $16)
+          permanent_address, current_address, blood_group, pan_number, aadhaar_number,
+          bank_account_holder, bank_name, bank_account_number, bank_ifsc_code, bank_branch)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $13, $14, $15, $16,
+               $17, $18, $19, $20, $21)
        RETURNING id, created_at, joining_date`,
       [
         dto.employeeCode,
@@ -94,6 +96,11 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
         dto.bloodGroup ?? null,
         dto.panNumber ?? null,
         dto.aadhaarNumber ?? null,
+        dto.bankAccountHolder ?? null,
+        dto.bankName ?? null,
+        dto.bankAccountNumber ?? null,
+        dto.bankIfscCode ?? null,
+        dto.bankBranch ?? null,
       ],
     );
     const row = employee.rows[0] as InsertedRow;

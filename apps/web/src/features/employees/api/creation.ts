@@ -99,6 +99,26 @@ export async function createEmployee(
     cleanBody.aadhaarNumber = payload.aadhaarNumber.replace(/\s+/g, '');
   }
 
+  if (payload.bankAccountHolder && payload.bankAccountHolder.trim()) {
+    cleanBody.bankAccountHolder = payload.bankAccountHolder.trim();
+  }
+
+  if (payload.bankName && payload.bankName.trim()) {
+    cleanBody.bankName = payload.bankName.trim();
+  }
+
+  if (payload.bankAccountNumber && payload.bankAccountNumber.trim()) {
+    cleanBody.bankAccountNumber = payload.bankAccountNumber.replace(/\s+/g, '');
+  }
+
+  if (payload.bankIfscCode && payload.bankIfscCode.trim()) {
+    cleanBody.bankIfscCode = payload.bankIfscCode.trim().toUpperCase();
+  }
+
+  if (payload.bankBranch && payload.bankBranch.trim()) {
+    cleanBody.bankBranch = payload.bankBranch.trim();
+  }
+
   const res = await apiFetch('/api/v1/employees', {
     method: 'POST',
     headers: {

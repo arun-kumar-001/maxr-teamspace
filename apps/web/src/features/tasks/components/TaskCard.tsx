@@ -6,6 +6,7 @@ export interface TaskCardProps {
   task: Task;
   onSelect: (task: Task) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onToggleDailyDone?: (taskId: string) => void;
   onDragStart?: (task: Task, canCompleteOrReopen: boolean) => void;
   onDragEnd?: () => void;
   isDragging?: boolean;
@@ -35,6 +36,7 @@ export function TaskCard({
   task,
   onSelect,
   onStatusChange,
+  onToggleDailyDone,
   onDragStart,
   onDragEnd,
   isDragging = false,
@@ -65,6 +67,8 @@ export function TaskCard({
       .join('');
 
   const dueText = formatRelativeTaskDue(task.dueDate, task.status === 'completed');
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isDoneToday = Boolean(task.isDaily && task.dailyLastDoneDate === todayStr);
 
   return (
     <div
@@ -128,6 +132,19 @@ export function TaskCard({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap min-w-0">
             <TaskPriorityBadge priority={task.priority} />
+            {task.isDaily && (
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold border ${
+                  isDoneToday
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-primary-soft text-primary-ink border-primary-strong/20'
+                }`}
+                title={isDoneToday ? 'Daily task completed today' : 'Daily recurring task'}
+                data-testid={`daily-badge-${task.id}`}
+              >
+                {isDoneToday ? 'Daily ✓' : 'Daily'}
+              </span>
+            )}
             {task.isOverdue ? (
               <span
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-danger border border-rose-200"
@@ -163,24 +180,39 @@ export function TaskCard({
           </div>
         </div>
 
-        {/* Quick Transition Buttons */}
-        {onStatusChange && availableMoves.length > 0 && (
+        {/* Quick Transition & Daily Update Buttons */}
+        {((onStatusChange && availableMoves.length > 0) || (task.isDaily && onToggleDailyDone)) && (
           <div
-            className="flex items-center gap-1.5 pt-2 border-t border-border/80 overflow-x-auto"
+            className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/80"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
-            {availableMoves.map((target) => (
+            {task.isDaily && onToggleDailyDone && (
               <button
-                key={target}
                 type="button"
-                onClick={() => onStatusChange(task.id, target)}
-                className="px-2 py-1 text-[11px] font-medium rounded border border-border bg-surface-muted hover:bg-primary-soft hover:text-primary-ink hover:border-primary-strong/30 transition-colors shrink-0 min-h-[28px]"
-                data-testid={`quick-move-${task.id}-to-${target}`}
+                onClick={() => onToggleDailyDone(task.id)}
+                className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors min-h-[28px] ${
+                  isDoneToday
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    : 'border-primary-strong/30 bg-primary-soft/60 text-primary-ink hover:bg-primary-soft'
+                }`}
+                data-testid={`daily-done-btn-${task.id}`}
               >
-                → {TASK_STATUS_LABELS[target]}
+                {isDoneToday ? '✓ Done Today' : 'Mark Done Today'}
               </button>
-            ))}
+            )}
+            {onStatusChange &&
+              availableMoves.map((target) => (
+                <button
+                  key={target}
+                  type="button"
+                  onClick={() => onStatusChange(task.id, target)}
+                  className="px-2 py-1 text-[11px] font-medium rounded border border-border bg-surface-muted hover:bg-primary-soft hover:text-primary-ink hover:border-primary-strong/30 transition-colors min-h-[28px]"
+                  data-testid={`quick-move-${task.id}-to-${target}`}
+                >
+                  → {TASK_STATUS_LABELS[target]}
+                </button>
+              ))}
           </div>
         )}
       </div>

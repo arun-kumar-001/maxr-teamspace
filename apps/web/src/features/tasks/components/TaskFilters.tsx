@@ -235,7 +235,7 @@ export function TaskFilters({
                     { value: 'todo', label: 'To Do' },
                     { value: 'in_progress', label: 'In Progress' },
                     { value: 'in_review', label: 'In Review' },
-                    { value: 'blocked', label: 'Blocked' },
+                    { value: 'blocked', label: 'Hold' },
                     { value: 'completed', label: 'Completed' },
                   ]}
                 />

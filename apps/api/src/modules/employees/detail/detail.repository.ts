@@ -40,6 +40,18 @@ interface Row {
   created_at: Date | string;
   updated_at: Date | string;
   version: number;
+  additional_emails: string[] | null;
+  additional_phones: string[] | null;
+  permanent_address: string | null;
+  current_address: string | null;
+  blood_group: string | null;
+  pan_number: string | null;
+  aadhaar_number: string | null;
+  bank_account_holder: string | null;
+  bank_name: string | null;
+  bank_account_number: string | null;
+  bank_ifsc_code: string | null;
+  bank_branch: string | null;
   dept_id: string;
   dept_name: string;
   dept_code: string;
@@ -80,6 +92,18 @@ const toDetail = (row: Row, withAccount: boolean): EmployeeDetail => ({
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
   version: row.version,
+  additionalEmails: row.additional_emails ?? [],
+  additionalPhones: row.additional_phones ?? [],
+  permanentAddress: row.permanent_address,
+  currentAddress: row.current_address,
+  bloodGroup: row.blood_group,
+  panNumber: row.pan_number,
+  aadhaarNumber: row.aadhaar_number,
+  bankAccountHolder: row.bank_account_holder,
+  bankName: row.bank_name,
+  bankAccountNumber: row.bank_account_number,
+  bankIfscCode: row.bank_ifsc_code,
+  bankBranch: row.bank_branch,
   ...(withAccount
     ? {
         account: {
@@ -96,6 +120,9 @@ const SELECT = `
   SELECT e.id, e.employee_code, e.first_name, e.last_name, e.email, e.phone, e.status,
          to_char(e.joining_date, 'YYYY-MM-DD') AS joining_date,
          e.created_at, e.updated_at, e.version,
+         e.additional_emails, e.additional_phones, e.permanent_address, e.current_address,
+         e.blood_group, e.pan_number, e.aadhaar_number,
+         e.bank_account_holder, e.bank_name, e.bank_account_number, e.bank_ifsc_code, e.bank_branch,
          d.id AS dept_id, d.name AS dept_name, d.code AS dept_code,
          g.id AS desig_id, g.title AS desig_title, g.code AS desig_code,
          m.id AS manager_id, m.first_name AS manager_first_name,

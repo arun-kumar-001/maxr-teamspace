@@ -30,6 +30,7 @@ export const createTaskSchema = z
     priority: priority.default('medium'),
     dueDate: calendarDate.optional(),
     projectId: z.string().uuid().optional(),
+    isDaily: z.boolean().optional(),
   })
   .strict();
 
@@ -41,6 +42,7 @@ export const updateTaskSchema = z
     priority: priority.optional(),
     dueDate: calendarDate.nullable().optional(),
     projectId: z.string().uuid().nullable().optional(),
+    isDaily: z.boolean().optional(),
     version: z.number().int().min(1),
   })
   .strict()
@@ -81,6 +83,8 @@ export const taskSchema = z
     priority,
     dueDate: z.string().nullable(),
     isOverdue: z.boolean(),
+    isDaily: z.boolean(),
+    dailyLastDoneDate: z.string().nullable(),
     completedAt: z.string().datetime().nullable(),
     version: z.number().int(),
     createdAt: z.string().datetime(),

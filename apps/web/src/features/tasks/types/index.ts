@@ -18,7 +18,7 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'To Do',
   in_progress: 'In Progress',
   in_review: 'In Review',
-  blocked: 'Blocked',
+  blocked: 'Hold',
   completed: 'Completed',
 };
 
@@ -43,6 +43,8 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   isOverdue: boolean;
+  isDaily?: boolean;
+  dailyLastDoneDate?: string | null;
   completedAt: string | null;
   version: number;
   createdAt: string;
@@ -56,6 +58,7 @@ export interface CreateTaskInput {
   priority?: TaskPriority;
   dueDate?: string;
   projectId?: string;
+  isDaily?: boolean;
 }
 
 export interface UpdateTaskInput {
@@ -65,6 +68,7 @@ export interface UpdateTaskInput {
   priority?: TaskPriority;
   dueDate?: string | null;
   projectId?: string | null;
+  isDaily?: boolean;
   version: number;
 }
 

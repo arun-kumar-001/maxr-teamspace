@@ -117,6 +117,18 @@ export function createTasksRouter(options: {
     }),
   );
 
+  router.post(
+    '/:id/daily-done',
+    requirePermission('tasks.update_status'),
+    validate({ params: taskIdParamsSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: taskIdParamsSchema });
+      res.status(200).json({
+        data: await service.toggleDailyDone(params.id, caller(req), viewer(req)),
+      });
+    }),
+  );
+
   if (options.collaboration) router.use(options.collaboration);
 
   return router;

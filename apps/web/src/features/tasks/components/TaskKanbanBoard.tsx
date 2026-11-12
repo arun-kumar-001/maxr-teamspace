@@ -7,6 +7,7 @@ export interface TaskKanbanBoardProps {
   columns: Record<TaskStatus, Task[]>;
   onSelectTask: (task: Task) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onToggleDailyDone?: (taskId: string) => void;
   onQuickCreateClick?: () => void;
   canCreate?: boolean;
   currentEmployeeId?: string;
@@ -28,6 +29,7 @@ export function TaskKanbanBoard({
   columns,
   onSelectTask,
   onStatusChange,
+  onToggleDailyDone,
   onQuickCreateClick,
   canCreate = false,
   currentEmployeeId,
@@ -98,11 +100,8 @@ export function TaskKanbanBoard({
         </div>
       )}
 
-      <div
-        className="w-full overflow-x-auto pb-4 snap-x snap-mandatory"
-        data-testid="task-kanban-board"
-      >
-        <div className="flex gap-3.5 min-w-[1300px] xl:min-w-full items-start">
+      <div className="w-full pb-4" data-testid="task-kanban-board">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-start">
           {COLUMN_KEYS.map((colKey) => {
             const tasksInCol = columns[colKey] || [];
             const tone = COLUMN_HEADER_TONES[colKey];
@@ -124,7 +123,7 @@ export function TaskKanbanBoard({
                   if (dragOverCol === colKey) setDragOverCol(null);
                 }}
                 onDrop={(e) => handleDrop(e, colKey)}
-                className={`flex-1 min-w-[250px] rounded-card border border-border border-t-4 ${tone.border} p-3 flex flex-col gap-2.5 snap-start transition-all duration-200 ${
+                className={`min-w-0 rounded-card border border-border border-t-4 ${tone.border} p-2.5 flex flex-col gap-2.5 transition-all duration-200 ${
                   validTarget
                     ? 'bg-primary-surface/50 ring-2 ring-primary scale-[1.01] shadow-raised'
                     : invalidTarget
@@ -176,6 +175,7 @@ export function TaskKanbanBoard({
                         task={task}
                         onSelect={onSelectTask}
                         onStatusChange={onStatusChange}
+                        onToggleDailyDone={onToggleDailyDone}
                         onDragStart={(t, canCompleteOrReopen) => {
                           setDropNotice(null);
                           setDraggedItem({ task: t, canCompleteOrReopen });

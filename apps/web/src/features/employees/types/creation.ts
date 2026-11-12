@@ -23,6 +23,11 @@ export interface CreateEmployeePayload {
   bloodGroup?: string;
   panNumber?: string;
   aadhaarNumber?: string;
+  bankAccountHolder?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankBranch?: string;
 }
 
 /**
@@ -69,6 +74,11 @@ export interface CreateEmployeeFormState {
   bloodGroup: string;
   panNumber: string;
   aadhaarNumber: string;
+  bankAccountHolder: string;
+  bankName: string;
+  bankAccountNumber: string;
+  bankIfscCode: string;
+  bankBranch: string;
 }
 
 export interface CreateEmployeeValidationErrors {
@@ -81,6 +91,8 @@ export interface CreateEmployeeValidationErrors {
   additionalPhones?: string;
   panNumber?: string;
   aadhaarNumber?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
   departmentId?: string;
   designationId?: string;
   managerId?: string;

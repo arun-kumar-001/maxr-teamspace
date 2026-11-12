@@ -24,6 +24,11 @@ export interface CreateEmployeeDto {
   bloodGroup?: string;
   panNumber?: string;
   aadhaarNumber?: string;
+  bankAccountHolder?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankBranch?: string;
 }
 
 /** What the new employee looks like in the response. No credentials, ever. */
