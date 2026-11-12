@@ -73,8 +73,9 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
     const employee = await tx.query<InsertedRow>(
       `INSERT INTO employees
          (employee_code, first_name, last_name, email, phone, department_id, designation_id,
-          manager_id, status, joining_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
+          manager_id, status, joining_date, additional_emails, additional_phones,
+          permanent_address, current_address, blood_group, pan_number, aadhaar_number)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11, $12, $13, $14, $15, $16)
        RETURNING id, created_at, joining_date`,
       [
         dto.employeeCode,
@@ -86,6 +87,13 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
         dto.designationId,
         dto.managerId ?? null,
         dto.joiningDate,
+        dto.additionalEmails ?? [],
+        dto.additionalPhones ?? [],
+        dto.permanentAddress ?? null,
+        dto.currentAddress ?? null,
+        dto.bloodGroup ?? null,
+        dto.panNumber ?? null,
+        dto.aadhaarNumber ?? null,
       ],
     );
     const row = employee.rows[0] as InsertedRow;

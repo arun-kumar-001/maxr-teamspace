@@ -158,11 +158,13 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     loadBalances(selectedYear);
     loadMyRequests();
 
-    // Load initial 30 days of leave calendar
+    // Load initial calendar window covering full current month through end of next month
     const today = new Date();
-    const fromStr = today.toISOString().slice(0, 10);
-    const toDate = new Date(today.getTime() + 30 * 86_400_000);
-    const toStr = toDate.toISOString().slice(0, 10);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const fromStr = `${monthStart.getFullYear()}-${pad(monthStart.getMonth() + 1)}-${pad(monthStart.getDate())}`;
+    const toStr = `${nextMonthEnd.getFullYear()}-${pad(nextMonthEnd.getMonth() + 1)}-${pad(nextMonthEnd.getDate())}`;
     loadCalendar(fromStr, toStr);
   }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadCalendar, selectedYear]);
 

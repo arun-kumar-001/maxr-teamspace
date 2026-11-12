@@ -85,3 +85,39 @@ body {
 .sidebar-scroll::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+@keyframes crmFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes crmBarGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-crm-fade-up {
+  animation: crmFadeUp 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-crm-bar {
+  transform-origin: left center;
+  animation: crmBarGrow 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-crm-fade-up,
+  .animate-crm-bar {
+    animation: none;
+  }
+}

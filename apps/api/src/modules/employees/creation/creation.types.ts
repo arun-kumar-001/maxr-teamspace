@@ -17,6 +17,13 @@ export interface CreateEmployeeDto {
   /** `YYYY-MM-DD`. */
   joiningDate: string;
   role: Role;
+  additionalEmails?: string[];
+  additionalPhones?: string[];
+  permanentAddress?: string;
+  currentAddress?: string;
+  bloodGroup?: string;
+  panNumber?: string;
+  aadhaarNumber?: string;
 }
 
 /** What the new employee looks like in the response. No credentials, ever. */

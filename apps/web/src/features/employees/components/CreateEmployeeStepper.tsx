@@ -62,15 +62,15 @@ export function CreateEmployeeStepper({
             <li key={step.number} className="relative">
               <button
                 type="button"
-                disabled={!onStepClick || step.number > currentStep}
+                disabled={!onStepClick}
                 onClick={() => onStepClick?.(step.number)}
                 aria-current={isCurrent ? 'step' : undefined}
-                className={`w-full text-left p-3.5 rounded-card border transition-all flex items-center gap-3 select-none ${
+                className={`w-full text-left p-3.5 rounded-card border transition-all duration-300 flex items-center gap-3 select-none ${
                   isCurrent
-                    ? 'bg-primary-soft border-primary-strong shadow-raised'
+                    ? 'bg-primary-soft border-primary-strong ring-2 ring-primary/20 shadow-raised cursor-pointer'
                     : isCompleted
-                      ? 'bg-surface border-border hover:bg-surface-muted cursor-pointer'
-                      : 'bg-surface-muted border-border/70 opacity-60 cursor-default'
+                      ? 'bg-surface border-border hover:bg-surface-muted hover:border-primary-strong/40 cursor-pointer'
+                      : 'bg-surface-muted border-border/70 hover:bg-surface hover:border-border-strong cursor-pointer'
                 }`}
               >
                 <div

@@ -65,6 +65,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     balanceError,
     requestsError,
     calendarError,
+    loadBalances,
+    loadMyRequests,
+    loadCalendar,
     applyLeave,
     cancelRequest,
     createPolicy,
@@ -244,7 +247,22 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
         />
       )}
 
-      {activeTab === 'approvals' && canReviewApprovals && <LeaveApprovalsTab />}
+      {activeTab === 'approvals' && canReviewApprovals && (
+        <LeaveApprovalsTab
+          onDecisionSuccess={() => {
+            void loadMyRequests();
+            void loadBalances(selectedYear);
+            const now = new Date();
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const mEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+            void loadCalendar(
+              `${mStart.getFullYear()}-${pad(mStart.getMonth() + 1)}-${pad(mStart.getDate())}`,
+              `${mEnd.getFullYear()}-${pad(mEnd.getMonth() + 1)}-${pad(mEnd.getDate())}`,
+            );
+          }}
+        />
+      )}
 
       {activeTab === 'balances' && (
         <LeaveBalancesSummary
@@ -256,7 +274,14 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       )}
 
       {activeTab === 'calendar' && (
-        <LeaveCalendarView entries={calendarEntries} isLoading={isLoadingCalendar} />
+        <LeaveCalendarView
+          entries={calendarEntries}
+          holidays={holidays}
+          isLoading={isLoadingCalendar}
+          onRangeChange={(from, to) => {
+            void loadCalendar(from, to);
+          }}
+        />
       )}
 
       {activeTab === 'holidays' && (
