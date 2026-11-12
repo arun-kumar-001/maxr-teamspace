@@ -84,5 +84,20 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('bg-primary text-sidebar');
       expect(html).toContain('href="/staff/leave"');
     });
+
+    it('should include My Profile sidebar link across Admin, HR, Team Lead, and Staff portals', () => {
+      for (const role of [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF]) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <AppShell currentPath="/profile" onNavigate={() => {}}>
+              <div>My Profile</div>
+            </AppShell>
+          </AuthProvider>,
+        );
+
+        expect(html).toContain('href="/profile"');
+        expect(html).toContain('My Profile');
+      }
+    });
   });
 });

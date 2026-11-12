@@ -274,6 +274,14 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
+  // Payslips routes
+  if (path === '/payslips' || path.startsWith('/payslips/') || path === '/staff/payslips') {
+    return true;
+  }
+  if (path === '/hr/payslips' || path === '/admin/payslips') {
+    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
   // Meetings routes (Issue #45) - accessible to all authenticated roles
   if (
     path === '/meetings' ||
@@ -533,6 +541,13 @@ function NavSvgIcon({ name }: { name: NavItem['iconName'] | 'gallery' }) {
 export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
   const groups: SidebarGroup[] = [];
 
+  const myProfileItem: SidebarItem = {
+    id: '/profile',
+    label: 'My Profile',
+    href: '/profile',
+    icon: <NavSvgIcon name="user" />,
+  };
+
   const attendanceItem: SidebarItem = {
     id: '/attendance',
     label: 'Attendance',
@@ -557,6 +572,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
+        myProfileItem,
         attendanceItem,
         {
           id: '/leave',
@@ -588,6 +604,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           id: '/expenses',
           label: 'Expenses & Claims',
           href: '/expenses',
+          icon: <NavSvgIcon name="file-text" />,
+        },
+        {
+          id: '/admin/payslips',
+          label: 'Payslips',
+          href: '/admin/payslips',
           icon: <NavSvgIcon name="file-text" />,
         },
       ],
@@ -700,6 +722,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
+        myProfileItem,
         attendanceItem,
         {
           id: '/leave',
@@ -723,6 +746,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           id: '/expenses',
           label: 'Expenses',
           href: '/expenses',
+          icon: <NavSvgIcon name="file-text" />,
+        },
+        {
+          id: '/hr/payslips',
+          label: 'Payslips',
+          href: '/hr/payslips',
           icon: <NavSvgIcon name="file-text" />,
         },
       ],
@@ -808,6 +837,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
+        myProfileItem,
         {
           id: '/lead/team',
           label: 'Team Directory',
@@ -837,6 +867,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           id: '/expenses',
           label: 'Expenses',
           href: '/expenses',
+          icon: <NavSvgIcon name="file-text" />,
+        },
+        {
+          id: '/payslips',
+          label: 'Payslips',
+          href: '/payslips',
           icon: <NavSvgIcon name="file-text" />,
         },
       ],
