@@ -5,12 +5,21 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
-export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md' }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  maxWidth = 'md',
+}: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(isOpen, dialogRef, onClose);
@@ -22,6 +31,7 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
     md: 'sm:max-w-md',
     lg: 'sm:max-w-lg',
     xl: 'sm:max-w-xl',
+    '2xl': 'sm:max-w-2xl',
   };
 
   return (
@@ -48,13 +58,16 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = 'md
 
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <h2 id={titleId} className="text-base sm:text-lg font-semibold text-text">
-              {title}
-            </h2>
+          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-border shrink-0">
+            <div className="min-w-0">
+              <h2 id={titleId} className="text-base sm:text-lg font-semibold text-text truncate">
+                {title}
+              </h2>
+              {subtitle && <p className="text-xs text-text-muted mt-0.5 truncate">{subtitle}</p>}
+            </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
               aria-label="Close modal"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">

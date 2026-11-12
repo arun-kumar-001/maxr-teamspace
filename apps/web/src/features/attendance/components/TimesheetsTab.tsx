@@ -381,10 +381,10 @@ export function TimesheetsTab({
         </div>
       </div>
 
-      {/* 2. Main Layout (8 cols Table & Bulk Actions, 4 cols Panels) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 8 cols: Filters, Table, Bulk Actions */}
-        <div className="lg:col-span-8 space-y-4">
+      {/* 2. Main Layout (9 cols Table & Bulk Actions, 3 cols Panels) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left 9 cols: Filters, Table, Bulk Actions */}
+        <div className="lg:col-span-9 space-y-4 min-w-0">
           {/* Controls Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
@@ -475,7 +475,7 @@ export function TimesheetsTab({
               <table className="w-full text-left text-xs sm:text-sm" aria-label="Timesheets Table">
                 <thead className="bg-surface-muted/60 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
                   <tr>
-                    <th scope="col" className="w-8 px-4 py-3.5">
+                    <th scope="col" className="w-8 pl-3.5 pr-2 py-3.5">
                       <input
                         type="checkbox"
                         aria-label="Select all timesheets"
@@ -487,25 +487,28 @@ export function TimesheetsTab({
                         className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
                       />
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Employee
                     </th>
-                    <th scope="col" className="px-4 py-3.5 hidden md:table-cell">
+                    <th
+                      scope="col"
+                      className="px-2.5 xl:px-3.5 py-3.5 hidden md:table-cell whitespace-nowrap"
+                    >
                       Dept
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Planned
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Worked
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       OT
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Status
                     </th>
-                    <th scope="col" className="px-4 py-3.5 text-right">
+                    <th scope="col" className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
@@ -521,7 +524,7 @@ export function TimesheetsTab({
                     filteredTimesheets.map((ts) => {
                       return (
                         <tr key={ts.id} className="hover:bg-surface-muted/40 transition-colors">
-                          <td className="w-8 px-4 py-3.5">
+                          <td className="w-8 pl-3.5 pr-2 py-3.5">
                             <input
                               type="checkbox"
                               aria-label={`Select ${ts.name}`}
@@ -531,34 +534,36 @@ export function TimesheetsTab({
                             />
                           </td>
 
-                          <td className="px-4 py-3.5">
+                          <td className="px-2.5 xl:px-3.5 py-3.5">
                             <span className="font-bold text-text block truncate">{ts.name}</span>
-                            <span className="text-[11px] text-text-muted font-mono block">
+                            <span className="text-[11px] text-text-muted block">
                               {ts.employeeCode}
                             </span>
                           </td>
 
-                          <td className="px-4 py-3.5 hidden md:table-cell text-xs text-text-muted">
+                          <td className="px-2.5 xl:px-3.5 py-3.5 hidden md:table-cell text-xs text-text-muted whitespace-nowrap">
                             {ts.departmentName}
                           </td>
 
-                          <td className="px-4 py-3.5 text-xs text-text-muted">
+                          <td className="px-2.5 xl:px-3.5 py-3.5 text-xs text-text-muted whitespace-nowrap">
                             {ts.plannedHours}h
                           </td>
 
-                          <td className="px-4 py-3.5 font-bold text-text">{ts.workedHours}h</td>
+                          <td className="px-2.5 xl:px-3.5 py-3.5 font-bold text-text whitespace-nowrap">
+                            {ts.workedHours}h
+                          </td>
 
-                          <td className="px-4 py-3.5">
+                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                             {ts.overtimeHours > 0 ? (
                               <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs">
                                 +{ts.overtimeHours}h
                               </span>
                             ) : (
-                              <span className="text-text-subtle">\u2014</span>
+                              <span className="text-text-muted text-xs font-medium">None</span>
                             )}
                           </td>
 
-                          <td className="px-4 py-3.5">
+                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                                 ts.status === 'approved'
@@ -585,7 +590,7 @@ export function TimesheetsTab({
                             </span>
                           </td>
 
-                          <td className="px-4 py-3.5 text-right">
+                          <td className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
                               {ts.status === 'submitted' && canApproveTimesheets && (
                                 <button
@@ -617,10 +622,10 @@ export function TimesheetsTab({
           </div>
         </div>
 
-        {/* Right 4 cols: Hours by Day & Overtime Claims */}
-        <div className="lg:col-span-4 space-y-4">
+        {/* Right 3 cols: Hours by Day & Overtime Claims */}
+        <div className="lg:col-span-3 space-y-4 min-w-0">
           {/* Hours by Day Card */}
-          <div className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
+          <div className="p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <h3 className="text-sm font-bold text-text leading-tight">Hours by Day</h3>
               <span className="text-[11px] font-semibold text-text-muted">Weekly Total</span>
@@ -631,7 +636,7 @@ export function TimesheetsTab({
                 <div key={d.day} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-text">{d.day}</span>
-                    <span className="text-text-muted font-mono">{d.hours} hrs</span>
+                    <span className="text-text-muted tabular-nums">{d.hours} hrs</span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-surface-muted overflow-hidden">
                     <div
@@ -724,7 +729,9 @@ export function TimesheetsTab({
                     className="flex items-center justify-between p-2.5 bg-surface text-text"
                   >
                     <span className="font-semibold">{day}</span>
-                    <span className="text-text-muted font-mono">09:00 AM – 06:00 PM (8.5 hrs)</span>
+                    <span className="text-text-muted tabular-nums">
+                      09:00 AM – 06:00 PM (8.5 hrs)
+                    </span>
                   </div>
                 ))}
               </div>

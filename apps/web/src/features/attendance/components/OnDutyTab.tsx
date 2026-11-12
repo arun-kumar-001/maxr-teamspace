@@ -134,7 +134,7 @@ function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 function formatTimeDisplay(isoString?: string | null): string {
-  if (!isoString) return '\u2014';
+  if (!isoString) return 'None';
   try {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return isoString;
@@ -145,7 +145,7 @@ function formatTimeDisplay(isoString?: string | null): string {
 }
 
 function formatDurationDisplay(minutes?: number | null): string {
-  if (minutes === undefined || minutes === null) return '\u2014';
+  if (minutes === undefined || minutes === null) return 'None';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h ${String(m).padStart(2, '0')}m`;
@@ -282,7 +282,7 @@ export function OnDutyTab({
         shiftHours: `${defaultShift.startTime} - ${defaultShift.endTime}`,
         checkInTime: rec ? formatTimeDisplay(rec.checkInTime) : null,
         checkOutTime: rec ? formatTimeDisplay(rec.checkOutTime) : null,
-        hoursWorked: rec ? formatDurationDisplay(rec.durationMinutes) : '\u2014',
+        hoursWorked: rec ? formatDurationDisplay(rec.durationMinutes) : 'None',
         status,
         notes: rec?.notes,
         rawRecord: rec,
@@ -443,10 +443,10 @@ export function OnDutyTab({
         </div>
       </div>
 
-      {/* 2. Main Two-Column Layout (70% Left Table, 30% Right Panels) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Attendance Table & Quick Filters (8 cols on lg) */}
-        <div className="lg:col-span-8 space-y-4">
+      {/* 2. Main Two-Column Layout (75% Left Table, 25% Right Panels) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left Column: Attendance Table & Quick Filters (9 cols on lg) */}
+        <div className="lg:col-span-9 space-y-4 min-w-0">
           {/* Quick Filters Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
@@ -528,25 +528,25 @@ export function OnDutyTab({
               >
                 <thead className="bg-surface-muted/50 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
                   <tr>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-3 xl:px-4 py-3.5">
                       Employee
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Shift
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Check-in
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Check-out
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Hours
                     </th>
-                    <th scope="col" className="px-4 py-3.5">
+                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                       Status
                     </th>
-                    <th scope="col" className="px-4 py-3.5 text-right">
+                    <th scope="col" className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
                       Actions
                     </th>
                   </tr>
@@ -571,7 +571,7 @@ export function OnDutyTab({
                       return (
                         <tr key={row.id} className="hover:bg-surface-muted/40 transition-colors">
                           {/* Employee */}
-                          <td className="px-4 py-3.5">
+                          <td className="px-3 xl:px-4 py-3.5">
                             <div className="flex items-center gap-3">
                               <div
                                 className={`w-8 h-8 rounded-full ${avatarBg} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}
@@ -590,7 +590,7 @@ export function OnDutyTab({
                                 >
                                   {row.name}
                                 </a>
-                                <span className="text-[11px] text-text-muted block truncate font-mono">
+                                <span className="text-[11px] text-text-muted block truncate">
                                   {row.employeeCode} • {row.departmentName}
                                 </span>
                                 {row.notes && (
@@ -603,28 +603,33 @@ export function OnDutyTab({
                           </td>
 
                           {/* Shift */}
-                          <td className="px-4 py-3.5">
+                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                             <span className="font-semibold text-text block">{row.shiftName}</span>
-                            <span className="text-[11px] text-text-muted block">
-                              ({row.shiftHours})
-                            </span>
                           </td>
 
                           {/* Check-in */}
-                          <td className="px-4 py-3.5 text-text-muted font-medium">
-                            {row.checkInTime || '\u2014'}
+                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium whitespace-nowrap">
+                            {row.checkInTime || 'None'}
                           </td>
 
                           {/* Check-out */}
-                          <td className="px-4 py-3.5 text-text-muted font-medium">
-                            {row.checkOutTime || '\u2014'}
+                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium whitespace-nowrap">
+                            {row.checkOutTime || 'None'}
                           </td>
 
                           {/* Hours */}
-                          <td className="px-4 py-3.5 font-bold text-text">{row.hoursWorked}</td>
+                          <td
+                            className={`px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap ${
+                              row.hoursWorked === 'None'
+                                ? 'text-text-muted font-medium'
+                                : 'font-bold text-text'
+                            }`}
+                          >
+                            {row.hoursWorked}
+                          </td>
 
                           {/* Status */}
-                          <td className="px-4 py-3.5">
+                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
                             <span
                               className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                                 row.status === 'present'
@@ -658,7 +663,7 @@ export function OnDutyTab({
                           </td>
 
                           {/* Actions */}
-                          <td className="px-4 py-3.5 text-right">
+                          <td className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1">
                               {row.rawRecord && (
                                 <button
@@ -739,15 +744,15 @@ export function OnDutyTab({
           </div>
         </div>
 
-        {/* Right Column: Shift Coverage & On Leave Today (4 cols on lg) */}
-        <div className="lg:col-span-4 space-y-4">
+        {/* Right Column: Shift Coverage & On Leave Today (3 cols on lg) */}
+        <div className="lg:col-span-3 space-y-4 min-w-0">
           {/* Shift Coverage Card */}
-          <div className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
+          <div className="p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
             <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
               <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <IconLayers className="w-4 h-4" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-bold text-text leading-tight">Shift Coverage</h3>
                 <span className="text-[11px] text-text-muted">3 Active Shifts</span>
               </div>
@@ -756,11 +761,11 @@ export function OnDutyTab({
             <div className="space-y-3 pt-1">
               {shiftCoverage.map((sc) => (
                 <div key={sc.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-text">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold text-text truncate min-w-0">
                       {sc.name} <span className="text-text-muted text-[11px]">({sc.hours})</span>
                     </span>
-                    <span className="font-bold text-emerald-600">{sc.percent}%</span>
+                    <span className="font-bold text-emerald-600 shrink-0">{sc.percent}%</span>
                   </div>
                   {/* Progress bar */}
                   <div className="w-full h-2 rounded-full bg-surface-muted overflow-hidden">
