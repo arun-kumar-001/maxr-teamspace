@@ -85,11 +85,11 @@ export function LeaveRequestsTab() {
         <div>
           <h2
             className="text-lg sm:text-xl font-bold font-display"
-            style={{ color: 'rgb(244, 247, 246)' }}
+            style={{ color: 'rgb(8, 11, 12)' }}
           >
             Leave Balances &amp; Requests ({selectedYear})
           </h2>
-          <p className="text-xs sm:text-sm" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
+          <p className="text-xs sm:text-sm" style={{ color: 'rgb(79, 92, 90)' }}>
             Track your Annual, Sick, Casual, and Work From Home balances and submit new requests
           </p>
         </div>

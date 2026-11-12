@@ -7,7 +7,7 @@ import {
   fetchTeamAttendance,
   fetchTodayAttendance,
 } from '../api/attendance';
-import { AttendanceWidget } from '../components/AttendanceWidget';
+import { CheckInOutTab } from '../components/CheckInOutTab';
 import { LeaveRequestsTab } from '../components/LeaveRequestsTab';
 import { MyAttendanceTab } from '../components/MyAttendanceTab';
 import { OnDutyTab } from '../components/OnDutyTab';
@@ -35,8 +35,6 @@ export interface AttendancePageProps {
 const SUB_TABS: Array<{ id: AttendanceManagementTab; label: string }> = [
   { id: 'my-attendance', label: 'My Attendance' },
   { id: 'check-in', label: 'Check-In / Check-Out' },
-  { id: 'leave-requests', label: 'Leave Requests' },
-  { id: 'team-calendar', label: 'Team Calendar' },
 ];
 
 function EmployeeAttendanceWorkspace({
@@ -111,53 +109,45 @@ function EmployeeAttendanceWorkspace({
 
   return (
     <div
-      className="relative overflow-hidden rounded-[24px] p-4 sm:p-6 md:p-8 border space-y-6"
+      className="relative rounded-[24px] p-4 sm:p-6 md:p-7 border space-y-5 bg-white"
       style={{
-        backgroundColor: 'rgb(17, 24, 25)',
-        backgroundImage: [
-          'radial-gradient(circle at 12% 10%, rgba(0, 220, 203, 0.22) 0%, transparent 42%)',
-          'radial-gradient(circle at 88% 14%, rgba(233, 138, 203, 0.18) 0%, transparent 38%)',
-          'radial-gradient(circle at 50% 95%, rgba(73, 53, 72, 0.55) 0%, transparent 52%)',
-          'linear-gradient(155deg, rgb(17, 24, 25) 0%, rgb(8, 11, 12) 100%)',
-        ].join(', '),
-        borderColor: 'rgba(85, 205, 179, 0.22)',
-        boxShadow: '0 24px 60px rgba(8, 11, 12, 0.4)',
+        backgroundColor: 'rgb(255, 255, 255)',
+        borderColor: 'rgb(229, 231, 235)',
+        boxShadow: '0 4px 24px rgba(8, 11, 12, 0.04)',
       }}
       data-testid="attendance-page"
     >
-      {/* Top Frosted Header & Sub-Navigation */}
+      {/* Top Clean White Header & Sub-Navigation */}
       <div
-        className="p-4 sm:p-5 rounded-2xl border space-y-4 backdrop-blur-xl"
+        className="pb-4 border-b space-y-4"
         style={{
-          backgroundColor: 'rgba(8, 11, 12, 0.55)',
-          borderColor: 'rgba(244, 247, 246, 0.12)',
+          borderColor: 'rgb(229, 231, 235)',
         }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p
               className="text-[11px] font-bold uppercase tracking-widest"
-              style={{ color: 'rgb(85, 205, 179)' }}
+              style={{ color: 'rgb(13, 148, 136)' }}
             >
-              MaxR Teamspace Workforce Hub
+              MAXR TEAMSPACE WORKFORCE HUB
             </p>
             <h1
               className="text-xl sm:text-2xl font-bold font-display mt-0.5"
-              style={{ color: 'rgb(244, 247, 246)' }}
+              style={{ color: 'rgb(8, 11, 12)' }}
             >
               Attendance Management
             </h1>
-            <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
-              Monitor monthly attendance metrics, clock sessions &amp; breaks, manage leave, and
-              view team schedules
+            <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'rgb(79, 92, 90)' }}>
+              Track your attendance, manage check-in/out, leaves and view team attendance.
             </p>
           </div>
         </div>
 
-        {/* 4 Neon-Teal Sub-Navigation Tabs */}
+        {/* 4 Mint-Teal Sub-Navigation Tabs */}
         <nav
           aria-label="Attendance sections"
-          className="flex flex-wrap gap-2 pt-1"
+          className="flex flex-wrap gap-2"
           data-testid="attendance-subnav"
         >
           {SUB_TABS.map((tab) => {
@@ -172,14 +162,14 @@ function EmployeeAttendanceWorkspace({
                   active
                     ? {
                         backgroundColor: 'rgb(85, 205, 179)',
-                        borderColor: 'rgb(0, 220, 203)',
+                        borderColor: 'rgb(85, 205, 179)',
                         color: 'rgb(8, 11, 12)',
-                        boxShadow: '0 0 22px rgba(0, 220, 203, 0.35)',
+                        boxShadow: '0 2px 8px rgba(85, 205, 179, 0.25)',
                       }
                     : {
-                        backgroundColor: 'rgba(17, 24, 25, 0.75)',
-                        borderColor: 'rgba(244, 247, 246, 0.12)',
-                        color: 'rgba(244, 247, 246, 0.8)',
+                        backgroundColor: 'rgb(255, 255, 255)',
+                        borderColor: 'rgb(229, 231, 235)',
+                        color: 'rgb(8, 11, 12)',
                       }
                 }
                 aria-current={active ? 'page' : undefined}
@@ -232,17 +222,16 @@ function EmployeeAttendanceWorkspace({
       )}
 
       {activeTab === 'check-in' && (
-        <div className="space-y-4" data-testid="check-in-tab-panel">
-          <AttendanceWidget
-            theme="dark"
-            employeeName={user?.name}
-            designation={user?.title ?? user?.role}
-            onSessionChange={() => {
-              void refresh();
-              void loadTodaySummary();
-            }}
-          />
-        </div>
+        <CheckInOutTab
+          employeeName={user?.name}
+          designation={user?.title ?? user?.role}
+          records={records}
+          onSessionChange={() => {
+            void refresh();
+            void loadTodaySummary();
+          }}
+          onViewAllHistory={() => setActiveTab('my-attendance')}
+        />
       )}
 
       {activeTab === 'leave-requests' && <LeaveRequestsTab />}

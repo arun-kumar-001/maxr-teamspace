@@ -232,42 +232,14 @@ describe('Attendance Management 4-Tab Module', () => {
       expect(screen.getAllByText('Completed sprint backlog')[0]).toBeDefined();
     });
 
-    // Switch to Check-In / Check-Out tab & test Break button
+    // Switch to Check-In / Check-Out tab & verify panel + attendance history card
     fireEvent.click(screen.getByTestId('attendance-tab-check-in'));
     await waitFor(() => {
-      expect(screen.getByTestId('attendance-live-clock')).toBeDefined();
+      expect(screen.getByTestId('check-in-tab-panel')).toBeDefined();
+      expect(screen.getByTestId('attendance-history-card')).toBeDefined();
     });
-    const startBreakBtn = await screen.findByTestId('attendance-start-break-btn');
-    fireEvent.click(startBreakBtn);
-    await waitFor(() => {
-      expect(
-        fetchSpy.mock.calls.some((call) =>
-          String(call[0]).includes('/api/v1/attendance/break-start'),
-        ),
-      ).toBe(true);
-    });
-
-    // Switch to Leave Requests tab
-    fireEvent.click(screen.getByTestId('attendance-tab-leave-requests'));
-    await waitFor(() => {
-      expect(screen.getByTestId('leave-requests-tab')).toBeDefined();
-      expect(screen.getByTestId('leave-balances-grid')).toBeDefined();
-    });
-
-    // Switch to Team Calendar tab & inspect detail modal
-    fireEvent.click(screen.getByTestId('attendance-tab-team-calendar'));
-    await waitFor(() => {
-      expect(screen.getByTestId('team-calendar-tab')).toBeDefined();
-      expect(screen.getByTestId('calendar-entry-card-att-cal-1')).toBeDefined();
-    });
-
-    fireEvent.click(screen.getByTestId('calendar-entry-card-att-cal-1'));
-    expect(screen.getByTestId('calendar-detail-modal')).toBeDefined();
-    expect(screen.getByTestId('calendar-detail-modal').textContent).toContain('Ananya Sharma');
-
-    // Close detail modal & toggle Month View (waits for month range fetch)
-    fireEvent.keyDown(document, { key: 'Escape' });
-    fireEvent.click(screen.getByTestId('calendar-view-month-btn'));
-    expect(await screen.findByTestId('team-calendar-month-grid')).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalled();
+    expect(screen.queryByTestId('attendance-tab-leave-requests')).toBeNull();
+    expect(screen.queryByTestId('attendance-tab-team-calendar')).toBeNull();
   });
 });

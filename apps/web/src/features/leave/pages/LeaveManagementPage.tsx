@@ -34,7 +34,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       ? 'requests'
       : initialTab === 'approvals' && !canReviewApprovals
         ? 'requests'
-        : initialTab,
+        : initialTab === 'calendar'
+          ? 'requests'
+          : initialTab,
   );
 
   const {
@@ -86,7 +88,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     { value: 'requests', label: 'My Requests' },
     ...(canReviewApprovals ? [{ value: 'approvals', label: 'Team Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
-    { value: 'calendar', label: 'Team Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
@@ -224,6 +225,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       {activeTab === 'requests' && (
         <LeaveRequestsTable
           requests={requests}
+          balances={balances}
           isLoading={isLoadingRequests}
           onCancelRequest={async (id) => {
             await cancelRequest(id);

@@ -11,6 +11,7 @@ import { AttendanceCalendarView } from './AttendanceCalendarView';
 import { AttendanceFilters } from './AttendanceFilters';
 import { AttendanceStatusBadge } from './AttendanceStatusBadge';
 import { CorrectionsHistoryView } from './CorrectionsHistoryView';
+import { MyAttendanceCalendarBoard } from './MyAttendanceCalendarBoard';
 import { TeamAttendanceGrid } from './TeamAttendanceGrid';
 import type {
   AttendanceCorrection,
@@ -139,47 +140,6 @@ export function MyAttendanceTab({
     resetFilters();
   };
 
-  const stats = useMemo(() => {
-    const presentSet = new Set<string>();
-    let lateCount = 0;
-    let absentCount = 0;
-    let earlyCheckoutCount = 0;
-    let totalMinutes = 0;
-
-    for (const r of records) {
-      if (r.status === 'absent') {
-        absentCount += 1;
-      } else {
-        presentSet.add(r.workDate);
-      }
-      if (r.status === 'late') {
-        lateCount += 1;
-      }
-      if (r.durationMinutes !== null) {
-        totalMinutes += r.durationMinutes;
-        if (r.checkOutTime && r.durationMinutes > 0 && r.durationMinutes < 450) {
-          earlyCheckoutCount += 1;
-        }
-      }
-    }
-
-    const totalWorkingDays = Math.max(22, presentSet.size + absentCount);
-    const attendancePct =
-      totalWorkingDays > 0
-        ? Math.min(100, Math.round((presentSet.size / totalWorkingDays) * 100))
-        : 0;
-
-    return {
-      totalWorkingDays,
-      presentDays: presentSet.size,
-      absentDays: absentCount,
-      lateArrivals: lateCount,
-      earlyCheckOuts: earlyCheckoutCount,
-      totalHours: (totalMinutes / 60).toFixed(1),
-      attendancePct,
-    };
-  }, [records]);
-
   const monthOptions = useMemo(() => {
     const opts: Array<{ value: string; label: string }> = [{ value: '', label: 'All Months' }];
     const base = new Date();
@@ -270,141 +230,21 @@ export function MyAttendanceTab({
     [onOpenCorrectionModal],
   );
 
-  const todaySession = todaySummary?.activeSession;
-  const isTodayOnBreak = Boolean(todaySession?.breaks?.some((b) => !b.endTime));
-  const todayTotalBreakMinutes = (todaySummary?.sessions ?? []).reduce(
-    (sum, s) => sum + (s.breakMinutes ?? 0),
-    0,
-  );
-  const todayStatusLabel = todaySession
-    ? isTodayOnBreak
-      ? 'On Break'
-      : 'Checked In'
-    : (todaySummary?.totalDurationMinutes ?? 0) > 0
-      ? 'Shift Completed'
-      : 'Not Checked In';
-
-  const kpiCards = [
-    {
-      label: 'Working Days',
-      value: String(stats.totalWorkingDays),
-      accent: 'rgb(85, 205, 179)',
-    },
-    {
-      label: 'Present Days',
-      value: String(stats.presentDays),
-      accent: 'rgb(0, 220, 203)',
-    },
-    {
-      label: 'Absent Days',
-      value: String(stats.absentDays),
-      accent: 'rgb(233, 138, 203)',
-    },
-    {
-      label: 'Late Arrivals',
-      value: String(stats.lateArrivals),
-      accent: 'rgb(245, 158, 11)',
-    },
-    {
-      label: 'Early Check-Outs',
-      value: String(stats.earlyCheckOuts),
-      accent: 'rgb(168, 85, 247)',
-    },
-    {
-      label: 'Total Hours',
-      value: `${stats.totalHours}h`,
-      accent: 'rgb(85, 205, 179)',
-    },
-    {
-      label: 'Attendance %',
-      value: `${stats.attendancePct}%`,
-      accent: 'rgb(0, 220, 203)',
-    },
-  ];
-
   return (
-    <div className="space-y-5" data-testid="my-attendance-tab">
-      {/* Today Status Strip */}
+    <div className="space-y-6" data-testid="my-attendance-tab">
+      <MyAttendanceCalendarBoard
+        records={records}
+        todaySummary={todaySummary}
+        onOpenCorrectionModal={onOpenCorrectionModal}
+        onGoToCheckIn={onGoToCheckIn}
+      />
+
+      {/* Month selector + Existing Attendance Records & Corrections Table */}
       <div
-        className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        className="p-3 sm:p-4 rounded-2xl border space-y-3 bg-white"
         style={{
-          background: 'linear-gradient(125deg, rgba(17, 24, 25, 0.88), rgba(73, 53, 72, 0.36))',
-          borderColor: 'rgba(85, 205, 179, 0.28)',
-          color: 'rgb(244, 247, 246)',
-        }}
-      >
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2.5 h-2.5 rounded-full"
-              style={{
-                backgroundColor: todaySession ? 'rgb(0, 220, 203)' : 'rgb(233, 138, 203)',
-              }}
-            />
-            <span
-              className="text-xs font-semibold uppercase tracking-wider"
-              style={{ color: 'rgb(85, 205, 179)' }}
-            >
-              Today&apos;s Attendance
-            </span>
-          </div>
-          <p className="text-lg font-bold font-display">
-            {todayStatusLabel}
-            {todaySession ? ` \u00B7 In at ${formatTime(todaySession.checkInTime)}` : ''}
-          </p>
-          <p className="text-xs" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
-            Logged today: {formatDuration(todaySummary?.totalDurationMinutes ?? 0)} &middot; Break:{' '}
-            {formatDuration(todayTotalBreakMinutes)}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onGoToCheckIn}
-          className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold min-h-[44px] transition-all cursor-pointer shrink-0"
-          style={{
-            backgroundColor: 'rgb(85, 205, 179)',
-            color: 'rgb(8, 11, 12)',
-            boxShadow: '0 0 18px rgba(0, 220, 203, 0.25)',
-          }}
-        >
-          Go to Check-In / Check-Out
-        </button>
-      </div>
-
-      {/* Monthly KPI Summary Cards */}
-      <div
-        className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3"
-        data-testid="my-attendance-kpi-grid"
-      >
-        {kpiCards.map((card) => (
-          <div
-            key={card.label}
-            className="p-3.5 rounded-2xl border backdrop-blur-md"
-            style={{
-              backgroundColor: 'rgba(17, 24, 25, 0.78)',
-              borderColor: 'rgba(244, 247, 246, 0.12)',
-            }}
-          >
-            <p className="text-[11px] font-medium" style={{ color: 'rgba(244, 247, 246, 0.65)' }}>
-              {card.label}
-            </p>
-            <p
-              className="text-xl font-bold font-display mt-1 tabular-nums"
-              style={{ color: card.accent }}
-            >
-              {card.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Month selector + Existing Filters */}
-      <div
-        className="p-3 sm:p-4 rounded-2xl border space-y-3"
-        style={{
-          backgroundColor: 'rgba(244, 247, 246, 0.96)',
-          borderColor: 'rgba(227, 233, 231, 0.9)',
+          backgroundColor: 'rgb(255, 255, 255)',
+          borderColor: 'rgb(229, 231, 235)',
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border">
