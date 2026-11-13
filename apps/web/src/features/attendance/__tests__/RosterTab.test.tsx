@@ -34,12 +34,12 @@ const mockDepartments: DepartmentItem[] = [
   { id: 'dept-1', name: 'Engineering', code: 'ENG', employeeCount: 2 },
 ];
 
-describe('RosterTab Compact Grid & 9-to-7 Standard Shift', () => {
+describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders week view with compact 9-to-7 standard shift timing and off days without horizontal overflow', () => {
+  it('renders week view with real-time check-in and check-out times and off days', () => {
     render(
       <RosterTab
         employees={mockEmployees}
@@ -54,13 +54,18 @@ describe('RosterTab Compact Grid & 9-to-7 Standard Shift', () => {
     expect(screen.getByText('Arun Kumar')).toBeInTheDocument();
     expect(screen.getByText('Rajesh Patel')).toBeInTheDocument();
 
-    // Verify 09:00 - 19:00 (9 to 7) default standard shift is displayed
-    const standardShiftPills = screen.getAllByText('09:00 – 19:00');
-    expect(standardShiftPills.length).toBeGreaterThan(0);
+    // Verify real-time check-in & check-out times are displayed (e.g. 09:xx – 19:xx)
+    const timeCells = screen.getAllByRole('button').filter((b) => b.textContent?.includes('–'));
+    expect(timeCells.length).toBeGreaterThan(0);
 
     // Verify weekend off badges are displayed cleanly
     const offBadges = screen.getAllByText('Off');
     expect(offBadges.length).toBeGreaterThan(0);
+
+    // Verify bottom legend has clean attendance status indicators
+    expect(screen.getByText('Completed (Check-In & Out)')).toBeInTheDocument();
+    expect(screen.getByText('Active (Currently In)')).toBeInTheDocument();
+    expect(screen.getByText('Weekly Off')).toBeInTheDocument();
 
     // Verify table structure has proper accessible label
     const table = screen.getByLabelText('Attendance Shift Roster Grid');
