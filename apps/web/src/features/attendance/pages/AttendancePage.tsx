@@ -47,6 +47,7 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
   const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets'>(initialTab);
   const [selectedDate, setSelectedDate] = useState<string>(() => getLocalTodayIso());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -142,7 +143,7 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
       return 'Today – My attendance records and session details.';
     }
     if (activeTab === 'roster') {
-      return 'Weekly shift schedules and employee assignments.';
+      return 'Plan and manage employee shifts for the selected period.';
     }
     return 'Review and approve employee working hours and overtime.';
   })();
@@ -168,71 +169,86 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight">
-            Attendance
+            {activeTab === 'roster'
+              ? 'Roster'
+              : activeTab === 'timesheets'
+                ? 'Timesheets'
+                : 'Attendance'}
           </h1>
           <p className="text-xs sm:text-sm text-text-muted">{tabSubtitle}</p>
         </div>
 
-        {/* Date Selector Dropdown */}
-        <div className="relative self-start sm:self-auto">
+        {activeTab === 'roster' && canManage ? (
           <button
             type="button"
-            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-surface/90 border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface transition-colors"
+            onClick={() => setIsCreateRosterOpen(true)}
+            className="min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 bg-primary-deep text-white hover:bg-primary-deep/90 shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
           >
-            <span>📅</span>
-            <span>{formattedSelectedDate}</span>
-            <span className="text-text-muted text-[10px]">▼</span>
+            <span className="text-base leading-none font-bold">+</span>
+            <span>Create Roster</span>
           </button>
+        ) : (
+          /* Date Selector Dropdown */
+          <div className="relative self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-surface/90 border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface transition-colors"
+            >
+              <span>📅</span>
+              <span>{formattedSelectedDate}</span>
+              <span className="text-text-muted text-[10px]">▼</span>
+            </button>
 
-          {isDatePickerOpen && (
-            <div className="absolute right-0 mt-2 z-20 w-56 p-2.5 bg-surface border border-border rounded-xl shadow-lg space-y-1.5">
-              <span className="text-[11px] font-bold text-text-muted px-2 block">
-                Quick Date Select
-              </span>
-              {[
-                { label: 'Today', val: getLocalTodayIso() },
-                { label: 'Yesterday', val: addDaysIso(getLocalTodayIso(), -1) },
-                { label: '2 Days Ago', val: addDaysIso(getLocalTodayIso(), -2) },
-                { label: '3 Days Ago', val: addDaysIso(getLocalTodayIso(), -3) },
-              ].map((d) => (
-                <button
-                  key={d.val}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(d.val);
-                    setIsDatePickerOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-                    selectedDate === d.val
-                      ? 'bg-primary-soft text-primary-deep font-bold'
-                      : 'text-text hover:bg-surface-muted'
-                  }`}
-                >
-                  <span>{d.label}</span>
-                  <span className="font-mono text-[10px] text-text-muted">{d.val}</span>
-                </button>
-              ))}
-              <div className="pt-1.5 border-t border-border">
-                <label className="text-[10px] font-semibold text-text-muted px-1 block mb-1">
-                  Pick Date
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setSelectedDate(e.target.value);
+            {isDatePickerOpen && (
+              <div className="absolute right-0 mt-2 z-20 w-56 p-2.5 bg-surface border border-border rounded-xl shadow-lg space-y-1.5">
+                <span className="text-[11px] font-bold text-text-muted px-2 block">
+                  Quick Date Select
+                </span>
+                {[
+                  { label: 'Today', val: getLocalTodayIso() },
+                  { label: 'Yesterday', val: addDaysIso(getLocalTodayIso(), -1) },
+                  { label: '2 Days Ago', val: addDaysIso(getLocalTodayIso(), -2) },
+                  { label: '3 Days Ago', val: addDaysIso(getLocalTodayIso(), -3) },
+                ].map((d) => (
+                  <button
+                    key={d.val}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(d.val);
                       setIsDatePickerOpen(false);
-                    }
-                  }}
-                  aria-label="Pick attendance date"
-                  className="w-full px-2 py-1.5 text-xs rounded-lg border border-border bg-surface text-text"
-                />
+                    }}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                      selectedDate === d.val
+                        ? 'bg-primary-soft text-primary-deep font-bold'
+                        : 'text-text hover:bg-surface-muted'
+                    }`}
+                  >
+                    <span>{d.label}</span>
+                    <span className="font-mono text-[10px] text-text-muted">{d.val}</span>
+                  </button>
+                ))}
+                <div className="pt-1.5 border-t border-border">
+                  <label className="text-[10px] font-semibold text-text-muted px-1 block mb-1">
+                    Pick Date
+                  </label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setSelectedDate(e.target.value);
+                        setIsDatePickerOpen(false);
+                      }
+                    }}
+                    aria-label="Pick attendance date"
+                    className="w-full px-2 py-1.5 text-xs rounded-lg border border-border bg-surface text-text"
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 2. Navigation Tabs (Exact 3 tabs: On Duty, Roster, Timesheets) */}
@@ -318,6 +334,8 @@ export function AttendancePage({ initialTab = 'on-duty' }: AttendancePageProps) 
               initialLeaves={leaveEntries}
               canManageRoster={canManage}
               onRefresh={loadData}
+              openCreateModal={isCreateRosterOpen}
+              onCloseCreateModal={() => setIsCreateRosterOpen(false)}
             />
           )}
 

@@ -85,25 +85,6 @@ function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
-function IconLayers({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
-
 function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
@@ -202,6 +183,7 @@ export function OnDutyTab({
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'late_absent'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedShiftName, setSelectedShiftName] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
   const pageSize = 10;
 
@@ -352,83 +334,69 @@ export function OnDutyTab({
 
   return (
     <div className="space-y-6">
-      {/* 1. Four Top KPI Cards */}
+      {/* 1. Four Top KPI Cards (Solid Vibrant Pastels from Reference Image) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* On Duty */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconUsers className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                On Duty
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {onDutyCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                {onDutyPercent}% of total employees
-              </span>
-            </div>
+        <div className="p-5 bg-[#faebe6] border border-[#f2d4cb] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">On Duty</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {onDutyCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              {onDutyPercent}% of total employees
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-rose-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconUsers className="w-6 h-6" />
           </div>
         </div>
 
         {/* Late Today */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconClock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Late Today
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {lateCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                &gt; 15 min after shift start
-              </span>
-            </div>
+        <div className="p-5 bg-[#e4f5ed] border border-[#c6eadb] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">Late Today</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {lateCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              &gt; 15 min after shift start
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconClock className="w-6 h-6" />
           </div>
         </div>
 
         {/* Absent Today */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconUserX className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Absent Today
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {absentCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">Not checked in yet</span>
-            </div>
+        <div className="p-5 bg-[#e5effb] border border-[#ccdef4] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">Absent Today</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {absentCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              Not checked in yet
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-sky-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconUserX className="w-6 h-6" />
           </div>
         </div>
 
         {/* On Leave */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-xs">
-              <IconCalendar className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                On Leave
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {onLeaveCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                Approved leave today
-              </span>
-            </div>
+        <div className="p-5 bg-[#fef4d8] border border-[#fae6b4] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">On Leave</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {onLeaveCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              Approved leave today
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-amber-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconCalendar className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -437,8 +405,8 @@ export function OnDutyTab({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Attendance Table & Quick Filters (8 cols on lg) */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Quick Filters Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Quick Filters Bar (Enclosed in clean solid white card) */}
+          <div className="p-3 sm:p-4 bg-surface rounded-2xl border border-border/80 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               {/* Department Selector */}
               <select
@@ -448,9 +416,9 @@ export function OnDutyTab({
                   setDepartmentFilter(e.target.value);
                   setPage(1);
                 }}
-                className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border/80 rounded-xl text-text outline-none cursor-pointer hover:bg-surface-muted"
+                className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border/80 rounded-xl text-text outline-none cursor-pointer hover:bg-surface-muted transition-colors"
               >
-                <option value="all">Department ▾</option>
+                <option value="all">All Departments</option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.name}>
                     {dept.name}
@@ -465,7 +433,7 @@ export function OnDutyTab({
                   setFilterMode('all');
                   setPage(1);
                 }}
-                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                   filterMode === 'all'
                     ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-surface text-text-muted hover:text-text border border-border/80'
@@ -481,9 +449,9 @@ export function OnDutyTab({
                   setFilterMode('late_absent');
                   setPage(1);
                 }}
-                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all ${
+                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                   filterMode === 'late_absent'
-                    ? 'bg-primary-deep text-white shadow-xs'
+                    ? 'bg-primary-deep text-white shadow-xs font-bold'
                     : 'bg-surface text-text-muted hover:text-text border border-border/80'
                 }`}
               >
@@ -504,19 +472,19 @@ export function OnDutyTab({
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full min-h-[38px] px-3 py-1.5 text-xs bg-surface border border-border/80 rounded-xl text-text placeholder:text-text-muted outline-none focus:border-primary-strong"
+                className="w-full min-h-[38px] px-3 py-1.5 text-xs bg-surface border border-border/80 rounded-xl text-text placeholder:text-text-muted outline-none focus:border-primary-deep transition-colors"
               />
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden">
+          {/* Table Container (Solid clean white card matching Timesheets) */}
+          <div className="bg-surface rounded-2xl border border-border/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table
-                className="w-full text-left text-xs sm:text-sm"
+                className="w-full text-left text-xs sm:text-sm border-collapse"
                 aria-label="On Duty Attendance Table"
               >
-                <thead className="bg-surface-muted/50 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
+                <thead className="bg-surface-muted/60 border-b border-border/80 text-xs font-bold text-text-muted">
                   <tr>
                     <th scope="col" className="px-4 py-3.5">
                       Employee
@@ -541,7 +509,7 @@ export function OnDutyTab({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border text-text">
+                <tbody className="divide-y divide-border/60 text-text bg-surface">
                   {paginatedRows.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-8 text-center text-xs text-text-muted">
@@ -559,7 +527,10 @@ export function OnDutyTab({
                         .toUpperCase();
 
                       return (
-                        <tr key={row.id} className="hover:bg-surface-muted/40 transition-colors">
+                        <tr
+                          key={row.id}
+                          className="bg-surface hover:bg-surface-muted/40 transition-colors"
+                        >
                           {/* Employee */}
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-3">
@@ -731,54 +702,95 @@ export function OnDutyTab({
 
         {/* Right Column: Shift Coverage & On Leave Today (4 cols on lg) */}
         <div className="lg:col-span-4 space-y-4">
-          {/* Shift Coverage Card */}
-          <div className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
-            <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <IconLayers className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-text leading-tight">Shift Coverage</h3>
-                <span className="text-[11px] text-text-muted">3 Active Shifts</span>
-              </div>
+          {/* Shift Coverage Card (Matches Timesheets vertical bar chart style) */}
+          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-extrabold text-text font-display tracking-tight leading-tight">
+                Shift Coverage
+              </h3>
+              <p className="text-xs text-text-muted font-normal mt-0.5">
+                Active shifts coverage today
+              </p>
             </div>
 
-            <div className="space-y-3 pt-1">
-              {shiftCoverage.map((sc) => (
-                <div key={sc.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-text">
-                      {sc.name} <span className="text-text-muted text-[11px]">({sc.hours})</span>
-                    </span>
-                    <span className="font-bold text-emerald-600">{sc.percent}%</span>
-                  </div>
-                  {/* Progress bar */}
-                  <div className="w-full h-2 rounded-full bg-surface-muted overflow-hidden">
+            {/* Vertical Bar Chart with 4 Dashed Grid Lines */}
+            <div className="relative pt-6 pb-2">
+              {/* 4 Dashed Horizontal Grid Lines */}
+              <div className="absolute inset-x-0 top-6 bottom-8 flex flex-col justify-between pointer-events-none">
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+              </div>
+
+              {/* Bars and Shift Labels */}
+              <div className="relative z-10 flex items-end justify-around gap-2 h-44 px-2">
+                {shiftCoverage.map((sc) => {
+                  const isSelected = selectedShiftName === sc.name;
+                  return (
                     <div
-                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                      style={{ width: `${sc.percent}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                      key={sc.name}
+                      onClick={() =>
+                        setSelectedShiftName((prev) => (prev === sc.name ? null : sc.name))
+                      }
+                      className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group relative"
+                    >
+                      {/* Floating Percentage Badge when clicked */}
+                      {isSelected && (
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-md bg-[#0c6b75] text-white text-[10px] font-bold shadow-md whitespace-nowrap animate-in fade-in zoom-in-95 pointer-events-none z-20">
+                          {sc.percent}%
+                        </div>
+                      )}
+
+                      {/* Bar */}
+                      <div className="w-full max-w-[44px] flex items-end justify-center h-full pb-1">
+                        <div
+                          className={`w-full rounded-t-xl transition-all duration-300 ${
+                            isSelected
+                              ? 'bg-[#0c6b75] shadow-xs scale-y-[1.02] origin-bottom'
+                              : 'bg-[#74a8b5] group-hover:bg-[#5f97a5] opacity-90 group-hover:opacity-100 group-hover:scale-y-[1.02] origin-bottom'
+                          }`}
+                          style={{ height: `${sc.percent}%` }}
+                        />
+                      </div>
+
+                      {/* Shift Label */}
+                      <span
+                        className={`text-xs mt-2 transition-colors text-center ${
+                          isSelected
+                            ? 'font-extrabold text-[#0c6b75]'
+                            : 'font-medium text-text-muted group-hover:text-text'
+                        }`}
+                      >
+                        {sc.name}
+                      </span>
+                      <span className="text-[10px] text-text-muted font-mono mt-0.5 whitespace-nowrap">
+                        {sc.hours.split(' - ')[0]}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* On Leave Today Card */}
-          <div className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
-            <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                <IconCalendar className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-text leading-tight">On Leave Today</h3>
-                <span className="text-[11px] text-text-muted">{onLeaveCount} Employees</span>
+          {/* On Leave Today Card (Clean Solid White Card) */}
+          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <IconCalendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-text leading-tight">On Leave Today</h3>
+                  <span className="text-[11px] text-text-muted">{onLeaveCount} Employees</span>
+                </div>
               </div>
             </div>
 
             <div className="space-y-3 pt-1">
               {onLeaveEmployees.length === 0 ? (
-                <p className="text-xs text-text-muted text-center py-2">
+                <p className="text-xs text-text-muted text-center py-4">
                   No employees on leave today.
                 </p>
               ) : (
@@ -812,16 +824,18 @@ export function OnDutyTab({
               )}
             </div>
 
-            <div className="pt-2 border-t border-border/60 text-right">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/staff/leave')}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 border-none p-0"
-              >
-                View All ({onLeaveCount}) &rarr;
-              </Button>
-            </div>
+            {onLeaveEmployees.length > 0 && (
+              <div className="pt-2 border-t border-border/60 text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/staff/leave')}
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 border-none p-0 cursor-pointer"
+                >
+                  View All ({onLeaveCount}) &rarr;
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
