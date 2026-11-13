@@ -9,6 +9,7 @@ export interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  position?: 'center' | 'drawer';
 }
 
 export function Modal({
@@ -19,6 +20,7 @@ export function Modal({
   children,
   footer,
   maxWidth = 'md',
+  position = 'center',
 }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -34,9 +36,15 @@ export function Modal({
     '2xl': 'sm:max-w-2xl',
   };
 
+  const isDrawer = position === 'drawer';
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-overlay backdrop-blur-sm transition-opacity"
+      className={`fixed inset-0 z-50 flex bg-overlay backdrop-blur-sm transition-opacity ${
+        isDrawer
+          ? 'justify-end items-stretch p-0'
+          : 'items-end sm:items-center justify-center p-0 sm:p-4'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
@@ -44,11 +52,15 @@ export function Modal({
       {/* Background click to dismiss */}
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
-      {/* Modal Dialog: Full-width sheet on mobile (<640px), Centered Card on desktop */}
+      {/* Modal Dialog or Right Slide-Over Drawer */}
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className={`relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`}
+        className={
+          isDrawer
+            ? `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-t-none sm:rounded-l-card shadow-raised overflow-hidden flex flex-col h-[92dvh] sm:h-full mt-auto sm:mt-0 z-10 border-t sm:border-t-0 sm:border-l border-border`
+            : `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`
+        }
       >
         {/* Mobile handle indicator */}
         <div

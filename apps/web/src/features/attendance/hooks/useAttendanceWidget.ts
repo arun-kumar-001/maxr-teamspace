@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   checkIn as apiCheckIn,
   checkOut as apiCheckOut,
+  endBreak as apiEndBreak,
   fetchTodayAttendance,
+  startBreak as apiStartBreak,
 } from '../api/attendance';
 import type {
   AttendanceRecord,
@@ -16,6 +18,8 @@ export interface UseAttendanceWidgetResult {
   summary: TodayAttendanceSummary | null;
   activeSession: AttendanceRecord | null;
   isCheckedIn: boolean;
+  isOnBreak: boolean;
+  breakMinutes: number;
   isLoading: boolean;
   isSubmitting: boolean;
   error: string | null;
@@ -26,6 +30,8 @@ export interface UseAttendanceWidgetResult {
   setNotes: (notes: string) => void;
   checkIn: () => Promise<boolean>;
   checkOut: () => Promise<boolean>;
+  startBreak: () => Promise<boolean>;
+  endBreak: () => Promise<boolean>;
   refresh: () => Promise<void>;
   clearError: () => void;
 }
@@ -130,10 +136,47 @@ export function useAttendanceWidget(): UseAttendanceWidgetResult {
     }
   }, [notes, refresh]);
 
+  const handleStartBreak = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      const record = await apiStartBreak();
+      setActiveSession(record);
+      await refresh();
+      return true;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unable to start break');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [refresh]);
+
+  const handleEndBreak = useCallback(async (): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      const record = await apiEndBreak();
+      setActiveSession(record);
+      await refresh();
+      return true;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unable to end break');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [refresh]);
+
+  const isOnBreak = Boolean(activeSession?.breaks?.some((b) => b.endTime === null));
+  const breakMinutes = activeSession?.breakMinutes ?? 0;
+
   return {
     summary,
     activeSession,
     isCheckedIn: Boolean(activeSession),
+    isOnBreak,
+    breakMinutes,
     isLoading,
     isSubmitting,
     error,
@@ -144,6 +187,8 @@ export function useAttendanceWidget(): UseAttendanceWidgetResult {
     setNotes,
     checkIn: handleCheckIn,
     checkOut: handleCheckOut,
+    startBreak: handleStartBreak,
+    endBreak: handleEndBreak,
     refresh,
     clearError: () => setError(null),
   };

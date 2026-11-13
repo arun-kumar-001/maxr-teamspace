@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
 import { DonutChart, type DonutChartSegment } from '../components/ui';
+import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
+import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
+import { fetchMeetings } from '../features/meetings/api/meetingsApi';
+import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import { cn } from '@/lib/utils';
 
 // --- Shared Code-Based Modern Duotone SVG Icons ---
@@ -114,43 +118,6 @@ function IconCheckSquare({ className = 'w-5 h-5' }: { className?: string }) {
         fillOpacity="0.15"
       />
       <path d="m8.25 12.25 2.6 2.6 5.15-5.35" />
-    </svg>
-  );
-}
-
-function IconCoffee({ className = 'w-3.5 h-3.5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M17 8h1.5a3.5 3.5 0 0 1 0 7H17" />
-      <path d="M4 8h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z" fill="currentColor" fillOpacity="0.15" />
-      <path d="M8 3.5v2M12 3.5v2" />
-    </svg>
-  );
-}
-
-function IconSwitch({ className = 'w-3.5 h-3.5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 3v8" />
-      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
     </svg>
   );
 }
@@ -298,14 +265,12 @@ interface ApprovalItem {
 export function AdminDashboard() {
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined') {
-      window.location.href = path;
+      window.history.pushState({}, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };
 
-  // State: My Watch Timer (4 hours 20 mins 57 secs = 15657 seconds)
-  const [watchSeconds, setWatchSeconds] = useState(15657);
-  const [isOnBreak, setIsOnBreak] = useState(false);
-  const [isSignedOff, setIsSignedOff] = useState(false);
+  const [greetingName, setGreetingName] = useState('Admin');
   const [hoveredAttendance, setHoveredAttendance] = useState<string | null>(null);
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -317,7 +282,42 @@ export function AdminDashboard() {
     leaveRequests: 7,
     openTasks: 42,
     activeSessions: 42,
+    pendingApprovalsTotal: 14,
   });
+
+  // State: Priority Tasks & Upcoming Meetings
+  const [priorityTasks, setPriorityTasks] = useState([
+    {
+      title: 'Website UI review',
+      owner: 'Owner: Rajesh Patel',
+      badge: 'In progress',
+      badgeClass: 'bg-primary-soft text-primary-strong',
+    },
+    {
+      title: 'Automation workflow QA',
+      owner: 'Owner: Priya Sharma',
+      badge: 'Review',
+      badgeClass: 'bg-purple-100 text-purple-700',
+    },
+    {
+      title: 'Social media campaign',
+      owner: 'Owner: Karthik M',
+      badge: 'To do',
+      badgeClass: 'bg-surface-muted text-text-muted border border-border',
+    },
+    {
+      title: 'Research summary',
+      owner: 'Owner: Divya N',
+      badge: 'Due today',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
+    },
+  ]);
+
+  const [upcomingMeetings, setUpcomingMeetings] = useState([
+    { time: '10:30', title: 'Daily team sync', desc: 'All teams • 30 mins' },
+    { time: '13:00', title: 'Marketing review', desc: 'Campaign planning • 45 mins' },
+    { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
+  ]);
 
   // State: Approvals
   const [approvals, setApprovals] = useState<ApprovalItem[]>([
@@ -350,131 +350,284 @@ export function AdminDashboard() {
     },
   ]);
 
-  // Live timer interval
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (!isOnBreak && !isSignedOff) {
-      timer = setInterval(() => {
-        setWatchSeconds((s) => s + 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isOnBreak, isSignedOff]);
+  const [attendanceCounts, setAttendanceCounts] = useState({
+    present: 112,
+    late: 9,
+    onLeave: 7,
+    absent: 0,
+  });
+
+  const [taskCounts, setTaskCounts] = useState({
+    completed: 142,
+    pending: 36,
+    overdue: 8,
+  });
 
   // Fetch live metrics gracefully from API if available
   useEffect(() => {
     let mounted = true;
 
     async function loadData() {
-      try {
-        const empRes = await apiFetch('/api/v1/employees?pageSize=1');
-        if (mounted && empRes.ok) {
-          const empJson = await empRes.json();
-          if (typeof empJson?.meta?.total === 'number' && empJson.meta.total > 0) {
-            setMetrics((prev) => ({
-              ...prev,
-              teamMembers: empJson.meta.total,
-            }));
-          }
+      const now = new Date();
+      const todayIso = now.toISOString().slice(0, 10);
+      const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const [meRes, empRes, approvalsRes, tasksRes, meetingsRes, teamAttRes, leaveReqRes] =
+        await Promise.allSettled([
+          apiFetch('/api/v1/auth/me').then((r) => (r.ok ? r.json() : null)),
+          apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
+          fetchApprovals({ status: 'pending', pageSize: 3 }),
+          fetchTeamTasks({ pageSize: 100 }),
+          fetchMeetings({
+            from: now.toISOString(),
+            to: weekLater.toISOString(),
+            pageSize: 3,
+          }),
+          fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
+          apiFetch('/api/v1/leave-requests?status=pending&pageSize=1').then((r) =>
+            r.ok ? r.json() : null,
+          ),
+        ]);
+
+      if (!mounted) return;
+
+      if (meRes.status === 'fulfilled') {
+        const fullName =
+          meRes.value?.data?.user?.name || meRes.value?.user?.name || meRes.value?.data?.name;
+        if (typeof fullName === 'string' && fullName.trim()) {
+          setGreetingName(fullName.trim().split(' ')[0]!);
         }
-      } catch {
-        // Retain verified baseline defaults gracefully
+      }
+
+      if (empRes.status === 'fulfilled' && typeof empRes.value?.meta?.total === 'number') {
+        setMetrics((prev) => ({
+          ...prev,
+          teamMembers: empRes.value.meta.total || prev.teamMembers,
+        }));
+      }
+
+      if (teamAttRes.status === 'fulfilled') {
+        const records = teamAttRes.value.data ?? [];
+        if (records.length > 0) {
+          let present = 0;
+          let late = 0;
+          let onLeave = 0;
+          let absent = 0;
+          let activeNow = 0;
+          for (const rec of records) {
+            if (!rec.checkOutTime) activeNow += 1;
+            if (rec.status === 'late') late += 1;
+            else if (rec.status === 'on_leave') onLeave += 1;
+            else if (rec.status === 'absent') absent += 1;
+            else present += 1;
+          }
+          setAttendanceCounts({ present, late, onLeave, absent });
+          setMetrics((prev) => ({
+            ...prev,
+            presentToday: present + late,
+            activeSessions: activeNow,
+          }));
+        }
+      }
+
+      if (
+        leaveReqRes.status === 'fulfilled' &&
+        typeof leaveReqRes.value?.meta?.total === 'number'
+      ) {
+        setMetrics((prev) => ({ ...prev, leaveRequests: leaveReqRes.value.meta.total }));
+      }
+
+      if (approvalsRes.status === 'fulfilled') {
+        const items = approvalsRes.value.data ?? [];
+        const total = approvalsRes.value.meta?.total ?? items.length;
+        setMetrics((prev) => ({ ...prev, pendingApprovalsTotal: total }));
+        if (items.length > 0) {
+          setApprovals(
+            items.map((a, idx) => {
+              const name = a.requesterName || 'Employee';
+              const initials = name
+                .split(' ')
+                .filter(Boolean)
+                .map((p: string) => p[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase();
+              const bgList = [
+                'bg-purple-100 text-purple-700',
+                'bg-purple-200 text-purple-800',
+                'bg-slate-200 text-slate-800',
+              ];
+              return {
+                id: a.id,
+                name,
+                type: a.subjectType,
+                detail: `${a.subjectType.replace(/_/g, ' ')} request`,
+                initial: initials || 'EM',
+                avatarBg: bgList[idx % bgList.length]!,
+                status: a.status === 'approved' ? 'approved' : 'pending',
+              };
+            }),
+          );
+        }
+      }
+
+      if (tasksRes.status === 'fulfilled') {
+        const list = tasksRes.value.data ?? [];
+        if (typeof tasksRes.value.meta?.total === 'number') {
+          setMetrics((prev) => ({ ...prev, openTasks: tasksRes.value.meta.total }));
+        }
+        if (list.length > 0) {
+          const todayMs = Date.now();
+          let completed = 0;
+          let overdue = 0;
+          let pending = 0;
+          for (const t of list) {
+            if (t.status === 'completed') completed += 1;
+            else if (t.dueDate && new Date(t.dueDate).getTime() < todayMs) overdue += 1;
+            else pending += 1;
+          }
+          setTaskCounts({ completed, pending, overdue });
+          setPriorityTasks(
+            list.slice(0, 4).map((t) => ({
+              title: t.title,
+              owner: `Owner: ${t.assigneeName || 'Team Member'}`,
+              badge:
+                t.status === 'in_progress'
+                  ? 'In progress'
+                  : t.status === 'in_review'
+                    ? 'Review'
+                    : t.status === 'completed'
+                      ? 'Completed'
+                      : t.status === 'blocked'
+                        ? 'Blocked'
+                        : 'To do',
+              badgeClass:
+                t.status === 'in_progress'
+                  ? 'bg-primary-soft text-primary-strong'
+                  : t.status === 'in_review'
+                    ? 'bg-purple-100 text-purple-700'
+                    : t.status === 'completed'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-surface-muted text-text-muted border border-border',
+            })),
+          );
+        }
+      }
+
+      if (meetingsRes.status === 'fulfilled') {
+        const list = meetingsRes.value.data ?? [];
+        if (list.length > 0) {
+          setUpcomingMeetings(
+            list.slice(0, 3).map((m) => {
+              const dt = new Date(m.startsAt);
+              const hh = String(dt.getHours()).padStart(2, '0');
+              const mm = String(dt.getMinutes()).padStart(2, '0');
+              return {
+                time: Number.isNaN(dt.getTime()) ? '10:00' : `${hh}:${mm}`,
+                title: m.title,
+                desc: `${m.organizerName} • ${m.attendeeCount} attendees`,
+              };
+            }),
+          );
+        }
       }
     }
 
-    loadData();
+    loadData().catch(() => {});
 
     return () => {
       mounted = false;
     };
   }, []);
 
-  const formatTimer = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
     setApprovals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
+    if (!id.startsWith('app-')) {
+      try {
+        await approveRequest(id);
+      } catch {
+        // Optimistic UI fallback
+      }
+    }
   };
 
-  // Daily target 8.5h = 30600s for MY WATCH DonutChart
-  const watchTargetSeconds = 30600;
-  const watchChartData: DonutChartSegment[] = [
-    {
-      label: 'Shift Progress',
-      value: isSignedOff ? 0 : Math.min(watchSeconds, watchTargetSeconds),
-      color: isOnBreak ? 'var(--chart-5)' : 'var(--primary)',
-    },
-  ];
+  const totalAttendanceCount = Math.max(
+    1,
+    attendanceCounts.present +
+      attendanceCounts.late +
+      attendanceCounts.onLeave +
+      attendanceCounts.absent,
+  );
 
   const attendanceChartData: Array<
     DonutChartSegment & { pctLabel: string; inkColor: string; pillClass: string }
   > = [
     {
       label: 'Present',
-      value: 112,
+      value: attendanceCounts.present,
       color: 'var(--primary)',
       inkColor: 'var(--primary-ink)',
-      pctLabel: '89.0%',
+      pctLabel: `${((attendanceCounts.present / totalAttendanceCount) * 100).toFixed(1)}%`,
       pillClass: 'bg-primary-soft',
     },
     {
       label: 'Late',
-      value: 9,
+      value: attendanceCounts.late,
       color: 'var(--chart-5)',
       inkColor: 'var(--chart-ink-5)',
-      pctLabel: '7.1%',
+      pctLabel: `${((attendanceCounts.late / totalAttendanceCount) * 100).toFixed(1)}%`,
       pillClass: 'bg-amber-50',
     },
     {
       label: 'On Leave',
-      value: 7,
+      value: attendanceCounts.onLeave,
       color: 'var(--chart-4)',
       inkColor: 'var(--chart-ink-4)',
-      pctLabel: '5.5%',
+      pctLabel: `${((attendanceCounts.onLeave / totalAttendanceCount) * 100).toFixed(1)}%`,
       pillClass: 'bg-purple-50',
     },
     {
       label: 'Absent',
-      value: 0,
+      value: attendanceCounts.absent,
       color: 'var(--chart-7)',
       inkColor: 'var(--chart-ink-7)',
-      pctLabel: '0.0%',
+      pctLabel: `${((attendanceCounts.absent / totalAttendanceCount) * 100).toFixed(1)}%`,
       pillClass: 'bg-rose-50',
     },
   ];
   const activeAttendance = attendanceChartData.find((s) => s.label === hoveredAttendance);
+
+  const totalTaskCount = Math.max(
+    1,
+    taskCounts.completed + taskCounts.pending + taskCounts.overdue,
+  );
 
   const taskChartData: Array<
     DonutChartSegment & { pct: number; inkColor: string; pillClass: string }
   > = [
     {
       label: 'Completed',
-      value: 142,
+      value: taskCounts.completed,
       color: 'var(--primary)',
       inkColor: 'var(--primary-ink)',
-      pct: 76,
+      pct: Math.round((taskCounts.completed / totalTaskCount) * 100),
       pillClass: 'bg-primary-soft',
     },
     {
       label: 'Pending',
-      value: 36,
+      value: taskCounts.pending,
       color: 'var(--chart-4)',
       inkColor: 'var(--chart-ink-4)',
-      pct: 19,
+      pct: Math.round((taskCounts.pending / totalTaskCount) * 100),
       pillClass: 'bg-purple-50',
     },
     {
       label: 'Overdue',
-      value: 8,
+      value: taskCounts.overdue,
       color: 'var(--chart-7)',
       inkColor: 'var(--chart-ink-7)',
-      pct: 5,
+      pct: Math.round((taskCounts.overdue / totalTaskCount) * 100),
       pillClass: 'bg-rose-50',
     },
   ];
@@ -539,7 +692,12 @@ export function AdminDashboard() {
       <section className="flex flex-row items-center justify-between gap-4 maxr-card-entrance min-w-0">
         <div className="min-w-0">
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-text tracking-tight truncate">
-            Good morning, Arun!
+            {new Date().getHours() < 12
+              ? 'Good morning'
+              : new Date().getHours() < 17
+                ? 'Good afternoon'
+                : 'Good evening'}
+            , {greetingName}!
           </h1>
         </div>
         <div className="shrink-0">
@@ -603,7 +761,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              16 not checked in
+              {Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in
             </span>
           </div>
         </div>
@@ -629,7 +787,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              3 pending review
+              {metrics.leaveRequests} pending review
             </span>
           </div>
         </div>
@@ -655,7 +813,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              8 due soon
+              {taskCounts.overdue} overdue
             </span>
           </div>
         </div>
@@ -663,140 +821,8 @@ export function AdminDashboard() {
 
       {/* 3. Middle Section: 3 Cards (My Watch, Attendance Overview, Task Overview) - Perfectly Sized */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
-        {/* Card 1: MY WATCH */}
-        <div
-          style={{ animationDelay: '250ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconClock className="w-3.5 h-3.5" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-xs font-bold text-text tracking-wider uppercase truncate">
-                  MY WATCH
-                </h2>
-                <p className="text-[10.5px] text-text-muted truncate">
-                  Main Office &bull; 08:30 - 17:00
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-xs shrink-0">
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${isOnBreak ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}
-              />
-              <span>{isSignedOff ? 'Signed off' : isOnBreak ? 'On Break' : 'Running'}</span>
-            </div>
-          </div>
-
-          {/* Circular Timer Ring & Actions - Powered by DonutChart */}
-          <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            <DonutChart
-              data={watchChartData}
-              totalValue={watchTargetSeconds}
-              size={126}
-              strokeWidth={9}
-              segmentGap={0}
-              showInnerRing={true}
-              animationDuration={0.6}
-              highlightOnHover={false}
-              trackColor="var(--track)"
-              aria-label="My watch progress"
-              className="shrink-0"
-              centerContent={
-                <div className="flex flex-col items-center justify-center text-center leading-none">
-                  <span
-                    className="font-mono text-base sm:text-lg font-extrabold tracking-tight"
-                    style={{
-                      color: isSignedOff
-                        ? 'var(--text-muted)'
-                        : isOnBreak
-                          ? 'var(--chart-ink-5)'
-                          : 'var(--text)',
-                    }}
-                  >
-                    {formatTimer(watchSeconds)}
-                  </span>
-                  <span
-                    className="text-[10px] mt-1 font-semibold"
-                    style={{
-                      color: isOnBreak ? 'var(--chart-ink-5)' : 'var(--primary-ink)',
-                    }}
-                  >
-                    of 8.5h today
-                  </span>
-                </div>
-              }
-            />
-
-            {/* Action Buttons */}
-            <div className="flex-1 min-w-0 space-y-2">
-              <button
-                type="button"
-                onClick={() => setIsOnBreak(!isOnBreak)}
-                className={`w-full text-xs py-2 px-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 hover:scale-101 active:scale-95 shadow-xs whitespace-nowrap border ${
-                  isOnBreak
-                    ? 'bg-primary text-sidebar border-primary'
-                    : 'bg-surface-raised text-text border-border hover:bg-surface-muted'
-                }`}
-              >
-                <IconCoffee className="w-3.5 h-3.5 shrink-0" />
-                <span>{isOnBreak ? 'Resume work' : 'Take a break'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSignedOff(!isSignedOff)}
-                className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap"
-              >
-                <IconSwitch className="w-3.5 h-3.5 shrink-0" />
-                <span>{isSignedOff ? 'Sign on' : 'Sign off'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Weekly Working Hours Mini Bars */}
-          <div className="pt-2.5 border-t border-border/80">
-            <div className="flex items-end justify-between gap-1 text-center h-14">
-              {[
-                { day: 'Wed', hours: '7.9h', fillPercent: 93, active: false, delay: '50ms' },
-                { day: 'Thu', hours: '8.4h', fillPercent: 99, active: false, delay: '100ms' },
-                { day: 'Fri', hours: '7.6h', fillPercent: 89, active: false, delay: '150ms' },
-                { day: 'Sat', hours: '-', fillPercent: 12, active: false, delay: '200ms' },
-                { day: 'Sun', hours: '-', fillPercent: 12, active: false, delay: '250ms' },
-                { day: 'Mon', hours: '8.2h', fillPercent: 96, active: false, delay: '300ms' },
-                { day: 'Tue', hours: '4.3h', fillPercent: 51, active: true, delay: '350ms' },
-              ].map((d) => (
-                <div
-                  key={d.day}
-                  className="flex-1 flex flex-col items-center justify-end gap-1 h-full min-w-0"
-                >
-                  <div className="w-full max-w-[24px] h-8 rounded-md bg-surface-muted/80 flex items-end justify-center overflow-hidden p-0.5">
-                    <div
-                      style={{ height: `${d.fillPercent}%`, animationDelay: d.delay }}
-                      className={`maxr-bar-grow w-full rounded-xs transition-all duration-300 ${
-                        d.active
-                          ? 'bg-emerald-700'
-                          : d.hours === '-'
-                            ? 'bg-transparent'
-                            : 'bg-primary-soft'
-                      }`}
-                    />
-                  </div>
-                  <span className="text-[10px] font-semibold text-text-muted leading-none">
-                    {d.day}
-                  </span>
-                  <span
-                    className={`text-[9.5px] font-mono leading-none ${d.active ? 'font-bold text-emerald-700' : 'text-text-subtle'}`}
-                  >
-                    {d.hours}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Card 1: Shared Time Tracker (matching Overview card styling) */}
+        <TimeTrackerCard variant="overview" className="h-full" />
 
         {/* Card 2: Attendance Overview */}
         <div
@@ -842,7 +868,7 @@ export function AdminDashboard() {
                     className="flex flex-col items-center justify-center text-center leading-none"
                   >
                     <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                      {activeAttendance ? activeAttendance.value : '89.0%'}
+                      {activeAttendance ? activeAttendance.value : attendanceChartData[0]!.pctLabel}
                     </span>
                     <span
                       className="text-[10.5px] mt-1 font-bold truncate max-w-[78px]"
@@ -903,9 +929,9 @@ export function AdminDashboard() {
 
           {/* Subtext info for balanced vertical card spacing */}
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted">
-            <span className="truncate">Target: 124 staff</span>
+            <span className="truncate">Target: {metrics.teamMembers} staff</span>
             <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
-              90.3% avg this week
+              {attendanceChartData[0]!.pctLabel} present today
             </span>
           </div>
         </div>
@@ -1043,7 +1069,7 @@ export function AdminDashboard() {
               </span>
               <h2 className="text-sm font-bold text-text truncate">Pending Approvals</h2>
               <span className="px-1.5 py-0.2 rounded-full text-[10.5px] font-bold bg-purple-600 text-white shadow-xs shrink-0">
-                14
+                {metrics.pendingApprovalsTotal}
               </span>
             </div>
             <button
@@ -1088,7 +1114,7 @@ export function AdminDashboard() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => handleApprove(item.id)}
+                    onClick={() => void handleApprove(item.id)}
                     className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap ${
                       item.status === 'approved'
                         ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
@@ -1110,7 +1136,7 @@ export function AdminDashboard() {
               onClick={() => navigateTo('/approvals')}
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
-              <span>View all 14 approvals</span>
+              <span>View all {metrics.pendingApprovalsTotal} approvals</span>
               <span className="transition-transform duration-200 group-hover:translate-x-1">
                 &rarr;
               </span>
@@ -1142,32 +1168,7 @@ export function AdminDashboard() {
 
           {/* Task Rows - Fitted & Clean */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
-            {[
-              {
-                title: 'Website UI review',
-                owner: 'Owner: Rajesh Patel',
-                badge: 'In progress',
-                badgeClass: 'bg-primary-soft text-primary-strong',
-              },
-              {
-                title: 'Automation workflow QA',
-                owner: 'Owner: Priya Sharma',
-                badge: 'Review',
-                badgeClass: 'bg-purple-100 text-purple-700',
-              },
-              {
-                title: 'Social media campaign',
-                owner: 'Owner: Karthik M',
-                badge: 'To do',
-                badgeClass: 'bg-surface-muted text-text-muted border border-border',
-              },
-              {
-                title: 'Research summary',
-                owner: 'Owner: Divya N',
-                badge: 'Due today',
-                badgeClass: 'bg-emerald-100 text-emerald-700',
-              },
-            ].map((task) => (
+            {priorityTasks.map((task) => (
               <div
                 key={task.title}
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
@@ -1207,7 +1208,7 @@ export function AdminDashboard() {
 
         {/* Card 3: Upcoming Meetings - Perfectly Balanced */}
         <div
-          onClick={() => navigateTo('/calendar')}
+          onClick={() => navigateTo('/meetings')}
           style={{ animationDelay: '500ms' }}
           className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
         >
@@ -1227,13 +1228,9 @@ export function AdminDashboard() {
 
           {/* Meeting Rows */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
-            {[
-              { time: '10:30', title: 'Daily team sync', desc: 'All teams • 30 mins' },
-              { time: '13:00', title: 'Marketing review', desc: 'Campaign planning • 45 mins' },
-              { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
-            ].map((m) => (
+            {upcomingMeetings.map((m, idx) => (
               <div
-                key={m.time}
+                key={`${m.time}-${idx}`}
                 className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -1257,7 +1254,7 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80">
             <button
               type="button"
-              onClick={() => navigateTo('/calendar')}
+              onClick={() => navigateTo('/meetings')}
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>View full calendar</span>

@@ -21,10 +21,10 @@ export interface NavItem {
 }
 
 export const NAVIGATION_REGISTRY: readonly NavItem[] = [
-  // Shared / Overview Route
+  // Shared / Dashboard Route
   {
     id: 'dashboard',
-    label: 'Overview',
+    label: 'Dashboard',
     path: '/dashboard',
     iconName: 'home',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
@@ -80,6 +80,13 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'file-text',
     allowedRoles: [ROLES.ADMIN],
   },
+  {
+    id: 'admin-payslips',
+    label: 'Payslips',
+    path: '/admin/payslips',
+    iconName: 'file-text',
+    allowedRoles: [ROLES.ADMIN],
+  },
 
   // HR Manager Routes (AGENTS.md §1)
   {
@@ -121,6 +128,13 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     id: 'hr-reports',
     label: 'HR Reports',
     path: '/hr/reports',
+    iconName: 'file-text',
+    allowedRoles: [ROLES.HR_MANAGER],
+  },
+  {
+    id: 'hr-payslips',
+    label: 'Payslips',
+    path: '/hr/payslips',
     iconName: 'file-text',
     allowedRoles: [ROLES.HR_MANAGER],
   },
@@ -198,7 +212,7 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
   },
   {
     id: 'staff-attendance',
-    label: 'Check-In / Check-Out',
+    label: 'Attendance Management',
     path: '/staff/attendance',
     iconName: 'clock',
     allowedRoles: [ROLES.STAFF],
@@ -557,6 +571,11 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       { id: '/attendance', label: 'On Duty', href: '/attendance' },
       { id: '/attendance/roster', label: 'Roster', href: '/attendance/roster' },
       { id: '/attendance/timesheets', label: 'Timesheets', href: '/attendance/timesheets' },
+      {
+        id: '/attendance/check-in-out',
+        label: 'Check-In / Check-Out',
+        href: '/attendance/check-in-out',
+      },
     ],
   };
 
@@ -580,8 +599,10 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           href: '/leave',
           icon: <NavSvgIcon name="calendar" />,
           children: [
-            { id: '/leave', label: 'Leave Requests', href: '/leave' },
+            { id: '/leave', label: 'My Leave', href: '/leave' },
+            { id: '/leave/approvals', label: 'Team Approvals', href: '/leave/approvals' },
             { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
+            { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
           ],
         },
         {
@@ -726,9 +747,15 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         attendanceItem,
         {
           id: '/leave',
-          label: 'Leave Requests',
+          label: 'Leave Management',
           href: '/leave',
           icon: <NavSvgIcon name="calendar" />,
+          children: [
+            { id: '/leave', label: 'My Leave', href: '/leave' },
+            { id: '/leave/approvals', label: 'Team Approvals', href: '/leave/approvals' },
+            { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
+            { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
+          ],
         },
         {
           id: '/tasks',
@@ -918,7 +945,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         },
         {
           id: '/staff/attendance',
-          label: 'Check-In / Check-Out',
+          label: 'Attendance Management',
           href: '/staff/attendance',
           icon: <NavSvgIcon name="clock" />,
         },

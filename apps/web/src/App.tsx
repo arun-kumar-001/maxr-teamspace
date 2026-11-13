@@ -466,10 +466,18 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/attendance/check-in-out"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="check-in-out" />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/staff/attendance"
         element={
           <ShellLayout>
-            <AttendancePage initialTab="on-duty" />
+            <AttendancePage initialTab="my-attendance" />
           </ShellLayout>
         }
       />
@@ -726,7 +734,7 @@ function AppRoutes() {
         path="/staff/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="requests" />
           </ShellLayout>
         }
       />
@@ -734,7 +742,23 @@ function AppRoutes() {
         path="/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/requests"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/approvals"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="approvals" />
           </ShellLayout>
         }
       />

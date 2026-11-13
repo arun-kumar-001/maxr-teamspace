@@ -9,6 +9,7 @@ import type {
   CorrectionQuery,
   PaginatedCorrectionsResponse,
   RequestCorrectionPayload,
+  TeamCalendarData,
   TodayAttendanceSummary,
 } from '../types';
 
@@ -180,5 +181,40 @@ export async function cancelCorrection(id: string): Promise<AttendanceCorrection
     method: 'POST',
   });
   const body = await handleResponse<{ data: AttendanceCorrection }>(res);
+  return body.data;
+}
+
+export async function startBreak(): Promise<AttendanceRecord> {
+  const res = await apiFetch('/api/v1/attendance/break-start', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  const body = await handleResponse<{ data: AttendanceRecord }>(res);
+  return body.data;
+}
+
+export async function endBreak(): Promise<AttendanceRecord> {
+  const res = await apiFetch('/api/v1/attendance/break-end', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  const body = await handleResponse<{ data: AttendanceRecord }>(res);
+  return body.data;
+}
+
+export async function fetchTeamCalendar(params?: {
+  startDate?: string;
+  endDate?: string;
+  departmentId?: string;
+  employeeId?: string;
+}): Promise<TeamCalendarData> {
+  const qs = new URLSearchParams();
+  if (params?.startDate) qs.set('startDate', params.startDate);
+  if (params?.endDate) qs.set('endDate', params.endDate);
+  if (params?.departmentId) qs.set('departmentId', params.departmentId);
+  if (params?.employeeId) qs.set('employeeId', params.employeeId);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  const res = await apiFetch(`/api/v1/attendance/team-calendar${suffix}`);
+  const body = await handleResponse<{ data: TeamCalendarData }>(res);
   return body.data;
 }

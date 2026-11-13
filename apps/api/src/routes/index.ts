@@ -32,6 +32,7 @@ import { createLeaveSetup } from '../modules/leave';
 import { createNotifications, loadNotificationsConfig } from '../modules/notifications';
 import { createProjects } from '../modules/projects';
 import { createTasks } from '../modules/tasks';
+import { createTodos } from '../modules/todos';
 import { createMeetings } from '../modules/meetings';
 import { createExpensesModule } from '../modules/expenses';
 import { createPayslipsRouter } from '../modules/payslips';
@@ -141,6 +142,7 @@ export function createApiRouter({
       projects: projects.reader,
     }).router,
   );
+  router.use('/todos', createTodos({ authenticate: auth.authenticate, getPool }).router);
   const meetings = createMeetings({ platform, authenticate: auth.authenticate });
   router.use('/meetings', meetings.router);
   router.use(

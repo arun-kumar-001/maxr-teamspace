@@ -7,19 +7,23 @@ export interface TaskPriorityBadgeProps {
   className?: string;
 }
 
-const PRIORITY_CONFIG: Record<TaskPriority, { container: string; icon?: boolean }> = {
+const PRIORITY_CONFIG: Record<TaskPriority, { container: string; dot: string; icon?: boolean }> = {
   urgent: {
-    container: 'bg-rose-50 text-danger border-rose-200 font-semibold',
+    container: 'bg-rose-50 text-rose-700 border-rose-200/80 font-semibold',
+    dot: 'bg-rose-500',
     icon: true,
   },
   high: {
-    container: 'bg-amber-50 text-amber-800 border-amber-200 font-medium',
+    container: 'bg-amber-50 text-amber-800 border-amber-200/80 font-semibold',
+    dot: 'bg-amber-500',
   },
   medium: {
-    container: 'bg-blue-50 text-blue-700 border-blue-200 font-medium',
+    container: 'bg-sky-50 text-sky-800 border-sky-200/80 font-medium',
+    dot: 'bg-sky-500',
   },
   low: {
-    container: 'bg-surface-muted text-text-subtle border-border font-medium',
+    container: 'bg-slate-50 text-slate-700 border-slate-200/80 font-medium',
+    dot: 'bg-slate-400',
   },
 };
 
@@ -31,16 +35,17 @@ export function TaskPriorityBadge({
   const config = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.low;
   const label = TASK_PRIORITY_LABELS[priority] || priority;
 
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[10.5px]' : 'px-2.5 py-1 text-xs';
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded border capitalize ${sizeClasses} ${config.container} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border capitalize ${sizeClasses} ${config.container} ${className}`}
       data-testid={`task-priority-${priority}`}
     >
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot} shrink-0`} aria-hidden="true" />
       {config.icon && (
         <svg
-          className="w-3 h-3 shrink-0"
+          className="w-3 h-3 shrink-0 text-rose-600"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

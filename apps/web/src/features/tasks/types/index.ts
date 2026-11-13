@@ -14,11 +14,46 @@ export const TASK_TRANSITIONS: Readonly<Record<TaskStatus, readonly TaskStatus[]
   completed: ['in_progress'],
 };
 
+export const TASK_TRANSITION_PATHS: Readonly<
+  Record<TaskStatus, Readonly<Partial<Record<TaskStatus, readonly TaskStatus[]>>>>
+> = {
+  todo: {
+    in_progress: ['in_progress'],
+    in_review: ['in_progress', 'in_review'],
+    blocked: ['in_progress', 'blocked'],
+    completed: ['in_progress', 'in_review', 'completed'],
+  },
+  in_progress: {
+    todo: ['todo'],
+    in_review: ['in_review'],
+    blocked: ['blocked'],
+    completed: ['in_review', 'completed'],
+  },
+  in_review: {
+    in_progress: ['in_progress'],
+    completed: ['completed'],
+    todo: ['in_progress', 'todo'],
+    blocked: ['in_progress', 'blocked'],
+  },
+  blocked: {
+    in_progress: ['in_progress'],
+    todo: ['in_progress', 'todo'],
+    in_review: ['in_progress', 'in_review'],
+    completed: ['in_progress', 'in_review', 'completed'],
+  },
+  completed: {
+    in_progress: ['in_progress'],
+    todo: ['in_progress', 'todo'],
+    in_review: ['in_progress', 'in_review'],
+    blocked: ['in_progress', 'blocked'],
+  },
+};
+
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'To Do',
   in_progress: 'In Progress',
   in_review: 'In Review',
-  blocked: 'Blocked',
+  blocked: 'Hold',
   completed: 'Completed',
 };
 
@@ -43,6 +78,8 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   isOverdue: boolean;
+  isDaily?: boolean;
+  dailyLastDoneDate?: string | null;
   completedAt: string | null;
   version: number;
   createdAt: string;
@@ -56,6 +93,7 @@ export interface CreateTaskInput {
   priority?: TaskPriority;
   dueDate?: string;
   projectId?: string;
+  isDaily?: boolean;
 }
 
 export interface UpdateTaskInput {
@@ -65,6 +103,7 @@ export interface UpdateTaskInput {
   priority?: TaskPriority;
   dueDate?: string | null;
   projectId?: string | null;
+  isDaily?: boolean;
   version: number;
 }
 

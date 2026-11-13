@@ -573,11 +573,21 @@ export function OnDutyTab({
                           {/* Employee */}
                           <td className="px-3 xl:px-4 py-3.5">
                             <div className="flex items-center gap-3">
-                              <div
-                                className={`w-8 h-8 rounded-full ${avatarBg} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}
-                              >
-                                {initials}
-                              </div>
+                              {row.rawRecord?.checkInPhoto || row.rawRecord?.checkOutPhoto ? (
+                                <img
+                                  src={
+                                    row.rawRecord.checkOutPhoto || row.rawRecord.checkInPhoto || ''
+                                  }
+                                  alt={`${row.name} verification`}
+                                  className="w-8 h-8 rounded-full object-cover border border-primary/50 shrink-0 shadow-xs"
+                                />
+                              ) : (
+                                <div
+                                  className={`w-8 h-8 rounded-full ${avatarBg} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}
+                                >
+                                  {initials}
+                                </div>
+                              )}
                               <div className="min-w-0">
                                 <a
                                   href={`/employees/${row.employeeId}`}
@@ -608,13 +618,33 @@ export function OnDutyTab({
                           </td>
 
                           {/* Check-in */}
-                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium whitespace-nowrap">
-                            {row.checkInTime || 'None'}
+                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium">
+                            <span className="whitespace-nowrap block">
+                              {row.checkInTime || 'None'}
+                            </span>
+                            {row.rawRecord?.location?.address && (
+                              <span
+                                className="text-[10.5px] text-text-subtle block truncate max-w-[160px]"
+                                title={row.rawRecord.location.address}
+                              >
+                                {row.rawRecord.location.address}
+                              </span>
+                            )}
                           </td>
 
                           {/* Check-out */}
-                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium whitespace-nowrap">
-                            {row.checkOutTime || 'None'}
+                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium">
+                            <span className="whitespace-nowrap block">
+                              {row.checkOutTime || 'None'}
+                            </span>
+                            {row.rawRecord?.checkOutLocation?.address && (
+                              <span
+                                className="text-[10.5px] text-text-subtle block truncate max-w-[160px]"
+                                title={row.rawRecord.checkOutLocation.address}
+                              >
+                                {row.rawRecord.checkOutLocation.address}
+                              </span>
+                            )}
                           </td>
 
                           {/* Hours */}
