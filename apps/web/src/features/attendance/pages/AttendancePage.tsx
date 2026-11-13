@@ -246,6 +246,7 @@ function AttendanceOpsWorkspace({
   }, [initialTab]);
   const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
 
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
@@ -351,45 +352,58 @@ function AttendanceOpsWorkspace({
           <p className="text-xs sm:text-sm text-text-muted">{tabSubtitle}</p>
         </div>
 
-        <div className="relative self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-white border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface-muted transition-colors"
-          >
-            <span>{formattedSelectedDate}</span>
-            <span className="text-text-muted text-[10px]">&#9660;</span>
-          </button>
-
-          {isDatePickerOpen && (
-            <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-white border border-border/80 rounded-card shadow-lg space-y-1">
-              <span className="text-[11px] font-bold text-text-muted px-2 block">
-                Quick Date Select
-              </span>
-              {[
-                { label: 'Today (03 Nov 2026)', val: '2026-11-03' },
-                { label: 'Yesterday (02 Nov 2026)', val: '2026-11-02' },
-                { label: 'Friday (31 Oct 2026)', val: '2026-10-31' },
-                { label: 'Thursday (30 Oct 2026)', val: '2026-10-30' },
-              ].map((d) => (
-                <button
-                  key={d.val}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(d.val);
-                    setIsDatePickerOpen(false);
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-                    selectedDate === d.val
-                      ? 'bg-primary-soft text-primary-deep font-bold'
-                      : 'text-text hover:bg-surface-muted'
-                  }`}
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {activeTab === 'roster' && canManage && (
+            <button
+              type="button"
+              onClick={() => setIsCreateRosterOpen(true)}
+              className="min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 bg-primary-deep text-white hover:bg-primary-deep/90 shadow-xs transition-colors cursor-pointer"
+            >
+              <span className="text-base leading-none font-bold">+</span>
+              <span>Create Roster</span>
+            </button>
           )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-white border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface-muted transition-colors"
+            >
+              <span>{formattedSelectedDate}</span>
+              <span className="text-text-muted text-[10px]">&#9660;</span>
+            </button>
+
+            {isDatePickerOpen && (
+              <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-white border border-border/80 rounded-card shadow-lg space-y-1">
+                <span className="text-[11px] font-bold text-text-muted px-2 block">
+                  Quick Date Select
+                </span>
+                {[
+                  { label: 'Today (03 Nov 2026)', val: '2026-11-03' },
+                  { label: 'Yesterday (02 Nov 2026)', val: '2026-11-02' },
+                  { label: 'Friday (31 Oct 2026)', val: '2026-10-31' },
+                  { label: 'Thursday (30 Oct 2026)', val: '2026-10-30' },
+                ].map((d) => (
+                  <button
+                    key={d.val}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(d.val);
+                      setIsDatePickerOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                      selectedDate === d.val
+                        ? 'bg-primary-soft text-primary-deep font-bold'
+                        : 'text-text hover:bg-surface-muted'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -487,8 +501,13 @@ function AttendanceOpsWorkspace({
               employees={employees}
               departments={departments}
               shifts={shifts}
+              selectedDate={selectedDate}
+              initialRecords={records}
+              initialLeaves={leaveEntries}
               canManageRoster={canManage}
               onRefresh={() => void loadData()}
+              openCreateModal={isCreateRosterOpen}
+              onCloseCreateModal={() => setIsCreateRosterOpen(false)}
             />
           )}
 
