@@ -223,10 +223,10 @@ export function RosterTab({
 
   // Custom Shift Schedule fields in Create Roster Modal
   const [isCustomShift, setIsCustomShift] = useState(false);
-  const [customShiftName, setCustomShiftName] = useState('Custom Shift');
-  const [customShiftCode, setCustomShiftCode] = useState('CUSTOM');
-  const [customStartTime, setCustomStartTime] = useState('08:00');
-  const [customEndTime, setCustomEndTime] = useState('17:00');
+  const [customShiftName, setCustomShiftName] = useState('Standard Shift (9 to 7)');
+  const [customShiftCode, setCustomShiftCode] = useState('STANDARD');
+  const [customStartTime, setCustomStartTime] = useState('09:00');
+  const [customEndTime, setCustomEndTime] = useState('19:00');
   const [customGraceMinutes, setCustomGraceMinutes] = useState(15);
 
   const [weekRecords, setWeekRecords] = useState<AttendanceRecord[]>(initialRecords);
@@ -250,14 +250,34 @@ export function RosterTab({
     return [1, 2, 3, 4, 5];
   }, [attendancePolicy]);
 
+  const fallbackDefaultShift: Shift = useMemo(
+    () => ({
+      id: 'standard-shift-9-to-7',
+      code: 'STANDARD',
+      name: 'Standard Shift (9 to 7)',
+      startTime: '09:00',
+      endTime: '19:00',
+      graceMinutes: 15,
+      isActive: true,
+      crossesMidnight: false,
+    }),
+    [],
+  );
+
   const defaultShift = useMemo<Shift | null>(() => {
-    if (shifts.length === 0) return null;
+    if (shifts.length === 0) return fallbackDefaultShift;
     if (attendancePolicy?.defaultShiftId) {
       const found = shifts.find((s) => s.id === attendancePolicy.defaultShiftId);
       if (found) return found;
     }
-    return shifts.find((s) => s.isActive) ?? shifts[0] ?? null;
-  }, [shifts, attendancePolicy]);
+    const standardMatch = shifts.find(
+      (s) =>
+        (s.startTime?.startsWith('09') && s.endTime?.startsWith('19')) ||
+        s.code.toUpperCase() === 'STANDARD',
+    );
+    if (standardMatch) return standardMatch;
+    return shifts.find((s) => s.isActive) ?? shifts[0] ?? fallbackDefaultShift;
+  }, [shifts, attendancePolicy, fallbackDefaultShift]);
 
   // Compute Monday..Sunday for displayed week
   const weekDays = useMemo(() => {
@@ -498,7 +518,7 @@ export function RosterTab({
       const fromCatalog = shifts.find((s) => s.id === matched.shiftId);
       if (fromCatalog) return fromCatalog;
     }
-    return defaultShift;
+    return defaultShift ?? fallbackDefaultShift;
   };
 
   // 4 Top Metric Cards calculation
@@ -515,7 +535,7 @@ export function RosterTab({
           onLeaveEmployees.add(emp.id);
         } else if (!wd.isWeekend) {
           const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
-          const hrs = shift ? parseShiftHours(shift.startTime, shift.endTime) : 8;
+          const hrs = shift ? parseShiftHours(shift.startTime, shift.endTime) : 10;
           totalScheduledHours += hrs;
           scheduledEmployees.add(emp.id);
         }
@@ -535,6 +555,7 @@ export function RosterTab({
     leaveByEmpDate,
     assignmentsByEmp,
     defaultShift,
+    fallbackDefaultShift,
     shifts,
     viewMode,
   ]);
@@ -567,61 +588,57 @@ export function RosterTab({
     });
   };
 
-  // Helper for Shift styling & categorization (ensuring equal height and perfect alignment)
+  // Helper for Shift styling & categorization (compact, executive, MaxR Flow tokens)
   const getShiftCellConfig = (shift: Shift | null, isLeave: boolean, isWeekend: boolean) => {
     if (isWeekend) {
       return {
         isOff: true,
-        className: 'bg-slate-50 text-slate-400 border border-slate-200/60',
+        isLeave: false,
+        isCustom: false,
+        className: 'bg-surface-muted/20 text-text-muted/50 border-transparent',
         badge: 'Off',
-        timing: 'Rest Day',
+        timing: '',
       };
     }
     if (isLeave) {
       return {
         isOff: false,
+        isLeave: true,
+        isCustom: false,
         className: 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70',
-        badge: 'Leave',
-        timing: 'Approved',
-      };
-    }
-    if (!shift) {
-      return {
-        isOff: false,
-        className: 'bg-sky-50 text-sky-900 border border-sky-200/80 hover:bg-sky-100/70',
-        badge: 'General',
-        timing: '09:00 – 18:00',
+        badge: 'On Leave',
+        timing: '',
       };
     }
 
-    const code = (shift.code || '').toUpperCase();
-    const name = (shift.name || '').toLowerCase();
-    const start = shift.startTime.slice(0, 5);
-    const end = shift.endTime.slice(0, 5);
+    const effective = shift ?? fallbackDefaultShift;
+    const start = effective.startTime.slice(0, 5);
+    const end = effective.endTime.slice(0, 5);
+    const timing = `${start} – ${end}`;
+    const isStandard =
+      (start === '09:00' && end === '19:00') ||
+      effective.code.toUpperCase() === 'STANDARD';
 
-    if (code.includes('DAY') || name.includes('day')) {
+    if (isStandard) {
       return {
         isOff: false,
+        isLeave: false,
+        isCustom: false,
         className:
-          'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70',
-        badge: 'Day',
-        timing: `${start} – ${end}`,
+          'bg-surface-muted/60 text-text border border-border/80 hover:bg-primary-soft hover:border-primary-strong/30 hover:text-primary-ink',
+        badge: '09:00 – 19:00',
+        timing: '09:00 – 19:00',
       };
     }
-    if (code.includes('NIGHT') || name.includes('night')) {
-      return {
-        isOff: false,
-        className:
-          'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100/70',
-        badge: 'Night',
-        timing: `${start} – ${end}`,
-      };
-    }
+
     return {
       isOff: false,
-      className: 'bg-sky-50 text-sky-900 border border-sky-200/80 hover:bg-sky-100/70',
-      badge: 'General',
-      timing: `${start} – ${end}`,
+      isLeave: false,
+      isCustom: true,
+      className:
+        'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100/80',
+      badge: effective.name || timing,
+      timing,
     };
   };
 
@@ -958,33 +975,33 @@ export function RosterTab({
         </div>
       </div>
 
-      {/* 3. Main Roster Grid: Unified, Perfectly Aligned Table */}
+      {/* 3. Main Roster Grid: Compact, Perfectly Aligned Table (100% width, No Horizontal Scroll) */}
       {viewMode === 'week' ? (
         <div className="bg-white rounded-card border border-border/80 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table
-              className="w-full text-left text-xs sm:text-sm border-collapse table-fixed"
+              className="w-full text-left text-xs sm:text-sm border-collapse"
               aria-label="Attendance Shift Roster Grid"
             >
               <colgroup>
-                <col className="w-[260px] min-w-[260px]" />
+                <col className="w-[23%] min-w-[170px]" />
                 {weekDays.map((wd) => (
-                  <col key={wd.dateStr} className="w-[126px] min-w-[126px]" />
+                  <col key={wd.dateStr} className="w-[11%]" />
                 ))}
               </colgroup>
 
               <thead className="bg-surface-muted/60 border-b border-border/80 text-xs font-bold text-text-muted">
                 <tr>
-                  <th scope="col" className="px-5 py-4 font-bold text-text">
+                  <th scope="col" className="px-4 py-3 font-bold text-text">
                     Employee
                   </th>
                   {weekDays.map((wd) => (
                     <th
                       key={wd.dateStr}
                       scope="col"
-                      className={`px-2 py-3.5 text-center transition-colors ${
+                      className={`px-1 py-2.5 text-center transition-colors ${
                         wd.isToday
-                          ? 'bg-emerald-50/70 border-x border-emerald-200/60 text-emerald-800'
+                          ? 'bg-primary-soft/50 text-primary-ink font-bold'
                           : 'text-text-muted'
                       }`}
                     >
@@ -993,7 +1010,7 @@ export function RosterTab({
                       </div>
                       <span
                         className={`block text-[11px] font-normal mt-0.5 ${
-                          wd.isToday ? 'text-emerald-700 font-semibold' : 'text-text-muted'
+                          wd.isToday ? 'text-primary-ink font-semibold' : 'text-text-muted'
                         }`}
                       >
                         {wd.formatted}
@@ -1018,18 +1035,18 @@ export function RosterTab({
                         {/* Collapsible Department Header */}
                         <tr
                           onClick={() => toggleDeptCollapse(deptName)}
-                          className="bg-surface-muted/50 hover:bg-surface-muted/80 cursor-pointer transition-colors border-y border-border/80"
+                          className="bg-surface-muted/40 hover:bg-surface-muted/60 cursor-pointer transition-colors border-y border-border/80"
                         >
-                          <td colSpan={8} className="px-5 py-3">
-                            <div className="flex items-center gap-2 text-xs font-extrabold text-text">
+                          <td colSpan={8} className="px-4 py-2.5">
+                            <div className="flex items-center gap-2 text-xs font-bold text-text">
                               <span
                                 className={`transition-transform duration-200 ${
                                   isCollapsed ? '-rotate-90' : 'rotate-0'
                                 }`}
                               >
-                                <IconChevronDown className="w-4 h-4 text-text-muted" />
+                                <IconChevronDown className="w-3.5 h-3.5 text-text-muted" />
                               </span>
-                              <IconUsers className="w-4 h-4 text-primary-deep" />
+                              <IconUsers className="w-3.5 h-3.5 text-primary-deep" />
                               <span>{deptName}</span>
                               <span className="text-text-muted font-normal text-[11px]">
                                 ({deptEmps.length})
@@ -1047,24 +1064,24 @@ export function RosterTab({
                                 className="hover:bg-surface-muted/20 transition-colors border-b border-border/40"
                               >
                                 {/* Employee Profile Cell */}
-                                <td className="px-5 py-3 align-middle">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0 border border-border/60 shadow-xs">
+                                <td className="px-4 py-2.5 align-middle">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/80 shadow-xs">
                                       {emp.firstName[0]}
                                       {emp.lastName[0]}
                                     </div>
-                                    <div className="min-w-0">
-                                      <span className="font-bold text-text block truncate text-xs sm:text-sm">
+                                    <div className="min-w-0 truncate">
+                                      <span className="font-semibold text-text block truncate text-xs sm:text-sm">
                                         {emp.firstName} {emp.lastName}
                                       </span>
-                                      <span className="text-[11px] text-text-muted block truncate font-medium">
+                                      <span className="text-[11px] text-text-muted block truncate font-normal">
                                         {emp.designation?.title || emp.employeeCode}
                                       </span>
                                     </div>
                                   </div>
                                 </td>
 
-                                {/* Day Shift Cells: All perfectly aligned with uniform height and font */}
+                                {/* Day Shift Cells: Compact, uniform 32px height, perfectly aligned */}
                                 {weekDays.map((wd) => {
                                   const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                                   const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
@@ -1078,18 +1095,17 @@ export function RosterTab({
                                   return (
                                     <td
                                       key={wd.dateStr}
-                                      className={`px-1.5 py-2.5 text-center align-middle transition-colors ${
-                                        wd.isToday
-                                          ? 'bg-emerald-50/25 border-x border-emerald-200/40'
-                                          : ''
+                                      className={`px-1 py-2 text-center align-middle transition-colors ${
+                                        wd.isToday ? 'bg-primary-soft/30' : ''
                                       }`}
                                     >
                                       {cellConfig.isOff ? (
-                                        <div className="h-[54px] w-[114px] mx-auto rounded-xl flex flex-col items-center justify-center bg-slate-50/80 border border-slate-200/60 text-slate-400">
-                                          <span className="font-bold text-xs">Off</span>
-                                          <span className="text-[10px] font-mono opacity-75 mt-0.5">
-                                            Rest Day
-                                          </span>
+                                        <div className="h-8 w-full max-w-[100px] mx-auto rounded-lg flex items-center justify-center text-text-muted/50 bg-surface-muted/20 text-xs font-medium select-none">
+                                          Off
+                                        </div>
+                                      ) : cellConfig.isLeave ? (
+                                        <div className="h-8 w-full max-w-[100px] mx-auto rounded-lg flex items-center justify-center bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold select-none">
+                                          On Leave
                                         </div>
                                       ) : (
                                         <button
@@ -1102,52 +1118,31 @@ export function RosterTab({
                                           }}
                                           title={
                                             canManageRoster
-                                              ? `Click to edit shift for ${emp.firstName} on ${wd.dateStr}`
-                                              : `${cellConfig.badge} Shift`
+                                              ? `Click to change shift for ${emp.firstName} on ${wd.dateStr} (${cellConfig.timing})`
+                                              : `${cellConfig.timing} Shift`
                                           }
-                                          className={`h-[54px] w-[114px] mx-auto rounded-xl flex flex-col items-center justify-center p-1.5 transition-all ${
+                                          className={`h-8 w-full max-w-[100px] mx-auto rounded-lg flex items-center justify-center gap-1.5 px-2 transition-all text-xs font-semibold tabular-nums ${
                                             cellConfig.className
                                           } ${
                                             canManageRoster
-                                              ? 'cursor-pointer hover:shadow-xs hover:scale-[1.02]'
+                                              ? 'cursor-pointer hover:shadow-xs'
                                               : 'cursor-default'
                                           }`}
                                         >
-                                          <span className="font-bold text-xs leading-tight">
-                                            {cellConfig.badge}
+                                          <span className="truncate text-[11px] leading-tight">
+                                            {cellConfig.timing}
                                           </span>
-                                          {cellConfig.timing && (
-                                            <span className="text-[10px] font-mono leading-tight opacity-85 mt-0.5 whitespace-nowrap">
-                                              {cellConfig.timing}
-                                            </span>
-                                          )}
-
-                                          {/* Attendance Badge on today / past */}
                                           {record && (
                                             <span
-                                              className={`mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold ${
+                                              title={`Status: ${record.status}`}
+                                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                                                 record.status === 'late'
-                                                  ? 'text-warning'
+                                                  ? 'bg-warning'
                                                   : record.status === 'absent'
-                                                    ? 'text-danger'
-                                                    : 'text-emerald-700'
+                                                    ? 'bg-danger'
+                                                    : 'bg-emerald-600'
                                               }`}
-                                            >
-                                              <span
-                                                className={`w-1.5 h-1.5 rounded-full ${
-                                                  record.status === 'late'
-                                                    ? 'bg-warning'
-                                                    : record.status === 'absent'
-                                                      ? 'bg-danger'
-                                                      : 'bg-emerald-600'
-                                                }`}
-                                              />
-                                              {record.checkOutTime
-                                                ? 'Present'
-                                                : record.status === 'late'
-                                                  ? 'Late'
-                                                  : 'Active'}
-                                            </span>
+                                            />
                                           )}
                                         </button>
                                       )}
@@ -1331,8 +1326,10 @@ export function RosterTab({
                                               : 'cursor-default'
                                           }`}
                                         >
-                                          {cellConfig.badge === 'General'
-                                            ? 'Gen'
+                                          {cellConfig.badge.includes('09:00') ||
+                                          cellConfig.badge === 'General' ||
+                                          cellConfig.badge === 'Standard'
+                                            ? '9–7'
                                             : cellConfig.badge}
                                         </button>
                                       )}
