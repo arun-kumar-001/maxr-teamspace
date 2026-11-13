@@ -37,6 +37,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
   }, [isUserMenuOpen]);
 
   const getPageTitle = (path: string): string => {
+    if (path === '/dashboard' || path === '/') return 'Dashboard';
     if (path.includes('users')) return 'Users & Roles Administration';
     if (path.includes('notifications')) return 'Notification Inbox';
     if (path.includes('audit')) return 'Security Audit Logs';

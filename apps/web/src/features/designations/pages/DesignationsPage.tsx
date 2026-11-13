@@ -1,19 +1,25 @@
+import { useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { PageContainer } from '../../../components/ui/PageContainer';
 import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/StatusPill';
 import { DataTable, type Column, type SortDirection } from '../../../components/ui/DataTable';
+import { PageContainer } from '../../../components/ui/PageContainer';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { EmptyState, ErrorState, ForbiddenState } from '../../../components/ui/StateCards';
+import { Badge } from '../../../components/ui/StatusPill';
 import { Toast } from '../../../components/ui/Toast';
-import { DesignationFilters } from '../components/DesignationFilters';
+import { fetchEmployeeDirectory } from '../../employees/api/employees';
+import type { EmployeeDirectoryItem } from '../../employees/types';
 import { DesignationCard } from '../components/DesignationCard';
-import { DesignationModal } from '../components/DesignationModal';
-import { DesignationDetailModal } from '../components/DesignationDetailModal';
 import { DesignationDeactivateDialog } from '../components/DesignationDeactivateDialog';
+import { DesignationDetailModal } from '../components/DesignationDetailModal';
+import { DesignationFilters } from '../components/DesignationFilters';
+import { DesignationModal } from '../components/DesignationModal';
+import { CAREER_LEVEL_BANDS } from '../components/levelMeta';
 import { useDesignations } from '../hooks/useDesignations';
 import type { Designation } from '../types';
+
+type DesigViewMode = 'all' | 'cards' | 'table';
 
 export function DesignationsPage() {
   const { role } = useAuth();
@@ -21,6 +27,23 @@ export function DesignationsPage() {
   const canCreate = role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   const canEdit = role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   const canDeactivate = role === ROLES.ADMIN;
+
+  const [viewMode, setViewMode] = useState<DesigViewMode>('all');
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<number | null>(null);
+  const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([fetchEmployeeDirectory({ page: 1, pageSize: 100 })]).then(([res]) => {
+      if (cancelled) return;
+      if (res.status === 'fulfilled') {
+        setEmployees(res.value.data ?? []);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const {
     designations,
@@ -68,6 +91,32 @@ export function DesignationsPage() {
     toast,
     dismissToast,
   } = useDesignations();
+
+  const holdersByDesignation = useMemo(() => {
+    const map = new Map<string, EmployeeDirectoryItem[]>();
+    for (const emp of employees) {
+      const id = emp.designation?.id;
+      if (!id) continue;
+      const list = map.get(id) ?? [];
+      list.push(emp);
+      map.set(id, list);
+    }
+    return map;
+  }, [employees]);
+
+  const levelCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const d of designations) {
+      const clamped = Math.min(4, Math.max(1, d.level));
+      counts.set(clamped, (counts.get(clamped) ?? 0) + 1);
+    }
+    return counts;
+  }, [designations]);
+
+  const visibleDesignations = useMemo(() => {
+    if (selectedLevelFilter === null) return designations;
+    return designations.filter((d) => Math.min(4, Math.max(1, d.level)) === selectedLevelFilter);
+  }, [designations, selectedLevelFilter]);
 
   if (isForbidden) {
     return (
@@ -134,6 +183,19 @@ export function DesignationsPage() {
           Level {row.level}
         </span>
       ),
+    },
+    {
+      key: 'holders',
+      header: 'Assigned Staff',
+      priority: 'medium',
+      render: (row) => {
+        const count = (holdersByDesignation.get(row.id) ?? []).length;
+        return (
+          <span className="text-xs font-medium text-text-muted">
+            {count} {count === 1 ? 'member' : 'members'}
+          </span>
+        );
+      },
     },
     {
       key: 'status',
@@ -240,18 +302,101 @@ export function DesignationsPage() {
           </p>
         </div>
 
-        {canCreate && (
-          <Button
-            type="button"
-            variant="primary"
-            onClick={openCreate}
-            className="min-h-[44px] text-xs sm:text-sm font-semibold shrink-0"
-            data-testid="add-designation-btn"
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          {/* Interactive View Switcher */}
+          <div
+            className="hidden sm:inline-flex items-center p-1 rounded-tile bg-surface-muted border border-border"
+            role="group"
+            aria-label="Designation view mode"
           >
-            Add Designation
-          </Button>
-        )}
+            {(
+              [
+                { id: 'all', label: 'All' },
+                { id: 'cards', label: 'Cards' },
+                { id: 'table', label: 'Table' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setViewMode(opt.id)}
+                className={`px-2.5 py-1 rounded-input text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === opt.id
+                    ? 'bg-surface text-text shadow-sm'
+                    : 'text-text-muted hover:text-text'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {canCreate && (
+            <Button
+              type="button"
+              variant="primary"
+              onClick={openCreate}
+              className="min-h-[44px] text-xs sm:text-sm font-semibold shrink-0"
+              data-testid="add-designation-btn"
+            >
+              Add Designation
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Interactive Career Band Filter Strip */}
+      {!isLoading && !error && designations.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+          <button
+            type="button"
+            onClick={() => setSelectedLevelFilter(null)}
+            className={`animate-crm-fade-up p-3 rounded-card border text-left transition-all duration-300 cursor-pointer ${
+              selectedLevelFilter === null
+                ? 'bg-primary-deep text-surface border-primary-deep shadow-raised'
+                : 'bg-surface border-border text-text hover:border-primary-strong/40 hover:-translate-y-0.5'
+            }`}
+          >
+            <div
+              className={`text-[11px] font-semibold uppercase tracking-wider ${
+                selectedLevelFilter === null ? 'text-surface/80' : 'text-text-subtle'
+              }`}
+            >
+              All Career Bands
+            </div>
+            <div className="mt-1 text-xl font-bold">{designations.length}</div>
+          </button>
+
+          {CAREER_LEVEL_BANDS.map((band, idx) => {
+            const count = levelCounts.get(band.level) ?? 0;
+            const isSelected = selectedLevelFilter === band.level;
+            return (
+              <button
+                key={band.level}
+                type="button"
+                onClick={() => setSelectedLevelFilter(isSelected ? null : band.level)}
+                style={{ animationDelay: `${(idx + 1) * 45}ms` }}
+                className={`animate-crm-fade-up p-3 rounded-card border text-left transition-all duration-300 cursor-pointer ${
+                  isSelected
+                    ? 'bg-primary-soft/60 border-primary-strong shadow-raised ring-2 ring-primary/20'
+                    : 'bg-surface border-border hover:border-primary-strong/40 hover:-translate-y-0.5'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-text-muted truncate">
+                    {band.label}
+                  </span>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${band.barClass}`} />
+                </div>
+                <div className="mt-1 flex items-baseline justify-between">
+                  <span className="text-xl font-bold text-text">{count}</span>
+                  <span className="text-[11px] text-text-subtle">roles</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Filter Controls */}
       <DesignationFilters
@@ -262,7 +407,10 @@ export function DesignationsPage() {
         onSearchChange={setSearch}
         onDepartmentChange={setDepartmentFilter}
         onStatusChange={setStatusFilter}
-        onReset={resetFilters}
+        onReset={() => {
+          setSelectedLevelFilter(null);
+          resetFilters();
+        }}
       />
 
       {/* Error State */}
@@ -293,24 +441,27 @@ export function DesignationsPage() {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && designations.length === 0 && (
+      {!isLoading && !error && visibleDesignations.length === 0 && (
         <EmptyState
           title="No designations found"
           description={
-            search || departmentFilter || statusFilter
+            search || departmentFilter || statusFilter || selectedLevelFilter !== null
               ? 'No designations match your filter criteria. Try clearing filters.'
               : 'There are no designation records yet. Click "Add Designation" to create one.'
           }
           actionLabel={
-            search || departmentFilter || statusFilter
+            search || departmentFilter || statusFilter || selectedLevelFilter !== null
               ? 'Clear Filters'
               : canCreate
                 ? 'Add Designation'
                 : undefined
           }
           onAction={
-            search || departmentFilter || statusFilter
-              ? resetFilters
+            search || departmentFilter || statusFilter || selectedLevelFilter !== null
+              ? () => {
+                  setSelectedLevelFilter(null);
+                  resetFilters();
+                }
               : canCreate
                 ? openCreate
                 : undefined
@@ -318,10 +469,17 @@ export function DesignationsPage() {
         />
       )}
 
-      {/* Mobile Cards Layout (<640px) */}
-      {!isLoading && !error && designations.length > 0 && (
-        <div className="block sm:hidden space-y-3" data-testid="designation-mobile-cards">
-          {designations.map((desig) => (
+      {/* Interactive Designation Cards Grid */}
+      {!isLoading && !error && visibleDesignations.length > 0 && (
+        <div
+          className={
+            viewMode === 'table'
+              ? 'block sm:hidden space-y-3'
+              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+          }
+          data-testid="designation-mobile-cards"
+        >
+          {visibleDesignations.map((desig, idx) => (
             <DesignationCard
               key={desig.id}
               designation={desig}
@@ -331,11 +489,13 @@ export function DesignationsPage() {
               onView={openDetail}
               onEdit={openEdit}
               onDeactivate={openDeactivate}
+              holders={holdersByDesignation.get(desig.id) ?? []}
+              animationIndex={idx}
             />
           ))}
 
           {meta.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
+            <div className="col-span-full flex items-center justify-between pt-2 sm:hidden">
               <Button
                 type="button"
                 variant="outline"
@@ -365,10 +525,10 @@ export function DesignationsPage() {
       )}
 
       {/* Desktop / Tablet Data Table (>=640px) */}
-      {!isLoading && !error && designations.length > 0 && (
-        <div className="hidden sm:block">
+      {!isLoading && !error && visibleDesignations.length > 0 && viewMode !== 'cards' && (
+        <div className="hidden sm:block animate-crm-fade-up">
           <DataTable
-            data={designations as unknown as Record<string, unknown>[]}
+            data={visibleDesignations as unknown as Record<string, unknown>[]}
             columns={columns as unknown as Column<Record<string, unknown>>[]}
             keyExtractor={(row) => (row as unknown as Designation).id}
             isLoading={isLoading}
@@ -397,12 +557,13 @@ export function DesignationsPage() {
         onSubmit={handleSave}
       />
 
-      {/* Details Modal */}
+      {/* Slide-Over Details Drawer */}
       <DesignationDetailModal
         isOpen={isDetailOpen}
         designation={detailDesignation}
         departmentMap={departmentMap}
         onClose={closeDetail}
+        holders={detailDesignation ? (holdersByDesignation.get(detailDesignation.id) ?? []) : []}
       />
 
       {/* Deactivate Dialog */}

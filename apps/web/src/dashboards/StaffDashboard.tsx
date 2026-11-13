@@ -43,19 +43,19 @@ export function StaffDashboard() {
           <Badge variant="neutral">Sample data</Badge>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
             <p className="text-xs font-semibold text-text-muted">Annual Leave</p>
             <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">14</p>
             <p className="mt-1 text-xs text-positive-ink font-medium">14 of 18 days available</p>
           </div>
 
-          <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
             <p className="text-xs font-semibold text-text-muted">Sick Leave</p>
             <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">8</p>
             <p className="mt-1 text-xs text-primary-ink font-medium">8 of 10 days available</p>
           </div>
 
-          <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
             <p className="text-xs font-semibold text-text-muted">Casual Leave</p>
             <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">4</p>
             <p className="mt-1 text-xs text-warning font-medium">4 of 6 days available</p>
@@ -66,7 +66,7 @@ export function StaffDashboard() {
       {/* Two Column Layout: Tasks & Payslip */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* My Tasks */}
-        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+        <div className="p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display">Assigned Tasks</h2>
             <Badge variant="neutral">Sample data</Badge>
@@ -104,7 +104,7 @@ export function StaffDashboard() {
         </div>
 
         {/* Read-Only Payslips Snapshot (AGENTS.md §1) */}
-        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+        <div className="p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display">
               Recent Payslips (Read-Only)

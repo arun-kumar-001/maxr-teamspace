@@ -8,8 +8,11 @@ import { z } from 'zod';
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 
+/** Standard 8-4-4-4-12 UUID/GUID string (compatible with both dev_seed IDs and v4 UUIDs). */
+export const uuidString = z.guid();
+
 /** `:id` path parameter. Rejects anything that is not a UUID before it reaches SQL. */
-export const idParamSchema = z.object({ id: z.string().uuid() }).strict();
+export const idParamSchema = z.object({ id: uuidString }).strict();
 
 /** Common list-endpoint query. Out-of-range values are rejected, never silently clamped. */
 export const paginationQuerySchema = z.object({

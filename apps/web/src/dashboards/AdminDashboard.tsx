@@ -6,7 +6,7 @@ import { approveRequest, fetchApprovals } from '../features/approvals/api/approv
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchMeetings } from '../features/meetings/api/meetingsApi';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 
 // --- Shared Code-Based Modern Duotone SVG Icons ---
 
@@ -718,7 +718,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/employees')}
           style={{ animationDelay: '50ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-emerald-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="text-emerald-600 flex items-center justify-center shrink-0">
@@ -744,7 +744,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/attendance')}
           style={{ animationDelay: '100ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-purple-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="text-purple-600 flex items-center justify-center shrink-0">
@@ -770,7 +770,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/approvals')}
           style={{ animationDelay: '150ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-teal-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="text-teal-600 flex items-center justify-center shrink-0">
@@ -796,7 +796,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '200ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-rose-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="text-rose-600 flex items-center justify-center shrink-0">
@@ -828,7 +828,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/attendance')}
           style={{ animationDelay: '300ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -940,7 +940,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '350ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -1059,7 +1059,7 @@ export function AdminDashboard() {
         {/* Card 1: Pending Approvals */}
         <div
           style={{ animationDelay: '400ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -1148,7 +1148,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '450ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -1210,7 +1210,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/meetings')}
           style={{ animationDelay: '500ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">

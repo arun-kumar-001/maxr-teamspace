@@ -1,19 +1,26 @@
+import { useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { PageContainer } from '../../../components/ui/PageContainer';
 import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/StatusPill';
 import { DataTable, type Column, type SortDirection } from '../../../components/ui/DataTable';
+import { PageContainer } from '../../../components/ui/PageContainer';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { EmptyState, ErrorState, ForbiddenState } from '../../../components/ui/StateCards';
+import { Badge } from '../../../components/ui/StatusPill';
 import { Toast } from '../../../components/ui/Toast';
-import { DepartmentFilters } from '../components/DepartmentFilters';
+import { fetchDesignations } from '../../designations/api/designationsApi';
+import type { Designation } from '../../designations/types';
+import { fetchEmployeeDirectory } from '../../employees/api/employees';
+import type { EmployeeDirectoryItem } from '../../employees/types';
 import { DepartmentCard } from '../components/DepartmentCard';
-import { DepartmentModal } from '../components/DepartmentModal';
-import { DepartmentDetailModal } from '../components/DepartmentDetailModal';
 import { DepartmentDeactivateDialog } from '../components/DepartmentDeactivateDialog';
+import { DepartmentDetailModal } from '../components/DepartmentDetailModal';
+import { DepartmentFilters } from '../components/DepartmentFilters';
+import { DepartmentModal } from '../components/DepartmentModal';
 import { useDepartments } from '../hooks/useDepartments';
 import type { Department } from '../types';
+
+type DeptViewMode = 'all' | 'cards' | 'table';
 
 export function DepartmentsPage() {
   const { role } = useAuth();
@@ -21,6 +28,25 @@ export function DepartmentsPage() {
   const canCreate = role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   const canEdit = role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   const canDeactivate = role === ROLES.ADMIN;
+
+  const [viewMode, setViewMode] = useState<DeptViewMode>('all');
+  const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
+  const [designations, setDesignations] = useState<Designation[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      fetchEmployeeDirectory({ page: 1, pageSize: 100 }),
+      fetchDesignations({ pageSize: 100 }),
+    ]).then(([empRes, desigRes]) => {
+      if (cancelled) return;
+      if (empRes.status === 'fulfilled') setEmployees(empRes.value.data ?? []);
+      if (desigRes.status === 'fulfilled') setDesignations(desigRes.value.data ?? []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const {
     departments,
@@ -65,6 +91,44 @@ export function DepartmentsPage() {
     dismissToast,
   } = useDepartments();
 
+  const membersByDept = useMemo(() => {
+    const map = new Map<string, EmployeeDirectoryItem[]>();
+    for (const emp of employees) {
+      const deptId = emp.department?.id;
+      if (!deptId) continue;
+      const list = map.get(deptId) ?? [];
+      list.push(emp);
+      map.set(deptId, list);
+    }
+    return map;
+  }, [employees]);
+
+  const designationsByDept = useMemo(() => {
+    const map = new Map<string, Designation[]>();
+    for (const d of designations) {
+      const list = map.get(d.departmentId) ?? [];
+      list.push(d);
+      map.set(d.departmentId, list);
+    }
+    return map;
+  }, [designations]);
+
+  const overviewStats = useMemo(() => {
+    const activeDepts = departments.filter((d) => d.isActive).length;
+    const totalStaff = employees.length;
+    const onboardingCount = employees.filter((e) => e.status === 'pending').length;
+    let topDept: Department | null = null;
+    let topCount = -1;
+    for (const d of departments) {
+      const cnt = (membersByDept.get(d.id) ?? []).length;
+      if (cnt > topCount) {
+        topCount = cnt;
+        topDept = d;
+      }
+    }
+    return { activeDepts, totalStaff, onboardingCount, topDept, topCount: Math.max(0, topCount) };
+  }, [departments, employees, membersByDept]);
+
   if (isForbidden) {
     return (
       <PageContainer maxWidth="dashboard">
@@ -106,6 +170,22 @@ export function DepartmentsPage() {
           {row.code}
         </span>
       ),
+    },
+    {
+      key: 'headcount',
+      header: 'Headcount',
+      priority: 'medium',
+      render: (row) => {
+        const list = membersByDept.get(row.id) ?? [];
+        const rolesCount = (designationsByDept.get(row.id) ?? []).length;
+        return (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-semibold text-text">{list.length} staff</span>
+            <span className="text-text-subtle">&middot;</span>
+            <span className="text-text-muted">{rolesCount} roles</span>
+          </div>
+        );
+      },
     },
     {
       key: 'status',
@@ -212,18 +292,113 @@ export function DepartmentsPage() {
           </p>
         </div>
 
-        {canCreate && (
-          <Button
-            type="button"
-            variant="primary"
-            onClick={openCreate}
-            className="min-h-[44px] text-xs sm:text-sm font-semibold shrink-0"
-            data-testid="add-department-btn"
+        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          {/* Interactive View Switcher */}
+          <div
+            className="hidden sm:inline-flex items-center p-1 rounded-tile bg-surface-muted border border-border"
+            role="group"
+            aria-label="Department view mode"
           >
-            Add Department
-          </Button>
-        )}
+            {(
+              [
+                { id: 'all', label: 'All' },
+                { id: 'cards', label: 'Cards' },
+                { id: 'table', label: 'Table' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setViewMode(opt.id)}
+                className={`px-2.5 py-1 rounded-input text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === opt.id
+                    ? 'bg-surface text-text shadow-sm'
+                    : 'text-text-muted hover:text-text'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {canCreate && (
+            <Button
+              type="button"
+              variant="primary"
+              onClick={openCreate}
+              className="min-h-[44px] text-xs sm:text-sm font-semibold shrink-0"
+              data-testid="add-department-btn"
+            >
+              Add Department
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Interactive Division Overview Strip */}
+      {!isLoading && !error && departments.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card transition-all duration-300 hover:border-primary-strong/40">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
+              Active Divisions
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">{overviewStats.activeDepts}</span>
+              <span className="text-xs text-text-muted">of {departments.length} shown</span>
+            </div>
+          </div>
+
+          <div
+            className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card transition-all duration-300 hover:border-primary-strong/40"
+            style={{ animationDelay: '50ms' }}
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
+              Workforce Aligned
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">{overviewStats.totalStaff}</span>
+              <span className="text-xs text-text-muted">
+                {overviewStats.onboardingCount > 0
+                  ? `${overviewStats.onboardingCount} onboarding`
+                  : 'employees'}
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card transition-all duration-300 hover:border-primary-strong/40"
+            style={{ animationDelay: '100ms' }}
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
+              Mapped Designations
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">{designations.length}</span>
+              <span className="text-xs text-text-muted">role tiers</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => overviewStats.topDept && openDetail(overviewStats.topDept)}
+            disabled={!overviewStats.topDept}
+            style={{ animationDelay: '150ms' }}
+            className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-primary-strong/40 hover:shadow-raised cursor-pointer"
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
+              Largest Division
+            </div>
+            <div className="mt-1 flex items-baseline justify-between gap-2">
+              <span className="text-base font-bold text-primary-deep truncate">
+                {overviewStats.topDept?.name ?? '—'}
+              </span>
+              <span className="text-xs font-semibold text-text-muted shrink-0">
+                {overviewStats.topCount} staff &rarr;
+              </span>
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Filter Controls */}
       <DepartmentFilters
@@ -277,10 +452,17 @@ export function DepartmentsPage() {
         />
       )}
 
-      {/* Mobile Cards Layout (<640px) */}
+      {/* Interactive Division Cards Grid (Mobile always + Desktop when viewMode !== 'table') */}
       {!isLoading && !error && departments.length > 0 && (
-        <div className="block sm:hidden space-y-3" data-testid="department-mobile-cards">
-          {departments.map((dept) => (
+        <div
+          className={
+            viewMode === 'table'
+              ? 'block sm:hidden space-y-3'
+              : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+          }
+          data-testid="department-mobile-cards"
+        >
+          {departments.map((dept, index) => (
             <DepartmentCard
               key={dept.id}
               department={dept}
@@ -289,11 +471,15 @@ export function DepartmentsPage() {
               onView={openDetail}
               onEdit={openEdit}
               onDeactivate={openDeactivate}
+              members={membersByDept.get(dept.id) ?? []}
+              designations={designationsByDept.get(dept.id) ?? []}
+              totalWorkforce={employees.length}
+              animationIndex={index}
             />
           ))}
 
           {meta.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
+            <div className="col-span-full flex items-center justify-between pt-2 sm:hidden">
               <Button
                 type="button"
                 variant="outline"
@@ -322,9 +508,9 @@ export function DepartmentsPage() {
         </div>
       )}
 
-      {/* Desktop / Tablet Data Table (>=640px) */}
-      {!isLoading && !error && departments.length > 0 && (
-        <div className="hidden sm:block">
+      {/* Desktop / Tablet Data Table (>=640px when viewMode !== 'cards') */}
+      {!isLoading && !error && departments.length > 0 && viewMode !== 'cards' && (
+        <div className="hidden sm:block animate-crm-fade-up">
           <DataTable
             data={departments as unknown as Record<string, unknown>[]}
             columns={columns as unknown as Column<Record<string, unknown>>[]}
@@ -354,11 +540,13 @@ export function DepartmentsPage() {
         onSubmit={handleSave}
       />
 
-      {/* Details Modal */}
+      {/* Slide-Over Details Drawer */}
       <DepartmentDetailModal
         isOpen={isDetailOpen}
         department={detailDepartment}
         onClose={closeDetail}
+        members={detailDepartment ? (membersByDept.get(detailDepartment.id) ?? []) : []}
+        designations={detailDepartment ? (designationsByDept.get(detailDepartment.id) ?? []) : []}
       />
 
       {/* Deactivate Dialog */}

@@ -14,7 +14,55 @@ import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { EmployeeDocumentsTab } from '../components/EmployeeDocumentsTab';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
-import type { EmployeePatch } from '../types';
+import type { EmployeeDetail, EmployeePatch } from '../types';
+
+function BankAccountDetailsSection({ employee }: { employee: EmployeeDetail }) {
+  return (
+    <div className="pt-6 border-t border-border space-y-4">
+      <h3 className="text-sm font-semibold text-text font-display">Bank Account Details</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+        <div className="space-y-1">
+          <span className="text-xs text-text-subtle font-medium block">Account Holder Name</span>
+          <p className="font-medium text-text">
+            {employee.bankAccountHolder || <span className="text-text-muted">Not provided</span>}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <span className="text-xs text-text-subtle font-medium block">Bank Name</span>
+          <p className="font-medium text-text">
+            {employee.bankName || <span className="text-text-muted">Not provided</span>}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <span className="text-xs text-text-subtle font-medium block">Account Number</span>
+          <p className="font-mono text-text">
+            {employee.bankAccountNumber || (
+              <span className="font-sans text-text-muted">Not provided</span>
+            )}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <span className="text-xs text-text-subtle font-medium block">IFSC Code</span>
+          <p className="font-mono text-text">
+            {employee.bankIfscCode || (
+              <span className="font-sans text-text-muted">Not provided</span>
+            )}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <span className="text-xs text-text-subtle font-medium block">Branch Name</span>
+          <p className="font-medium text-text">
+            {employee.bankBranch || <span className="text-text-muted">Not provided</span>}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -420,7 +468,88 @@ export function EmployeeDetailPage() {
                 )}
               </p>
             </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-text-subtle font-medium block">Additional Emails</span>
+              {employee.additionalEmails && employee.additionalEmails.length > 0 ? (
+                <div className="space-y-1">
+                  {employee.additionalEmails.map((em) => (
+                    <p key={em}>
+                      <a
+                        href={`mailto:${em}`}
+                        className="font-medium text-primary-deep hover:underline"
+                      >
+                        {em}
+                      </a>
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-text-muted">Not provided</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-text-subtle font-medium block">Additional Phones</span>
+              {employee.additionalPhones && employee.additionalPhones.length > 0 ? (
+                <div className="space-y-1">
+                  {employee.additionalPhones.map((ph) => (
+                    <p key={ph}>
+                      <a
+                        href={`tel:${ph}`}
+                        className="font-medium text-text hover:text-primary-deep"
+                      >
+                        {ph}
+                      </a>
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-text-muted">Not provided</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-text-subtle font-medium block">Blood Group</span>
+              <p className="font-medium text-text">
+                {employee.bloodGroup || <span className="text-text-muted">Not provided</span>}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-text-subtle font-medium block">PAN Number</span>
+              <p className="font-mono text-text">
+                {employee.panNumber || (
+                  <span className="font-sans text-text-muted">Not provided</span>
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-text-subtle font-medium block">Aadhaar Number</span>
+              <p className="font-mono text-text">
+                {employee.aadhaarNumber || (
+                  <span className="font-sans text-text-muted">Not provided</span>
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-1 sm:col-span-2 lg:col-span-1">
+              <span className="text-xs text-text-subtle font-medium block">Permanent Address</span>
+              <p className="text-text whitespace-pre-line">
+                {employee.permanentAddress || <span className="text-text-muted">Not provided</span>}
+              </p>
+            </div>
+
+            <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+              <span className="text-xs text-text-subtle font-medium block">Current Address</span>
+              <p className="text-text whitespace-pre-line">
+                {employee.currentAddress || <span className="text-text-muted">Not provided</span>}
+              </p>
+            </div>
           </div>
+
+          <BankAccountDetailsSection employee={employee} />
         </div>
       )}
 
@@ -479,6 +608,8 @@ export function EmployeeDetailPage() {
               </div>
             </div>
           </div>
+
+          <BankAccountDetailsSection employee={employee} />
         </div>
       )}
 

@@ -200,8 +200,8 @@ export function TimeTrackerCard({
 
   const cardSurfaceClass =
     variant === 'overview'
-      ? 'p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border'
-      : 'rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out bg-surface border border-border';
+      ? 'p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs flex flex-col justify-between min-w-0 transition-all duration-200 hover:shadow-card hover:-translate-y-0.5 hover:border-border'
+      : 'rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out bg-white border border-border/80';
 
   const timerRing = (ringSizeClass: string, timeTextClass: string) => (
     <div className="relative flex items-center justify-center shrink-0">

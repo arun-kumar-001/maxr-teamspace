@@ -16,6 +16,18 @@ export interface CreateEmployeePayload {
   managerId?: string;
   joiningDate: string;
   role: Role;
+  additionalEmails?: string[];
+  additionalPhones?: string[];
+  permanentAddress?: string;
+  currentAddress?: string;
+  bloodGroup?: string;
+  panNumber?: string;
+  aadhaarNumber?: string;
+  bankAccountHolder?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankBranch?: string;
 }
 
 /**
@@ -54,6 +66,19 @@ export interface CreateEmployeeFormState {
   managerId: string;
   joiningDate: string;
   role: Role;
+  additionalEmails: string[];
+  additionalPhones: string[];
+  permanentAddress: string;
+  currentAddress: string;
+  sameAsPermanentAddress: boolean;
+  bloodGroup: string;
+  panNumber: string;
+  aadhaarNumber: string;
+  bankAccountHolder: string;
+  bankName: string;
+  bankAccountNumber: string;
+  bankIfscCode: string;
+  bankBranch: string;
 }
 
 export interface CreateEmployeeValidationErrors {
@@ -61,7 +86,13 @@ export interface CreateEmployeeValidationErrors {
   firstName?: string;
   lastName?: string;
   email?: string;
+  additionalEmails?: string;
   phone?: string;
+  additionalPhones?: string;
+  panNumber?: string;
+  aadhaarNumber?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
   departmentId?: string;
   designationId?: string;
   managerId?: string;

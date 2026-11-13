@@ -1,4 +1,4 @@
-import { MAX_PAGE_SIZE } from '@maxr/shared';
+import { MAX_PAGE_SIZE, uuidString } from '@maxr/shared';
 import { z } from 'zod';
 
 /**
@@ -8,7 +8,7 @@ import { z } from 'zod';
 export const changeManagerSchema = z
   .object({
     version: z.number().int().min(1),
-    managerId: z.string().uuid().nullable(),
+    managerId: uuidString.nullable(),
   })
   .strict();
 
@@ -22,7 +22,7 @@ export const orgListQuerySchema = z
 
 export const orgNodeSchema = z
   .object({
-    id: z.string().uuid(),
+    id: uuidString,
     employeeCode: z.string(),
     name: z.string(),
     designation: z.string(),
@@ -33,11 +33,9 @@ export const orgNodeSchema = z
 
 export const managerChangeSchema = z
   .object({
-    id: z.string().uuid(),
-    managerId: z.string().uuid().nullable(),
-    manager: z
-      .object({ id: z.string().uuid(), employeeCode: z.string(), name: z.string() })
-      .nullable(),
+    id: uuidString,
+    managerId: uuidString.nullable(),
+    manager: z.object({ id: uuidString, employeeCode: z.string(), name: z.string() }).nullable(),
     version: z.number().int(),
   })
   .meta({ id: 'ManagerChange' });

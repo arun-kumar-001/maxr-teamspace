@@ -24,6 +24,12 @@ export function CreateEmployeeForm({
   availableRoles,
   isAdmin,
   setFieldValue,
+  addAdditionalEmail,
+  updateAdditionalEmail,
+  removeAdditionalEmail,
+  addAdditionalPhone,
+  updateAdditionalPhone,
+  removeAdditionalPhone,
   setCurrentStep,
   nextStep,
   prevStep,
@@ -55,18 +61,63 @@ export function CreateEmployeeForm({
   const selectedDesignation = designations.find((d) => d.id === formData.designationId);
   const selectedManager = managers.find((m) => m.id === formData.managerId);
 
+  const hasStep1Error = Boolean(
+    errors.firstName ||
+    errors.lastName ||
+    errors.email ||
+    errors.additionalEmails ||
+    errors.phone ||
+    errors.additionalPhones ||
+    errors.panNumber ||
+    errors.aadhaarNumber ||
+    errors.bankAccountNumber ||
+    errors.bankIfscCode,
+  );
+  const hasStep2Error = Boolean(
+    errors.employeeCode ||
+    errors.departmentId ||
+    errors.designationId ||
+    errors.managerId ||
+    errors.joiningDate,
+  );
+  const hasStep3Error = Boolean(errors.role);
+
+  const stepStatus: Record<number, 'complete' | 'incomplete' | 'error'> = {
+    1: hasStep1Error
+      ? 'error'
+      : formData.firstName.trim() && formData.lastName.trim() && formData.email.trim()
+        ? 'complete'
+        : 'incomplete',
+    2: hasStep2Error
+      ? 'error'
+      : formData.employeeCode.trim() &&
+          formData.departmentId &&
+          formData.designationId &&
+          formData.joiningDate
+        ? 'complete'
+        : 'incomplete',
+    3: hasStep3Error ? 'error' : 'incomplete',
+  };
+
+  const handleStepSelect = (step: number) => {
+    setCurrentStep(step);
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="space-y-6"
+      className="space-y-5"
       data-testid="create-employee-form"
     >
-      {/* Top Visual Stepper */}
-      <CreateEmployeeStepper
-        currentStep={currentStep}
-        onStepClick={(step) => setCurrentStep(step)}
-      />
+      {/* Top Interactive Stepper */}
+      <div>
+        <CreateEmployeeStepper
+          currentStep={currentStep}
+          stepStatus={stepStatus}
+          onStepClick={handleStepSelect}
+        />
+      </div>
 
       {/* General Submission Error Alert */}
       {submitError && (
@@ -96,11 +147,10 @@ export function CreateEmployeeForm({
 
       {/* ============================================================== */}
       {/* SECTION 1: Personal Details */}
-      {/* Mobile: visible when currentStep === 1. Desktop: always in flow */}
       {/* ============================================================== */}
       <div
-        className={`bg-surface border border-border rounded-card p-4 sm:p-6 shadow-card space-y-4 ${
-          currentStep === 1 ? 'block' : 'hidden sm:block'
+        className={`bg-surface border border-border border-t-4 border-t-primary-deep rounded-card p-4 sm:p-6 shadow-card space-y-4 transition-all duration-200 ${
+          currentStep === 1 ? 'block' : 'hidden'
         }`}
         data-testid="section-personal-details"
       >
@@ -154,51 +204,326 @@ export function CreateEmployeeForm({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            label="Work Email Address"
-            htmlFor="create-emp-email"
-            required
-            error={errors.email}
-            helperText="Used as the sign-in username and for onboarding communications."
-          >
+          <div className="space-y-2">
+            <FormField
+              label="Work Email Address"
+              htmlFor="create-emp-email"
+              required
+              error={errors.email}
+              helperText="Used as the sign-in username and for onboarding communications."
+            >
+              <div className="flex items-center gap-2">
+                <Input
+                  id="create-emp-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFieldValue('email', e.target.value)}
+                  placeholder="e.g. rahul.sharma@maxr.example"
+                  disabled={isSubmitting}
+                  autoCapitalize="none"
+                  data-testid="input-email"
+                />
+                <button
+                  type="button"
+                  onClick={addAdditionalEmail}
+                  disabled={isSubmitting || formData.additionalEmails.length >= 5}
+                  title="Add additional email address"
+                  aria-label="Add additional email address"
+                  data-testid="add-email-btn"
+                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface-muted/70 text-text hover:bg-primary-soft hover:text-primary-deep hover:border-primary-strong/40 transition-colors disabled:opacity-40 cursor-pointer font-semibold text-base"
+                >
+                  +
+                </button>
+              </div>
+            </FormField>
+
+            {formData.additionalEmails.map((extraEmail, idx) => (
+              <div key={idx} className="flex items-center gap-2 animate-crm-fade-up">
+                <Input
+                  type="email"
+                  value={extraEmail}
+                  onChange={(e) => updateAdditionalEmail(idx, e.target.value)}
+                  placeholder={`Additional email #${idx + 1} (personal / secondary)`}
+                  disabled={isSubmitting}
+                  autoCapitalize="none"
+                  aria-label={`Additional email ${idx + 1}`}
+                  data-testid={`input-additional-email-${idx}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAdditionalEmail(idx)}
+                  disabled={isSubmitting}
+                  aria-label={`Remove additional email ${idx + 1}`}
+                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface text-text-muted hover:text-danger hover:bg-rose-50 transition-colors cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+            {errors.additionalEmails && (
+              <p className="text-xs text-danger font-medium">{errors.additionalEmails}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <FormField
+              label="Phone Number"
+              htmlFor="create-emp-phone"
+              error={errors.phone}
+              helperText="Optional. Digits, spaces, +, (, ) and - (6–50 characters)."
+            >
+              <div className="flex items-center gap-2">
+                <Input
+                  id="create-emp-phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFieldValue('phone', e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                  disabled={isSubmitting}
+                  data-testid="input-phone"
+                />
+                <button
+                  type="button"
+                  onClick={addAdditionalPhone}
+                  disabled={isSubmitting || formData.additionalPhones.length >= 5}
+                  title="Add additional mobile number"
+                  aria-label="Add additional mobile number"
+                  data-testid="add-phone-btn"
+                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface-muted/70 text-text hover:bg-primary-soft hover:text-primary-deep hover:border-primary-strong/40 transition-colors disabled:opacity-40 cursor-pointer font-semibold text-base"
+                >
+                  +
+                </button>
+              </div>
+            </FormField>
+
+            {formData.additionalPhones.map((extraPhone, idx) => (
+              <div key={idx} className="flex items-center gap-2 animate-crm-fade-up">
+                <Input
+                  type="tel"
+                  value={extraPhone}
+                  onChange={(e) => updateAdditionalPhone(idx, e.target.value)}
+                  placeholder={`Additional mobile #${idx + 1} (alternate / emergency)`}
+                  disabled={isSubmitting}
+                  aria-label={`Additional mobile ${idx + 1}`}
+                  data-testid={`input-additional-phone-${idx}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAdditionalPhone(idx)}
+                  disabled={isSubmitting}
+                  aria-label={`Remove additional mobile ${idx + 1}`}
+                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface text-text-muted hover:text-danger hover:bg-rose-50 transition-colors cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+            {errors.additionalPhones && (
+              <p className="text-xs text-danger font-medium">{errors.additionalPhones}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Blood Group, PAN Card Number, Aadhaar Number */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-border/70">
+          <FormField label="Blood Group" htmlFor="create-emp-blood-group">
             <Input
-              id="create-emp-email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFieldValue('email', e.target.value)}
-              placeholder="e.g. rahul.sharma@maxr.example"
+              id="create-emp-blood-group"
+              type="text"
+              maxLength={10}
+              value={formData.bloodGroup}
+              onChange={(e) => setFieldValue('bloodGroup', e.target.value)}
+              placeholder="e.g. O+, A+, AB-"
               disabled={isSubmitting}
-              autoCapitalize="none"
-              data-testid="input-email"
+              data-testid="input-blood-group"
             />
           </FormField>
 
           <FormField
-            label="Phone Number"
-            htmlFor="create-emp-phone"
-            error={errors.phone}
-            helperText="Optional. Digits, spaces, +, (, ) and - (6–50 characters)."
+            label="PAN Card Number"
+            htmlFor="create-emp-pan"
+            error={errors.panNumber}
+            helperText="10-char format (e.g. ABCDE1234F)"
           >
             <Input
-              id="create-emp-phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFieldValue('phone', e.target.value)}
-              placeholder="e.g. +91 98765 43210"
+              id="create-emp-pan"
+              type="text"
+              maxLength={10}
+              value={formData.panNumber}
+              onChange={(e) => setFieldValue('panNumber', e.target.value.toUpperCase())}
+              placeholder="ABCDE1234F"
               disabled={isSubmitting}
-              data-testid="input-phone"
+              className="uppercase font-mono"
+              data-testid="input-pan-number"
             />
           </FormField>
+
+          <FormField
+            label="Aadhaar Number"
+            htmlFor="create-emp-aadhaar"
+            error={errors.aadhaarNumber}
+            helperText="12-digit Aadhaar ID"
+          >
+            <Input
+              id="create-emp-aadhaar"
+              type="text"
+              maxLength={14}
+              value={formData.aadhaarNumber}
+              onChange={(e) => setFieldValue('aadhaarNumber', e.target.value)}
+              placeholder="1234 5678 9012"
+              disabled={isSubmitting}
+              className="font-mono"
+              data-testid="input-aadhaar-number"
+            />
+          </FormField>
+        </div>
+
+        {/* Permanent Address & Current Address */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border/70">
+          <FormField label="Permanent Address" htmlFor="create-emp-perm-address">
+            <textarea
+              id="create-emp-perm-address"
+              rows={2}
+              value={formData.permanentAddress}
+              onChange={(e) => setFieldValue('permanentAddress', e.target.value)}
+              placeholder="Door No, Street, City, State, PIN..."
+              disabled={isSubmitting}
+              data-testid="input-permanent-address"
+              className="w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </FormField>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="create-emp-curr-address"
+                className="block text-xs font-semibold text-text-muted uppercase tracking-wider"
+              >
+                Current Address
+              </label>
+              <label className="inline-flex items-center gap-1.5 text-xs text-text-muted cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={formData.sameAsPermanentAddress}
+                  onChange={(e) => setFieldValue('sameAsPermanentAddress', e.target.checked)}
+                  disabled={isSubmitting}
+                  data-testid="same-address-checkbox"
+                  className="rounded border-border text-primary-deep focus:ring-primary"
+                />
+                <span>Same as permanent</span>
+              </label>
+            </div>
+            <textarea
+              id="create-emp-curr-address"
+              rows={2}
+              value={formData.currentAddress}
+              onChange={(e) => setFieldValue('currentAddress', e.target.value)}
+              placeholder="Current residential address..."
+              disabled={isSubmitting || formData.sameAsPermanentAddress}
+              data-testid="input-current-address"
+              className="w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+            />
+          </div>
+        </div>
+
+        {/* Bank Account Details */}
+        <div className="pt-4 border-t border-border/70 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Bank Account Details
+            </h3>
+            <span className="text-xs text-text-subtle">
+              Optional payroll &amp; reimbursement info
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <FormField label="Account Holder Name" htmlFor="create-emp-bank-holder">
+              <Input
+                id="create-emp-bank-holder"
+                type="text"
+                maxLength={150}
+                value={formData.bankAccountHolder}
+                onChange={(e) => setFieldValue('bankAccountHolder', e.target.value)}
+                placeholder="e.g. Aarav Sharma"
+                disabled={isSubmitting}
+                data-testid="input-bank-account-holder"
+              />
+            </FormField>
+
+            <FormField label="Bank Name" htmlFor="create-emp-bank-name">
+              <Input
+                id="create-emp-bank-name"
+                type="text"
+                maxLength={150}
+                value={formData.bankName}
+                onChange={(e) => setFieldValue('bankName', e.target.value)}
+                placeholder="e.g. HDFC Bank"
+                disabled={isSubmitting}
+                data-testid="input-bank-name"
+              />
+            </FormField>
+
+            <FormField
+              label="Account Number"
+              htmlFor="create-emp-bank-account"
+              error={errors.bankAccountNumber}
+              helperText="6–30 digits or letters"
+            >
+              <Input
+                id="create-emp-bank-account"
+                type="text"
+                maxLength={30}
+                value={formData.bankAccountNumber}
+                onChange={(e) => setFieldValue('bankAccountNumber', e.target.value)}
+                placeholder="e.g. 50100234567890"
+                disabled={isSubmitting}
+                className="font-mono"
+                data-testid="input-bank-account-number"
+              />
+            </FormField>
+
+            <FormField
+              label="IFSC Code"
+              htmlFor="create-emp-bank-ifsc"
+              error={errors.bankIfscCode}
+              helperText="11-character bank IFSC"
+            >
+              <Input
+                id="create-emp-bank-ifsc"
+                type="text"
+                maxLength={11}
+                value={formData.bankIfscCode}
+                onChange={(e) => setFieldValue('bankIfscCode', e.target.value.toUpperCase())}
+                placeholder="HDFC0001234"
+                disabled={isSubmitting}
+                className="uppercase font-mono"
+                data-testid="input-bank-ifsc-code"
+              />
+            </FormField>
+
+            <FormField label="Branch Name" htmlFor="create-emp-bank-branch">
+              <Input
+                id="create-emp-bank-branch"
+                type="text"
+                maxLength={150}
+                value={formData.bankBranch}
+                onChange={(e) => setFieldValue('bankBranch', e.target.value)}
+                placeholder="e.g. Indiranagar, Bengaluru"
+                disabled={isSubmitting}
+                data-testid="input-bank-branch"
+              />
+            </FormField>
+          </div>
         </div>
       </div>
 
       {/* ============================================================== */}
       {/* SECTION 2: Employment & Hierarchy */}
-      {/* Mobile: visible when currentStep === 2. Desktop: always in flow */}
       {/* ============================================================== */}
       <div
-        className={`bg-surface border border-border rounded-card p-4 sm:p-6 shadow-card space-y-4 ${
-          currentStep === 2 ? 'block' : 'hidden sm:block'
+        className={`bg-surface border border-border border-t-4 border-t-blue-600 rounded-card p-4 sm:p-6 shadow-card space-y-4 transition-all duration-200 ${
+          currentStep === 2 ? 'block' : 'hidden'
         }`}
         data-testid="section-employment-details"
       >
@@ -327,11 +652,10 @@ export function CreateEmployeeForm({
 
       {/* ============================================================== */}
       {/* SECTION 3: Role & System Access */}
-      {/* Mobile: visible when currentStep === 3. Desktop: always in flow */}
       {/* ============================================================== */}
       <div
-        className={`bg-surface border border-border rounded-card p-4 sm:p-6 shadow-card space-y-4 ${
-          currentStep === 3 ? 'block' : 'hidden sm:block'
+        className={`bg-surface border border-border border-t-4 border-t-emerald-600 rounded-card p-4 sm:p-6 shadow-card space-y-4 transition-all duration-200 ${
+          currentStep === 3 ? 'block' : 'hidden'
         }`}
         data-testid="section-role-access"
       >
@@ -450,85 +774,74 @@ export function CreateEmployeeForm({
       </div>
 
       {/* ============================================================== */}
-      {/* FORM ACTIONS & CONTROLS */}
+      {/* WIZARD NAVIGATION & SUBMIT BAR */}
       {/* ============================================================== */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
+        <div className="flex items-center gap-2">
+          {currentStep > 1 ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prevStep}
+              disabled={isSubmitting}
+              className="min-h-[44px]"
+              data-testid="prev-step-button"
+            >
+              ← Back
+            </Button>
+          ) : (
+            onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="min-h-[44px]"
+                data-testid="desktop-cancel-button"
+              >
+                Cancel
+              </Button>
+            )
+          )}
+          {currentStep > 1 && onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="min-h-[44px] hidden sm:inline-flex"
+              data-testid="desktop-cancel-button"
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
 
-      {/* Mobile-only Action Bar (< 640px) */}
-      <div className="flex sm:hidden items-center justify-between gap-3 pt-2">
-        {currentStep > 1 ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={prevStep}
-            disabled={isSubmitting}
-            className="min-h-[44px] min-w-[80px]"
-            data-testid="mobile-prev-step-button"
-          >
-            Previous
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="min-h-[44px]"
-            data-testid="mobile-cancel-button"
-          >
-            Cancel
-          </Button>
-        )}
+        <div className="flex items-center gap-2 ml-auto sm:ml-0">
+          {currentStep < 3 && (
+            <Button
+              type="button"
+              variant="primary"
+              onClick={nextStep}
+              disabled={isSubmitting}
+              className="min-h-[44px]"
+              data-testid="next-step-button"
+            >
+              {currentStep === 1 ? 'Next: Employment →' : 'Next: Access & Review →'}
+            </Button>
+          )}
 
-        {currentStep < 3 ? (
-          <Button
-            type="button"
-            variant="primary"
-            onClick={nextStep}
-            disabled={isSubmitting}
-            className="min-h-[44px] ml-auto"
-            data-testid="mobile-next-step-button"
-          >
-            Continue
-          </Button>
-        ) : (
           <Button
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
             disabled={isSubmitting}
-            className="min-h-[44px] ml-auto"
-            data-testid="mobile-submit-button"
+            className={currentStep === 3 ? 'min-h-[44px]' : 'hidden'}
+            data-testid="desktop-submit-button"
           >
             Create Employee
           </Button>
-        )}
-      </div>
-
-      {/* Desktop & Tablet Action Bar (>= 640px) */}
-      <div className="hidden sm:flex items-center justify-end gap-3 pt-2 border-t border-border">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className="min-h-[44px]"
-            data-testid="desktop-cancel-button"
-          >
-            Cancel
-          </Button>
-        )}
-
-        <Button
-          type="submit"
-          variant="primary"
-          isLoading={isSubmitting}
-          disabled={isSubmitting}
-          className="min-h-[44px]"
-          data-testid="desktop-submit-button"
-        >
-          Create Employee
-        </Button>
+        </div>
       </div>
     </form>
   );

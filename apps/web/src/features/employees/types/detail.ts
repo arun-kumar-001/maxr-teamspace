@@ -30,6 +30,18 @@ export interface EmployeeDetail {
   createdAt: string;
   updatedAt: string;
   version: number;
+  additionalEmails?: string[];
+  additionalPhones?: string[];
+  permanentAddress?: string | null;
+  currentAddress?: string | null;
+  bloodGroup?: string | null;
+  panNumber?: string | null;
+  aadhaarNumber?: string | null;
+  bankAccountHolder?: string | null;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankIfscCode?: string | null;
+  bankBranch?: string | null;
   account?: EmployeeAccountInfo;
 }
 

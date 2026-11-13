@@ -1,4 +1,4 @@
-import { ROLES, type Role } from '@maxr/shared';
+import { ROLES, uuidString, type Role } from '@maxr/shared';
 import { z } from 'zod';
 
 const MAX_DAYS_AHEAD = 365;
@@ -33,26 +33,64 @@ export const createEmployeeSchema = z
       .trim()
       .regex(/^[0-9+()\-\s]{6,50}$/, 'Digits, spaces, + ( ) and - only')
       .optional(),
-    departmentId: z.string().uuid(),
-    designationId: z.string().uuid(),
-    managerId: z.string().uuid().optional(),
+    departmentId: uuidString,
+    designationId: uuidString,
+    managerId: uuidString.optional(),
     joiningDate: isoDate,
     role: roleKey.default(ROLES.STAFF),
+    additionalEmails: z.array(z.string().trim().toLowerCase().email().max(255)).max(5).optional(),
+    additionalPhones: z
+      .array(
+        z
+          .string()
+          .trim()
+          .regex(/^[0-9+()\-\s]{6,50}$/, 'Digits, spaces, + ( ) and - only'),
+      )
+      .max(5)
+      .optional(),
+    permanentAddress: z.string().trim().max(500).optional(),
+    currentAddress: z.string().trim().max(500).optional(),
+    bloodGroup: z.string().trim().min(1).max(10).optional(),
+    panNumber: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, 'Use 10-character PAN format (e.g. ABCDE1234F)')
+      .optional(),
+    aadhaarNumber: z
+      .string()
+      .trim()
+      .regex(/^\d{12}$/, 'Aadhaar number must be 12 digits')
+      .optional(),
+    bankAccountHolder: z.string().trim().min(1).max(150).optional(),
+    bankName: z.string().trim().min(1).max(150).optional(),
+    bankAccountNumber: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9]{6,30}$/, 'Account number must be 6 to 30 letters or digits')
+      .optional(),
+    bankIfscCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Use 11-character IFSC format (e.g. HDFC0001234)')
+      .optional(),
+    bankBranch: z.string().trim().min(1).max(150).optional(),
   })
   .strict();
 
 export const createdEmployeeSchema = z
   .object({
-    id: z.string().uuid(),
-    userId: z.string().uuid(),
+    id: uuidString,
+    userId: uuidString,
     employeeCode: z.string(),
     firstName: z.string(),
     lastName: z.string(),
     email: z.string().email(),
     phone: z.string().nullable(),
-    departmentId: z.string().uuid(),
-    designationId: z.string().uuid(),
-    managerId: z.string().uuid().nullable(),
+    departmentId: uuidString,
+    designationId: uuidString,
+    managerId: uuidString.nullable(),
     status: z.literal('pending'),
     role: roleKey,
     joiningDate: z.string(),

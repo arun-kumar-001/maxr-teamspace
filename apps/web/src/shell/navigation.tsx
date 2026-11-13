@@ -587,7 +587,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       items: [
         {
           id: '/dashboard',
-          label: 'Overview',
+          label: 'Dashboard',
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
@@ -739,7 +739,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       items: [
         {
           id: '/dashboard',
-          label: 'Overview',
+          label: 'Dashboard',
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
@@ -860,7 +860,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       items: [
         {
           id: '/dashboard',
-          label: 'Overview',
+          label: 'Dashboard',
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
@@ -933,7 +933,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       items: [
         {
           id: '/dashboard',
-          label: 'Overview',
+          label: 'Dashboard',
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
