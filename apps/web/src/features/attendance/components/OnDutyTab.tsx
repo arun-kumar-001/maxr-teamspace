@@ -365,10 +365,10 @@ export function OnDutyTab({
       {/* 1. Four Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* On Duty */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-emerald-300 rounded-card shadow-card flex items-center justify-between gap-3">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-emerald-600 flex items-center justify-center shrink-0">
-              <IconUsers className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <IconUsers className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -385,10 +385,10 @@ export function OnDutyTab({
         </div>
 
         {/* Late Today */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-sky-300 rounded-card shadow-card flex items-center justify-between gap-3">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-sky-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+              <IconClock className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -405,10 +405,10 @@ export function OnDutyTab({
         </div>
 
         {/* Absent Today */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-rose-300 rounded-card shadow-card flex items-center justify-between gap-3">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-rose-600 flex items-center justify-center shrink-0">
-              <IconUserX className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <IconUserX className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -423,10 +423,10 @@ export function OnDutyTab({
         </div>
 
         {/* On Leave */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-purple-300 rounded-card shadow-card flex items-center justify-between gap-3">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-purple-600 flex items-center justify-center shrink-0">
-              <IconCalendar className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <IconCalendar className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
@@ -458,7 +458,7 @@ export function OnDutyTab({
                   setDepartmentFilter(e.target.value);
                   setPage(1);
                 }}
-                className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border/80 rounded-xl text-text outline-none cursor-pointer hover:bg-surface-muted"
+                className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-white border border-border/80 rounded-xl text-text outline-none cursor-pointer hover:bg-surface-muted shadow-xs"
               >
                 <option value="all">Department ▾</option>
                 {departments.map((dept) => (
@@ -475,10 +475,10 @@ export function OnDutyTab({
                   setFilterMode('all');
                   setPage(1);
                 }}
-                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all shadow-xs ${
                   filterMode === 'all'
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-surface text-text-muted hover:text-text border border-border/80'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white text-text-muted hover:text-text border border-border/80 hover:bg-surface-muted'
                 }`}
               >
                 All Employees
@@ -491,10 +491,10 @@ export function OnDutyTab({
                   setFilterMode('late_absent');
                   setPage(1);
                 }}
-                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all ${
+                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all shadow-xs ${
                   filterMode === 'late_absent'
-                    ? 'bg-primary-deep text-white shadow-xs'
-                    : 'bg-surface text-text-muted hover:text-text border border-border/80'
+                    ? 'bg-primary-deep text-white'
+                    : 'bg-white text-text-muted hover:text-text border border-border/80 hover:bg-surface-muted'
                 }`}
               >
                 <span>Late &amp; Absent</span>
@@ -514,13 +514,13 @@ export function OnDutyTab({
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full min-h-[38px] px-3 py-1.5 text-xs bg-surface border border-border/80 rounded-xl text-text placeholder:text-text-muted outline-none focus:border-primary-strong"
+                className="w-full min-h-[38px] px-3 py-1.5 text-xs bg-white border border-border/80 rounded-xl text-text placeholder:text-text-muted outline-none focus:border-primary-strong shadow-xs"
               />
             </div>
           </div>
 
           {/* Table Container */}
-          <div className="bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden">
+          <div className="bg-white border border-border/80 rounded-card shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table
                 className="w-full text-left text-xs sm:text-sm"
@@ -777,7 +777,7 @@ export function OnDutyTab({
         {/* Right Column: Shift Coverage & On Leave Today (3 cols on lg) */}
         <div className="lg:col-span-3 space-y-4 min-w-0">
           {/* Shift Coverage Card */}
-          <div className="p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
+          <div className="p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
             <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
               <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <IconLayers className="w-4 h-4" />
@@ -810,7 +810,7 @@ export function OnDutyTab({
           </div>
 
           {/* On Leave Today Card */}
-          <div className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
+          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
             <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
               <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
                 <IconCalendar className="w-4 h-4" />

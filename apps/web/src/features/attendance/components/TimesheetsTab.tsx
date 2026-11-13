@@ -301,7 +301,7 @@ export function TimesheetsTab({
       {/* 1. Four Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Hours Worked */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
               <IconClock className="w-5 h-5" />
@@ -321,7 +321,7 @@ export function TimesheetsTab({
         </div>
 
         {/* Overtime Hours */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
               <IconClock className="w-5 h-5" />
@@ -341,7 +341,7 @@ export function TimesheetsTab({
         </div>
 
         {/* Pending Approval */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
               <IconClock className="w-5 h-5" />
@@ -361,7 +361,7 @@ export function TimesheetsTab({
         </div>
 
         {/* Flagged Timesheets */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 hover:-translate-y-0.5 transition-all">
+        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
               <IconAlertTriangle className="w-5 h-5" />
@@ -389,7 +389,7 @@ export function TimesheetsTab({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               {/* Status Tabs */}
-              <div className="flex items-center p-1 bg-surface border border-border/80 rounded-xl shadow-xs">
+              <div className="flex items-center p-1 bg-white border border-border/80 rounded-xl shadow-xs">
                 {(['all', 'submitted', 'flagged', 'approved'] as const).map((tab) => (
                   <button
                     key={tab}
@@ -411,7 +411,7 @@ export function TimesheetsTab({
                 aria-label="Filter by Department"
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="min-h-[36px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border/80 rounded-xl text-text outline-none hover:bg-surface-muted cursor-pointer"
+                className="min-h-[36px] px-3 py-1.5 text-xs font-semibold bg-white border border-border/80 rounded-xl text-text outline-none hover:bg-surface-muted cursor-pointer shadow-xs"
               >
                 <option value="all">All Departments</option>
                 {departments.map((d) => (
@@ -428,13 +428,13 @@ export function TimesheetsTab({
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-40 min-h-[36px] px-3 py-1.5 text-xs bg-surface border border-border/80 rounded-xl text-text outline-none focus:border-primary-strong"
+                className="w-40 min-h-[36px] px-3 py-1.5 text-xs bg-white border border-border/80 rounded-xl text-text outline-none focus:border-primary-strong shadow-xs"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExportCSV}
-                className="min-h-[36px] px-3 text-xs font-semibold flex items-center gap-1.5"
+                className="min-h-[36px] px-3 text-xs font-semibold flex items-center gap-1.5 bg-white shadow-xs"
               >
                 <IconDownload />
                 Export
@@ -470,7 +470,7 @@ export function TimesheetsTab({
           )}
 
           {/* Timesheets Table */}
-          <div className="bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden">
+          <div className="bg-white border border-border/80 rounded-card shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm" aria-label="Timesheets Table">
                 <thead className="bg-surface-muted/60 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
@@ -625,7 +625,7 @@ export function TimesheetsTab({
         {/* Right 3 cols: Hours by Day & Overtime Claims */}
         <div className="lg:col-span-3 space-y-4 min-w-0">
           {/* Hours by Day Card */}
-          <div className="p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-4">
+          <div className="p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <h3 className="text-sm font-bold text-text leading-tight">Hours by Day</h3>
               <span className="text-[11px] font-semibold text-text-muted">Weekly Total</span>
@@ -650,7 +650,7 @@ export function TimesheetsTab({
           </div>
 
           {/* Pending Overtime Claims */}
-          <div className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card space-y-3">
+          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <h3 className="text-sm font-bold text-text leading-tight">Overtime Claims</h3>
               <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">

@@ -405,7 +405,7 @@ export function RosterTab({
 
       {/* 1. Live Current-Date Roster Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
+        <div className="p-3.5 bg-white rounded-card border border-border/80 shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
           <span className="text-[11px] font-semibold text-text-subtle uppercase tracking-wider block">
             Rostered Team
           </span>
@@ -413,7 +413,7 @@ export function RosterTab({
             {focusSummary.totalEmployees}
           </span>
         </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
+        <div className="p-3.5 bg-white rounded-card border border-border/80 shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
           <span className="text-[11px] font-semibold text-primary-ink uppercase tracking-wider block">
             Scheduled ({focusDateStr === todayStr ? 'Today' : focusDateStr})
           </span>
@@ -421,7 +421,7 @@ export function RosterTab({
             {focusSummary.scheduled}
           </span>
         </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
+        <div className="p-3.5 bg-white rounded-card border border-border/80 shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
           <span className="text-[11px] font-semibold text-positive-ink uppercase tracking-wider block">
             Checked In / Present
           </span>
@@ -429,7 +429,7 @@ export function RosterTab({
             {focusSummary.present}
           </span>
         </div>
-        <div className="p-3.5 bg-surface rounded-card border border-border shadow-card">
+        <div className="p-3.5 bg-white rounded-card border border-border/80 shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
           <span className="text-[11px] font-semibold text-warning uppercase tracking-wider block">
             On Leave
           </span>
@@ -440,7 +440,7 @@ export function RosterTab({
       </div>
 
       {/* 2. Clean Week Controls, Search, Department & Dynamic Shift Legend */}
-      <div className="flex flex-col gap-3 p-4 bg-surface border border-border rounded-card shadow-card">
+      <div className="flex flex-col gap-3 p-4 bg-white border border-border/80 rounded-card shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Week Selector (Fixed compact icon + whitespace-nowrap) */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -448,11 +448,11 @@ export function RosterTab({
               type="button"
               aria-label="Previous week"
               onClick={() => setWeekOffset((prev) => prev - 1)}
-              className="w-9 h-9 rounded-lg border border-border bg-surface text-text hover:bg-surface-muted flex items-center justify-center transition-colors shrink-0"
+              className="w-9 h-9 rounded-lg border border-border/80 bg-white text-text hover:bg-surface-muted flex items-center justify-center transition-colors shrink-0 shadow-xs"
             >
               <IconChevronLeft className="w-4 h-4" />
             </button>
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-muted border border-border text-xs font-bold text-text whitespace-nowrap">
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-border/80 text-xs font-bold text-text whitespace-nowrap shadow-xs">
               <IconCalendar className="w-4 h-4 shrink-0 text-primary-deep" />
               <span>{weekLabel}</span>
             </div>
@@ -460,7 +460,7 @@ export function RosterTab({
               type="button"
               aria-label="Next week"
               onClick={() => setWeekOffset((prev) => prev + 1)}
-              className="w-9 h-9 rounded-lg border border-border bg-surface text-text hover:bg-surface-muted flex items-center justify-center transition-colors shrink-0"
+              className="w-9 h-9 rounded-lg border border-border/80 bg-white text-text hover:bg-surface-muted flex items-center justify-center transition-colors shrink-0 shadow-xs"
             >
               <IconChevronRight className="w-4 h-4" />
             </button>
@@ -468,7 +468,7 @@ export function RosterTab({
               <button
                 type="button"
                 onClick={() => setWeekOffset(0)}
-                className="px-2.5 py-1.5 text-xs font-semibold text-primary-ink bg-primary-soft rounded-lg hover:bg-primary/20 transition-colors"
+                className="px-2.5 py-1.5 text-xs font-semibold text-primary-ink bg-primary-soft rounded-lg hover:bg-primary/20 transition-colors shadow-xs"
               >
                 Current Week
               </button>
@@ -484,13 +484,14 @@ export function RosterTab({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search employee or code..."
                 aria-label="Search roster employees"
+                className="bg-white"
               />
             </div>
             <select
               aria-label="Filter Roster by Department"
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="min-h-[40px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border rounded-input text-text outline-none hover:bg-surface-muted cursor-pointer"
+              className="min-h-[40px] px-3 py-1.5 text-xs font-semibold bg-white border border-border/80 rounded-input text-text outline-none hover:bg-surface-muted cursor-pointer shadow-xs"
             >
               <option value="all">All Departments</option>
               {departments.map((d) => (
@@ -550,7 +551,7 @@ export function RosterTab({
       </div>
 
       {/* 3. Weekly Roster Matrix */}
-      <div className="bg-surface border border-border rounded-card shadow-card overflow-hidden">
+      <div className="bg-white border border-border/80 rounded-card shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm" aria-label="Weekly Shift Roster">
             <thead className="bg-surface-muted/70 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">

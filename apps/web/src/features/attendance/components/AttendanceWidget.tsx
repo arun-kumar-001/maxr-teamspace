@@ -120,14 +120,7 @@ export function AttendanceWidget({
         borderRadius: '20px',
         color: 'rgb(244, 247, 246)',
       }
-    : {
-        backgroundColor: 'rgba(255, 255, 255, 0.68)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderColor: 'rgba(255, 255, 255, 0.65)',
-        boxShadow: '0 10px 32px rgba(85, 205, 179, 0.06), 0 2px 6px rgba(8, 11, 12, 0.03)',
-        borderRadius: '16px',
-      };
+    : {};
 
   const primaryTextClass = isDark ? 'text-white' : 'text-text';
   const mutedTextStyle = isDark ? { color: 'rgba(244, 247, 246, 0.7)' } : undefined;
@@ -135,8 +128,8 @@ export function AttendanceWidget({
 
   return (
     <div
-      className={`p-4 sm:p-6 border shadow-card space-y-4 ${
-        isDark ? '' : 'bg-surface border-border rounded-[16px]'
+      className={`p-4 sm:p-6 border space-y-4 ${
+        isDark ? 'shadow-card' : 'bg-white border-border/80 rounded-card shadow-xs'
       } ${className}`}
       style={cardStyle}
       data-testid="attendance-widget"

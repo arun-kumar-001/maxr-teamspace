@@ -110,36 +110,20 @@ function EmployeeAttendanceWorkspace({
 
   return (
     <div
-      className="relative rounded-[24px] p-4 sm:p-6 md:p-7 border space-y-5 bg-white"
-      style={{
-        backgroundColor: 'rgb(255, 255, 255)',
-        borderColor: 'rgb(229, 231, 235)',
-        boxShadow: '0 4px 24px rgba(8, 11, 12, 0.04)',
-      }}
+      className="relative rounded-card p-4 sm:p-6 md:p-7 border border-border/80 space-y-5 bg-white shadow-xs"
       data-testid="attendance-page"
     >
       {/* Top Clean White Header & Sub-Navigation */}
-      <div
-        className="pb-4 border-b space-y-4"
-        style={{
-          borderColor: 'rgb(229, 231, 235)',
-        }}
-      >
+      <div className="pb-4 border-b border-border/80 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p
-              className="text-[11px] font-bold uppercase tracking-widest"
-              style={{ color: 'rgb(13, 148, 136)' }}
-            >
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary-strong">
               MAXR TEAMSPACE WORKFORCE HUB
             </p>
-            <h1
-              className="text-xl sm:text-2xl font-bold font-display mt-0.5"
-              style={{ color: 'rgb(8, 11, 12)' }}
-            >
+            <h1 className="text-xl sm:text-2xl font-bold font-display text-text mt-0.5">
               Attendance Management
             </h1>
-            <p className="text-xs sm:text-sm mt-0.5" style={{ color: 'rgb(79, 92, 90)' }}>
+            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
               Track your attendance, manage check-in/out, leaves and view team attendance.
             </p>
           </div>
@@ -158,21 +142,11 @@ function EmployeeAttendanceWorkspace({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold min-h-[42px] transition-all cursor-pointer border"
-                style={
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold min-h-[42px] transition-all cursor-pointer border ${
                   active
-                    ? {
-                        backgroundColor: 'rgb(85, 205, 179)',
-                        borderColor: 'rgb(85, 205, 179)',
-                        color: 'rgb(8, 11, 12)',
-                        boxShadow: '0 2px 8px rgba(85, 205, 179, 0.25)',
-                      }
-                    : {
-                        backgroundColor: 'rgb(255, 255, 255)',
-                        borderColor: 'rgb(229, 231, 235)',
-                        color: 'rgb(8, 11, 12)',
-                      }
-                }
+                    ? 'bg-primary-deep text-white border-primary-deep shadow-xs'
+                    : 'bg-white border-border/80 text-text hover:bg-surface-muted'
+                }`}
                 aria-current={active ? 'page' : undefined}
                 data-testid={`attendance-tab-${tab.id}`}
               >
@@ -381,14 +355,14 @@ function AttendanceOpsWorkspace({
           <button
             type="button"
             onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-surface/90 border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface transition-colors"
+            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-white border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface-muted transition-colors"
           >
             <span>{formattedSelectedDate}</span>
             <span className="text-text-muted text-[10px]">&#9660;</span>
           </button>
 
           {isDatePickerOpen && (
-            <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-surface border border-border rounded-xl shadow-lg space-y-1">
+            <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-white border border-border/80 rounded-card shadow-lg space-y-1">
               <span className="text-[11px] font-bold text-text-muted px-2 block">
                 Quick Date Select
               </span>
@@ -482,7 +456,7 @@ function AttendanceOpsWorkspace({
       </div>
 
       {isLoading ? (
-        <div className="p-6 bg-surface border border-border rounded-card space-y-4">
+        <div className="p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
           <Skeleton variant="rectangular" height={36} className="w-1/3" />
           <Skeleton variant="rectangular" height={100} className="w-full" />
           <Skeleton variant="rectangular" height={240} className="w-full" />

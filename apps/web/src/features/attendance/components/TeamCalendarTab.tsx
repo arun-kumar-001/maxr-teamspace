@@ -278,24 +278,14 @@ export function TeamCalendarTab() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 rounded-2xl" data-testid="team-calendar-tab">
-      {/* Left Sidebar: Categories & Filters (Dark Frosted Rail matching reference) */}
-      <aside
-        className="w-full lg:w-64 shrink-0 p-4 rounded-2xl border space-y-5"
-        style={{
-          backgroundColor: 'rgba(17, 24, 25, 0.88)',
-          borderColor: 'rgba(244, 247, 246, 0.12)',
-          color: 'rgb(244, 247, 246)',
-        }}
-      >
+      {/* Left Sidebar: Categories & Filters */}
+      <aside className="w-full lg:w-64 shrink-0 p-4 rounded-card border border-border/80 bg-white shadow-xs space-y-5 text-text">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3
-              className="text-xs font-bold uppercase tracking-wider"
-              style={{ color: 'rgb(85, 205, 179)' }}
-            >
+            <h3 className="text-xs font-bold uppercase tracking-wider text-primary-strong">
               Attendance Legend
             </h3>
-            <span className="text-[11px]" style={{ color: 'rgba(244, 247, 246, 0.55)' }}>
+            <span className="text-[11px] text-text-muted">
               Toggle
             </span>
           </div>
@@ -314,25 +304,19 @@ export function TeamCalendarTab() {
                         onChange={() =>
                           setEnabledCategories((prev) => ({ ...prev, [cat]: !prev[cat] }))
                         }
-                        className="rounded border-slate-600 accent-teal-400"
+                        className="rounded border-border accent-teal-600"
                       />
                       <span
                         className="w-2.5 h-2.5 rounded-full inline-block"
                         style={{ backgroundColor: meta.barColor }}
                       />
-                      <span style={{ color: 'rgb(244, 247, 246)' }}>{meta.label}</span>
+                      <span className="text-text font-medium">{meta.label}</span>
                     </span>
-                    <span
-                      className="text-[11px] font-semibold tabular-nums"
-                      style={{ color: 'rgba(244, 247, 246, 0.65)' }}
-                    >
+                    <span className="text-[11px] font-semibold tabular-nums text-text-muted">
                       {count}
                     </span>
                   </div>
-                  <div
-                    className="h-1 w-full rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'rgba(244, 247, 246, 0.08)' }}
-                  >
+                  <div className="h-1 w-full rounded-full overflow-hidden bg-surface-muted">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -347,22 +331,15 @@ export function TeamCalendarTab() {
           </div>
         </div>
 
-        <div
-          className="pt-4 border-t space-y-3"
-          style={{ borderColor: 'rgba(244, 247, 246, 0.1)' }}
-        >
-          <h3
-            className="text-xs font-bold uppercase tracking-wider"
-            style={{ color: 'rgb(85, 205, 179)' }}
-          >
+        <div className="pt-4 border-t border-border/80 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-primary-strong">
             Filters
           </h3>
 
           <div className="space-y-1">
             <label
               htmlFor="calendar-department-filter"
-              className="text-[11px] block"
-              style={{ color: 'rgba(244, 247, 246, 0.7)' }}
+              className="text-[11px] block text-text-muted font-medium"
             >
               Department
             </label>
@@ -370,12 +347,7 @@ export function TeamCalendarTab() {
               id="calendar-department-filter"
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="w-full text-xs px-2.5 py-2 rounded-lg border min-h-[38px]"
-              style={{
-                backgroundColor: 'rgba(8, 11, 12, 0.7)',
-                borderColor: 'rgba(244, 247, 246, 0.16)',
-                color: 'rgb(244, 247, 246)',
-              }}
+              className="w-full text-xs px-2.5 py-2 rounded-lg border border-border/80 bg-white text-text min-h-[38px] shadow-xs"
               data-testid="calendar-department-filter"
             >
               <option value="">All Departments</option>
@@ -390,8 +362,7 @@ export function TeamCalendarTab() {
           <div className="space-y-1">
             <label
               htmlFor="calendar-employee-filter"
-              className="text-[11px] block"
-              style={{ color: 'rgba(244, 247, 246, 0.7)' }}
+              className="text-[11px] block text-text-muted font-medium"
             >
               Employee
             </label>
@@ -399,12 +370,7 @@ export function TeamCalendarTab() {
               id="calendar-employee-filter"
               value={employeeFilter}
               onChange={(e) => setEmployeeFilter(e.target.value)}
-              className="w-full text-xs px-2.5 py-2 rounded-lg border min-h-[38px]"
-              style={{
-                backgroundColor: 'rgba(8, 11, 12, 0.7)',
-                borderColor: 'rgba(244, 247, 246, 0.16)',
-                color: 'rgb(244, 247, 246)',
-              }}
+              className="w-full text-xs px-2.5 py-2 rounded-lg border border-border/80 bg-white text-text min-h-[38px] shadow-xs"
               data-testid="calendar-employee-filter"
             >
               <option value="">All Team Members</option>
@@ -419,8 +385,7 @@ export function TeamCalendarTab() {
           <div className="space-y-1">
             <label
               htmlFor="calendar-status-filter"
-              className="text-[11px] block"
-              style={{ color: 'rgba(244, 247, 246, 0.7)' }}
+              className="text-[11px] block text-text-muted font-medium"
             >
               Attendance Status
             </label>
@@ -428,12 +393,7 @@ export function TeamCalendarTab() {
               id="calendar-status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as CalendarCategory | '')}
-              className="w-full text-xs px-2.5 py-2 rounded-lg border min-h-[38px]"
-              style={{
-                backgroundColor: 'rgba(8, 11, 12, 0.7)',
-                borderColor: 'rgba(244, 247, 246, 0.16)',
-                color: 'rgb(244, 247, 246)',
-              }}
+              className="w-full text-xs px-2.5 py-2 rounded-lg border border-border/80 bg-white text-text min-h-[38px] shadow-xs"
               data-testid="calendar-status-filter"
             >
               <option value="">All Statuses</option>
@@ -448,28 +408,15 @@ export function TeamCalendarTab() {
           <button
             type="button"
             onClick={resetAllFilters}
-            className="w-full text-xs font-semibold py-2 rounded-lg border min-h-[38px] cursor-pointer"
-            style={{
-              backgroundColor: 'rgba(85, 205, 179, 0.1)',
-              borderColor: 'rgba(85, 205, 179, 0.3)',
-              color: 'rgb(85, 205, 179)',
-            }}
+            className="w-full text-xs font-semibold py-2 rounded-lg border border-border/80 bg-surface-muted/60 hover:bg-surface-muted text-text min-h-[38px] cursor-pointer shadow-xs transition-colors"
           >
             Reset Filters
           </button>
         </div>
       </aside>
 
-      {/* Main Luminous Calendar Stage matching reference image */}
-      <div
-        className="flex-1 min-w-0 p-4 sm:p-6 rounded-[22px] border space-y-5"
-        style={{
-          backgroundColor: 'rgba(244, 247, 246, 0.96)',
-          borderColor: 'rgba(255, 255, 255, 0.85)',
-          color: 'rgb(17, 24, 25)',
-          boxShadow: '0 20px 50px rgba(8, 11, 12, 0.35)',
-        }}
-      >
+      {/* Main Luminous Calendar Stage */}
+      <div className="flex-1 min-w-0 p-4 sm:p-6 rounded-card border border-border/80 bg-white shadow-xs space-y-5 text-text">
         {/* Top Controls: Month Title, Month/Week/Day Segmented Switch, < Today > */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <h2

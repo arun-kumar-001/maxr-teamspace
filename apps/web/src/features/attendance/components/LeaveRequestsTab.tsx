@@ -8,30 +8,22 @@ function formatStatusChip(status: LeaveRequestStatus) {
     case 'approved':
       return {
         label: 'Approved',
-        bg: 'rgba(85, 205, 179, 0.16)',
-        border: 'rgba(85, 205, 179, 0.4)',
-        text: 'rgb(85, 205, 179)',
+        className: 'bg-emerald-50 border-emerald-200 text-emerald-800',
       };
     case 'rejected':
       return {
         label: 'Rejected',
-        bg: 'rgba(233, 138, 203, 0.16)',
-        border: 'rgba(233, 138, 203, 0.45)',
-        text: 'rgb(233, 138, 203)',
+        className: 'bg-rose-50 border-rose-200 text-rose-800',
       };
     case 'cancelled':
       return {
         label: 'Cancelled',
-        bg: 'rgba(148, 163, 184, 0.16)',
-        border: 'rgba(148, 163, 184, 0.35)',
-        text: 'rgb(203, 213, 225)',
+        className: 'bg-slate-100 border-slate-200 text-slate-700',
       };
     default:
       return {
         label: status === 'applied' ? 'Applied' : 'Pending',
-        bg: 'rgba(245, 158, 11, 0.16)',
-        border: 'rgba(245, 158, 11, 0.4)',
-        text: 'rgb(251, 191, 36)',
+        className: 'bg-amber-50 border-amber-200 text-amber-800',
       };
   }
 }
@@ -133,54 +125,27 @@ export function LeaveRequestsTab() {
 
       {/* Request Status Counters */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div
-          className="p-4 rounded-2xl border"
-          style={{
-            backgroundColor: 'rgba(17, 24, 25, 0.82)',
-            borderColor: 'rgba(245, 158, 11, 0.3)',
-          }}
-        >
-          <p className="text-xs font-medium" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
+        <div className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
+          <p className="text-xs font-semibold text-text-muted">
             Pending Approval
           </p>
-          <p
-            className="text-2xl font-bold font-display mt-1"
-            style={{ color: 'rgb(251, 191, 36)' }}
-          >
+          <p className="text-2xl font-bold font-display mt-1 text-amber-600">
             {counts.pending}
           </p>
         </div>
-        <div
-          className="p-4 rounded-2xl border"
-          style={{
-            backgroundColor: 'rgba(17, 24, 25, 0.82)',
-            borderColor: 'rgba(85, 205, 179, 0.32)',
-          }}
-        >
-          <p className="text-xs font-medium" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
+        <div className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
+          <p className="text-xs font-semibold text-text-muted">
             Approved Leaves
           </p>
-          <p
-            className="text-2xl font-bold font-display mt-1"
-            style={{ color: 'rgb(85, 205, 179)' }}
-          >
+          <p className="text-2xl font-bold font-display mt-1 text-emerald-600">
             {counts.approved}
           </p>
         </div>
-        <div
-          className="p-4 rounded-2xl border"
-          style={{
-            backgroundColor: 'rgba(17, 24, 25, 0.82)',
-            borderColor: 'rgba(233, 138, 203, 0.32)',
-          }}
-        >
-          <p className="text-xs font-medium" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
+        <div className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
+          <p className="text-xs font-semibold text-text-muted">
             Rejected Requests
           </p>
-          <p
-            className="text-2xl font-bold font-display mt-1"
-            style={{ color: 'rgb(233, 138, 203)' }}
-          >
+          <p className="text-2xl font-bold font-display mt-1 text-rose-600">
             {counts.rejected}
           </p>
         </div>
@@ -188,10 +153,7 @@ export function LeaveRequestsTab() {
 
       {/* Leave Balances */}
       <div>
-        <h3
-          className="text-xs font-bold uppercase tracking-wider mb-3"
-          style={{ color: 'rgba(244, 247, 246, 0.65)' }}
-        >
+        <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-text-muted">
           Leave Balances
         </h3>
         {isLoadingBalances ? (
@@ -202,14 +164,7 @@ export function LeaveRequestsTab() {
             <Skeleton variant="rectangular" height={92} />
           </div>
         ) : balances.length === 0 ? (
-          <div
-            className="p-4 rounded-2xl border text-xs sm:text-sm"
-            style={{
-              backgroundColor: 'rgba(17, 24, 25, 0.75)',
-              borderColor: 'rgba(244, 247, 246, 0.14)',
-              color: 'rgba(244, 247, 246, 0.75)',
-            }}
-          >
+          <div className="p-4 rounded-card border border-border/80 bg-white text-xs sm:text-sm text-text-muted shadow-xs">
             No leave balances accrued yet for {selectedYear}.
           </div>
         ) : (
@@ -224,47 +179,28 @@ export function LeaveRequestsTab() {
               return (
                 <div
                   key={bal.leaveTypeId}
-                  className="p-4 rounded-2xl border space-y-2.5"
-                  style={{
-                    backgroundColor: 'rgba(17, 24, 25, 0.85)',
-                    borderColor: 'rgba(85, 205, 179, 0.24)',
-                  }}
+                  className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all space-y-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold" style={{ color: 'rgb(244, 247, 246)' }}>
+                    <span className="text-sm font-bold text-text">
                       {bal.name}
                     </span>
-                    <span
-                      className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: 'rgba(85, 205, 179, 0.15)',
-                        color: 'rgb(85, 205, 179)',
-                      }}
-                    >
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary-soft text-primary-deep border border-primary/20">
                       {bal.code}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between">
-                    <span
-                      className="text-2xl font-bold font-display"
-                      style={{ color: 'rgb(0, 220, 203)' }}
-                    >
+                    <span className="text-2xl font-bold font-display text-primary-deep">
                       {bal.remaining}
                     </span>
-                    <span className="text-xs" style={{ color: 'rgba(244, 247, 246, 0.65)' }}>
+                    <span className="text-xs text-text-muted">
                       of {totalAvail} days left ({bal.used} used)
                     </span>
                   </div>
-                  <div
-                    className="h-1.5 w-full rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'rgba(244, 247, 246, 0.1)' }}
-                  >
+                  <div className="h-1.5 w-full rounded-full overflow-hidden bg-surface-muted">
                     <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${pct}%`,
-                        backgroundColor: 'rgb(85, 205, 179)',
-                      }}
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${pct}%` }}
                     />
                   </div>
                 </div>
@@ -275,17 +211,8 @@ export function LeaveRequestsTab() {
       </div>
 
       {/* Request History */}
-      <div
-        className="p-4 sm:p-5 rounded-2xl border space-y-4"
-        style={{
-          backgroundColor: 'rgba(17, 24, 25, 0.86)',
-          borderColor: 'rgba(244, 247, 246, 0.12)',
-        }}
-      >
-        <h3
-          className="text-sm sm:text-base font-bold font-display"
-          style={{ color: 'rgb(244, 247, 246)' }}
-        >
+      <div className="p-4 sm:p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-4">
+        <h3 className="text-sm sm:text-base font-bold font-display text-text">
           My Leave Request History
         </h3>
 
@@ -301,7 +228,7 @@ export function LeaveRequestsTab() {
             onRetry={() => void loadMyRequests()}
           />
         ) : requests.length === 0 ? (
-          <div className="rounded-xl bg-surface p-4">
+          <div className="rounded-xl bg-surface-muted/50 p-4">
             <EmptyState
               title="No leave requests submitted"
               description="Submit a leave request whenever you need time off or plan to work remotely."
@@ -317,38 +244,24 @@ export function LeaveRequestsTab() {
               return (
                 <div
                   key={req.id}
-                  className="p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  style={{
-                    backgroundColor: 'rgba(8, 11, 12, 0.55)',
-                    borderColor: 'rgba(244, 247, 246, 0.1)',
-                  }}
+                  className="p-3.5 rounded-xl border border-border/80 bg-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-muted/30 transition-colors"
                 >
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: 'rgb(244, 247, 246)' }}
-                      >
+                      <span className="text-sm font-bold text-text">
                         {req.leaveTypeName}
                       </span>
-                      <span
-                        className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border"
-                        style={{
-                          backgroundColor: chip.bg,
-                          borderColor: chip.border,
-                          color: chip.text,
-                        }}
-                      >
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${chip.className}`}>
                         {chip.label}
                       </span>
                     </div>
-                    <p className="text-xs" style={{ color: 'rgba(244, 247, 246, 0.7)' }}>
+                    <p className="text-xs text-text-muted">
                       {req.startDate} &rarr; {req.endDate} &middot; {req.days}{' '}
                       {req.days === 1 ? 'day' : 'days'}
                       {req.halfDay ? ' (Half day)' : ''}
                     </p>
                     {req.reason && (
-                      <p className="text-xs italic" style={{ color: 'rgba(244, 247, 246, 0.6)' }}>
+                      <p className="text-xs italic text-text-subtle">
                         &ldquo;{req.reason}&rdquo;
                       </p>
                     )}
@@ -362,11 +275,6 @@ export function LeaveRequestsTab() {
                       isLoading={cancellingId === req.id}
                       onClick={() => void handleCancel(req.id)}
                       className="text-xs min-h-[38px] self-start sm:self-center"
-                      style={{
-                        borderColor: 'rgba(233, 138, 203, 0.4)',
-                        color: 'rgb(233, 138, 203)',
-                        backgroundColor: 'rgba(233, 138, 203, 0.08)',
-                      }}
                     >
                       Cancel Request
                     </Button>

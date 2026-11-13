@@ -240,14 +240,8 @@ export function MyAttendanceTab({
       />
 
       {/* Month selector + Existing Attendance Records & Corrections Table */}
-      <div
-        className="p-3 sm:p-4 rounded-2xl border space-y-3 bg-white"
-        style={{
-          backgroundColor: 'rgb(255, 255, 255)',
-          borderColor: 'rgb(229, 231, 235)',
-        }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border">
+      <div className="p-3 sm:p-4 rounded-card border border-border/80 space-y-3 bg-white shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border/80">
           <div className="flex items-center gap-2">
             <label
               htmlFor="attendance-month-filter"
@@ -259,7 +253,7 @@ export function MyAttendanceTab({
               id="attendance-month-filter"
               value={selectedMonth}
               onChange={(e) => handleMonthChange(e.target.value)}
-              className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-border-strong bg-surface-raised text-text min-h-[38px]"
+              className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-border/80 bg-white text-text min-h-[38px] shadow-xs"
               data-testid="attendance-month-filter"
             >
               {monthOptions.map((opt) => (

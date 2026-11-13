@@ -337,11 +337,11 @@ export function CompanyCheckInOutTab({
         {/* Card 1: Currently Checked In */}
         <div
           onClick={() => setStatusFilter('checked_in')}
-          className="p-4 sm:p-4.5 bg-white border border-emerald-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer hover:border-emerald-400 transition-colors"
+          className="p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-emerald-600 flex items-center justify-center shrink-0">
-              <IconUserCheck className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <IconUserCheck className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -362,11 +362,11 @@ export function CompanyCheckInOutTab({
         {/* Card 2: Taking Break */}
         <div
           onClick={() => setStatusFilter('on_break')}
-          className="p-4 sm:p-4.5 bg-white border border-amber-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer hover:border-amber-400 transition-colors"
+          className="p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-amber-600 flex items-center justify-center shrink-0">
-              <IconCoffee className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <IconCoffee className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -387,11 +387,11 @@ export function CompanyCheckInOutTab({
         {/* Card 3: Completed Shift */}
         <div
           onClick={() => setStatusFilter('checked_out')}
-          className="p-4 sm:p-4.5 bg-white border border-teal-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer hover:border-teal-400 transition-colors"
+          className="p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-teal-600 flex items-center justify-center shrink-0">
-              <IconLogOut className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <IconLogOut className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -412,11 +412,11 @@ export function CompanyCheckInOutTab({
         {/* Card 4: Not Checked In */}
         <div
           onClick={() => setStatusFilter('not_checked_in')}
-          className="p-4 sm:p-4.5 bg-white border border-rose-300 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer hover:border-rose-400 transition-colors"
+          className="p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="text-rose-600 flex items-center justify-center shrink-0">
-              <IconHourglass className="w-7 h-7" />
+            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <IconHourglass className="w-6 h-6" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -436,10 +436,10 @@ export function CompanyCheckInOutTab({
       </div>
 
       {/* 2. Filter & Controls Bar */}
-      <div className="p-4 rounded-card bg-surface border border-border shadow-card space-y-3">
+      <div className="p-4 rounded-card bg-white border border-border/80 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-surface-muted rounded-xl">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-surface-muted/60 rounded-xl">
             {(
               [
                 { id: 'all', label: `All (${sessionRows.length})` },
@@ -455,7 +455,7 @@ export function CompanyCheckInOutTab({
                 onClick={() => setStatusFilter(tab.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   statusFilter === tab.id
-                    ? 'bg-surface text-text shadow-xs font-bold'
+                    ? 'bg-white text-text shadow-xs font-bold'
                     : 'text-text-muted hover:text-text'
                 }`}
               >
@@ -472,7 +472,7 @@ export function CompanyCheckInOutTab({
                 placeholder="Search employee..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-48 sm:w-56 text-xs px-3 py-1.5 pl-8 rounded-lg bg-surface-raised border border-border text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary-strong"
+                className="w-48 sm:w-56 text-xs px-3 py-1.5 pl-8 rounded-lg bg-white border border-border/80 text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary-strong shadow-xs"
               />
               <span className="absolute left-2.5 top-2 text-text-muted flex items-center justify-center">
                 <IconSearch className="w-3.5 h-3.5" />
@@ -482,7 +482,7 @@ export function CompanyCheckInOutTab({
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-surface-raised border border-border text-text focus:outline-none focus:ring-2 focus:ring-primary-strong cursor-pointer"
+              className="text-xs px-3 py-1.5 rounded-lg bg-white border border-border/80 text-text focus:outline-none focus:ring-2 focus:ring-primary-strong cursor-pointer shadow-xs"
             >
               <option value="all">All Departments</option>
               {departments.map((d) => (
@@ -496,7 +496,7 @@ export function CompanyCheckInOutTab({
       </div>
 
       {/* 3. Company-wide Check-In / Check-Out Table */}
-      <div className="rounded-card bg-surface border border-border shadow-card overflow-hidden">
+      <div className="rounded-card bg-white border border-border/80 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-text">
