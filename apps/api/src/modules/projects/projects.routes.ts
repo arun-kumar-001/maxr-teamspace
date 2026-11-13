@@ -1,17 +1,26 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
+import { rawUploadParser, readRawUpload } from '../../http/raw-upload';
 import { validate, validated } from '../../http/validate';
 import { ScopeFilter, accessFor, requirePermission, resolveScope, toScopeFilter } from '../rbac';
 import {
   addMemberSchema,
+  createMilestoneSchema,
   createProjectSchema,
+  createProjectUpdateSchema,
   listProjectsQuerySchema,
+  projectDocumentParamsSchema,
   projectIdParamsSchema,
   projectMemberParamsSchema,
+  projectMilestoneParamsSchema,
+  updateMilestoneSchema,
   updateProjectSchema,
+  uploadDocumentQuerySchema,
 } from './projects.schemas';
 import { ProjectCaller, ProjectsService } from './projects.service';
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 function caller(req: Request): ProjectCaller {
   const { actor } = req;
@@ -24,6 +33,13 @@ function readFilter(req: Request): ScopeFilter {
   const { actor } = req;
   if (!actor) throw new Error('authenticate() did not run before this handler');
   return toScopeFilter(resolveScope(actor.roles, 'projects.read'), actor);
+}
+
+/** Scope of `projects.manage` for checking owner vs Admin overrides on collaboration routes. */
+function manageFilter(req: Request): ScopeFilter {
+  const { actor } = req;
+  if (!actor) throw new Error('authenticate() did not run before this handler');
+  return toScopeFilter(resolveScope(actor.roles, 'projects.manage'), actor);
 }
 
 /**
@@ -129,6 +145,127 @@ export function createProjectsRouter(options: {
           accessFor(req).filter,
         ),
       });
+    }),
+  );
+
+  router.post(
+    '/:id/milestones',
+    requirePermission('projects.manage'),
+    validate({ params: projectIdParamsSchema, body: createMilestoneSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params, body } = validated(req, {
+        params: projectIdParamsSchema,
+        body: createMilestoneSchema,
+      });
+      res.status(201).json({
+        data: await service.addMilestone(
+          params.id,
+          body,
+          caller(req),
+          readFilter(req),
+          accessFor(req).filter,
+        ),
+      });
+    }),
+  );
+
+  router.put(
+    '/:id/milestones/:milestoneId',
+    requirePermission('projects.manage'),
+    validate({ params: projectMilestoneParamsSchema, body: updateMilestoneSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params, body } = validated(req, {
+        params: projectMilestoneParamsSchema,
+        body: updateMilestoneSchema,
+      });
+      res.status(200).json({
+        data: await service.updateMilestone(
+          params.id,
+          params.milestoneId,
+          body,
+          caller(req),
+          readFilter(req),
+          accessFor(req).filter,
+        ),
+      });
+    }),
+  );
+
+  router.post(
+    '/:id/updates',
+    requirePermission('projects.read'),
+    validate({ params: projectIdParamsSchema, body: createProjectUpdateSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params, body } = validated(req, {
+        params: projectIdParamsSchema,
+        body: createProjectUpdateSchema,
+      });
+      res.status(201).json({
+        data: await service.addUpdate(
+          params.id,
+          body,
+          caller(req),
+          readFilter(req),
+          manageFilter(req),
+        ),
+      });
+    }),
+  );
+
+  router.post(
+    '/:id/documents',
+    requirePermission('projects.read'),
+    validate({ params: projectIdParamsSchema, query: uploadDocumentQuerySchema }),
+    rawUploadParser(MAX_UPLOAD_BYTES),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params, query } = validated(req, {
+        params: projectIdParamsSchema,
+        query: uploadDocumentQuerySchema,
+      });
+      const file = readRawUpload(req);
+      res.status(201).json({
+        data: await service.uploadDocument(
+          params.id,
+          file,
+          query.category,
+          caller(req),
+          readFilter(req),
+        ),
+      });
+    }),
+  );
+
+  router.get(
+    '/:id/documents/:documentId/download-link',
+    requirePermission('projects.read'),
+    validate({ params: projectDocumentParamsSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: projectDocumentParamsSchema });
+      res.status(200).json({
+        data: await service.downloadDocumentLink(
+          params.id,
+          params.documentId,
+          caller(req),
+          readFilter(req),
+        ),
+      });
+    }),
+  );
+
+  router.delete(
+    '/:id/documents/:documentId',
+    requirePermission('projects.read'),
+    validate({ params: projectDocumentParamsSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: projectDocumentParamsSchema });
+      await service.removeDocument(
+        params.id,
+        params.documentId,
+        caller(req),
+        readFilter(req),
+        manageFilter(req),
+      );
+      res.status(200).json({ data: { removed: true } });
     }),
   );
 

@@ -25,7 +25,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:pointer-events-none rounded-input select-none';
+    'inline-flex items-center justify-center font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:pointer-events-none rounded-input select-none';
 
   // Touch targets: minimum 44px on phone (AGENTS.md §8)
   const sizeStyles: Record<ButtonSize, string> = {
@@ -35,20 +35,40 @@ export function Button({
   };
 
   const variantStyles: Record<ButtonVariant, string> = {
-    // Solid teal with a coloured shadow ("Plan a campaign" in the references).
-    primary: 'bg-primary-deep text-white shadow-primary hover:bg-primary-deeper',
-    // White button with a light outline ("Export").
-    secondary: 'bg-surface-raised text-text border border-border-strong hover:bg-surface-muted',
-    outline: 'bg-transparent text-text border border-border-strong hover:bg-surface-raised',
-    ghost: 'bg-transparent text-text-muted hover:bg-surface-muted hover:text-text',
+    // Solid Mint Teal with Deep Black text and teal glow hover
+    primary:
+      'bg-primary-deep text-sidebar font-bold shadow-primary hover:shadow-[0_6px_24px_rgba(85,205,179,0.5)]',
+    // Transparent glass
+    secondary:
+      'bg-white/65 backdrop-blur-md text-text border border-white/80 hover:bg-white/80 hover:shadow-[0_0_16px_rgba(85,205,179,0.25)]',
+    outline:
+      'bg-white/40 backdrop-blur-md text-text border border-white/70 hover:bg-white/70 hover:shadow-[0_0_16px_rgba(85,205,179,0.25)]',
+    ghost: 'bg-transparent text-text-muted hover:bg-white/40 hover:text-text',
     danger: 'bg-danger text-white hover:opacity-90 active:opacity-100',
   };
+
+  const dynamicStyle =
+    variant === 'primary'
+      ? {
+          backgroundColor: 'rgb(85, 205, 179)',
+          color: 'rgb(8, 11, 12)',
+          boxShadow: '0 4px 18px rgba(85, 205, 179, 0.45)',
+          ...props.style,
+        }
+      : variant === 'secondary' || variant === 'outline'
+        ? {
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            ...props.style,
+          }
+        : props.style;
 
   return (
     <button
       ref={ref}
       disabled={disabled || isLoading}
       className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+      style={dynamicStyle}
       aria-busy={isLoading}
       {...props}
     >

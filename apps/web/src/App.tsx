@@ -469,7 +469,7 @@ function AppRoutes() {
         path="/staff/attendance"
         element={
           <ShellLayout>
-            <AttendancePage initialTab="on-duty" />
+            <AttendancePage />
           </ShellLayout>
         }
       />
@@ -726,7 +726,7 @@ function AppRoutes() {
         path="/staff/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
@@ -734,7 +734,7 @@ function AppRoutes() {
         path="/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
@@ -844,6 +844,38 @@ function AppRoutes() {
       />
 
       {/* Staff Member Protected Routes */}
+      <Route
+        path="/staff/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
       <Route
         path="/staff/*"
         element={

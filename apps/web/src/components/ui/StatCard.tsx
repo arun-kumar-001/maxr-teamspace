@@ -60,11 +60,19 @@ export interface StatCardProps extends MetricContentProps {
   className?: string;
 }
 
-/** Stand-alone KPI card. */
+/** Stand-alone KPI card with frosted glass styling. */
 export function StatCard({ className = '', isLoading = false, ...content }: StatCardProps) {
   return (
     <div
-      className={`flex flex-col gap-3 p-5 bg-surface border border-border rounded-card shadow-card min-w-0 ${className}`}
+      className={`flex flex-col gap-3 p-5 bg-surface border border-border rounded-card shadow-card min-w-0 transition-all hover:scale-[1.01] ${className}`}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.68)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderColor: 'rgba(255, 255, 255, 0.65)',
+        boxShadow: '0 10px 30px rgba(85, 205, 179, 0.06), 0 2px 6px rgba(8, 11, 12, 0.03)',
+        borderRadius: '20px',
+      }}
       aria-busy={isLoading}
     >
       <MetricContent {...content} isLoading={isLoading} />

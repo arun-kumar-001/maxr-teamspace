@@ -44,6 +44,30 @@ export const ATTENDANCE_SORTABLE_FIELDS = {
   createdAt: 'createdAt',
 } as const;
 
+// Accept standard 8-4-4-4-12 PostgreSQL UUIDs (including deterministic local dev seed IDs).
+const uuidInput = z
+  .string()
+  .regex(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+    'Invalid UUID',
+  );
+
+export const teamCalendarQuerySchema = z
+  .object({
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format')
+      .optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format')
+      .optional(),
+    departmentId: uuidInput.optional(),
+    employeeId: uuidInput.optional(),
+  })
+  .strict();
+
 export type CheckInInput = z.infer<typeof checkInSchema>;
 export type CheckOutInput = z.infer<typeof checkOutSchema>;
 export type ListAttendanceQuery = z.infer<typeof listAttendanceQuerySchema>;
+export type TeamCalendarQuery = z.infer<typeof teamCalendarQuerySchema>;

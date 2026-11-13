@@ -33,10 +33,9 @@ function EyeIcon({ open }: { open: boolean }) {
       className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8"
       aria-hidden="true"
     >
-      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-      <line x1="2" y1="2" x2="22" y2="22" />
+      <path d="M2 12s3.8-7 10-7c2.4 0 4.6 1.1 6.4 2.8M22 12s-3.8 7-10 7c-2.4 0-4.6-1.1-6.4-2.8" />
+      <path d="M10 10a3 3 0 0 0 4 4" />
+      <line x1="20" y1="4" x2="4" y2="20" />
     </svg>
   );
 }
@@ -46,188 +45,139 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!email) {
-      setError('Please enter your email.');
+    if (!email.trim()) {
+      setError('Please enter your email or username.');
       return;
     }
 
-    const success = await login(email, password);
+    const success = await login(email.trim(), password);
     if (success) {
       if (onSuccess) onSuccess();
     } else {
-      setError('Invalid credentials. Check your work email and password.');
+      setError('Invalid credentials. Check your email or username and password.');
     }
   };
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden select-none"
-      style={{
-        background:
-          'linear-gradient(135deg, rgb(238, 252, 250) 0%, rgb(244, 253, 252) 35%, rgb(255, 255, 255) 70%, rgb(250, 253, 253) 100%)',
-      }}
+      className="min-h-[100dvh] w-full flex items-center justify-center relative overflow-hidden select-none"
+      style={{ backgroundColor: 'rgb(255, 255, 255)' }}
     >
-      {/* ── VECTOR BACKGROUND WAVES (Infinitely sharp on 1080p, 1440p, 4K UHD, 8K) ── */}
+      {/* Top-left curved corner accent matching login 22 reference */}
       <svg
-        className="pointer-events-none absolute inset-0 w-full h-full"
-        viewBox="0 0 1440 900"
-        preserveAspectRatio="none"
+        className="pointer-events-none absolute top-0 left-0 w-28 h-28 xs:w-32 xs:h-32 sm:w-64 sm:h-64 lg:w-80 lg:h-80 2xl:w-96 2xl:h-96"
+        viewBox="0 0 360 360"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <defs>
-          <linearGradient
-            id="topTeal1"
-            x1="0"
-            y1="0"
-            x2="400"
-            y2="350"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="rgb(84, 222, 206)" stopOpacity="0.95" />
-            <stop offset="60%" stopColor="rgb(0, 201, 167)" stopOpacity="0.75" />
-            <stop offset="100%" stopColor="rgb(168, 245, 236)" stopOpacity="0.1" />
-          </linearGradient>
-
-          <linearGradient
-            id="topTeal2"
-            x1="0"
-            y1="0"
-            x2="280"
-            y2="420"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="rgb(155, 243, 234)" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="rgb(84, 222, 206)" stopOpacity="0.25" />
-          </linearGradient>
-
-          <linearGradient
-            id="bottomTeal"
-            x1="0"
-            y1="500"
-            x2="450"
-            y2="900"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="rgb(85, 205, 179)" stopOpacity="0.95" />
-            <stop offset="50%" stopColor="rgb(13, 148, 136)" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="rgb(168, 245, 236)" stopOpacity="0.15" />
-          </linearGradient>
-
-          <linearGradient
-            id="bottomDeep"
-            x1="0"
-            y1="700"
-            x2="350"
-            y2="900"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="rgb(8, 11, 12)" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="rgb(15, 40, 38)" stopOpacity="0.95" />
-          </linearGradient>
-        </defs>
-
-        {/* Top-left swoosh layers */}
-        <path d="M0 0 L320 0 C280 120 180 180 80 260 C20 310 0 360 0 400 Z" fill="url(#topTeal2)" />
-        <path d="M0 0 L240 0 C200 90 120 160 50 240 C10 290 0 340 0 380 Z" fill="url(#topTeal1)" />
+        {/* Outer thin teal arc swoosh */}
         <path
-          d="M0 0 C60 60 140 100 220 110 C290 120 360 90 440 40 L440 0 Z"
-          fill="rgba(195, 248, 243, 0.45)"
+          d="M 278 0 C 232 94 128 202 0 264"
+          stroke="rgb(20, 204, 179)"
+          strokeWidth="2"
+          fill="none"
         />
-
-        {/* Bottom-left layered waves */}
-        <path
-          d="M0 480 Q140 560 220 660 T360 840 Q400 875 460 900 L0 900 Z"
-          fill="rgba(165, 243, 235, 0.35)"
-        />
-
-        <path
-          d="M0 600 C100 640 180 720 250 800 C290 850 330 880 380 900 L0 900 Z"
-          fill="url(#bottomTeal)"
-        />
-
-        <path
-          d="M0 720 C60 740 120 780 170 830 C205 865 235 885 270 900 L0 900 Z"
-          fill="url(#bottomDeep)"
-        />
+        {/* Vibrant teal mid ribbon */}
+        <path d="M 0 0 L 218 0 C 176 74 96 154 0 206 Z" fill="rgb(20, 204, 179)" />
+        {/* Deep plum corner wedge */}
+        <path d="M 0 0 L 138 0 C 102 52 54 102 0 134 Z" fill="rgb(73, 18, 66)" />
       </svg>
 
-      {/* ── TWO-COLUMN MAIN CONTENT (Scales from mobile to 4K Ultrawide) ── */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between w-full max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1700px] 4xl:max-w-[2200px] mx-auto px-6 sm:px-8 lg:px-12 2xl:px-16 3xl:px-24 4xl:px-32 py-8 sm:py-12 2xl:py-16 3xl:py-24 4xl:py-32 gap-10 sm:gap-14 lg:gap-16 2xl:gap-24 3xl:gap-32 4xl:gap-40">
-        {/* LEFT COLUMN: MaxR Teamspace Brand Logo in Ultra-High-DPI 4K */}
-        <div className="flex flex-col items-center lg:items-start lg:flex-1 text-center lg:text-left">
+      {/* Bottom-right curved corner accent matching login 22 reference */}
+      <svg
+        className="pointer-events-none absolute bottom-0 right-0 w-28 h-28 xs:w-32 xs:h-32 sm:w-72 sm:h-72 lg:w-96 lg:h-96 2xl:w-[440px] 2xl:h-[440px]"
+        viewBox="0 0 400 400"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        {/* Thin delicate teal arc */}
+        <path
+          d="M 88 400 C 138 296 266 196 400 136"
+          stroke="rgb(20, 204, 179)"
+          strokeWidth="2"
+          fill="none"
+        />
+        {/* Vibrant teal lower-right wave */}
+        <path d="M 400 400 L 146 400 C 206 324 304 246 400 206 Z" fill="rgb(20, 204, 179)" />
+        {/* Deep plum corner wedge */}
+        <path d="M 400 400 L 222 400 C 272 348 338 300 400 272 Z" fill="rgb(73, 18, 66)" />
+      </svg>
+
+      {/* Main Centered Two-Column Split Layout */}
+      <div className="relative z-10 w-full max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] mx-auto px-5 sm:px-10 lg:px-14 pt-10 pb-16 sm:py-12 flex flex-col lg:flex-row items-center justify-center gap-8 sm:gap-10 lg:gap-12 2xl:gap-16">
+        {/* LEFT COLUMN: Official MaxR Teamspace Logo + Collaboration Illustration */}
+        <div className="flex-1 w-full flex flex-col items-center justify-center text-center gap-3 sm:gap-5">
           <img
             src="/maxr-teamspace-logo-4k.png"
             srcSet="/maxr-teamspace-logo.png 1x, /maxr-teamspace-logo-4k.png 2x"
             alt="MaxR Teamspace"
-            className="w-[280px] xs:w-[320px] sm:w-[380px] lg:w-[440px] 2xl:w-[560px] 3xl:w-[680px] 4xl:w-[840px] h-auto object-contain select-none drop-shadow-sm transition-all"
+            className="w-[210px] xs:w-[240px] sm:w-[300px] lg:w-[340px] 2xl:w-[400px] 3xl:w-[460px] h-auto object-contain select-none"
+            draggable={false}
+          />
+          <img
+            src="/login-illustration.png"
+            alt="MaxR Teamspace team collaboration illustration"
+            className="w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[500px] 2xl:max-w-[580px] 3xl:max-w-[660px] h-auto object-contain select-none"
             draggable={false}
           />
         </div>
 
-        {/* RIGHT COLUMN: The Login Card matching the reference design */}
+        {/* CENTER VERTICAL TEAL DIVIDER WITH ROUNDED PILL BAR */}
         <div
-          className="w-full max-w-[460px] sm:max-w-[480px] 2xl:max-w-[560px] 3xl:max-w-[640px] 4xl:max-w-[760px] lg:flex-none relative bg-white transition-all rounded-[32px] sm:rounded-[36px] 2xl:rounded-[44px] 3xl:rounded-[52px] 4xl:rounded-[60px] p-8 sm:p-12 2xl:p-14 3xl:p-16 4xl:p-20"
-          style={{
-            boxShadow: '0 20px 60px rgba(8, 11, 12, 0.06), 0 2px 10px rgba(85, 205, 179, 0.04)',
-            border: '1px solid rgba(226, 232, 240, 0.8)',
-          }}
+          aria-hidden="true"
+          className="hidden lg:flex flex-col items-center justify-center self-stretch py-4 relative"
         >
-          {/* Top-left dot matrix grid (5 cols x 3 rows = 15 dots) */}
           <div
-            aria-hidden="true"
-            className="absolute top-6 left-6 sm:top-8 sm:left-8 2xl:top-10 2xl:left-10 3xl:top-12 3xl:left-12 4xl:top-14 4xl:left-14 grid grid-cols-5 gap-2 sm:gap-2.5 2xl:gap-3 3xl:gap-3.5 4xl:gap-4 pointer-events-none"
-          >
-            {Array.from({ length: 15 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 sm:w-2 sm:h-2 2xl:w-2.5 2xl:h-2.5 3xl:w-3 3xl:h-3 4xl:w-3.5 4xl:h-3.5 rounded-full"
-                style={{ background: 'rgb(85, 205, 179)' }}
-              />
-            ))}
-          </div>
-
-          {/* Bottom-right dot matrix grid (5 cols x 3 rows = 15 dots) */}
+            className="w-[1.5px] flex-1"
+            style={{ backgroundColor: 'rgba(20, 204, 179, 0.55)' }}
+          />
           <div
-            aria-hidden="true"
-            className="absolute bottom-6 right-6 sm:bottom-8 sm:right-8 2xl:bottom-10 2xl:right-10 3xl:bottom-12 3xl:right-12 4xl:bottom-14 4xl:right-14 grid grid-cols-5 gap-2 sm:gap-2.5 2xl:gap-3 3xl:gap-3.5 4xl:gap-4 pointer-events-none"
-          >
-            {Array.from({ length: 15 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 sm:w-2 sm:h-2 2xl:w-2.5 2xl:h-2.5 3xl:w-3 3xl:h-3 4xl:w-3.5 4xl:h-3.5 rounded-full"
-                style={{ background: 'rgb(85, 205, 179)' }}
-              />
-            ))}
-          </div>
+            className="w-[5px] h-24 2xl:h-28 rounded-full -my-2 z-10"
+            style={{ backgroundColor: 'rgb(20, 204, 179)' }}
+          />
+          <div
+            className="w-[1.5px] flex-1"
+            style={{ backgroundColor: 'rgba(20, 204, 179, 0.55)' }}
+          />
+        </div>
 
-          {/* Card Header (Centered) */}
+        {/* RIGHT COLUMN: Clean Borderless Sign In Form directly on white canvas */}
+        <div className="flex-1 w-full max-w-[420px] sm:max-w-[440px] 2xl:max-w-[500px] flex flex-col items-center">
           <h1
-            className="font-display text-2xl xs:text-3xl sm:text-[34px] 2xl:text-4xl 3xl:text-5xl 4xl:text-6xl font-black tracking-tight mb-2 2xl:mb-3 text-center"
-            style={{ color: 'rgb(8, 11, 12)', fontFamily: 'Outfit, Inter, sans-serif' }}
+            className="font-display text-3xl xs:text-[34px] sm:text-[40px] 2xl:text-5xl font-extrabold tracking-tight text-center"
+            style={{ color: 'rgb(15, 23, 21)' }}
           >
-            Welcome <span style={{ color: 'rgb(85, 205, 179)' }}>Back</span>
+            Sign In
           </h1>
+
+          {/* Teal Rounded Accent Underline */}
+          <div
+            aria-hidden="true"
+            className="w-20 sm:w-24 h-1.5 rounded-full mt-2.5 mb-4"
+            style={{ backgroundColor: 'rgb(20, 204, 179)' }}
+          />
+
           <p
-            className="text-sm sm:text-[15px] 2xl:text-lg 3xl:text-xl 4xl:text-2xl font-medium mb-7 sm:mb-8 2xl:mb-10 3xl:mb-12 4xl:mb-14 text-center"
-            style={{ color: 'rgb(102, 112, 133)' }}
+            className="text-sm sm:text-[15px] 2xl:text-lg font-medium mb-7 sm:mb-8 text-center"
+            style={{ color: 'rgb(31, 41, 39)' }}
           >
-            Sign in to MaxR Teamspace to continue
+            Access your MaxR Teamspace account
           </p>
 
           {/* Error Banner */}
           {error && (
             <div
               role="alert"
-              className="mb-5 2xl:mb-6 3xl:mb-8 p-3 2xl:p-4 rounded-xl 2xl:rounded-2xl text-sm 2xl:text-base 3xl:text-lg font-medium"
+              className="w-full mb-5 p-3.5 rounded-2xl text-sm font-medium text-center"
               style={{
                 background: 'rgb(254, 242, 242)',
                 border: '1px solid rgb(254, 202, 202)',
@@ -238,16 +188,12 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
             </div>
           )}
 
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-3.5 sm:gap-4 2xl:gap-5 3xl:gap-6 4xl:gap-8"
-          >
-            {/* Email input field with mail icon */}
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+            {/* Email or Username Pill Field */}
             <div className="relative">
               <span
-                className="absolute left-4 sm:left-4.5 2xl:left-5 3xl:left-6 4xl:left-7 top-1/2 -translate-y-1/2 flex items-center pointer-events-none"
-                style={{ color: 'rgb(102, 112, 133)' }}
+                className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none"
+                style={{ color: 'rgb(19, 32, 30)' }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -257,7 +203,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                   strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8"
+                  className="w-5 h-5"
                   aria-hidden="true"
                 >
                   <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -266,35 +212,35 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               </span>
               <input
                 id="login-email"
-                type="email"
-                placeholder="Enter your email"
+                type="text"
+                placeholder="Email or Username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
+                autoComplete="username"
                 required
-                aria-label="Work email"
-                className="w-full text-sm sm:text-[15px] 2xl:text-lg 3xl:text-xl 4xl:text-2xl rounded-2xl sm:rounded-[20px] 2xl:rounded-[22px] 3xl:rounded-[26px] outline-none transition-all pl-12 sm:pl-13 2xl:pl-15 3xl:pl-17 4xl:pl-20 pr-4 2xl:pr-6 h-[52px] sm:h-[56px] 2xl:h-[64px] 3xl:h-[72px] 4xl:h-[82px]"
+                aria-label="Email or Username"
+                className="w-full text-sm sm:text-[15px] 2xl:text-base rounded-full outline-none transition-all pl-12 sm:pl-14 pr-5 h-12 sm:h-[54px] 2xl:h-[58px] placeholder:text-slate-500"
                 style={{
-                  border: '1.5px solid rgb(226, 232, 240)',
-                  color: 'rgb(8, 11, 12)',
-                  background: 'rgb(255, 255, 255)',
+                  border: '1.5px solid rgb(203, 213, 225)',
+                  color: 'rgb(19, 32, 30)',
+                  backgroundColor: 'rgb(255, 255, 255)',
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(85, 205, 179)';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(85, 205, 179, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgb(20, 204, 179)';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(20, 204, 179, 0.16)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(226, 232, 240)';
+                  e.currentTarget.style.borderColor = 'rgb(203, 213, 225)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               />
             </div>
 
-            {/* Password input field with lock and eye icons */}
+            {/* Password Pill Field */}
             <div className="relative">
               <span
-                className="absolute left-4 sm:left-4.5 2xl:left-5 3xl:left-6 4xl:left-7 top-1/2 -translate-y-1/2 flex items-center pointer-events-none"
-                style={{ color: 'rgb(102, 112, 133)' }}
+                className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none"
+                style={{ color: 'rgb(19, 32, 30)' }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -304,7 +250,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                   strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8"
+                  className="w-5 h-5"
                   aria-hidden="true"
                 >
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -314,23 +260,23 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
               <input
                 id="login-password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 aria-label="Password"
-                className="w-full text-sm sm:text-[15px] 2xl:text-lg 3xl:text-xl 4xl:text-2xl rounded-2xl sm:rounded-[20px] 2xl:rounded-[22px] 3xl:rounded-[26px] outline-none transition-all pl-12 sm:pl-13 2xl:pl-15 3xl:pl-17 4xl:pl-20 pr-12 2xl:pr-14 3xl:pr-16 4xl:pr-20 h-[52px] sm:h-[56px] 2xl:h-[64px] 3xl:h-[72px] 4xl:h-[82px]"
+                className="w-full text-sm sm:text-[15px] 2xl:text-base rounded-full outline-none transition-all pl-12 sm:pl-14 pr-14 h-12 sm:h-[54px] 2xl:h-[58px] placeholder:text-slate-500"
                 style={{
-                  border: '1.5px solid rgb(226, 232, 240)',
-                  color: 'rgb(8, 11, 12)',
-                  background: 'rgb(255, 255, 255)',
+                  border: '1.5px solid rgb(203, 213, 225)',
+                  color: 'rgb(19, 32, 30)',
+                  backgroundColor: 'rgb(255, 255, 255)',
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(85, 205, 179)';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(85, 205, 179, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgb(20, 204, 179)';
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(20, 204, 179, 0.16)';
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(226, 232, 240)';
+                  e.currentTarget.style.borderColor = 'rgb(203, 213, 225)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               />
@@ -338,33 +284,39 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-3.5 2xl:right-4 3xl:right-5 4xl:right-6 top-1/2 -translate-y-1/2 p-1.5 flex items-center justify-center cursor-pointer min-w-[36px] min-h-[36px] 2xl:min-w-[44px] 2xl:min-h-[44px] transition-colors"
-                style={{ color: 'rgb(102, 112, 133)' }}
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer min-w-[44px] min-h-[44px] rounded-full transition-colors"
+                style={{ color: 'rgb(19, 32, 30)' }}
               >
                 <EyeIcon open={showPassword} />
               </button>
             </div>
 
-            {/* Remember Me and Forgot Password row */}
-            <div className="flex items-center justify-between mt-1 sm:mt-1.5">
+            {/* Remember me & Forgot password? */}
+            <div className="flex items-center justify-between px-1 mt-0.5">
               <label
-                className="flex items-center gap-2 2xl:gap-3 cursor-pointer text-xs sm:text-[14px] 2xl:text-base 3xl:text-lg 4xl:text-xl font-bold select-none"
-                style={{ color: 'rgb(8, 11, 12)' }}
+                className="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm font-bold select-none min-h-[44px]"
+                style={{ color: 'rgb(19, 32, 30)' }}
               >
                 <span
                   role="checkbox"
                   aria-checked={rememberMe}
                   tabIndex={0}
-                  onClick={() => setRememberMe((v) => !v)}
-                  onKeyDown={(e) => {
-                    if (e.key === ' ' || e.key === 'Enter') setRememberMe((v) => !v);
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setRememberMe((v) => !v);
                   }}
-                  className="flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8 rounded-[5px] sm:rounded-[6px] 2xl:rounded-[7px] transition-all cursor-pointer flex-shrink-0"
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      setRememberMe((v) => !v);
+                    }
+                  }}
+                  className="flex items-center justify-center w-[18px] h-[18px] rounded-[4px] transition-all cursor-pointer shrink-0"
                   style={{
-                    background: rememberMe ? 'rgb(85, 205, 179)' : 'rgb(255, 255, 255)',
+                    backgroundColor: rememberMe ? 'rgb(20, 204, 179)' : 'rgb(255, 255, 255)',
                     border: rememberMe
-                      ? '2px solid rgb(85, 205, 179)'
-                      : '2px solid rgb(209, 213, 219)',
+                      ? '2px solid rgb(20, 204, 179)'
+                      : '2px solid rgb(30, 41, 59)',
                   }}
                 >
                   {rememberMe && (
@@ -372,7 +324,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                       viewBox="0 0 12 12"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 2xl:w-3.5 2xl:h-3.5 3xl:w-4 3xl:h-4 4xl:w-5 4xl:h-5"
+                      className="w-3 h-3"
                       aria-hidden="true"
                     >
                       <polyline
@@ -393,44 +345,39 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 onClick={() => {
                   setError('Password reset instructions will be sent to your administrator.');
                 }}
-                className="font-bold text-xs sm:text-[14px] 2xl:text-base 3xl:text-lg 4xl:text-xl hover:underline cursor-pointer bg-transparent border-0 p-0 transition-colors"
-                style={{ color: 'rgb(8, 11, 12)' }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.color = 'rgb(85, 205, 179)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.color = 'rgb(8, 11, 12)';
-                }}
+                className="font-bold text-xs sm:text-sm hover:underline cursor-pointer bg-transparent border-0 min-h-[44px] px-1"
+                style={{ color: 'rgb(92, 29, 104)' }}
               >
                 Forgot password?
               </button>
             </div>
 
-            {/* Sign In Button with smooth rounded-full pill shape and arrow icon matching reference */}
+            {/* Primary Pill Sign In Button (dark bold text + arrow on vibrant mint teal) */}
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-3 sm:mt-4 2xl:mt-5 3xl:mt-6 w-full flex items-center justify-center gap-2.5 text-white font-bold text-sm sm:text-[16px] 2xl:text-xl 3xl:text-2xl 4xl:text-3xl rounded-full cursor-pointer transition-all disabled:opacity-70 h-[48px] sm:h-[52px] 2xl:h-[62px] 3xl:h-[70px] 4xl:h-[80px]"
+              className="mt-1 w-full flex items-center justify-center gap-2.5 font-extrabold text-base sm:text-lg 2xl:text-xl rounded-full cursor-pointer transition-all disabled:opacity-70 h-12 sm:h-[54px] 2xl:h-[58px]"
               style={{
-                background: 'rgb(85, 205, 179)',
-                boxShadow: '0 8px 24px rgba(85, 205, 179, 0.45)',
+                backgroundColor: 'rgb(24, 212, 186)',
+                color: 'rgb(11, 20, 18)',
+                boxShadow: '0 8px 20px rgba(20, 204, 179, 0.25)',
                 fontFamily: 'Outfit, Inter, sans-serif',
               }}
               onMouseOver={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.background = 'rgb(72, 192, 166)';
-                  e.currentTarget.style.boxShadow = '0 10px 28px rgba(85, 205, 179, 0.55)';
-                }
+                if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(16, 194, 170)';
               }}
               onMouseOut={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.background = 'rgb(85, 205, 179)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(85, 205, 179, 0.45)';
-                }
+                if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(24, 212, 186)';
               }}
             >
               {isLoading ? (
-                <span className="w-5 h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <span
+                  className="w-5 h-5 border-2 rounded-full animate-spin"
+                  style={{
+                    borderColor: 'rgba(11, 20, 18, 0.25)',
+                    borderTopColor: 'rgb(11, 20, 18)',
+                  }}
+                />
               ) : (
                 <>
                   <span>Sign In</span>
@@ -442,7 +389,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="w-4 h-4 2xl:w-5 2xl:h-5 3xl:w-6 3xl:h-6 4xl:w-7 4xl:h-7"
+                    className="w-5 h-5"
                     aria-hidden="true"
                   >
                     <line x1="5" y1="12" x2="19" y2="12" />

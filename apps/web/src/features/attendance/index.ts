@@ -10,5 +10,8 @@ export * from './components/TeamAttendanceGrid';
 export * from './components/CorrectionStatusBadge';
 export * from './components/RequestCorrectionModal';
 export * from './components/CorrectionsHistoryView';
+export * from './components/MyAttendanceTab';
+export * from './components/LeaveRequestsTab';
+export * from './components/TeamCalendarTab';
 export * from './hooks/useAttendanceCorrections';
 export * from './pages/AttendancePage';

@@ -291,6 +291,30 @@
             "type": "integer",
             "nullable": true
           },
+          "breaks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "startTime": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "endTime": {
+                  "type": "string",
+                  "nullable": true,
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "startTime",
+                "endTime"
+              ]
+            }
+          },
+          "breakMinutes": {
+            "type": "integer"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -842,12 +866,58 @@
               "archived"
             ]
           },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "in_progress",
+              "on_hold",
+              "completed"
+            ]
+          },
+          "progressPercent": {
+            "type": "integer"
+          },
+          "objectives": {
+            "type": "string",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "nullable": true
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "ownerEmployeeId": {
             "type": "string",
             "format": "uuid"
           },
           "ownerName": {
             "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerDesignation": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerDepartment": {
+            "type": "string",
+            "nullable": true
           },
           "startDate": {
             "type": "string",
@@ -878,6 +948,12 @@
           "name",
           "description",
           "status",
+          "priority",
+          "workflowStatus",
+          "progressPercent",
+          "objectives",
+          "scope",
+          "technologies",
           "ownerEmployeeId",
           "ownerName",
           "startDate",
@@ -912,12 +988,58 @@
               "archived"
             ]
           },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "workflowStatus": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "in_progress",
+              "on_hold",
+              "completed"
+            ]
+          },
+          "progressPercent": {
+            "type": "integer"
+          },
+          "objectives": {
+            "type": "string",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "nullable": true
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "ownerEmployeeId": {
             "type": "string",
             "format": "uuid"
           },
           "ownerName": {
             "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerDesignation": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerDepartment": {
+            "type": "string",
+            "nullable": true
           },
           "startDate": {
             "type": "string",
@@ -953,6 +1075,18 @@
                 "name": {
                   "type": "string"
                 },
+                "email": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "designation": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "department": {
+                  "type": "string",
+                  "nullable": true
+                },
                 "addedAt": {
                   "type": "string",
                   "format": "date-time"
@@ -964,6 +1098,186 @@
                 "addedAt"
               ]
             }
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "projectId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "startDate": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "dueDate": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "not_started",
+                    "in_progress",
+                    "on_hold",
+                    "completed"
+                  ]
+                },
+                "completionPercent": {
+                  "type": "integer"
+                },
+                "sortOrder": {
+                  "type": "integer"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "projectId",
+                "title",
+                "description",
+                "startDate",
+                "dueDate",
+                "status",
+                "completionPercent",
+                "sortOrder",
+                "createdAt",
+                "updatedAt"
+              ]
+            }
+          },
+          "updates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "projectId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "authorEmployeeId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "authorName": {
+                  "type": "string"
+                },
+                "authorRoleLabel": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "updateType": {
+                  "type": "string",
+                  "enum": [
+                    "manager_update",
+                    "progress_update",
+                    "comment",
+                    "activity"
+                  ]
+                },
+                "content": {
+                  "type": "string"
+                },
+                "progressPercent": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "projectId",
+                "authorEmployeeId",
+                "authorName",
+                "updateType",
+                "content",
+                "progressPercent",
+                "createdAt"
+              ]
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "projectId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "uploadedByEmployeeId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "uploadedByName": {
+                  "type": "string"
+                },
+                "originalName": {
+                  "type": "string"
+                },
+                "contentType": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "specification",
+                    "architecture",
+                    "report",
+                    "general"
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "projectId",
+                "uploadedByEmployeeId",
+                "uploadedByName",
+                "originalName",
+                "contentType",
+                "size",
+                "category",
+                "createdAt"
+              ]
+            }
           }
         },
         "required": [
@@ -972,6 +1286,12 @@
           "name",
           "description",
           "status",
+          "priority",
+          "workflowStatus",
+          "progressPercent",
+          "objectives",
+          "scope",
+          "technologies",
           "ownerEmployeeId",
           "ownerName",
           "startDate",
@@ -980,7 +1300,10 @@
           "memberCount",
           "createdAt",
           "updatedAt",
-          "members"
+          "members",
+          "milestones",
+          "updates",
+          "documents"
         ]
       },
       "Task": {
@@ -2465,6 +2788,259 @@
           "manager",
           "status",
           "joiningDate",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PayslipRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeCode": {
+            "type": "string"
+          },
+          "employeeName": {
+            "type": "string"
+          },
+          "departmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "payMonth": {
+            "type": "integer"
+          },
+          "payYear": {
+            "type": "integer"
+          },
+          "periodLabel": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "designation": {
+            "type": "string"
+          },
+          "uan": {
+            "type": "string"
+          },
+          "pan": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "beneficiaryId": {
+            "type": "string"
+          },
+          "workLocation": {
+            "type": "string"
+          },
+          "baseBranch": {
+            "type": "string"
+          },
+          "subLocation": {
+            "type": "string"
+          },
+          "daysPaid": {
+            "type": "number"
+          },
+          "leaveBalances": {
+            "type": "object",
+            "properties": {
+              "sl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "el": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "cl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "fl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "lc": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "basicSalary": {
+            "type": "number"
+          },
+          "basicArrears": {
+            "type": "number"
+          },
+          "hra": {
+            "type": "number"
+          },
+          "hraArrears": {
+            "type": "number"
+          },
+          "performancePay": {
+            "type": "number"
+          },
+          "performanceArrears": {
+            "type": "number"
+          },
+          "variableAllowance": {
+            "type": "number"
+          },
+          "variableArrears": {
+            "type": "number"
+          },
+          "totalCurrentEarnings": {
+            "type": "number"
+          },
+          "totalArrearsEarnings": {
+            "type": "number"
+          },
+          "totalEarnings": {
+            "type": "number"
+          },
+          "providentFund": {
+            "type": "number"
+          },
+          "incomeTax": {
+            "type": "number"
+          },
+          "professionalTax": {
+            "type": "number"
+          },
+          "otherDeductionDesc": {
+            "type": "string"
+          },
+          "otherDeductionAmount": {
+            "type": "number"
+          },
+          "totalDeductions": {
+            "type": "number"
+          },
+          "netPay": {
+            "type": "number"
+          },
+          "retiralPf": {
+            "type": "number"
+          },
+          "retiralGratuity": {
+            "type": "number"
+          },
+          "annualIncome": {
+            "type": "number"
+          },
+          "taxDeductions": {
+            "type": "number"
+          },
+          "netTaxIncome": {
+            "type": "number"
+          },
+          "totalTaxPayable": {
+            "type": "number"
+          },
+          "taxDeductedTillNow": {
+            "type": "number"
+          },
+          "balanceTax": {
+            "type": "number"
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "publishedBy": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "employeeId",
+          "employeeCode",
+          "employeeName",
+          "departmentName",
+          "payMonth",
+          "payYear",
+          "periodLabel",
+          "status",
+          "designation",
+          "uan",
+          "pan",
+          "bankName",
+          "accountNumber",
+          "beneficiaryId",
+          "workLocation",
+          "baseBranch",
+          "subLocation",
+          "daysPaid",
+          "leaveBalances",
+          "basicSalary",
+          "basicArrears",
+          "hra",
+          "hraArrears",
+          "performancePay",
+          "performanceArrears",
+          "variableAllowance",
+          "variableArrears",
+          "totalCurrentEarnings",
+          "totalArrearsEarnings",
+          "totalEarnings",
+          "providentFund",
+          "incomeTax",
+          "professionalTax",
+          "otherDeductionDesc",
+          "otherDeductionAmount",
+          "totalDeductions",
+          "netPay",
+          "retiralPf",
+          "retiralGratuity",
+          "annualIncome",
+          "taxDeductions",
+          "netTaxIncome",
+          "totalTaxPayable",
+          "taxDeductedTillNow",
+          "balanceTax",
+          "publishedAt",
+          "publishedBy",
           "createdAt",
           "updatedAt"
         ]
@@ -4520,6 +5096,353 @@
           },
           "403": {
             "description": "Caller lacks attendance.list permission (e.g. Staff)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/break-start": {
+      "post": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "Start a break on the active attendance session",
+        "description": "Required permission: `attendance.check_in`",
+        "responses": {
+          "200": {
+            "description": "Attendance session updated with active break",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AttendanceRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not checked in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Break already in progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/break-end": {
+      "post": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "End the ongoing break on the active attendance session",
+        "description": "Required permission: `attendance.check_in`",
+        "responses": {
+          "200": {
+            "description": "Attendance session updated with completed break",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AttendanceRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No active session or break found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/team-calendar": {
+      "get": {
+        "tags": [
+          "Attendance"
+        ],
+        "summary": "Get scoped team attendance, leave, and holiday calendar entries",
+        "description": "Required permission: `attendance.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "required": false,
+            "name": "startDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "required": false,
+            "name": "endDate",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": false,
+            "name": "departmentId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": false,
+            "name": "employeeId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team calendar payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "employees": {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        },
+                        "departments": {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        },
+                        "holidays": {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "nullable": true
+                          }
+                        }
+                      },
+                      "required": [
+                        "employees",
+                        "departments",
+                        "holidays",
+                        "entries"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
             "content": {
               "application/json": {
                 "schema": {
@@ -7538,7 +8461,7 @@
         "tags": [
           "Projects"
         ],
-        "summary": "The projects you own or belong to (an Admin sees all), by status and name",
+        "summary": "The projects you own or belong to (an Admin sees all), with summary overview counts",
         "description": "Required permission: `projects.read`",
         "parameters": [
           {
@@ -7577,6 +8500,46 @@
           {
             "schema": {
               "type": "string",
+              "enum": [
+                "not_started",
+                "in_progress",
+                "on_hold",
+                "completed"
+              ]
+            },
+            "required": false,
+            "name": "workflowStatus",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ]
+            },
+            "required": false,
+            "name": "priority",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "deadline_asc",
+                "deadline_desc"
+              ]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "minLength": 1,
               "maxLength": 100
             },
@@ -7587,7 +8550,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A page of projects",
+            "description": "A page of projects with overview counts",
             "content": {
               "application/json": {
                 "schema": {
@@ -7621,11 +8584,39 @@
                         "total",
                         "totalPages"
                       ]
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "totalAssigned": {
+                          "type": "integer"
+                        },
+                        "inProgress": {
+                          "type": "integer"
+                        },
+                        "completed": {
+                          "type": "integer"
+                        },
+                        "upcoming": {
+                          "type": "integer"
+                        },
+                        "onHold": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "totalAssigned",
+                        "inProgress",
+                        "completed",
+                        "upcoming",
+                        "onHold"
+                      ]
                     }
                   },
                   "required": [
                     "data",
-                    "meta"
+                    "meta",
+                    "summary"
                   ]
                 }
               }
@@ -7687,7 +8678,7 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Create a project (Team Lead, Admin). A Team Lead owns it; an Admin may name another Team Lead or Admin as owner. Members must be the owner or the owner’s direct reports",
+        "summary": "Create a project (Team Lead, Admin). A Team Lead owns it; an Admin may name another Team Lead or Admin as owner.",
         "description": "Required permission: `projects.manage`",
         "parameters": [
           {
@@ -7731,15 +8722,56 @@
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low"
+                    ]
+                  },
+                  "workflowStatus": {
+                    "type": "string",
+                    "enum": [
+                      "not_started",
+                      "in_progress",
+                      "on_hold",
+                      "completed"
+                    ]
+                  },
+                  "progressPercent": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "objectives": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "technologies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50
+                    },
+                    "maxItems": 25
+                  },
                   "ownerEmployeeId": {
                     "type": "string",
-                    "format": "uuid"
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
                   },
                   "memberIds": {
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "format": "uuid"
+                      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
                     },
                     "maxItems": 200
                   }
@@ -7850,13 +8882,13 @@
         "tags": [
           "Projects"
         ],
-        "summary": "One project with its members",
+        "summary": "One project with its members, milestones, updates, and documents",
         "description": "Required permission: `projects.read`",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
             },
             "required": true,
             "name": "id",
@@ -7948,13 +8980,13 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Change a project, or archive and reactivate it with `status`. Send the `version` you read. An archived project is read-only except for reactivating it",
+        "summary": "Change a project, or archive and reactivate it with `status`. Send the `version` you read.",
         "description": "Required permission: `projects.manage`",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
             },
             "required": true,
             "name": "id",
@@ -7995,6 +9027,49 @@
                     "type": "string",
                     "nullable": true,
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low"
+                    ]
+                  },
+                  "workflowStatus": {
+                    "type": "string",
+                    "enum": [
+                      "not_started",
+                      "in_progress",
+                      "on_hold",
+                      "completed"
+                    ]
+                  },
+                  "progressPercent": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "objectives": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "scope": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "technologies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 50
+                    },
+                    "maxItems": 25
                   },
                   "version": {
                     "type": "integer",
@@ -8122,7 +9197,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
             },
             "required": true,
             "name": "id",
@@ -8138,7 +9213,7 @@
                 "properties": {
                   "employeeId": {
                     "type": "string",
-                    "format": "uuid"
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
                   }
                 },
                 "required": [
@@ -8262,7 +9337,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
             },
             "required": true,
             "name": "id",
@@ -8271,7 +9346,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
             },
             "required": true,
             "name": "employeeId",
@@ -8349,6 +9424,1122 @@
           },
           "422": {
             "description": "The owner, or the project is archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/milestones": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Create a project milestone (project owner or Admin)",
+        "description": "Required permission: `projects.manage`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "not_started",
+                      "in_progress",
+                      "on_hold",
+                      "completed"
+                    ]
+                  },
+                  "completionPercent": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "title"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created milestone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "projectId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dueDate": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "not_started",
+                            "in_progress",
+                            "on_hold",
+                            "completed"
+                          ]
+                        },
+                        "completionPercent": {
+                          "type": "integer"
+                        },
+                        "sortOrder": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "projectId",
+                        "title",
+                        "description",
+                        "startDate",
+                        "dueDate",
+                        "status",
+                        "completionPercent",
+                        "sortOrder",
+                        "createdAt",
+                        "updatedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only the project owner or an Admin can change it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project does not exist, or you neither own it nor belong to it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Project archived or invalid dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/milestones/{milestoneId}": {
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Update a project milestone (project owner or Admin)",
+        "description": "Required permission: `projects.manage`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "milestoneId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "nullable": true,
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "nullable": true,
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "not_started",
+                      "in_progress",
+                      "on_hold",
+                      "completed"
+                    ]
+                  },
+                  "completionPercent": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated milestone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "projectId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dueDate": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "not_started",
+                            "in_progress",
+                            "on_hold",
+                            "completed"
+                          ]
+                        },
+                        "completionPercent": {
+                          "type": "integer"
+                        },
+                        "sortOrder": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "projectId",
+                        "title",
+                        "description",
+                        "startDate",
+                        "dueDate",
+                        "status",
+                        "completionPercent",
+                        "sortOrder",
+                        "createdAt",
+                        "updatedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only the project owner or an Admin can change it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project does not exist, or you neither own it nor belong to it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Project archived or invalid dates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/updates": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Post a progress update, comment, or manager update on a visible project",
+        "description": "Required permission: `projects.read`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "updateType": {
+                    "type": "string",
+                    "enum": [
+                      "manager_update",
+                      "progress_update",
+                      "comment"
+                    ],
+                    "default": "comment"
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "progressPercent": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "content"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The posted project update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "projectId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "authorEmployeeId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "authorName": {
+                          "type": "string"
+                        },
+                        "authorRoleLabel": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "updateType": {
+                          "type": "string",
+                          "enum": [
+                            "manager_update",
+                            "progress_update",
+                            "comment",
+                            "activity"
+                          ]
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "progressPercent": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "projectId",
+                        "authorEmployeeId",
+                        "authorName",
+                        "updateType",
+                        "content",
+                        "progressPercent",
+                        "createdAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only the project owner or an Admin can post manager updates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project does not exist, or you neither own it nor belong to it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The project is archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/documents": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Upload a project document (PDF, PNG, or JPEG up to 10 MB)",
+        "description": "Required permission: `projects.read`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "specification",
+                "architecture",
+                "report",
+                "general"
+              ],
+              "default": "general"
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The uploaded document metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "projectId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "uploadedByEmployeeId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "uploadedByName": {
+                          "type": "string"
+                        },
+                        "originalName": {
+                          "type": "string"
+                        },
+                        "contentType": {
+                          "type": "string"
+                        },
+                        "size": {
+                          "type": "integer"
+                        },
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "specification",
+                            "architecture",
+                            "report",
+                            "general"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "projectId",
+                        "uploadedByEmployeeId",
+                        "uploadedByName",
+                        "originalName",
+                        "contentType",
+                        "size",
+                        "category",
+                        "createdAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project does not exist, or you neither own it nor belong to it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This document is already attached to the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The project is archived or file validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/documents/{documentId}/download-link": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Get a short-lived signed download URL for a project document",
+        "description": "Required permission: `projects.read`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "documentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed download link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project does not exist, or you neither own it nor belong to it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}/documents/{documentId}": {
+      "delete": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Remove a project document (uploader, project owner, or Admin)",
+        "description": "Required permission: `projects.read`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "documentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "removed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "removed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only the uploader, project manager, or an Admin can remove it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project does not exist, or you neither own it nor belong to it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The project is archived",
             "content": {
               "application/json": {
                 "schema": {
@@ -21095,6 +23286,1369 @@
           },
           "404": {
             "description": "Not found (or outside your scope)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/me": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "List own published payslips",
+        "description": "Required permission: `payslips.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+            },
+            "required": false,
+            "name": "sortBy",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "required": false,
+            "name": "sortOrder",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": false,
+            "name": "employeeId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "required": false,
+            "name": "payMonth",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            },
+            "required": false,
+            "name": "payYear",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated own published payslips",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PayslipRecord"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "total",
+                        "totalPages"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "List all employee payslips for HR/Admin management",
+        "description": "Required permission: `payslips.read_all`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+            },
+            "required": false,
+            "name": "sortBy",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "required": false,
+            "name": "sortOrder",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": false,
+            "name": "employeeId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "required": false,
+            "name": "payMonth",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            },
+            "required": false,
+            "name": "payYear",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated employee payslips",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PayslipRecord"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "total",
+                        "totalPages"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Create an employee monthly payslip",
+        "description": "Required permission: `payslips.manage`",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "employeeId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                  },
+                  "payMonth": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "payYear": {
+                    "type": "integer",
+                    "minimum": 2000,
+                    "maximum": 2100
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published"
+                    ]
+                  },
+                  "designation": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "uan": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "pan": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "bankName": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "accountNumber": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "beneficiaryId": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "workLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "baseBranch": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "subLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "daysPaid": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 31
+                  },
+                  "leaveBalances": {
+                    "type": "object",
+                    "properties": {
+                      "sl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "el": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "cl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "fl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "lc": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "basicSalary": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "basicArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hra": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hraArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performancePay": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performanceArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableAllowance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "providentFund": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "incomeTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "professionalTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "otherDeductionDesc": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "otherDeductionAmount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralPf": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralGratuity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "annualIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductions": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "netTaxIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "totalTaxPayable": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductedTillNow": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "balanceTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  }
+                },
+                "required": [
+                  "employeeId",
+                  "payMonth",
+                  "payYear",
+                  "basicSalary"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payslip created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Employee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Payslip already exists for this employee and month/year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/{id}": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Get a payslip record (own published, or any for HR/Admin)",
+        "description": "Required permission: `payslips.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payslip detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Update an employee payslip record",
+        "description": "Required permission: `payslips.manage`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published"
+                    ]
+                  },
+                  "designation": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "uan": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "pan": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "bankName": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "accountNumber": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "beneficiaryId": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "workLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "baseBranch": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "subLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "daysPaid": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 31
+                  },
+                  "leaveBalances": {
+                    "type": "object",
+                    "properties": {
+                      "sl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "el": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "cl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "fl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "lc": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "basicSalary": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "basicArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hra": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hraArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performancePay": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performanceArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableAllowance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "providentFund": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "incomeTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "professionalTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "otherDeductionDesc": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "otherDeductionAmount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralPf": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralGratuity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "annualIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductions": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "netTaxIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "totalTaxPayable": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductedTillNow": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "balanceTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated payslip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Download rendered A4 PDF for a payslip",
+        "description": "Required permission: `payslips.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application PDF binary stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/{id}/publish": {
+      "post": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Publish an employee payslip so the employee can view and download it",
+        "description": "Required permission: `payslips.manage`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published payslip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
             "content": {
               "application/json": {
                 "schema": {

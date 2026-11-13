@@ -1,4 +1,5 @@
-export type UploadCategory = 'receipts' | 'employeeDocuments' | 'profilePhotos' | 'taskAttachments';
+export type UploadCategory =
+  'receipts' | 'employeeDocuments' | 'profilePhotos' | 'taskAttachments' | 'projectDocuments';
 
 export interface StoredObjectMeta {
   /** The type we detected from the file's content, never the one the client claimed. */

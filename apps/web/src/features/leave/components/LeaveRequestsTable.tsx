@@ -1,226 +1,1097 @@
-import React, { useState } from 'react';
-import type { LeaveRequest } from '../types';
-import { DataTable, type Column, Badge, Button, EmptyState } from '../../../components/ui';
-import { LeaveRequestCard } from './LeaveRequestCard';
+import React, { useMemo, useState } from 'react';
+import type { LeaveBalance, LeaveRequest } from '../types';
+import { EmptyState } from '../../../components/ui';
 
 export interface LeaveRequestsTableProps {
   requests: LeaveRequest[];
+  balances?: LeaveBalance[];
   isLoading?: boolean;
   onCancelRequest?: (id: string) => Promise<void>;
   onApplyClick?: () => void;
 }
 
+interface DisplayLeaveItem {
+  id: string;
+  requestCode: string;
+  leaveTypeName: string;
+  leaveTypeCode: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  halfDay: boolean;
+  appliedDate: string;
+  reason: string;
+  status: string;
+  rawRequest?: LeaveRequest;
+}
+
+const DEV_SAMPLE_REQUESTS: DisplayLeaveItem[] = [
+  {
+    id: 'LR-0268',
+    requestCode: 'LR-0268',
+    leaveTypeName: 'Annual Leave',
+    leaveTypeCode: 'ANNUAL',
+    startDate: '2026-11-20',
+    endDate: '2026-11-24',
+    days: 3,
+    halfDay: false,
+    appliedDate: '2026-11-12',
+    reason: 'Family function',
+    status: 'approved',
+  },
+  {
+    id: 'LR-0267',
+    requestCode: 'LR-0267',
+    leaveTypeName: 'Casual Leave',
+    leaveTypeCode: 'CASUAL',
+    startDate: '2026-11-14',
+    endDate: '2026-11-14',
+    days: 1,
+    halfDay: false,
+    appliedDate: '2026-11-10',
+    reason: 'Personal work',
+    status: 'pending',
+  },
+  {
+    id: 'LR-0266',
+    requestCode: 'LR-0266',
+    leaveTypeName: 'Sick Leave',
+    leaveTypeCode: 'SICK',
+    startDate: '2026-11-05',
+    endDate: '2026-11-06',
+    days: 2,
+    halfDay: false,
+    appliedDate: '2026-11-04',
+    reason: 'Not feeling well',
+    status: 'approved',
+  },
+  {
+    id: 'LR-0265',
+    requestCode: 'LR-0265',
+    leaveTypeName: 'Work From Home',
+    leaveTypeCode: 'WFH',
+    startDate: '2026-10-30',
+    endDate: '2026-10-30',
+    days: 1,
+    halfDay: false,
+    appliedDate: '2026-10-29',
+    reason: 'Doctor appointment',
+    status: 'rejected',
+  },
+  {
+    id: 'LR-0264',
+    requestCode: 'LR-0264',
+    leaveTypeName: 'Annual Leave',
+    leaveTypeCode: 'ANNUAL',
+    startDate: '2026-10-15',
+    endDate: '2026-10-17',
+    days: 2,
+    halfDay: false,
+    appliedDate: '2026-10-10',
+    reason: 'Out of station',
+    status: 'approved',
+  },
+];
+
+const PAGE_SIZE = 5;
+
+function formatShortDate(isoDate: string): string {
+  if (!isoDate) return '—';
+  const datePart = isoDate.split('T')[0] ?? isoDate;
+  const parsed = new Date(`${datePart}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+  return parsed.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function getMonthKey(isoDate: string): string {
+  const datePart = isoDate.split('T')[0] ?? '';
+  return datePart.slice(0, 7);
+}
+
+function formatMonthLabel(monthKey: string): string {
+  const [yStr, mStr] = monthKey.split('-');
+  const year = Number(yStr);
+  const monthIdx = Number(mStr) - 1;
+  if (!year || monthIdx < 0 || monthIdx > 11) return monthKey;
+  return new Date(year, monthIdx, 1).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatRequestCode(id: string): string {
+  if (id.toUpperCase().startsWith('LR-')) return id.toUpperCase();
+  const trailingDigits = id.match(/(\d+)$/);
+  if (trailingDigits && trailingDigits[1]) {
+    return `LR-${trailingDigits[1].padStart(4, '0')}`;
+  }
+  const clean = id
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(-4)
+    .toUpperCase();
+  return `LR-${clean || '0001'}`;
+}
+
+function getLeaveTypePillStyle(codeOrName: string): { bg: string; color: string } {
+  const lower = codeOrName.toLowerCase();
+  if (lower.includes('casual')) {
+    return { bg: 'rgb(254, 240, 219)', color: 'rgb(180, 83, 9)' };
+  }
+  if (lower.includes('sick')) {
+    return { bg: 'rgb(240, 232, 255)', color: 'rgb(109, 40, 217)' };
+  }
+  if (lower.includes('home') || lower.includes('wfh')) {
+    return { bg: 'rgb(224, 242, 254)', color: 'rgb(3, 105, 161)' };
+  }
+  return { bg: 'rgb(214, 248, 238)', color: 'rgb(15, 118, 110)' };
+}
+
+function findBalanceDays(balances: LeaveBalance[], keywords: string[], fallback: number): number {
+  const match = balances.find((b) => {
+    const target = `${b.code} ${b.name}`.toLowerCase();
+    return keywords.some((kw) => target.includes(kw));
+  });
+  return match ? match.remaining : fallback;
+}
+
 export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   requests,
+  balances = [],
   isLoading = false,
   onCancelRequest,
   onApplyClick,
 }) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<DisplayLeaveItem | null>(null);
 
-  const filteredRequests = requests.filter((r) => {
-    if (statusFilter === 'all') return true;
-    return r.status === statusFilter;
-  });
+  const isDevMockMode = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH !== 'false';
+  const usingDevFallback = requests.length === 0 && isDevMockMode;
+
+  const displayItems: DisplayLeaveItem[] = useMemo(() => {
+    if (requests.length > 0) {
+      return requests.map((r) => ({
+        id: r.id,
+        requestCode: formatRequestCode(r.id),
+        leaveTypeName: r.leaveTypeName,
+        leaveTypeCode: r.leaveTypeCode,
+        startDate: r.startDate,
+        endDate: r.endDate,
+        days: r.days,
+        halfDay: r.halfDay,
+        appliedDate: r.createdAt || r.startDate,
+        reason: r.reason || '—',
+        status: r.status,
+        rawRequest: r,
+      }));
+    }
+    return isDevMockMode ? DEV_SAMPLE_REQUESTS : [];
+  }, [requests, isDevMockMode]);
+
+  const monthOptions = useMemo(() => {
+    const keys = new Set<string>();
+    for (const item of displayItems) {
+      const key = getMonthKey(item.startDate);
+      if (key.length === 7) keys.add(key);
+    }
+    return Array.from(keys)
+      .sort((a, b) => b.localeCompare(a))
+      .map((key) => ({ value: key, label: formatMonthLabel(key) }));
+  }, [displayItems]);
+
+  const statusCounts = useMemo(() => {
+    const source = usingDevFallback ? displayItems : requests;
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+    let cancelled = 0;
+    for (const item of source) {
+      const s = item.status.toLowerCase();
+      if (s === 'pending' || s === 'applied') pending += 1;
+      else if (s === 'approved') approved += 1;
+      else if (s === 'rejected') rejected += 1;
+      else if (s === 'cancelled') cancelled += 1;
+    }
+    return {
+      all: source.length,
+      pending,
+      approved,
+      rejected,
+      cancelled,
+    };
+  }, [usingDevFallback, displayItems, requests]);
+
+  const summaryCards = useMemo(() => {
+    const useMockSummary = usingDevFallback && balances.length === 0;
+    const annualDays = useMockSummary
+      ? 12
+      : findBalanceDays(balances, ['annual', 'earned', 'al'], 0);
+    const sickDays = useMockSummary ? 6 : findBalanceDays(balances, ['sick', 'sl'], 0);
+    const casualDays = useMockSummary ? 4 : findBalanceDays(balances, ['casual', 'cl'], 0);
+    const pendingCount = useMockSummary ? 2 : statusCounts.pending;
+    const approvedCount = useMockSummary ? 8 : statusCounts.approved;
+    const rejectedCount = useMockSummary ? 1 : statusCounts.rejected;
+
+    return [
+      {
+        key: 'annual',
+        label: 'Annual Leave Balance',
+        value: `${annualDays} Days`,
+        iconBg: 'rgb(220, 250, 240)',
+        iconColor: 'rgb(15, 118, 110)',
+        bandBg: 'rgb(236, 252, 246)',
+        valueColor: 'rgb(15, 118, 110)',
+        icon: (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        ),
+      },
+      {
+        key: 'sick',
+        label: 'Sick Leave Balance',
+        value: `${sickDays} Days`,
+        iconBg: 'rgb(240, 232, 255)',
+        iconColor: 'rgb(109, 40, 217)',
+        bandBg: 'rgb(246, 241, 255)',
+        valueColor: 'rgb(109, 40, 217)',
+        icon: (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        ),
+      },
+      {
+        key: 'casual',
+        label: 'Casual Leave Balance',
+        value: `${casualDays} Days`,
+        iconBg: 'rgb(254, 240, 219)',
+        iconColor: 'rgb(180, 83, 9)',
+        bandBg: 'rgb(255, 247, 235)',
+        valueColor: 'rgb(180, 83, 9)',
+        icon: (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 3v2m0 14a4 4 0 01-4-4v-1h8v1a4 4 0 01-4 4zM4 12a8 8 0 0116 0H4z"
+            />
+          </svg>
+        ),
+      },
+      {
+        key: 'pending',
+        label: 'Pending Requests',
+        value: String(pendingCount),
+        iconBg: 'rgb(254, 243, 199)',
+        iconColor: 'rgb(161, 98, 7)',
+        bandBg: 'rgb(254, 249, 231)',
+        valueColor: 'rgb(161, 98, 7)',
+        icon: (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 2h12M6 22h12M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4"
+            />
+          </svg>
+        ),
+      },
+      {
+        key: 'approved',
+        label: 'Approved Requests',
+        value: String(approvedCount),
+        iconBg: 'rgb(220, 252, 231)',
+        iconColor: 'rgb(21, 128, 61)',
+        bandBg: 'rgb(236, 253, 243)',
+        valueColor: 'rgb(21, 128, 61)',
+        icon: (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.1"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ),
+      },
+      {
+        key: 'rejected',
+        label: 'Rejected Requests',
+        value: String(rejectedCount),
+        iconBg: 'rgb(254, 226, 226)',
+        iconColor: 'rgb(220, 38, 38)',
+        bandBg: 'rgb(254, 242, 242)',
+        valueColor: 'rgb(220, 38, 38)',
+        icon: (
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.1"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ),
+      },
+    ];
+  }, [usingDevFallback, balances, statusCounts]);
+
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return displayItems.filter((item) => {
+      const normalizedStatus = item.status.toLowerCase();
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'pending') {
+          if (normalizedStatus !== 'pending' && normalizedStatus !== 'applied') return false;
+        } else if (normalizedStatus !== statusFilter.toLowerCase()) {
+          return false;
+        }
+      }
+      if (monthFilter !== 'all' && getMonthKey(item.startDate) !== monthFilter) {
+        return false;
+      }
+      if (query) {
+        const hay = `${item.requestCode} ${item.reason} ${item.leaveTypeName}`.toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [displayItems, statusFilter, monthFilter, searchQuery]);
+
+  const totalFiltered = filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
 
   const handleCancel = async (id: string) => {
     if (!onCancelRequest) return;
     try {
       setCancellingId(id);
       await onCancelRequest(id);
+      setSelectedRequest(null);
     } finally {
       setCancellingId(null);
     }
   };
 
-  const statusVariantMap = {
-    applied: 'primary' as const,
-    pending: 'warning' as const,
-    approved: 'success' as const,
-    rejected: 'danger' as const,
-    cancelled: 'neutral' as const,
-  };
-
-  const statusLabelMap = {
-    applied: 'Applied',
-    pending: 'Pending',
-    approved: 'Approved',
-    rejected: 'Rejected',
-    cancelled: 'Cancelled',
-  };
-
-  const columns: Column<LeaveRequest>[] = [
-    {
-      key: 'type',
-      header: 'Leave Type',
-      render: (req) => (
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-surface-muted border border-border text-text">
-            {req.leaveTypeCode}
-          </span>
-          <span className="font-semibold text-text">{req.leaveTypeName}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'dates',
-      header: 'Date Range',
-      render: (req) => (
-        <span className="font-mono text-xs font-medium text-text">
-          {req.startDate}
-          {req.startDate !== req.endDate ? ` to ${req.endDate}` : ''}
-        </span>
-      ),
-    },
-    {
-      key: 'duration',
-      header: 'Duration',
-      render: (req) => (
-        <span className="text-sm font-bold text-primary-deep font-mono">
-          {req.halfDay ? '0.5 day (Half Day)' : `${req.days} ${req.days === 1 ? 'day' : 'days'}`}
-        </span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (req) => (
-        <Badge variant={statusVariantMap[req.status]}>{statusLabelMap[req.status]}</Badge>
-      ),
-    },
-    {
-      key: 'reason',
-      header: 'Reason',
-      render: (req) => (
-        <span className="text-xs text-text-muted truncate max-w-xs block" title={req.reason ?? ''}>
-          {req.reason || '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'appliedAt',
-      header: 'Applied On',
-      render: (req) => (
-        <span className="text-xs text-text-subtle font-mono">
-          {new Date(req.createdAt).toLocaleDateString()}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      header: '',
-      render: (req) => {
-        const isCancellable =
-          (req.status === 'applied' || req.status === 'pending' || req.status === 'approved') &&
-          Boolean(onCancelRequest);
-
-        if (!isCancellable) return null;
-
-        return (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (
-                window.confirm(`Cancel leave request for ${req.leaveTypeName} (${req.startDate})?`)
-              ) {
-                handleCancel(req.id);
-              }
-            }}
-            disabled={cancellingId === req.id}
-            data-testid={`table-cancel-leave-btn-${req.id}`}
-            aria-label={`Cancel ${req.leaveTypeName} leave`}
-            className="min-h-[44px] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+  const renderStatusBadge = (status: string) => {
+    const lower = status.toLowerCase();
+    if (lower === 'approved') {
+      return (
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          style={{ backgroundColor: 'rgb(220, 252, 231)', color: 'rgb(21, 128, 61)' }}
+        >
+          <svg
+            className="w-3.5 h-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
           >
-            {cancellingId === req.id ? 'Cancelling...' : 'Cancel'}
-          </Button>
-        );
-      },
-    },
-  ];
+            <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm4.3 7.7l-5 5a1 1 0 01-1.4 0l-2-2a1 1 0 111.4-1.4l1.3 1.3 4.3-4.3a1 1 0 011.4 1.4z" />
+          </svg>
+          Approved
+        </span>
+      );
+    }
+    if (lower === 'pending' || lower === 'applied') {
+      return (
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          style={{ backgroundColor: 'rgb(254, 240, 219)', color: 'rgb(180, 83, 9)' }}
+        >
+          <svg
+            className="w-3.5 h-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" strokeLinecap="round" />
+          </svg>
+          Pending
+        </span>
+      );
+    }
+    if (lower === 'rejected') {
+      return (
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          style={{ backgroundColor: 'rgb(254, 226, 226)', color: 'rgb(220, 38, 38)' }}
+        >
+          <svg
+            className="w-3.5 h-3.5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm3.7 12.3a1 1 0 11-1.4 1.4L12 13.4l-2.3 2.3a1 1 0 01-1.4-1.4l2.3-2.3-2.3-2.3a1 1 0 011.4-1.4l2.3 2.3 2.3-2.3a1 1 0 011.4 1.4L13.4 12z" />
+          </svg>
+          Rejected
+        </span>
+      );
+    }
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+        style={{ backgroundColor: 'rgb(243, 244, 246)', color: 'rgb(75, 85, 99)' }}
+      >
+        Cancelled
+      </span>
+    );
+  };
 
-  const filterOptions: { value: string; label: string }[] = [
-    { value: 'all', label: `All (${requests.length})` },
-    {
-      value: 'pending',
-      label: `Pending (${requests.filter((r) => r.status === 'pending').length})`,
-    },
-    {
-      value: 'approved',
-      label: `Approved (${requests.filter((r) => r.status === 'approved').length})`,
-    },
-    {
-      value: 'rejected',
-      label: `Rejected (${requests.filter((r) => r.status === 'rejected').length})`,
-    },
-    {
-      value: 'cancelled',
-      label: `Cancelled (${requests.filter((r) => r.status === 'cancelled').length})`,
-    },
-  ];
+  const formatDaysLabel = (days: number, halfDay: boolean) => {
+    if (halfDay || days === 0.5) return '0.5 Day';
+    return `${days} ${days === 1 ? 'Day' : 'Days'}`;
+  };
+
+  const isEligiblePending = (status: string) => {
+    const s = status.toLowerCase();
+    return s === 'pending' || s === 'applied';
+  };
 
   return (
-    <div className="space-y-4" data-testid="leave-requests-container">
-      {/* Filter Chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 flex-wrap">
-        {filterOptions.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setStatusFilter(opt.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold min-h-[36px] transition-colors border ${
-              statusFilter === opt.value
-                ? 'bg-primary-deep text-white border-primary-deep shadow-primary'
-                : 'bg-surface text-text-muted border-border hover:border-primary-strong hover:text-text'
-            }`}
-            data-testid={`filter-status-${opt.value}`}
+    <div className="space-y-5" data-testid="leave-requests-container">
+      {/* 1. Six Leave Balance & Request Summary Cards */}
+      <div
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5"
+        data-testid="leave-summary-cards"
+      >
+        {summaryCards.map((card) => (
+          <div
+            key={card.key}
+            className="rounded-2xl border bg-white p-3.5 flex flex-col justify-between gap-2.5"
+            style={{
+              borderColor: 'rgb(229, 231, 235)',
+              boxShadow: '0 2px 8px rgba(8, 11, 12, 0.03)',
+            }}
           >
-            {opt.label}
-          </button>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: card.iconBg, color: card.iconColor }}
+              >
+                {card.icon}
+              </div>
+              <span
+                className="text-xs font-semibold leading-tight"
+                style={{ color: 'rgb(8, 11, 12)' }}
+              >
+                {card.label}
+              </span>
+            </div>
+            <div
+              className="rounded-xl py-2 px-3 text-center text-base sm:text-lg font-bold font-display"
+              style={{ backgroundColor: card.bandBg, color: card.valueColor }}
+            >
+              {card.value}
+            </div>
+          </div>
         ))}
       </div>
 
-      {filteredRequests.length === 0 && !isLoading ? (
-        <EmptyState
-          title="No Leave Requests Found"
-          description={
-            statusFilter === 'all'
-              ? 'You have not submitted any leave requests yet.'
-              : `No leave applications matching the "${statusFilter}" status filter.`
-          }
-          actionLabel={statusFilter === 'all' && onApplyClick ? 'Apply for Leave' : undefined}
-          onAction={statusFilter === 'all' && onApplyClick ? onApplyClick : undefined}
-        />
-      ) : (
-        <>
-          {/* Desktop Table View (≥ 1024px) */}
-          <div className="hidden lg:block bg-surface rounded-card border border-border overflow-hidden shadow-card">
-            <DataTable
-              data={filteredRequests}
-              columns={columns}
-              keyExtractor={(r) => r.id}
-              isLoading={isLoading}
-              ariaLabel="My Leave Requests Table"
-            />
+      {/* 2. My Leave Requests Table Card */}
+      <div
+        className="rounded-2xl border bg-white p-4 sm:p-5 space-y-4"
+        style={{
+          borderColor: 'rgb(229, 231, 235)',
+          boxShadow: '0 2px 10px rgba(8, 11, 12, 0.03)',
+        }}
+      >
+        {/* Header: Title + Search + Month Filter */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+              style={{
+                backgroundColor: 'rgb(248, 250, 252)',
+                borderColor: 'rgb(229, 231, 235)',
+                color: 'rgb(8, 11, 12)',
+              }}
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
+              My Leave Requests
+            </h2>
           </div>
 
-          {/* Mobile & Tablet Card View (< 1024px) */}
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4"
-            data-testid="mobile-leave-cards"
-          >
-            {filteredRequests.map((req) => (
-              <LeaveRequestCard
-                key={req.id}
-                request={req}
-                onCancel={handleCancel}
-                isCancelling={cancellingId === req.id}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            {/* Search by Request ID or Reason */}
+            <div className="relative min-w-[220px] sm:w-64">
+              <svg
+                className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search by Request ID, Reason..."
+                aria-label="Search leave requests"
+                data-testid="leave-search-input"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2"
+                style={{ borderColor: 'rgb(229, 231, 235)' }}
               />
-            ))}
+            </div>
+
+            {/* Month Filter Dropdown */}
+            <div className="relative">
+              <select
+                value={monthFilter}
+                onChange={(e) => {
+                  setMonthFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                aria-label="Filter by month"
+                data-testid="leave-month-filter"
+                className="appearance-none w-full sm:w-auto pl-3.5 pr-9 py-2 rounded-xl border bg-white text-xs font-semibold text-gray-800 cursor-pointer focus:outline-none focus:ring-2"
+                style={{ borderColor: 'rgb(229, 231, 235)' }}
+              >
+                <option value="all">All Months</option>
+                {monthOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
-        </>
+        </div>
+
+        {/* Status Filter Chips (kept compact & accessible for tests) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 flex-wrap">
+          {[
+            { value: 'all', label: `All (${statusCounts.all})` },
+            { value: 'pending', label: `Pending (${statusCounts.pending})` },
+            { value: 'approved', label: `Approved (${statusCounts.approved})` },
+            { value: 'rejected', label: `Rejected (${statusCounts.rejected})` },
+            { value: 'cancelled', label: `Cancelled (${statusCounts.cancelled})` },
+          ].map((opt) => {
+            const active = statusFilter === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(opt.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold min-h-[34px] transition-colors border"
+                style={
+                  active
+                    ? {
+                        backgroundColor: 'rgb(85, 205, 179)',
+                        borderColor: 'rgb(85, 205, 179)',
+                        color: 'rgb(8, 11, 12)',
+                      }
+                    : {
+                        backgroundColor: 'rgb(255, 255, 255)',
+                        borderColor: 'rgb(229, 231, 235)',
+                        color: 'rgb(75, 85, 99)',
+                      }
+                }
+                data-testid={`filter-status-${opt.value}`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Table / Empty / Mobile Cards */}
+        {paginatedItems.length === 0 && !isLoading ? (
+          <EmptyState
+            title="No Leave Requests Found"
+            description={
+              statusFilter === 'all' && !searchQuery && monthFilter === 'all'
+                ? 'You have not submitted any leave requests yet.'
+                : 'No leave requests match the active filters.'
+            }
+            actionLabel={statusFilter === 'all' && onApplyClick ? 'Apply for Leave' : undefined}
+            onAction={statusFilter === 'all' && onApplyClick ? onApplyClick : undefined}
+          />
+        ) : (
+          <>
+            {/* Desktop & Tablet Table View */}
+            <div
+              className="hidden md:block rounded-xl border overflow-hidden"
+              style={{ borderColor: 'rgb(229, 231, 235)' }}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr style={{ backgroundColor: 'rgb(235, 250, 247)' }}>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Request ID
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Leave Type
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Start Date
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        End Date
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Total Days
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Applied Date
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Reason
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Status
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-xs font-bold text-right whitespace-nowrap"
+                        style={{ color: 'rgb(8, 11, 12)' }}
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y" style={{ borderColor: 'rgb(241, 245, 249)' }}>
+                    {paginatedItems.map((item) => {
+                      const pill = getLeaveTypePillStyle(item.leaveTypeName);
+                      const canEdit = isEligiblePending(item.status);
+                      return (
+                        <tr
+                          key={item.id}
+                          className="hover:bg-gray-50/70 transition-colors"
+                          data-testid={`leave-request-row-${item.id}`}
+                        >
+                          <td
+                            className="py-3 px-2.5 text-xs font-semibold whitespace-nowrap"
+                            style={{ color: 'rgb(8, 11, 12)' }}
+                          >
+                            {item.requestCode}
+                          </td>
+                          <td className="py-3 px-2.5 whitespace-nowrap">
+                            <span
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                              style={{ backgroundColor: pill.bg, color: pill.color }}
+                            >
+                              {item.leaveTypeName}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2.5 text-xs text-gray-700 whitespace-nowrap">
+                            {formatShortDate(item.startDate)}
+                          </td>
+                          <td className="py-3 px-2.5 text-xs text-gray-700 whitespace-nowrap">
+                            {formatShortDate(item.endDate)}
+                          </td>
+                          <td className="py-3 px-2.5 text-xs font-medium text-gray-800 whitespace-nowrap">
+                            {formatDaysLabel(item.days, item.halfDay)}
+                          </td>
+                          <td className="py-3 px-2.5 text-xs text-gray-700 whitespace-nowrap">
+                            {formatShortDate(item.appliedDate)}
+                          </td>
+                          <td className="py-3 px-2.5 text-xs text-gray-700 max-w-[140px] truncate">
+                            {item.reason}
+                          </td>
+                          <td className="py-3 px-2.5 whitespace-nowrap">
+                            {renderStatusBadge(item.status)}
+                          </td>
+                          <td className="py-3 px-2.5 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedRequest(item)}
+                                aria-label={`View ${item.requestCode}`}
+                                data-testid={`view-leave-btn-${item.id}`}
+                                className="w-7 h-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
+                                title="View Details"
+                              >
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.9"
+                                >
+                                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              </button>
+                              {canEdit && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedRequest(item)}
+                                  aria-label={`Edit ${item.requestCode}`}
+                                  data-testid={`edit-leave-btn-${item.id}`}
+                                  className="w-7 h-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
+                                  title="Manage / Edit Pending Request"
+                                >
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.9"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
+                              {item.rawRequest &&
+                                (canEdit || item.status.toLowerCase() === 'approved') &&
+                                onCancelRequest && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCancel(item.id)}
+                                    disabled={cancellingId === item.id}
+                                    data-testid={`table-cancel-leave-btn-${item.id}`}
+                                    aria-label={`Cancel ${item.leaveTypeName} leave`}
+                                    className="px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                  >
+                                    {cancellingId === item.id ? 'Cancelling...' : 'Cancel'}
+                                  </button>
+                                )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile Card View (< 768px) */}
+            <div className="grid grid-cols-1 gap-3 md:hidden" data-testid="mobile-leave-cards">
+              {paginatedItems.map((item) => {
+                const pill = getLeaveTypePillStyle(item.leaveTypeName);
+                const canEdit = isEligiblePending(item.status);
+                return (
+                  <div
+                    key={item.id}
+                    className="p-4 bg-white rounded-xl border space-y-2.5"
+                    style={{ borderColor: 'rgb(229, 231, 235)' }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
+                        {item.requestCode}
+                      </span>
+                      {renderStatusBadge(item.status)}
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
+                        style={{ backgroundColor: pill.bg, color: pill.color }}
+                      >
+                        {item.leaveTypeName}
+                      </span>
+                      <span className="text-xs font-semibold text-gray-800">
+                        {formatDaysLabel(item.days, item.halfDay)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p>
+                        <span className="font-medium text-gray-800">Dates:</span>{' '}
+                        {formatShortDate(item.startDate)} – {formatShortDate(item.endDate)}
+                      </p>
+                      <p>
+                        <span className="font-medium text-gray-800">Applied:</span>{' '}
+                        {formatShortDate(item.appliedDate)}
+                      </p>
+                      <p>
+                        <span className="font-medium text-gray-800">Reason:</span> {item.reason}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRequest(item)}
+                        className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700"
+                      >
+                        View
+                      </button>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRequest(item)}
+                          className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {item.rawRequest && canEdit && onCancelRequest && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancel(item.id)}
+                          aria-label={`Cancel ${item.leaveTypeName} leave`}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <p className="text-xs text-gray-500">
+                Showing {totalFiltered === 0 ? 0 : startIndex + 1} to{' '}
+                {Math.min(startIndex + PAGE_SIZE, totalFiltered)} of {totalFiltered} records
+              </p>
+              <div className="inline-flex items-center gap-1.5 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  aria-label="Previous page"
+                  className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 disabled:opacity-40 inline-flex items-center justify-center text-xs hover:bg-gray-50"
+                >
+                  &lsaquo;
+                </button>
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pageNum) => {
+                  const isActive = pageNum === safePage;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 rounded-lg border text-xs font-bold inline-flex items-center justify-center transition-colors"
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: 'rgb(85, 205, 179)',
+                              borderColor: 'rgb(85, 205, 179)',
+                              color: 'rgb(8, 11, 12)',
+                            }
+                          : {
+                              backgroundColor: 'rgb(255, 255, 255)',
+                              borderColor: 'rgb(229, 231, 235)',
+                              color: 'rgb(75, 85, 99)',
+                            }
+                      }
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  aria-label="Next page"
+                  className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 disabled:opacity-40 inline-flex items-center justify-center text-xs hover:bg-gray-50"
+                >
+                  &rsaquo;
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Leave Request Details Modal */}
+      {selectedRequest && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="leave-detail-modal-title"
+          data-testid="leave-detail-modal"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white border p-5 space-y-4 shadow-xl"
+            style={{ borderColor: 'rgb(229, 231, 235)' }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-gray-500">{selectedRequest.requestCode}</p>
+                <h3
+                  id="leave-detail-modal-title"
+                  className="text-lg font-bold font-display"
+                  style={{ color: 'rgb(8, 11, 12)' }}
+                >
+                  {selectedRequest.leaveTypeName}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRequest(null)}
+                aria-label="Close details"
+                className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 inline-flex items-center justify-center"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                <span className="text-gray-500">Status</span>
+                {renderStatusBadge(selectedRequest.status)}
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                <span className="text-gray-500">Start Date</span>
+                <span className="font-semibold text-gray-800">
+                  {formatShortDate(selectedRequest.startDate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                <span className="text-gray-500">End Date</span>
+                <span className="font-semibold text-gray-800">
+                  {formatShortDate(selectedRequest.endDate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                <span className="text-gray-500">Total Days</span>
+                <span className="font-semibold text-gray-800">
+                  {formatDaysLabel(selectedRequest.days, selectedRequest.halfDay)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                <span className="text-gray-500">Applied Date</span>
+                <span className="font-semibold text-gray-800">
+                  {formatShortDate(selectedRequest.appliedDate)}
+                </span>
+              </div>
+              <div className="pt-1">
+                <span className="text-gray-500 block mb-1">Reason</span>
+                <p className="p-2.5 rounded-xl bg-gray-50 text-gray-800">
+                  {selectedRequest.reason}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              {selectedRequest.rawRequest &&
+                isEligiblePending(selectedRequest.status) &&
+                onCancelRequest && (
+                  <button
+                    type="button"
+                    onClick={() => handleCancel(selectedRequest.id)}
+                    disabled={cancellingId === selectedRequest.id}
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+                  >
+                    {cancellingId === selectedRequest.id ? 'Cancelling...' : 'Cancel Request'}
+                  </button>
+                )}
+              <button
+                type="button"
+                onClick={() => setSelectedRequest(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold"
+                style={{ backgroundColor: 'rgb(85, 205, 179)', color: 'rgb(8, 11, 12)' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
