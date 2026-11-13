@@ -1134,13 +1134,12 @@ export function RosterTab({
                               </span>
                               <span className="text-[11px] text-text-muted block truncate font-normal">
                                 {emp.designation?.title || emp.employeeCode}
-                                {emp.department?.name ? ` · ${emp.department.name}` : ''}
                               </span>
                             </div>
                           </div>
                         </td>
 
-                        {/* Day Shift Cells: Full Real-time Check-In and Check-Out without '..' */}
+                        {/* Day Shift Cells: Full Real-time Check-In and Check-Out without dot */}
                         {weekDays.map((wd) => {
                           const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
@@ -1181,7 +1180,7 @@ export function RosterTab({
                                       ? `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} · Click to edit shift`
                                       : `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''}`
                                   }
-                                  className={`h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center gap-1 px-1.5 transition-all text-xs font-semibold tabular-nums ${
+                                  className={`h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center px-2 transition-all text-xs font-semibold tabular-nums ${
                                     punch.status === 'present'
                                       ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70'
                                       : punch.status === 'active'
@@ -1198,18 +1197,6 @@ export function RosterTab({
                                   <span className="whitespace-nowrap text-[11px] leading-tight font-semibold">
                                     {punch.display}
                                   </span>
-                                  <span
-                                    title={`Status: ${punch.status}`}
-                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                      punch.status === 'late'
-                                        ? 'bg-warning'
-                                        : punch.status === 'absent'
-                                          ? 'bg-danger'
-                                          : punch.status === 'active'
-                                            ? 'bg-primary-deep animate-pulse'
-                                            : 'bg-emerald-600'
-                                    }`}
-                                  />
                                 </button>
                               )}
                             </td>
@@ -1305,7 +1292,6 @@ export function RosterTab({
                               </span>
                               <span className="text-[10px] text-text-muted block truncate font-medium">
                                 {emp.designation?.title || emp.employeeCode}
-                                {emp.department?.name ? ` · ${emp.department.name}` : ''}
                               </span>
                             </div>
                           </div>
