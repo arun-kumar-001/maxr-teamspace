@@ -29,7 +29,7 @@ import {
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
 import { DesignationsPage } from './features/designations';
-import { MyProfilePage } from './features/profile';
+import { MyProfilePage, ProfilePortalPage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
@@ -319,9 +319,17 @@ function AppRoutes() {
         }
       />
 
-      {/* My Employee Profile Routes (Issue #22) */}
+      {/* My Profile Portal & Personal Details Routes */}
       <Route
         path="/profile"
+        element={
+          <ShellLayout>
+            <ProfilePortalPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/profile/details"
         element={
           <ShellLayout>
             <MyProfilePage />
@@ -797,6 +805,40 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* Payslips Routes */}
+      <Route
+        path="/staff/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
           </ShellLayout>
         }
       />

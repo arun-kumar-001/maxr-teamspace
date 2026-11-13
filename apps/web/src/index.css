@@ -23,6 +23,17 @@ body {
   max-width: 100%;
 }
 
+/* Hide native number input up/down spinner arrows across the entire app */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 /* Custom Dashboard Animations: Floating, Real-time pulses, and Stripe Flow */
 @keyframes float-subtle {
   0%,

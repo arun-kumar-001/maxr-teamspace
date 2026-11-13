@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '../../../api/client';
-import { Button, EmptyState, ErrorState, Modal, Skeleton } from '../../../components/ui';
+import {
+  Button,
+  DropdownSelect,
+  EmptyState,
+  ErrorState,
+  Modal,
+  Skeleton,
+} from '../../../components/ui';
 import { usePayslips } from '../hooks/usePayslips';
 import type { CreatePayslipInput, PayslipRecord } from '../types';
 
@@ -34,6 +41,46 @@ interface DirectoryEmployeeOption {
   designation?: { title: string } | null;
 }
 
+interface LeaveBalanceApiRow {
+  code?: string;
+  name?: string;
+  remaining?: number;
+}
+
+function mapLeaveBalancesToSnapshot(items: LeaveBalanceApiRow[]): {
+  sl: number;
+  el: number;
+  cl: number;
+  fl: number;
+  lc: number;
+} {
+  const result = { sl: 0, el: 0, cl: 0, fl: 0, lc: 0 };
+  for (const item of items) {
+    const code = (item.code ?? '').trim().toUpperCase();
+    const name = (item.name ?? '').trim().toUpperCase();
+    const val = Number(item.remaining ?? 0);
+    if (!Number.isFinite(val)) continue;
+    if (code === 'SL' || code === 'SICK' || name.includes('SICK')) result.sl = val;
+    else if (
+      code === 'EL' ||
+      code === 'EARNED' ||
+      name.includes('EARNED') ||
+      name.includes('PRIVILEGE')
+    )
+      result.el = val;
+    else if (code === 'CL' || code === 'CASUAL' || name.includes('CASUAL')) result.cl = val;
+    else if (
+      code === 'FL' ||
+      code === 'FLOATING' ||
+      name.includes('FLOATING') ||
+      name.includes('OPTIONAL')
+    )
+      result.fl = val;
+    else if (code === 'LC' || (name.includes('LEAVE') && name.includes('COMP'))) result.lc = val;
+  }
+  return result;
+}
+
 export const PayslipsPage: React.FC = () => {
   const {
     canManage,
@@ -60,8 +107,14 @@ export const PayslipsPage: React.FC = () => {
 
   // HR/Admin create modal state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createTab, setCreateTab] = useState<'salary' | 'details' | 'tax'>('salary');
+  const [showArrears, setShowArrears] = useState(false);
+  const [leaveSyncStatus, setLeaveSyncStatus] = useState<'idle' | 'loading' | 'synced' | 'empty'>(
+    'idle',
+  );
   const [employees, setEmployees] = useState<DirectoryEmployeeOption[]>([]);
   const [submittingCreate, setSubmittingCreate] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [formState, setFormState] = useState<CreatePayslipInput>({
     employeeId: '',
     payMonth: 10,
@@ -77,14 +130,20 @@ export const PayslipsPage: React.FC = () => {
     baseBranch: 'Chennai',
     subLocation: 'Chennai',
     daysPaid: 31,
-    leaveBalances: { sl: 4, el: 12, cl: 4, fl: 1, lc: 0 },
+    leaveBalances: { sl: 0, el: 0, cl: 0, fl: 0, lc: 0 },
     basicSalary: 45000,
+    basicArrears: 0,
     hra: 18000,
+    hraArrears: 0,
     performancePay: 10000,
+    performanceArrears: 0,
     variableAllowance: 12000,
+    variableArrears: 0,
     providentFund: 5400,
     incomeTax: 2200,
     professionalTax: 200,
+    otherDeductionDesc: 'Desc.',
+    otherDeductionAmount: 0,
     retiralPf: 5400,
     retiralGratuity: 2165,
     annualIncome: 1020000,
@@ -94,6 +153,34 @@ export const PayslipsPage: React.FC = () => {
     taxDeductedTillNow: 22000,
     balanceTax: 17000,
   });
+
+  useEffect(() => {
+    if (!canManage || !isCreateOpen || !formState.employeeId) return;
+    let cancelled = false;
+    setLeaveSyncStatus('loading');
+    void (async () => {
+      try {
+        const res = await apiFetch(
+          `/api/v1/leave-balances?employeeId=${encodeURIComponent(formState.employeeId)}&year=${formState.payYear}&pageSize=50`,
+        );
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as { data?: LeaveBalanceApiRow[] };
+        const rows = json.data ?? [];
+        if (cancelled) return;
+        const mapped = mapLeaveBalancesToSnapshot(rows);
+        setFormState((prev) => ({
+          ...prev,
+          leaveBalances: mapped,
+        }));
+        setLeaveSyncStatus(rows.length > 0 ? 'synced' : 'empty');
+      } catch {
+        if (!cancelled) setLeaveSyncStatus('empty');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canManage, isCreateOpen, formState.employeeId, formState.payYear]);
 
   useEffect(() => {
     if (!canManage || !isCreateOpen || employees.length > 0) return;
@@ -146,22 +233,44 @@ export const PayslipsPage: React.FC = () => {
   const onCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formState.employeeId) {
-      setActionError('Please select an employee.');
+      setCreateError('Please select an employee.');
       return;
     }
     try {
       setSubmittingCreate(true);
+      setCreateError(null);
       setActionError(null);
       await handleCreate(formState);
       setIsCreateOpen(false);
       setDownloadToast('Payslip record created.');
       setTimeout(() => setDownloadToast(null), 4000);
     } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : 'Failed to create payslip');
+      const msg = err instanceof Error ? err.message : 'Failed to create payslip';
+      setCreateError(msg);
+      setActionError(msg);
     } finally {
       setSubmittingCreate(false);
     }
   };
+
+  const draftGross =
+    (formState.basicSalary || 0) +
+    (formState.basicArrears || 0) +
+    (formState.hra || 0) +
+    (formState.hraArrears || 0) +
+    (formState.performancePay || 0) +
+    (formState.performanceArrears || 0) +
+    (formState.variableAllowance || 0) +
+    (formState.variableArrears || 0);
+  const draftDeductions =
+    (formState.providentFund || 0) +
+    (formState.incomeTax || 0) +
+    (formState.professionalTax || 0) +
+    (formState.otherDeductionAmount || 0);
+  const draftNetPay = draftGross - draftDeductions;
+
+  const fieldClass =
+    'mt-1 h-9 w-full rounded-xl border border-border-strong bg-surface-raised px-2.5 text-xs text-text tabular-nums focus:border-primary-strong focus:outline-none focus:ring-2 focus:ring-primary-soft';
 
   return (
     <div className="space-y-6" data-testid="payslips-page">
@@ -208,7 +317,10 @@ export const PayslipsPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 size="sm"
-                onClick={() => setIsCreateOpen(true)}
+                onClick={() => {
+                  setCreateError(null);
+                  setIsCreateOpen(true);
+                }}
                 data-testid="create-payslip-btn"
               >
                 + New Payslip
@@ -267,39 +379,37 @@ export const PayslipsPage: React.FC = () => {
 
       {/* Period Filters */}
       <div className="flex flex-wrap items-center gap-3 rounded-card bg-surface border border-border p-3.5">
-        <label className="text-xs font-semibold text-text-muted flex items-center gap-2">
-          Month
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value ? Number(e.target.value) : '')}
-            className="rounded-input border border-border-strong bg-surface-raised px-2.5 py-1.5 text-xs text-text"
-            aria-label="Filter by month"
-          >
-            <option value="">All Months</option>
-            {MONTHS.map((m, idx) => (
-              <option key={m} value={idx + 1}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="text-xs font-semibold text-text-muted flex items-center gap-2">
+          <span>Month</span>
+          <div className="w-36">
+            <DropdownSelect
+              ariaLabel="Filter by month"
+              value={selectedMonth === '' ? '' : String(selectedMonth)}
+              onChange={(val) => setSelectedMonth(val ? Number(val) : '')}
+              options={[
+                { value: '', label: 'All Months' },
+                ...MONTHS.map((m, idx) => ({ value: String(idx + 1), label: m })),
+              ]}
+              className="h-9"
+            />
+          </div>
+        </div>
 
-        <label className="text-xs font-semibold text-text-muted flex items-center gap-2">
-          Year
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value ? Number(e.target.value) : '')}
-            className="rounded-input border border-border-strong bg-surface-raised px-2.5 py-1.5 text-xs text-text"
-            aria-label="Filter by year"
-          >
-            <option value="">All Years</option>
-            {[2026, 2025, 2024].map((yr) => (
-              <option key={yr} value={yr}>
-                {yr}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="text-xs font-semibold text-text-muted flex items-center gap-2">
+          <span>Year</span>
+          <div className="w-28">
+            <DropdownSelect
+              ariaLabel="Filter by year"
+              value={selectedYear === '' ? '' : String(selectedYear)}
+              onChange={(val) => setSelectedYear(val ? Number(val) : '')}
+              options={[
+                { value: '', label: 'All Years' },
+                ...[2026, 2025, 2024].map((yr) => ({ value: String(yr), label: String(yr) })),
+              ]}
+              className="h-9"
+            />
+          </div>
+        </div>
 
         {(selectedMonth !== '' || selectedYear !== '') && (
           <Button
@@ -424,13 +534,17 @@ export const PayslipsPage: React.FC = () => {
           isOpen={Boolean(previewSlip)}
           onClose={() => setPreviewSlip(null)}
           title={`Payslip — ${previewSlip.periodLabel}`}
+          subtitle="Read-only verified monthly salary statement"
+          maxWidth="2xl"
         >
-          <div className="space-y-4 text-xs text-text">
-            <div className="flex flex-wrap justify-between items-center pb-3 border-b border-border gap-2">
+          <div className="space-y-3.5 text-xs text-text">
+            <div className="flex flex-wrap justify-between items-center pb-3 border-b border-border gap-3">
               <div>
-                <p className="font-bold text-sm">{previewSlip.employeeName.toUpperCase()}</p>
-                <p className="text-text-muted">
-                  {previewSlip.employeeCode} &middot; {previewSlip.designation}
+                <p className="font-bold text-sm font-display text-text">
+                  {previewSlip.employeeName.toUpperCase()}
+                </p>
+                <p className="text-text-muted mt-0.5">
+                  {previewSlip.employeeCode} &middot; {previewSlip.designation || 'Employee'}
                 </p>
               </div>
               <Button
@@ -443,78 +557,161 @@ export const PayslipsPage: React.FC = () => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-surface-muted p-3 rounded-tile">
-              <div>
-                <p className="font-semibold text-text-muted mb-1">Employee Details</p>
-                <p>UAN: {previewSlip.uan || '—'}</p>
-                <p>PAN: {previewSlip.pan || '—'}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-xl border border-border bg-surface-muted/50 p-3 space-y-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted border-b border-border/70 pb-1">
+                  Employee Details
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">Emp ID</span>
+                  <span className="font-medium text-text tabular-nums">
+                    {previewSlip.employeeCode || 'None'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">UAN</span>
+                  <span className="font-medium text-text tabular-nums">
+                    {previewSlip.uan || 'None'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">PAN</span>
+                  <span className="font-medium text-text tabular-nums">
+                    {previewSlip.pan || 'None'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-text-muted mb-1">Payment & Leave</p>
-                <p>Bank: {previewSlip.bankName || '—'}</p>
-                <p>Acc: {previewSlip.accountNumber || '—'}</p>
-                <p>Days Paid: {previewSlip.daysPaid}</p>
+              <div className="rounded-xl border border-border bg-surface-muted/50 p-3 space-y-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted border-b border-border/70 pb-1">
+                  Payment &amp; Leave
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted shrink-0">Bank</span>
+                  <span className="font-medium text-text text-right truncate">
+                    {previewSlip.bankName || 'None'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted shrink-0">Acc</span>
+                  <span className="font-medium text-text tabular-nums truncate">
+                    {previewSlip.accountNumber || 'None'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">Days Paid</span>
+                  <span className="font-medium text-text tabular-nums">{previewSlip.daysPaid}</span>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-text-muted mb-1">Location Details</p>
-                <p>Location: {previewSlip.workLocation || '—'}</p>
-                <p>Branch: {previewSlip.baseBranch || '—'}</p>
-                <p>Beneficiary: {previewSlip.beneficiaryId || '—'}</p>
+              <div className="rounded-xl border border-border bg-surface-muted/50 p-3 space-y-1.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted border-b border-border/70 pb-1">
+                  Location Details
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">Location</span>
+                  <span className="font-medium text-text">
+                    {previewSlip.workLocation || 'None'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">Branch</span>
+                  <span className="font-medium text-text">{previewSlip.baseBranch || 'None'}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-text-muted">Beneficiary</span>
+                  <span className="font-medium text-text tabular-nums">
+                    {previewSlip.beneficiaryId || 'None'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="border border-border rounded-tile p-3 space-y-1.5">
-                <p className="font-bold text-primary-ink border-b border-border pb-1">Earnings</p>
-                <div className="flex justify-between">
-                  <span>Basic Salary</span>
-                  <span>{formatInr(previewSlip.basicSalary + previewSlip.basicArrears)}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="border border-border rounded-tile p-3.5 bg-surface flex flex-col justify-between gap-2">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-primary-ink border-b border-border pb-1.5">
+                    Earnings
+                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">Basic Salary</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.basicSalary + previewSlip.basicArrears)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">House Rent Allowance</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.hra + previewSlip.hraArrears)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">Performance Pay</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.performancePay + previewSlip.performanceArrears)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">Variable Allowance</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.variableAllowance + previewSlip.variableArrears)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>House Rent Allowance</span>
-                  <span>{formatInr(previewSlip.hra + previewSlip.hraArrears)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Performance Pay</span>
-                  <span>
-                    {formatInr(previewSlip.performancePay + previewSlip.performanceArrears)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Variable Allowance</span>
-                  <span>
-                    {formatInr(previewSlip.variableAllowance + previewSlip.variableArrears)}
-                  </span>
-                </div>
-                <div className="flex justify-between font-bold pt-1 border-t border-border">
+                <div className="flex items-center justify-between gap-3 font-bold pt-2 border-t border-border">
                   <span>Total Earnings</span>
-                  <span>{formatInr(previewSlip.totalEarnings)}</span>
+                  <span className="font-display tabular-nums whitespace-nowrap">
+                    {formatInr(previewSlip.totalEarnings)}
+                  </span>
                 </div>
               </div>
 
-              <div className="border border-border rounded-tile p-3 space-y-1.5">
-                <p className="font-bold text-primary-ink border-b border-border pb-1">Deductions</p>
-                <div className="flex justify-between">
-                  <span>Provident Fund</span>
-                  <span>{formatInr(previewSlip.providentFund)}</span>
+              <div className="border border-border rounded-tile p-3.5 bg-surface flex flex-col justify-between gap-2">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted border-b border-border pb-1.5">
+                    Deductions
+                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">Provident Fund</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.providentFund)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">Income Tax</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.incomeTax)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-muted">Professional Tax</span>
+                    <span className="font-medium tabular-nums whitespace-nowrap">
+                      {formatInr(previewSlip.professionalTax)}
+                    </span>
+                  </div>
+                  {previewSlip.otherDeductionAmount > 0 && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-text-muted">
+                        {previewSlip.otherDeductionDesc || 'Other Deduction'}
+                      </span>
+                      <span className="font-medium tabular-nums whitespace-nowrap">
+                        {formatInr(previewSlip.otherDeductionAmount)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between">
-                  <span>Income Tax</span>
-                  <span>{formatInr(previewSlip.incomeTax)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Professional Tax</span>
-                  <span>{formatInr(previewSlip.professionalTax)}</span>
-                </div>
-                <div className="flex justify-between font-bold pt-1 border-t border-border">
+                <div className="flex items-center justify-between gap-3 font-bold pt-2 border-t border-border">
                   <span>Total Deductions</span>
-                  <span>{formatInr(previewSlip.totalDeductions)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-sm text-primary-ink pt-2">
-                  <span>Net Pay (INR)</span>
-                  <span>{formatInr(previewSlip.netPay)}</span>
+                  <span className="font-display tabular-nums whitespace-nowrap">
+                    {formatInr(previewSlip.totalDeductions)}
+                  </span>
                 </div>
               </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-tile bg-primary-soft/70 border border-primary/30 px-4 py-2.5">
+              <span className="text-xs font-bold text-text">Net Pay (INR)</span>
+              <span className="text-lg font-bold font-display text-primary-ink tabular-nums whitespace-nowrap">
+                {formatInr(previewSlip.netPay)}
+              </span>
             </div>
           </div>
         </Modal>
@@ -526,167 +723,717 @@ export const PayslipsPage: React.FC = () => {
           isOpen={isCreateOpen}
           onClose={() => setIsCreateOpen(false)}
           title="Create Employee Payslip"
+          subtitle="Configure pay period, earnings, and deductions before saving."
+          maxWidth="2xl"
         >
-          <form onSubmit={(e) => void onCreateSubmit(e)} className="space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="block">
-                <span className="font-semibold text-text-muted">Employee</span>
-                <select
-                  required
-                  value={formState.employeeId}
-                  onChange={(e) => {
-                    const emp = employees.find((x) => x.id === e.target.value);
-                    setFormState((prev) => ({
-                      ...prev,
-                      employeeId: e.target.value,
-                      designation: emp?.designation?.title ?? prev.designation,
-                    }));
-                  }}
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                >
-                  <option value="">Select Employee</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName} ({emp.employeeCode})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Month</span>
-                <select
-                  value={formState.payMonth}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, payMonth: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                >
-                  {MONTHS.map((m, i) => (
-                    <option key={m} value={i + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Year</span>
-                <input
-                  type="number"
-                  min={2020}
-                  max={2100}
-                  value={formState.payYear}
-                  onChange={(e) => setFormState((p) => ({ ...p, payYear: Number(e.target.value) }))}
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
+          <form onSubmit={(e) => void onCreateSubmit(e)} className="space-y-3 text-xs">
+            {createError && (
+              <div
+                className="rounded-xl px-3 py-2 text-xs font-medium border border-danger/30 bg-danger/10 text-danger"
+                role="alert"
+              >
+                {createError}
+              </div>
+            )}
+
+            {/* Modal Section Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 rounded-tile bg-surface-muted p-1 border border-border">
+              {[
+                { id: 'salary', label: 'Salary & Period' },
+                { id: 'details', label: 'Bank, Location & Leave' },
+                { id: 'tax', label: 'Retirals & Annual Tax' },
+              ].map((tab) => {
+                const active = createTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCreateTab(tab.id as 'salary' | 'details' | 'tax')}
+                    className={`flex-1 min-w-[140px] rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+                      active
+                        ? 'bg-surface-raised text-primary-ink shadow-sm border border-border'
+                        : 'text-text-muted hover:text-text'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <label className="block">
-                <span className="font-semibold text-text-muted">Basic Salary (INR)</span>
-                <input
-                  type="number"
-                  min={0}
-                  required
-                  value={formState.basicSalary}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, basicSalary: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">HRA (INR)</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={formState.hra ?? 0}
-                  onChange={(e) => setFormState((p) => ({ ...p, hra: Number(e.target.value) }))}
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Performance Pay</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={formState.performancePay ?? 0}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, performancePay: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Variable Allowance</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={formState.variableAllowance ?? 0}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, variableAllowance: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
+            {createTab === 'salary' && (
+              <>
+                {/* Employee & Pay Period */}
+                <div className="rounded-tile bg-surface-muted/70 border border-border p-3 space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                    Employee &amp; Pay Period
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-12 gap-2.5">
+                    <div className="block col-span-2 sm:col-span-4">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Employee
+                      </span>
+                      <div className="mt-1">
+                        <DropdownSelect
+                          ariaLabel="Employee"
+                          placeholder="Select Employee"
+                          value={formState.employeeId}
+                          onChange={(val) => {
+                            const emp = employees.find((x) => x.id === val);
+                            setFormState((prev) => ({
+                              ...prev,
+                              employeeId: val,
+                              designation: emp?.designation?.title ?? prev.designation,
+                            }));
+                          }}
+                          options={employees.map((emp) => ({
+                            value: emp.id,
+                            label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})`,
+                          }))}
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="block sm:col-span-2">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Month
+                      </span>
+                      <div className="mt-1">
+                        <DropdownSelect
+                          ariaLabel="Pay Month"
+                          value={String(formState.payMonth)}
+                          onChange={(val) => setFormState((p) => ({ ...p, payMonth: Number(val) }))}
+                          options={MONTHS.map((m, i) => ({ value: String(i + 1), label: m }))}
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+
+                    <label className="block sm:col-span-2">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Year
+                      </span>
+                      <input
+                        type="number"
+                        min={2020}
+                        max={2100}
+                        value={formState.payYear}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, payYear: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+
+                    <label className="block sm:col-span-2">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Days Paid
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={31}
+                        value={formState.daysPaid ?? 30}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, daysPaid: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+
+                    <div className="block sm:col-span-2">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Status
+                      </span>
+                      <div className="mt-1">
+                        <DropdownSelect
+                          ariaLabel="Status"
+                          value={formState.status ?? 'draft'}
+                          onChange={(val) =>
+                            setFormState((p) => ({
+                              ...p,
+                              status: val as 'draft' | 'published',
+                            }))
+                          }
+                          options={[
+                            { value: 'draft', label: 'Draft' },
+                            { value: 'published', label: 'Published' },
+                          ]}
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Earnings & Deductions Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-tile border border-border bg-surface p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-primary-ink">
+                        Earnings (INR)
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowArrears((v) => !v)}
+                        className="text-[11px] font-semibold text-primary-ink hover:underline"
+                      >
+                        {showArrears ? 'Hide Arrears' : '+ Add Arrears'}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Basic Salary
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          required
+                          value={formState.basicSalary}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, basicSalary: Number(e.target.value) }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          HRA
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.hra ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, hra: Number(e.target.value) }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Performance Pay
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.performancePay ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, performancePay: Number(e.target.value) }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Variable Allow.
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.variableAllowance ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({
+                              ...p,
+                              variableAllowance: Number(e.target.value),
+                            }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                    </div>
+                    {showArrears && (
+                      <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-border/70">
+                        <label className="block">
+                          <span className="font-semibold text-text-muted block whitespace-nowrap">
+                            Basic Arrears
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={formState.basicArrears ?? 0}
+                            onChange={(e) =>
+                              setFormState((p) => ({ ...p, basicArrears: Number(e.target.value) }))
+                            }
+                            className={fieldClass}
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="font-semibold text-text-muted block whitespace-nowrap">
+                            HRA Arrears
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={formState.hraArrears ?? 0}
+                            onChange={(e) =>
+                              setFormState((p) => ({ ...p, hraArrears: Number(e.target.value) }))
+                            }
+                            className={fieldClass}
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="font-semibold text-text-muted block whitespace-nowrap">
+                            Perf. Arrears
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={formState.performanceArrears ?? 0}
+                            onChange={(e) =>
+                              setFormState((p) => ({
+                                ...p,
+                                performanceArrears: Number(e.target.value),
+                              }))
+                            }
+                            className={fieldClass}
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="font-semibold text-text-muted block whitespace-nowrap">
+                            Var. Arrears
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={formState.variableArrears ?? 0}
+                            onChange={(e) =>
+                              setFormState((p) => ({
+                                ...p,
+                                variableArrears: Number(e.target.value),
+                              }))
+                            }
+                            className={fieldClass}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-tile border border-border bg-surface p-3 space-y-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                      Deductions (INR)
+                    </p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Provident Fund
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.providentFund ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, providentFund: Number(e.target.value) }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Income Tax
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.incomeTax ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, incomeTax: Number(e.target.value) }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Professional Tax
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.professionalTax ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({
+                              ...p,
+                              professionalTax: Number(e.target.value),
+                            }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Other Deduction
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={formState.otherDeductionAmount ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({
+                              ...p,
+                              otherDeductionAmount: Number(e.target.value),
+                            }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {createTab === 'details' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-tile border border-border bg-surface p-3 space-y-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-primary-ink">
+                      Employee &amp; Bank Details
+                    </p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Designation
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.designation ?? ''}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, designation: e.target.value }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          UAN
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.uan ?? ''}
+                          onChange={(e) => setFormState((p) => ({ ...p, uan: e.target.value }))}
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          PAN
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.pan ?? ''}
+                          onChange={(e) => setFormState((p) => ({ ...p, pan: e.target.value }))}
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Bank Name
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.bankName ?? ''}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, bankName: e.target.value }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Acc No.
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.accountNumber ?? ''}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, accountNumber: e.target.value }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Beneficiary ID
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.beneficiaryId ?? ''}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, beneficiaryId: e.target.value }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="rounded-tile border border-border bg-surface p-3 space-y-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                      Location &amp; Deduction Label
+                    </p>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Location
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.workLocation ?? ''}
+                          onChange={(e) =>
+                            setFormState((p) => ({
+                              ...p,
+                              workLocation: e.target.value,
+                              subLocation: e.target.value,
+                            }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Base Br.
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.baseBranch ?? ''}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, baseBranch: e.target.value }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          Other Deduction Label
+                        </span>
+                        <input
+                          type="text"
+                          value={formState.otherDeductionDesc ?? 'Desc.'}
+                          onChange={(e) =>
+                            setFormState((p) => ({ ...p, otherDeductionDesc: e.target.value }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Auto-synced Leave Balances */}
+                <div className="rounded-tile border border-border bg-surface-muted/70 p-3 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-primary-ink">
+                      Leave Details ({formState.payYear})
+                    </p>
+                    <span className="text-[11px] font-medium text-text-muted">
+                      {leaveSyncStatus === 'loading'
+                        ? 'Fetching from Leave module...'
+                        : leaveSyncStatus === 'synced'
+                          ? 'Auto-synced from Leave balances'
+                          : 'No leave records for year (defaults to 0)'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2.5">
+                    {(
+                      [
+                        ['sl', 'SL'],
+                        ['el', 'EL'],
+                        ['cl', 'CL'],
+                        ['fl', 'FL'],
+                        ['lc', 'LC'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key} className="block">
+                        <span className="font-semibold text-text-muted block whitespace-nowrap">
+                          {label}
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={365}
+                          step="0.5"
+                          value={formState.leaveBalances?.[key] ?? 0}
+                          onChange={(e) =>
+                            setFormState((p) => ({
+                              ...p,
+                              leaveBalances: {
+                                ...p.leaveBalances,
+                                [key]: Number(e.target.value),
+                              },
+                            }))
+                          }
+                          className={fieldClass}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {createTab === 'tax' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-tile border border-border bg-surface p-3 space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-primary-ink">
+                    Retirals as on Month end
+                  </p>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Provident Fund (INR)
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.retiralPf ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, retiralPf: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Gratuity (INR)
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.retiralGratuity ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, retiralGratuity: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-tile border border-border bg-surface p-3 space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
+                    Projected Annual Tax Information
+                  </p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Annual Income
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.annualIncome ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, annualIncome: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Deductions (if any)
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.taxDeductions ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, taxDeductions: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        NetTax Income
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.netTaxIncome ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, netTaxIncome: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Total Tax Payable
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.totalTaxPayable ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, totalTaxPayable: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Tax deducted till now
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.taxDeductedTillNow ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({
+                            ...p,
+                            taxDeductedTillNow: Number(e.target.value),
+                          }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="font-semibold text-text-muted block whitespace-nowrap">
+                        Balance Tax
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formState.balanceTax ?? 0}
+                        onChange={(e) =>
+                          setFormState((p) => ({ ...p, balanceTax: Number(e.target.value) }))
+                        }
+                        className={fieldClass}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Live Calculation Preview */}
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-tile bg-primary-soft/70 border border-primary/30 px-3.5 py-2">
+              <div className="flex flex-wrap items-center gap-5 text-xs">
+                <div>
+                  <span className="text-text-muted block text-[11px]">Gross Earnings</span>
+                  <span className="font-semibold text-text font-display tabular-nums">
+                    {formatInr(draftGross)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-text-muted block text-[11px]">Total Deductions</span>
+                  <span className="font-semibold text-text font-display tabular-nums">
+                    {formatInr(draftDeductions)}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-text-muted block text-[11px]">Estimated Net Pay</span>
+                <span className="text-base font-bold text-primary-ink font-display tabular-nums">
+                  {formatInr(draftNetPay)}
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <label className="block">
-                <span className="font-semibold text-text-muted">Provident Fund</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={formState.providentFund ?? 0}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, providentFund: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Income Tax</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={formState.incomeTax ?? 0}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, incomeTax: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Professional Tax</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={formState.professionalTax ?? 0}
-                  onChange={(e) =>
-                    setFormState((p) => ({ ...p, professionalTax: Number(e.target.value) }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                />
-              </label>
-              <label className="block">
-                <span className="font-semibold text-text-muted">Status</span>
-                <select
-                  value={formState.status}
-                  onChange={(e) =>
-                    setFormState((p) => ({
-                      ...p,
-                      status: e.target.value as 'draft' | 'published',
-                    }))
-                  }
-                  className="mt-1 w-full rounded-input border border-border-strong bg-surface-raised px-2.5 py-2 text-text"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <div className="flex justify-end gap-2.5 pt-2.5 border-t border-border">
               <Button
                 type="button"
                 variant="outline"

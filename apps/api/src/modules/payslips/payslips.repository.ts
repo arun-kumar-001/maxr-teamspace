@@ -374,7 +374,7 @@ export class PgPayslipsRepository implements IPayslipsRepository {
           $37, $38, $39,
           $40, $41, $42,
           CASE WHEN $4 = 'published' THEN NOW() ELSE NULL END,
-          CASE WHEN $4 = 'published' THEN $43 ELSE NULL END
+          CASE WHEN $4 = 'published' THEN $43::uuid ELSE NULL END
         ) RETURNING id`,
         [
           dto.employeeId,
@@ -531,7 +531,7 @@ export class PgPayslipsRepository implements IPayslipsRepository {
       `UPDATE payslips
          SET status = 'published',
              published_at = COALESCE(published_at, NOW()),
-             published_by_employee_id = COALESCE(published_by_employee_id, $2),
+             published_by_employee_id = COALESCE(published_by_employee_id, $2::uuid),
              updated_at = NOW()
        WHERE id = $1
        RETURNING id`,
