@@ -183,6 +183,9 @@ Rules:
 
 ## 10. Testing and quality gates
 
+- **Targeted testing during development (MANDATORY):** When implementing or modifying a feature, run ONLY the test file(s) for that specific feature (e.g. `npx vitest run src/features/<feature>` or `src/dashboards`). DO NOT run the full project test suite (`npm test`) on routine feature edits to avoid wasting time.
+- **Full test suite timing:** Run the full project test suite ONLY when preparing a final PR, before deployment, or when explicitly requested by the user.
+
 Every PR must pass, and agents must run locally before declaring done:
 
 1. Typecheck, lint, format check.

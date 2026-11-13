@@ -7,3 +7,4 @@ export * from './components/PersonalInformation';
 export * from './components/EmploymentInformation';
 export * from './components/AccountInformation';
 export * from './pages/MyProfilePage';
+export * from './pages/ProfilePortalPage';

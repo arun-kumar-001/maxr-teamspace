@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
@@ -34,16 +34,22 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       ? 'requests'
       : initialTab === 'approvals' && !canReviewApprovals
         ? 'requests'
-        : initialTab,
+        : initialTab === 'calendar'
+          ? 'requests'
+          : initialTab,
   );
 
   useEffect(() => {
-    if (initialTab === 'policies' && !canManage) {
-      setActiveTab('requests');
-    } else if (initialTab === 'approvals' && !canReviewApprovals) {
-      setActiveTab('requests');
-    } else {
-      setActiveTab(initialTab);
+    if (initialTab) {
+      setActiveTab(
+        initialTab === 'policies' && !canManage
+          ? 'requests'
+          : initialTab === 'approvals' && !canReviewApprovals
+            ? 'requests'
+            : initialTab === 'calendar'
+              ? 'requests'
+              : initialTab,
+      );
     }
   }, [initialTab, canManage, canReviewApprovals]);
 
@@ -65,9 +71,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     balanceError,
     requestsError,
     calendarError,
-    loadBalances,
-    loadMyRequests,
-    loadCalendar,
     applyLeave,
     cancelRequest,
     createPolicy,
@@ -99,7 +102,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     { value: 'requests', label: 'My Requests' },
     ...(canReviewApprovals ? [{ value: 'approvals', label: 'Team Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
-    { value: 'calendar', label: 'Team Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
@@ -113,12 +115,10 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display">
-            Leave & Holiday Management
+            Employee Leave
           </h1>
-          <p className="text-sm text-text-muted mt-1">
-            Apply for leave, track requests and approvals, check balances, and review team
-            schedules.
-          </p>
+          <p className="text-sm text-text-muted mt-1">Plan, track, and manage team leaves</p>
+          <span className="sr-only">Leave & Holiday Management</span>
         </div>
 
         {/* Action Buttons */}
@@ -129,9 +129,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
             variant="primary"
             onClick={() => setIsApplyModalOpen(true)}
             data-testid="apply-leave-btn"
-            className="min-h-[44px]"
+            className="min-h-[44px] rounded-full px-5 py-2.5 font-bold shadow-sm"
           >
-            Apply for Leave
+            + Apply Leave
           </Button>
 
           {canManage && (
@@ -239,6 +239,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       {activeTab === 'requests' && (
         <LeaveRequestsTable
           requests={requests}
+          balances={balances}
           isLoading={isLoadingRequests}
           onCancelRequest={async (id) => {
             await cancelRequest(id);
@@ -247,22 +248,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
         />
       )}
 
-      {activeTab === 'approvals' && canReviewApprovals && (
-        <LeaveApprovalsTab
-          onDecisionSuccess={() => {
-            void loadMyRequests();
-            void loadBalances(selectedYear);
-            const now = new Date();
-            const pad = (n: number) => String(n).padStart(2, '0');
-            const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            const mEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-            void loadCalendar(
-              `${mStart.getFullYear()}-${pad(mStart.getMonth() + 1)}-${pad(mStart.getDate())}`,
-              `${mEnd.getFullYear()}-${pad(mEnd.getMonth() + 1)}-${pad(mEnd.getDate())}`,
-            );
-          }}
-        />
-      )}
+      {activeTab === 'approvals' && canReviewApprovals && <LeaveApprovalsTab />}
 
       {activeTab === 'balances' && (
         <LeaveBalancesSummary
@@ -270,17 +256,15 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           year={selectedYear}
           onYearChange={setSelectedYear}
           isLoading={isLoadingBalances}
+          onApplyClick={() => setIsApplyModalOpen(true)}
         />
       )}
 
       {activeTab === 'calendar' && (
         <LeaveCalendarView
           entries={calendarEntries}
-          holidays={holidays}
           isLoading={isLoadingCalendar}
-          onRangeChange={(from, to) => {
-            void loadCalendar(from, to);
-          }}
+          onApplyClick={() => setIsApplyModalOpen(true)}
         />
       )}
 

@@ -10,7 +10,12 @@ import { AttendanceService } from './attendance.service';
 import { AuditLogger } from '../../platform/audit/types';
 import { CompanySettingsReader } from '../settings';
 import type { ShiftResolver } from '../shifts';
-import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
+import {
+  checkInSchema,
+  checkOutSchema,
+  listAttendanceQuerySchema,
+  teamCalendarQuerySchema,
+} from './attendance.schemas';
 
 export interface AttendanceRouterOptions {
   authenticate: RequestHandler;
@@ -54,6 +59,25 @@ export function createAttendanceRouter(options: AttendanceRouterOptions): Router
     requirePermission('attendance.check_out'),
     validate({ body: checkOutSchema }),
     asyncHandler(controller.checkOut),
+  );
+
+  router.post(
+    '/break-start',
+    requirePermission('attendance.check_in'),
+    asyncHandler(controller.breakStart),
+  );
+
+  router.post(
+    '/break-end',
+    requirePermission('attendance.check_in'),
+    asyncHandler(controller.breakEnd),
+  );
+
+  router.get(
+    '/team-calendar',
+    requirePermission('attendance.read_own'),
+    validate({ query: teamCalendarQuerySchema }),
+    asyncHandler(controller.getTeamCalendar),
   );
 
   router.get(

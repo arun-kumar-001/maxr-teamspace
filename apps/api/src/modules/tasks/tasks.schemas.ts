@@ -20,16 +20,20 @@ const title = z.string().trim().min(1).max(200);
 const description = z.string().trim().min(1).max(2000);
 const booleanQuery = z.enum(['true', 'false']).transform((value) => value === 'true');
 
-export const taskIdParamsSchema = z.object({ id: z.string().uuid() }).strict();
+const uuidSchema = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'Invalid UUID');
+
+export const taskIdParamsSchema = z.object({ id: uuidSchema }).strict();
 
 export const createTaskSchema = z
   .object({
     title,
     description: description.optional(),
-    assigneeEmployeeId: z.string().uuid(),
+    assigneeEmployeeId: uuidSchema,
     priority: priority.default('medium'),
     dueDate: calendarDate.optional(),
-    projectId: z.string().uuid().optional(),
+    projectId: uuidSchema.optional(),
     isDaily: z.boolean().optional(),
   })
   .strict();
@@ -38,10 +42,10 @@ export const updateTaskSchema = z
   .object({
     title: title.optional(),
     description: description.nullable().optional(),
-    assigneeEmployeeId: z.string().uuid().optional(),
+    assigneeEmployeeId: uuidSchema.optional(),
     priority: priority.optional(),
     dueDate: calendarDate.nullable().optional(),
-    projectId: z.string().uuid().nullable().optional(),
+    projectId: uuidSchema.nullable().optional(),
     isDaily: z.boolean().optional(),
     version: z.number().int().min(1),
   })
@@ -57,7 +61,7 @@ const listFields = {
   pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(20),
   status: status.optional(),
   priority: priority.optional(),
-  projectId: z.string().uuid().optional(),
+  projectId: uuidSchema.optional(),
   overdue: booleanQuery.optional(),
   dueFrom: calendarDate.optional(),
   dueTo: calendarDate.optional(),
@@ -65,19 +69,19 @@ const listFields = {
 
 export const listMyTasksQuerySchema = z.object(listFields).strict();
 export const listTeamTasksQuerySchema = z
-  .object({ ...listFields, assigneeEmployeeId: z.string().uuid().optional() })
+  .object({ ...listFields, assigneeEmployeeId: uuidSchema.optional() })
   .strict();
 
 export const taskSchema = z
   .object({
-    id: z.string().uuid(),
+    id: uuidSchema,
     title: z.string(),
     description: z.string().nullable(),
-    projectId: z.string().uuid().nullable(),
+    projectId: uuidSchema.nullable(),
     projectName: z.string().nullable(),
-    assigneeEmployeeId: z.string().uuid(),
+    assigneeEmployeeId: uuidSchema,
     assigneeName: z.string(),
-    assignerEmployeeId: z.string().uuid(),
+    assignerEmployeeId: uuidSchema,
     assignerName: z.string(),
     status,
     priority,

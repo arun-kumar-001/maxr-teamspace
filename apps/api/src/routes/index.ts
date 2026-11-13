@@ -35,6 +35,7 @@ import { createTasks } from '../modules/tasks';
 import { createTodos } from '../modules/todos';
 import { createMeetings } from '../modules/meetings';
 import { createExpensesModule } from '../modules/expenses';
+import { createPayslipsRouter } from '../modules/payslips';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
@@ -252,6 +253,14 @@ export function createApiRouter({
     idempotencyStore,
   });
   router.use('/', expenses.router);
+
+  router.use(
+    '/payslips',
+    createPayslipsRouter({
+      authenticate: auth.authenticate,
+      audit: platform.audit,
+    }),
+  );
 
   if (exposeDevRoutes) {
     router.use('/templates', createTemplateRouter(idempotencyStore, platform, auth.authenticate));

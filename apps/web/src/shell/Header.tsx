@@ -37,6 +37,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
   }, [isUserMenuOpen]);
 
   const getPageTitle = (path: string): string => {
+    if (path === '/dashboard' || path === '/') return 'Dashboard';
     if (path.includes('users')) return 'Users & Roles Administration';
     if (path.includes('notifications')) return 'Notification Inbox';
     if (path.includes('audit')) return 'Security Audit Logs';
@@ -57,7 +58,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('tasks')) return 'Tasks & Work Management';
     if (path.includes('meetings') || path.includes('calendar')) return 'Calendar';
     if (path.includes('expenses')) return 'Expenses & Claims';
-    if (path.includes('profile')) return 'My Employee Profile';
+    if (path.includes('profile')) return 'My Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
     if (path.includes('components')) return 'Shared UI Component Gallery';
     return 'Dashboard';
