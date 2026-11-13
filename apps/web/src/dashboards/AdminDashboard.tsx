@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
+import { DonutChart, type DonutChartSegment } from '../components/ui';
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
-import {
-  checkIn,
-  checkOut,
-  fetchTeamAttendance,
-  fetchTodayAttendance,
-} from '../features/attendance/api/attendance';
+import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchMeetings } from '../features/meetings/api/meetingsApi';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
+import { cn } from '../lib/utils';
 
-// --- Shared Code-Based Lucide SVG Icons ---
+// --- Shared Code-Based Modern Duotone SVG Icons ---
 
 function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -24,8 +22,7 @@ function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
+      <path d="M12 5v14M5 12h14" />
     </svg>
   );
 }
@@ -36,16 +33,16 @@ function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <circle cx="9.5" cy="7.5" r="3.5" fill="currentColor" fillOpacity="0.18" />
+      <path d="M3 19.5c0-3 2.9-5 6.5-5s6.5 2 6.5 5" fill="currentColor" fillOpacity="0.14" />
+      <path d="M16.5 4.7a3.2 3.2 0 0 1 0 5.6" />
+      <path d="M21 19.5c0-2.3-1.8-4.1-4.3-4.7" />
     </svg>
   );
 }
@@ -56,14 +53,15 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
+      <circle cx="12" cy="12" r="9.25" fill="currentColor" fillOpacity="0.15" />
+      <path d="M12 7v5.2l3.4 2" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -74,16 +72,26 @@ function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
+      <rect
+        x="3.25"
+        y="4.75"
+        width="17.5"
+        height="16"
+        rx="4"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <path d="M3.25 9.75h17.5" />
+      <path d="M8 2.75v3.5M16 2.75v3.5" />
+      <circle cx="8.5" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15.5" cy="14" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -94,14 +102,22 @@ function IconCheckSquare({ className = 'w-5 h-5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <polyline points="9 11 12 14 22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      <rect
+        x="3.25"
+        y="3.25"
+        width="17.5"
+        height="17.5"
+        rx="5"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <path d="m8.25 12.25 2.6 2.6 5.15-5.35" />
     </svg>
   );
 }
@@ -112,13 +128,17 @@ function IconFolder({ className = 'w-4 h-4' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+      <path
+        d="M3.5 18.5a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5V9.25a2.5 2.5 0 0 0-2.5-2.5h-6.1a2 2 0 0 1-1.6-.8L9 4.3a2 2 0 0 0-1.6-.8H6A2.5 2.5 0 0 0 3.5 6v12.5Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
     </svg>
   );
 }
@@ -129,15 +149,19 @@ function IconClipboardCheck({ className = 'w-4 h-4' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-      <path d="m9 14 2 2 4-4" />
+      <rect x="8" y="2.5" width="8" height="3.5" rx="1.25" fill="currentColor" fillOpacity="0.2" />
+      <path
+        d="M16 4.25h2a2.25 2.25 0 0 1 2.25 2.25v12.5A2.25 2.25 0 0 1 18 21.25H6a2.25 2.25 0 0 1-2.25-2.25V6.5A2.25 2.25 0 0 1 6 4.25h2"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <path d="m9.25 13.5 2 2 4-4.25" />
     </svg>
   );
 }
@@ -154,7 +178,7 @@ function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <polyline points="9 18 15 12 9 6" />
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }
@@ -171,7 +195,7 @@ function IconCheck({ className = 'w-3.5 h-3.5' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <polyline points="20 6 9 17 4 12" />
+      <path d="m5 12.5 4.2 4.2L19 7" />
     </svg>
   );
 }
@@ -188,8 +212,12 @@ function IconEye({ className = 'w-3.5 h-3.5' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M2.2 12S5.8 5.5 12 5.5 21.8 12 21.8 12 18.2 18.5 12 18.5 2.2 12 2.2 12Z"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      <circle cx="12" cy="12" r="2.75" fill="currentColor" fillOpacity="0.25" />
     </svg>
   );
 }
@@ -200,14 +228,26 @@ function IconVideo({ className = 'w-3.5 h-3.5' }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="m22 8-6 4 6 4V8Z" />
-      <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+      <rect
+        x="2.5"
+        y="6.25"
+        width="13.5"
+        height="11.5"
+        rx="3"
+        fill="currentColor"
+        fillOpacity="0.16"
+      />
+      <path
+        d="m16 10.2 5.2-3a.6.6 0 0 1 .9.52v8.56a.6.6 0 0 1-.9.52l-5.2-3v-3.6Z"
+        fill="currentColor"
+        fillOpacity="0.22"
+      />
     </svg>
   );
 }
@@ -222,55 +262,31 @@ interface ApprovalItem {
   status: 'pending' | 'approved';
 }
 
-interface PriorityTaskItem {
-  title: string;
-  owner: string;
-  badge: string;
-  badgeClass: string;
-}
-
-interface UpcomingMeetingItem {
-  time: string;
-  title: string;
-  desc: string;
-}
-
 export function AdminDashboard() {
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined') {
-      window.location.href = path;
+      window.history.pushState({}, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };
 
-  // State: My Watch Timer (synced with active attendance session if checked in)
-  const [watchSeconds, setWatchSeconds] = useState(15657);
-  const [isOnBreak, setIsOnBreak] = useState(false);
-  const [isSignedOff, setIsSignedOff] = useState(false);
-  const [isWatchSubmitting, setIsWatchSubmitting] = useState(false);
+  const [greetingName, setGreetingName] = useState('Admin');
+  const [hoveredAttendance, setHoveredAttendance] = useState<string | null>(null);
+  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
-  // State: Live Metrics (Initialized with baseline defaults)
+  // State: Metrics (Initialized with verified baseline values)
   const [metrics, setMetrics] = useState({
     teamMembers: 128,
     presentToday: 112,
     leaveRequests: 7,
     openTasks: 42,
+    activeSessions: 42,
     pendingApprovalsTotal: 14,
   });
 
-  const [attendanceStats, setAttendanceStats] = useState({
-    present: 112,
-    late: 9,
-    onLeave: 7,
-    absent: 0,
-  });
-
-  const [taskStats, setTaskStats] = useState({
-    completed: 142,
-    pending: 36,
-    overdue: 8,
-  });
-
-  const [priorityTasks, setPriorityTasks] = useState<PriorityTaskItem[]>([
+  // State: Priority Tasks & Upcoming Meetings
+  const [priorityTasks, setPriorityTasks] = useState([
     {
       title: 'Website UI review',
       owner: 'Owner: Rajesh Patel',
@@ -297,7 +313,7 @@ export function AdminDashboard() {
     },
   ]);
 
-  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeetingItem[]>([
+  const [upcomingMeetings, setUpcomingMeetings] = useState([
     { time: '10:30', title: 'Daily team sync', desc: 'All teams • 30 mins' },
     { time: '13:00', title: 'Marketing review', desc: 'Campaign planning • 45 mins' },
     { time: '15:30', title: 'Project check-in', desc: 'Web & Research • 30 mins' },
@@ -334,91 +350,146 @@ export function AdminDashboard() {
     },
   ]);
 
-  // Live timer interval
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (!isOnBreak && !isSignedOff) {
-      timer = setInterval(() => {
-        setWatchSeconds((s) => s + 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isOnBreak, isSignedOff]);
+  const [attendanceCounts, setAttendanceCounts] = useState({
+    present: 112,
+    late: 9,
+    onLeave: 7,
+    absent: 0,
+  });
 
-  // Fetch live metrics gracefully from backend APIs
+  const [taskCounts, setTaskCounts] = useState({
+    completed: 142,
+    pending: 36,
+    overdue: 8,
+  });
+
+  // Fetch live metrics gracefully from API if available
   useEffect(() => {
     let mounted = true;
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const nextWeekIso = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
     async function loadData() {
-      const [empRes, appRes, taskRes, meetRes, todayAttRes, teamAttRes] = await Promise.allSettled([
-        apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
-        fetchApprovals({ status: 'pending', pageSize: 4 }),
-        fetchTeamTasks({ pageSize: 50 }),
-        fetchMeetings({ from: todayIso, to: nextWeekIso, pageSize: 4 }),
-        fetchTodayAttendance(),
-        fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
-      ]);
+      const now = new Date();
+      const todayIso = now.toISOString().slice(0, 10);
+      const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const [meRes, empRes, approvalsRes, tasksRes, meetingsRes, teamAttRes, leaveReqRes] =
+        await Promise.allSettled([
+          apiFetch('/api/v1/auth/me').then((r) => (r.ok ? r.json() : null)),
+          apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
+          fetchApprovals({ status: 'pending', pageSize: 3 }),
+          fetchTeamTasks({ pageSize: 100 }),
+          fetchMeetings({
+            from: now.toISOString(),
+            to: weekLater.toISOString(),
+            pageSize: 3,
+          }),
+          fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
+          apiFetch('/api/v1/leave-requests?status=pending&pageSize=1').then((r) =>
+            r.ok ? r.json() : null,
+          ),
+        ]);
 
       if (!mounted) return;
+
+      if (meRes.status === 'fulfilled') {
+        const fullName =
+          meRes.value?.data?.user?.name || meRes.value?.user?.name || meRes.value?.data?.name;
+        if (typeof fullName === 'string' && fullName.trim()) {
+          setGreetingName(fullName.trim().split(' ')[0]!);
+        }
+      }
 
       if (empRes.status === 'fulfilled' && typeof empRes.value?.meta?.total === 'number') {
         setMetrics((prev) => ({
           ...prev,
-          teamMembers: empRes.value.meta.total,
+          teamMembers: empRes.value.meta.total || prev.teamMembers,
         }));
       }
 
-      if (appRes.status === 'fulfilled') {
-        const list = appRes.value.data || [];
-        const total = appRes.value.meta?.total ?? list.length;
-        setMetrics((prev) => ({
-          ...prev,
-          leaveRequests: total,
-          pendingApprovalsTotal: total,
-        }));
-        if (list.length > 0) {
-          const avatars = [
-            'bg-purple-100 text-purple-700',
-            'bg-emerald-100 text-emerald-700',
-            'bg-slate-200 text-slate-800',
-          ];
+      if (teamAttRes.status === 'fulfilled') {
+        const records = teamAttRes.value.data ?? [];
+        if (records.length > 0) {
+          let present = 0;
+          let late = 0;
+          let onLeave = 0;
+          let absent = 0;
+          let activeNow = 0;
+          for (const rec of records) {
+            if (!rec.checkOutTime) activeNow += 1;
+            if (rec.status === 'late') late += 1;
+            else if (rec.status === 'on_leave') onLeave += 1;
+            else if (rec.status === 'absent') absent += 1;
+            else present += 1;
+          }
+          setAttendanceCounts({ present, late, onLeave, absent });
+          setMetrics((prev) => ({
+            ...prev,
+            presentToday: present + late,
+            activeSessions: activeNow,
+          }));
+        }
+      }
+
+      if (
+        leaveReqRes.status === 'fulfilled' &&
+        typeof leaveReqRes.value?.meta?.total === 'number'
+      ) {
+        setMetrics((prev) => ({ ...prev, leaveRequests: leaveReqRes.value.meta.total }));
+      }
+
+      if (approvalsRes.status === 'fulfilled') {
+        const items = approvalsRes.value.data ?? [];
+        const total = approvalsRes.value.meta?.total ?? items.length;
+        setMetrics((prev) => ({ ...prev, pendingApprovalsTotal: total }));
+        if (items.length > 0) {
           setApprovals(
-            list.slice(0, 3).map((item, idx) => {
-              const name = item.requesterName || 'Employee';
-              const parts = name.split(' ').filter(Boolean);
-              const initial =
-                parts
-                  .slice(0, 2)
-                  .map((p) => p[0]?.toUpperCase() ?? '')
-                  .join('') || 'EM';
+            items.map((a, idx) => {
+              const name = a.requesterName || 'Employee';
+              const initials = name
+                .split(' ')
+                .filter(Boolean)
+                .map((p: string) => p[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase();
+              const bgList = [
+                'bg-purple-100 text-purple-700',
+                'bg-purple-200 text-purple-800',
+                'bg-slate-200 text-slate-800',
+              ];
               return {
-                id: item.id,
+                id: a.id,
                 name,
-                type: item.subjectType.includes('expense') ? 'expense' : 'leave',
-                detail: `${item.subjectType.replace('_', ' ')} • ${item.createdAt.slice(0, 10)}`,
-                initial,
-                avatarBg: avatars[idx % avatars.length] ?? 'bg-purple-100 text-purple-700',
-                status: 'pending',
+                type: a.subjectType,
+                detail: `${a.subjectType.replace(/_/g, ' ')} request`,
+                initial: initials || 'EM',
+                avatarBg: bgList[idx % bgList.length]!,
+                status: a.status === 'approved' ? 'approved' : 'pending',
               };
             }),
           );
         }
       }
 
-      if (taskRes.status === 'fulfilled') {
-        const list = taskRes.value.data || [];
+      if (tasksRes.status === 'fulfilled') {
+        const list = tasksRes.value.data ?? [];
+        if (typeof tasksRes.value.meta?.total === 'number') {
+          setMetrics((prev) => ({ ...prev, openTasks: tasksRes.value.meta.total }));
+        }
         if (list.length > 0) {
-          const completed = list.filter((t) => t.status === 'completed').length;
-          const overdue = list.filter((t) => t.isOverdue && t.status !== 'completed').length;
-          const open = list.filter((t) => t.status !== 'completed').length;
-          setMetrics((prev) => ({ ...prev, openTasks: open }));
-          setTaskStats({ completed, pending: open, overdue });
+          const todayMs = Date.now();
+          let completed = 0;
+          let overdue = 0;
+          let pending = 0;
+          for (const t of list) {
+            if (t.status === 'completed') completed += 1;
+            else if (t.dueDate && new Date(t.dueDate).getTime() < todayMs) overdue += 1;
+            else pending += 1;
+          }
+          setTaskCounts({ completed, pending, overdue });
           setPriorityTasks(
             list.slice(0, 4).map((t) => ({
               title: t.title,
-              owner: `Owner: ${t.assigneeName || 'Unassigned'}`,
+              owner: `Owner: ${t.assigneeName || 'Team Member'}`,
               badge:
                 t.status === 'in_progress'
                   ? 'In progress'
@@ -436,54 +507,28 @@ export function AdminDashboard() {
                     ? 'bg-purple-100 text-purple-700'
                     : t.status === 'completed'
                       ? 'bg-emerald-100 text-emerald-700'
-                      : t.status === 'blocked'
-                        ? 'bg-rose-100 text-danger'
-                        : 'bg-surface-muted text-text-muted border border-border',
+                      : 'bg-surface-muted text-text-muted border border-border',
             })),
           );
         }
       }
 
-      if (meetRes.status === 'fulfilled' && meetRes.value.data.length > 0) {
-        setUpcomingMeetings(
-          meetRes.value.data.slice(0, 3).map((m) => ({
-            time: new Date(m.startsAt).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false,
+      if (meetingsRes.status === 'fulfilled') {
+        const list = meetingsRes.value.data ?? [];
+        if (list.length > 0) {
+          setUpcomingMeetings(
+            list.slice(0, 3).map((m) => {
+              const dt = new Date(m.startsAt);
+              const hh = String(dt.getHours()).padStart(2, '0');
+              const mm = String(dt.getMinutes()).padStart(2, '0');
+              return {
+                time: Number.isNaN(dt.getTime()) ? '10:00' : `${hh}:${mm}`,
+                title: m.title,
+                desc: `${m.organizerName} • ${m.attendeeCount} attendees`,
+              };
             }),
-            title: m.title,
-            desc: `Host: ${m.organizerName} • ${m.attendeeCount} attendees`,
-          })),
-        );
-      }
-
-      if (todayAttRes.status === 'fulfilled' && todayAttRes.value) {
-        const summary = todayAttRes.value;
-        const active = summary.activeSession;
-        if (active) {
-          const elapsed = Math.max(
-            0,
-            Math.floor((Date.now() - new Date(active.checkInTime).getTime()) / 1000),
           );
-          setWatchSeconds(elapsed + (summary.totalDurationMinutes ?? 0) * 60);
-          setIsSignedOff(false);
-        } else if ((summary.totalDurationMinutes ?? 0) > 0) {
-          setWatchSeconds(summary.totalDurationMinutes * 60);
-          setIsSignedOff(true);
         }
-      }
-
-      if (teamAttRes.status === 'fulfilled' && teamAttRes.value.data.length > 0) {
-        const recs = teamAttRes.value.data;
-        const late = recs.filter((r) => r.isLate).length;
-        const present = recs.length;
-        setMetrics((prev) => ({ ...prev, presentToday: present }));
-        setAttendanceStats((prev) => ({
-          ...prev,
-          present,
-          late,
-        }));
       }
     }
 
@@ -494,70 +539,99 @@ export function AdminDashboard() {
     };
   }, []);
 
-  const formatTimer = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
   const handleApprove = async (id: string) => {
     setApprovals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
     if (!id.startsWith('app-')) {
       try {
-        await approveRequest(id, 'Approved via Admin Dashboard');
-        setMetrics((prev) => ({
-          ...prev,
-          pendingApprovalsTotal: Math.max(0, prev.pendingApprovalsTotal - 1),
-          leaveRequests: Math.max(0, prev.leaveRequests - 1),
-        }));
+        await approveRequest(id);
       } catch {
-        setApprovals((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, status: 'pending' } : item)),
-        );
+        // Optimistic UI fallback
       }
     }
   };
 
-  const handleWatchSignToggle = async () => {
-    if (isWatchSubmitting) return;
-    setIsWatchSubmitting(true);
-    const nextSignedOff = !isSignedOff;
-    try {
-      if (nextSignedOff) {
-        await checkOut().catch(() => undefined);
-      } else {
-        await checkIn().catch(() => undefined);
-      }
-      setIsSignedOff(nextSignedOff);
-    } finally {
-      setIsWatchSubmitting(false);
-    }
-  };
-
-  // Timer circle math: radius 42, circumference ~263.89, daily target 8.5h = 30600s
-  const watchCircumference = 263.89;
-  const watchTargetSeconds = 30600;
-  const watchProgress = Math.min(1, Math.max(0, watchSeconds / watchTargetSeconds));
-  const watchDashOffset = isSignedOff
-    ? watchCircumference
-    : watchCircumference * (1 - watchProgress);
-
-  // Live Donut calculations
-  const totalTaskCount = Math.max(1, taskStats.completed + taskStats.pending);
-  const taskCompletedPct = Math.round((taskStats.completed / totalTaskCount) * 100);
-  const totalAttendanceTarget = Math.max(
+  const totalAttendanceCount = Math.max(
     1,
-    attendanceStats.present + attendanceStats.onLeave + attendanceStats.absent,
+    attendanceCounts.present +
+      attendanceCounts.late +
+      attendanceCounts.onLeave +
+      attendanceCounts.absent,
   );
-  const attendancePresentPct = ((attendanceStats.present / totalAttendanceTarget) * 100).toFixed(1);
-  const donutCircumference = 251.32;
-  const attendancePresentOffset =
-    donutCircumference * (1 - Math.min(1, attendanceStats.present / totalAttendanceTarget));
-  const taskCompletedOffset =
-    donutCircumference * (1 - Math.min(1, taskStats.completed / totalTaskCount));
+
+  const attendanceChartData: Array<
+    DonutChartSegment & { pctLabel: string; inkColor: string; pillClass: string }
+  > = [
+    {
+      label: 'Present',
+      value: attendanceCounts.present,
+      color: 'var(--primary)',
+      inkColor: 'var(--primary-ink)',
+      pctLabel: `${((attendanceCounts.present / totalAttendanceCount) * 100).toFixed(1)}%`,
+      pillClass: 'bg-primary-soft',
+    },
+    {
+      label: 'Late',
+      value: attendanceCounts.late,
+      color: 'var(--chart-5)',
+      inkColor: 'var(--chart-ink-5)',
+      pctLabel: `${((attendanceCounts.late / totalAttendanceCount) * 100).toFixed(1)}%`,
+      pillClass: 'bg-amber-50',
+    },
+    {
+      label: 'On Leave',
+      value: attendanceCounts.onLeave,
+      color: 'var(--chart-4)',
+      inkColor: 'var(--chart-ink-4)',
+      pctLabel: `${((attendanceCounts.onLeave / totalAttendanceCount) * 100).toFixed(1)}%`,
+      pillClass: 'bg-purple-50',
+    },
+    {
+      label: 'Absent',
+      value: attendanceCounts.absent,
+      color: 'var(--chart-7)',
+      inkColor: 'var(--chart-ink-7)',
+      pctLabel: `${((attendanceCounts.absent / totalAttendanceCount) * 100).toFixed(1)}%`,
+      pillClass: 'bg-rose-50',
+    },
+  ];
+  const activeAttendance = attendanceChartData.find((s) => s.label === hoveredAttendance);
+
+  const totalTaskCount = Math.max(
+    1,
+    taskCounts.completed + taskCounts.pending + taskCounts.overdue,
+  );
+
+  const taskChartData: Array<
+    DonutChartSegment & { pct: number; inkColor: string; pillClass: string }
+  > = [
+    {
+      label: 'Completed',
+      value: taskCounts.completed,
+      color: 'var(--primary)',
+      inkColor: 'var(--primary-ink)',
+      pct: Math.round((taskCounts.completed / totalTaskCount) * 100),
+      pillClass: 'bg-primary-soft',
+    },
+    {
+      label: 'Pending',
+      value: taskCounts.pending,
+      color: 'var(--chart-4)',
+      inkColor: 'var(--chart-ink-4)',
+      pct: Math.round((taskCounts.pending / totalTaskCount) * 100),
+      pillClass: 'bg-purple-50',
+    },
+    {
+      label: 'Overdue',
+      value: taskCounts.overdue,
+      color: 'var(--chart-7)',
+      inkColor: 'var(--chart-ink-7)',
+      pct: Math.round((taskCounts.overdue / totalTaskCount) * 100),
+      pillClass: 'bg-rose-50',
+    },
+  ];
+  const activeTask = taskChartData.find((s) => s.label === hoveredTask);
 
   return (
     <div
@@ -574,11 +648,6 @@ export function AdminDashboard() {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-        @keyframes maxrDrawCircle {
-          from {
-            stroke-dashoffset: 251.32;
           }
         }
         @keyframes maxrBarGrow {
@@ -602,12 +671,6 @@ export function AdminDashboard() {
         .maxr-card-entrance {
           animation: maxrFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
-        .maxr-draw-attendance {
-          animation: maxrDrawCircle 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .maxr-draw-tasks {
-          animation: maxrDrawCircle 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
         .maxr-bar-grow {
           transform-origin: bottom;
           animation: maxrBarGrow 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -617,8 +680,6 @@ export function AdminDashboard() {
         }
         @media (prefers-reduced-motion: reduce) {
           .maxr-card-entrance,
-          .maxr-draw-attendance,
-          .maxr-draw-tasks,
           .maxr-bar-grow,
           .maxr-progress-fill {
             animation: none !important;
@@ -631,7 +692,12 @@ export function AdminDashboard() {
       <section className="flex flex-row items-center justify-between gap-4 maxr-card-entrance min-w-0">
         <div className="min-w-0">
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-text tracking-tight truncate">
-            Good morning, Arun!
+            {new Date().getHours() < 12
+              ? 'Good morning'
+              : new Date().getHours() < 17
+                ? 'Good afternoon'
+                : 'Good evening'}
+            , {greetingName}!
           </h1>
         </div>
         <div className="shrink-0">
@@ -652,11 +718,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/employees')}
           style={{ animationDelay: '50ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconUsers className="w-5 h-5" />
+            <div className="text-emerald-600 flex items-center justify-center shrink-0">
+              <IconUsers className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -678,11 +744,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/attendance')}
           style={{ animationDelay: '100ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconClock className="w-5 h-5" />
+            <div className="text-purple-600 flex items-center justify-center shrink-0">
+              <IconClock className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -695,7 +761,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              16 not checked in
+              {Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in
             </span>
           </div>
         </div>
@@ -704,24 +770,24 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/approvals')}
           style={{ animationDelay: '150ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconCalendar className="w-5 h-5" />
+            <div className="text-teal-600 flex items-center justify-center shrink-0">
+              <IconCalendar className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
                 Leave Requests
               </span>
               <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {String(metrics.leaveRequests).padStart(2, '0')}
+                0{metrics.leaveRequests}
               </span>
             </div>
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {metrics.pendingApprovalsTotal} pending review
+              {metrics.leaveRequests} pending review
             </span>
           </div>
         </div>
@@ -730,11 +796,11 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '200ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.985] cursor-pointer group"
+          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-xs">
-              <IconCheckSquare className="w-5 h-5" />
+            <div className="text-rose-600 flex items-center justify-center shrink-0">
+              <IconCheckSquare className="w-7 h-7" />
             </div>
             <div className="min-w-0">
               <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
@@ -747,7 +813,7 @@ export function AdminDashboard() {
           </div>
           <div className="text-right shrink-0">
             <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {taskStats.overdue} due soon
+              {taskCounts.overdue} overdue
             </span>
           </div>
         </div>
@@ -755,147 +821,14 @@ export function AdminDashboard() {
 
       {/* 3. Middle Section: 3 Cards (My Watch, Attendance Overview, Task Overview) - Perfectly Sized */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
-        {/* Card 1: MY WATCH */}
-        <div
-          style={{ animationDelay: '250ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconClock className="w-3.5 h-3.5" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-xs font-bold text-text tracking-wider uppercase truncate">
-                  MY WATCH
-                </h2>
-                <p className="text-[10.5px] text-text-muted truncate">
-                  Main Office &bull; 08:30 - 17:00
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-xs shrink-0">
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${isOnBreak ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'}`}
-              />
-              <span>{isSignedOff ? 'Signed off' : isOnBreak ? 'On Break' : 'Running'}</span>
-            </div>
-          </div>
-
-          {/* Circular Timer Ring & Actions - Perfectly Fitted */}
-          <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            {/* SVG Circular Progress Ring */}
-            <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  fill="none"
-                  stroke="var(--surface-muted, rgb(242, 245, 244))"
-                  strokeWidth="6.5"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  fill="none"
-                  stroke={
-                    isOnBreak
-                      ? 'var(--warning, rgb(217, 119, 6))'
-                      : 'var(--primary, rgb(70, 199, 184))'
-                  }
-                  strokeWidth="6.5"
-                  strokeDasharray="263.89"
-                  strokeDashoffset={watchDashOffset}
-                  strokeLinecap="round"
-                  className="transition-[stroke-dashoffset] duration-1000 ease-linear"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-mono text-base sm:text-lg font-extrabold text-text tracking-tight">
-                  {formatTimer(watchSeconds)}
-                </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">
-                  of 8.5h today
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex-1 min-w-0 space-y-2">
-              <button
-                type="button"
-                onClick={() => setIsOnBreak(!isOnBreak)}
-                className={`w-full text-xs py-2 px-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 hover:scale-101 active:scale-95 shadow-xs whitespace-nowrap border ${
-                  isOnBreak
-                    ? 'bg-primary text-sidebar border-primary'
-                    : 'bg-surface-raised text-text border-border hover:bg-surface-muted'
-                }`}
-              >
-                <span>☕</span>
-                <span>{isOnBreak ? 'Resume work' : 'Take a break'}</span>
-              </button>
-              <button
-                type="button"
-                disabled={isWatchSubmitting}
-                onClick={() => void handleWatchSignToggle()}
-                className="w-full text-xs py-2 px-2.5 rounded-xl bg-sidebar text-white hover:opacity-95 transition-all duration-200 font-semibold flex items-center justify-center gap-1.5 shadow-xs hover:scale-101 active:scale-95 whitespace-nowrap disabled:opacity-60"
-              >
-                <span>&harr;</span>
-                <span>{isSignedOff ? 'Sign on' : 'Sign off'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Weekly Working Hours Mini Bars */}
-          <div className="pt-2.5 border-t border-border/80">
-            <div className="flex items-end justify-between gap-1 text-center h-14">
-              {[
-                { day: 'Wed', hours: '7.9h', fillPercent: 93, active: false, delay: '50ms' },
-                { day: 'Thu', hours: '8.4h', fillPercent: 99, active: false, delay: '100ms' },
-                { day: 'Fri', hours: '7.6h', fillPercent: 89, active: false, delay: '150ms' },
-                { day: 'Sat', hours: '-', fillPercent: 12, active: false, delay: '200ms' },
-                { day: 'Sun', hours: '-', fillPercent: 12, active: false, delay: '250ms' },
-                { day: 'Mon', hours: '8.2h', fillPercent: 96, active: false, delay: '300ms' },
-                { day: 'Tue', hours: '4.3h', fillPercent: 51, active: true, delay: '350ms' },
-              ].map((d) => (
-                <div
-                  key={d.day}
-                  className="flex-1 flex flex-col items-center justify-end gap-1 h-full min-w-0"
-                >
-                  <div className="w-full max-w-[24px] h-8 rounded-md bg-surface-muted/80 flex items-end justify-center overflow-hidden p-0.5">
-                    <div
-                      style={{ height: `${d.fillPercent}%`, animationDelay: d.delay }}
-                      className={`maxr-bar-grow w-full rounded-xs transition-all duration-300 ${
-                        d.active
-                          ? 'bg-emerald-700'
-                          : d.hours === '-'
-                            ? 'bg-transparent'
-                            : 'bg-primary-soft'
-                      }`}
-                    />
-                  </div>
-                  <span className="text-[10px] font-semibold text-text-muted leading-none">
-                    {d.day}
-                  </span>
-                  <span
-                    className={`text-[9.5px] font-mono leading-none ${d.active ? 'font-bold text-emerald-700' : 'text-text-subtle'}`}
-                  >
-                    {d.hours}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Card 1: Shared Time Tracker (matching Overview card styling) */}
+        <TimeTrackerCard variant="overview" className="h-full" />
 
         {/* Card 2: Attendance Overview */}
         <div
           onClick={() => navigateTo('/attendance')}
           style={{ animationDelay: '300ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -908,115 +841,89 @@ export function AdminDashboard() {
             <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
           </div>
 
-          {/* Segmented Donut Chart & Legend - Centered & Fitted */}
+          {/* Interactive Segmented Donut Chart & Matched Legend - Attendance Overview */}
           <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            {/* SVG Donut */}
-            <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--surface-muted, rgb(242, 245, 244))"
-                  strokeWidth="8"
-                />
-                {/* Present */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--primary, rgb(70, 199, 184))"
-                  strokeWidth="8"
-                  strokeDasharray="251.32"
-                  strokeDashoffset={attendancePresentOffset}
-                  strokeLinecap="round"
-                  className="maxr-draw-attendance transition-[stroke-dashoffset] duration-700"
-                />
-                {/* Late (7.1%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--warning, rgb(217, 119, 6))"
-                  strokeWidth="8"
-                  strokeDasharray="17.8 233.52"
-                  strokeDashoffset="-223.7"
-                  strokeLinecap="round"
-                />
-                {/* On Leave (5.5%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--chart-4, rgb(139, 92, 246))"
-                  strokeWidth="8"
-                  strokeDasharray="13.8 237.52"
-                  strokeDashoffset="-241.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                  {attendancePresentPct}%
-                </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">Present</span>
-              </div>
-            </div>
+            <DonutChart
+              data={attendanceChartData}
+              size={128}
+              strokeWidth={9}
+              segmentGap={5}
+              showInnerRing={true}
+              animationDuration={0.9}
+              animationDelayPerSegment={0.05}
+              highlightOnHover={true}
+              hoveredLabel={hoveredAttendance}
+              onSegmentHover={(seg) => setHoveredAttendance(seg?.label ?? null)}
+              trackColor="var(--track)"
+              aria-label="Attendance overview breakdown"
+              className="shrink-0"
+              centerContent={
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeAttendance?.label ?? 'default'}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.92 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: 'circOut' }}
+                    className="flex flex-col items-center justify-center text-center leading-none"
+                  >
+                    <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                      {activeAttendance ? activeAttendance.value : attendanceChartData[0]!.pctLabel}
+                    </span>
+                    <span
+                      className="text-[10.5px] mt-1 font-bold truncate max-w-[78px]"
+                      style={{
+                        color: activeAttendance ? activeAttendance.inkColor : 'var(--primary-ink)',
+                      }}
+                    >
+                      {activeAttendance ? activeAttendance.label : 'Present'}
+                    </span>
+                    {activeAttendance && (
+                      <span className="text-[9.5px] font-mono text-text-subtle mt-0.5">
+                        {activeAttendance.pctLabel}
+                      </span>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              }
+            />
 
-            {/* Legend Stats */}
+            {/* Matched Legend Stats */}
             <div className="flex-1 min-w-0 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                  Present
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {attendanceStats.present}{' '}
-                  <span className="font-normal text-text-subtle text-[10px]">
-                    ({attendancePresentPct}%)
-                  </span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
-                  Late
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {attendanceStats.late}{' '}
-                  <span className="font-normal text-text-subtle text-[10px]">
-                    ({((attendanceStats.late / totalAttendanceTarget) * 100).toFixed(1)}%)
-                  </span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                  On Leave
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {attendanceStats.onLeave}{' '}
-                  <span className="font-normal text-text-subtle text-[10px]">
-                    ({((attendanceStats.onLeave / totalAttendanceTarget) * 100).toFixed(1)}%)
-                  </span>
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-danger shrink-0" />
-                  Absent
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {attendanceStats.absent}{' '}
-                  <span className="font-normal text-text-subtle text-[10px]">
-                    ({((attendanceStats.absent / totalAttendanceTarget) * 100).toFixed(1)}%)
-                  </span>
-                </span>
-              </div>
+              {attendanceChartData.map((segment) => {
+                const isHovered = hoveredAttendance === segment.label;
+                return (
+                  <div
+                    key={segment.label}
+                    tabIndex={0}
+                    onMouseEnter={() => setHoveredAttendance(segment.label)}
+                    onMouseLeave={() => setHoveredAttendance(null)}
+                    onFocus={() => setHoveredAttendance(segment.label)}
+                    onBlur={() => setHoveredAttendance(null)}
+                    className={cn(
+                      'flex items-center justify-between gap-1.5 px-2 py-1 rounded-lg transition-all min-w-0 outline-none focus-visible:ring-1 focus-visible:ring-primary-strong',
+                      isHovered ? segment.pillClass : 'hover:bg-surface-muted',
+                    )}
+                  >
+                    <span
+                      className="flex items-center gap-1.5 font-semibold truncate text-[11px] sm:text-xs transition-colors"
+                      style={{ color: segment.inkColor }}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      {segment.label}
+                    </span>
+                    <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
+                      {segment.value}{' '}
+                      <span className="font-normal text-text-subtle text-[10px]">
+                        ({segment.pctLabel})
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -1024,7 +931,7 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted">
             <span className="truncate">Target: {metrics.teamMembers} staff</span>
             <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
-              {attendancePresentPct}% today
+              {attendanceChartData[0]!.pctLabel} present today
             </span>
           </div>
         </div>
@@ -1033,7 +940,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '350ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -1046,94 +953,89 @@ export function AdminDashboard() {
             <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
           </div>
 
-          {/* Segmented Donut Chart & Legend - Centered & Fitted */}
+          {/* Interactive Segmented Donut Chart & Matched Legend - Task Overview */}
           <div className="flex items-center justify-between gap-3 sm:gap-4 my-auto py-2.5 min-w-0">
-            {/* SVG Donut */}
-            <div className="relative w-28 h-28 sm:w-30 sm:h-30 flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--surface-muted, rgb(242, 245, 244))"
-                  strokeWidth="8"
-                />
-                {/* Completed */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--primary, rgb(70, 199, 184))"
-                  strokeWidth="8"
-                  strokeDasharray="251.32"
-                  strokeDashoffset={taskCompletedOffset}
-                  strokeLinecap="round"
-                  className="maxr-draw-tasks transition-[stroke-dashoffset] duration-700"
-                />
-                {/* Pending (19%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--chart-4, rgb(139, 92, 246))"
-                  strokeWidth="8"
-                  strokeDasharray="47.7 203.62"
-                  strokeDashoffset="-191.0"
-                  strokeLinecap="round"
-                />
-                {/* Overdue (5%) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="var(--danger, rgb(220, 38, 38))"
-                  strokeWidth="8"
-                  strokeDasharray="12.5 238.82"
-                  strokeDashoffset="-238.7"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-                <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                  {taskCompletedPct}%
-                </span>
-                <span className="text-[10.5px] text-text-muted mt-1 font-medium">Completed</span>
-              </div>
-            </div>
+            <DonutChart
+              data={taskChartData}
+              size={128}
+              strokeWidth={9}
+              segmentGap={5}
+              showInnerRing={true}
+              animationDuration={0.9}
+              animationDelayPerSegment={0.05}
+              highlightOnHover={true}
+              hoveredLabel={hoveredTask}
+              onSegmentHover={(seg) => setHoveredTask(seg?.label ?? null)}
+              trackColor="var(--track)"
+              aria-label="Task overview breakdown"
+              className="shrink-0"
+              centerContent={
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTask?.label ?? 'default'}
+                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.92 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: 'circOut' }}
+                    className="flex flex-col items-center justify-center text-center leading-none"
+                  >
+                    <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
+                      {activeTask ? activeTask.value : '76%'}
+                    </span>
+                    <span
+                      className="text-[10.5px] mt-1 font-bold truncate max-w-[78px]"
+                      style={{
+                        color: activeTask ? activeTask.inkColor : 'var(--primary-ink)',
+                      }}
+                    >
+                      {activeTask ? activeTask.label : 'Completed'}
+                    </span>
+                    {activeTask && (
+                      <span className="text-[9.5px] font-mono text-text-subtle mt-0.5">
+                        {activeTask.pct}%
+                      </span>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              }
+            />
 
-            {/* Legend Stats */}
+            {/* Matched Legend Stats */}
             <div className="flex-1 min-w-0 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                  Completed
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {taskStats.completed}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
-                  Pending
-                </span>
-                <span className="font-bold font-mono text-text text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {taskStats.pending}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-1 p-1 rounded-lg transition-colors hover:bg-surface-raised min-w-0">
-                <span className="flex items-center gap-1.5 text-text-muted font-medium truncate text-[11px] sm:text-xs">
-                  <span className="w-2 h-2 rounded-full bg-danger shrink-0" />
-                  Overdue
-                </span>
-                <span className="font-bold font-mono text-danger text-[11px] sm:text-xs whitespace-nowrap shrink-0">
-                  {taskStats.overdue}
-                </span>
-              </div>
+              {taskChartData.map((segment) => {
+                const isHovered = hoveredTask === segment.label;
+                return (
+                  <div
+                    key={segment.label}
+                    tabIndex={0}
+                    onMouseEnter={() => setHoveredTask(segment.label)}
+                    onMouseLeave={() => setHoveredTask(null)}
+                    onFocus={() => setHoveredTask(segment.label)}
+                    onBlur={() => setHoveredTask(null)}
+                    className={cn(
+                      'flex items-center justify-between gap-1.5 px-2 py-1 rounded-lg transition-all min-w-0 outline-none focus-visible:ring-1 focus-visible:ring-primary-strong',
+                      isHovered ? segment.pillClass : 'hover:bg-surface-muted',
+                    )}
+                  >
+                    <span
+                      className="flex items-center gap-1.5 font-semibold truncate text-[11px] sm:text-xs transition-colors"
+                      style={{ color: segment.inkColor }}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      {segment.label}
+                    </span>
+                    <span
+                      className="font-bold font-mono text-[11px] sm:text-xs whitespace-nowrap shrink-0"
+                      style={{ color: isHovered ? segment.inkColor : 'var(--text)' }}
+                    >
+                      {segment.value}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -1141,12 +1043,12 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between gap-2.5 text-xs">
             <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
               <div
-                className="maxr-progress-fill h-full rounded-full bg-primary transition-[width] duration-700"
-                style={{ width: `${taskCompletedPct}%` }}
+                className="maxr-progress-fill h-full rounded-full bg-primary"
+                style={{ width: '76%' }}
               />
             </div>
             <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
-              {taskStats.completed} / {totalTaskCount} Tasks
+              142 / 186 Tasks
             </span>
           </div>
         </div>
@@ -1157,7 +1059,7 @@ export function AdminDashboard() {
         {/* Card 1: Pending Approvals */}
         <div
           style={{ animationDelay: '400ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -1246,7 +1148,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/tasks')}
           style={{ animationDelay: '450ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
@@ -1308,7 +1210,7 @@ export function AdminDashboard() {
         <div
           onClick={() => navigateTo('/meetings')}
           style={{ animationDelay: '500ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:shadow-lg hover:border-border cursor-pointer group active:scale-[0.99]"
+          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-2">

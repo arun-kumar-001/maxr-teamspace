@@ -10,15 +10,26 @@ export const attendanceLocationSchema = z
   })
   .strict();
 
+export const photoDataUrlSchema = z
+  .string()
+  .max(600_000, 'Captured photo exceeds 600KB limit')
+  .regex(
+    /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/,
+    'Captured photo must be a valid base64 image data URL',
+  );
+
 export const checkInSchema = z
   .object({
     location: attendanceLocationSchema.optional(),
+    photoDataUrl: photoDataUrlSchema.optional(),
     notes: z.string().max(500).optional(),
   })
   .strict();
 
 export const checkOutSchema = z
   .object({
+    location: attendanceLocationSchema.optional(),
+    photoDataUrl: photoDataUrlSchema.optional(),
     notes: z.string().max(500).optional(),
   })
   .strict();
@@ -44,6 +55,29 @@ export const ATTENDANCE_SORTABLE_FIELDS = {
   createdAt: 'createdAt',
 } as const;
 
+const uuidInput = z
+  .string()
+  .regex(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+    'Invalid UUID',
+  );
+
+export const teamCalendarQuerySchema = z
+  .object({
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format')
+      .optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format')
+      .optional(),
+    departmentId: uuidInput.optional(),
+    employeeId: uuidInput.optional(),
+  })
+  .strict();
+
 export type CheckInInput = z.infer<typeof checkInSchema>;
 export type CheckOutInput = z.infer<typeof checkOutSchema>;
 export type ListAttendanceQuery = z.infer<typeof listAttendanceQuerySchema>;
+export type TeamCalendarQuery = z.infer<typeof teamCalendarQuerySchema>;

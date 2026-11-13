@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TaskCard } from './TaskCard';
 import type { Task, TaskStatus } from '../types';
-import { TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
+import { TASK_STATUS_LABELS } from '../types';
 
 export interface TaskKanbanBoardProps {
   columns: Record<TaskStatus, Task[]>;
@@ -47,8 +47,6 @@ export function TaskKanbanBoard({
     if (!draggedItem || !onStatusChange) return false;
     const { task, canCompleteOrReopen } = draggedItem;
     if (task.status === targetCol) return false;
-    const allowed = TASK_TRANSITIONS[task.status] || [];
-    if (!allowed.includes(targetCol)) return false;
     if ((targetCol === 'completed' || task.status === 'completed') && !canCompleteOrReopen) {
       return false;
     }
@@ -64,14 +62,6 @@ export function TaskKanbanBoard({
     setDraggedItem(null);
 
     if (task.status === targetCol) return;
-
-    const allowed = TASK_TRANSITIONS[task.status] || [];
-    if (!allowed.includes(targetCol)) {
-      setDropNotice(
-        `Cannot move "${task.title}" directly from ${TASK_STATUS_LABELS[task.status]} to ${TASK_STATUS_LABELS[targetCol]}.`,
-      );
-      return;
-    }
 
     if ((targetCol === 'completed' || task.status === 'completed') && !canCompleteOrReopen) {
       setDropNotice('Only the task assigner or an Administrator may complete or reopen this task.');
@@ -93,15 +83,15 @@ export function TaskKanbanBoard({
           <button
             type="button"
             onClick={() => setDropNotice(null)}
-            className="font-bold hover:underline shrink-0"
+            className="font-bold hover:underline shrink-0 cursor-pointer"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      <div className="w-full pb-4" data-testid="task-kanban-board">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-start">
+      <div className="w-full pb-4 overflow-x-auto" data-testid="task-kanban-board">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-start min-w-[1100px] 2xl:min-w-0">
           {COLUMN_KEYS.map((colKey) => {
             const tasksInCol = columns[colKey] || [];
             const tone = COLUMN_HEADER_TONES[colKey];
@@ -119,13 +109,14 @@ export function TaskKanbanBoard({
                   e.dataTransfer.dropEffect = canDropInto(colKey) ? 'move' : 'none';
                   if (dragOverCol !== colKey) setDragOverCol(colKey);
                 }}
-                onDragLeave={() => {
-                  if (dragOverCol === colKey) setDragOverCol(null);
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                  setDragOverCol((prev) => (prev === colKey ? null : prev));
                 }}
                 onDrop={(e) => handleDrop(e, colKey)}
-                className={`min-w-0 rounded-card border border-border border-t-4 ${tone.border} p-2.5 flex flex-col gap-2.5 transition-all duration-200 ${
+                className={`min-w-0 rounded-card border border-border border-t-4 ${tone.border} p-2.5 flex flex-col gap-2.5 transition-all duration-150 ${
                   validTarget
-                    ? 'bg-primary-surface/50 ring-2 ring-primary scale-[1.01] shadow-raised'
+                    ? 'bg-teal-50/70 ring-2 ring-primary border-primary shadow-lg scale-[1.01]'
                     : invalidTarget
                       ? 'bg-rose-50/40 ring-2 ring-danger/40'
                       : 'bg-surface-muted/70'
@@ -149,7 +140,7 @@ export function TaskKanbanBoard({
                       type="button"
                       onClick={onQuickCreateClick}
                       aria-label={`Add task to ${label}`}
-                      className="w-7 h-7 rounded-input text-text-muted hover:text-text hover:bg-surface flex items-center justify-center transition-colors"
+                      className="w-7 h-7 rounded-input text-text-muted hover:text-text hover:bg-surface flex items-center justify-center transition-colors cursor-pointer"
                     >
                       +
                     </button>
@@ -157,37 +148,49 @@ export function TaskKanbanBoard({
                 </div>
 
                 {/* Cards Container */}
-                <div className="flex flex-col gap-2.5 min-h-[160px]">
-                  {tasksInCol.length === 0 ? (
-                    <div
-                      className={`flex items-center justify-center h-28 border border-dashed rounded-lg text-xs select-none transition-colors ${
-                        validTarget
-                          ? 'border-primary text-primary-ink bg-primary-surface/30 font-medium'
-                          : 'border-border text-text-subtle'
-                      }`}
-                    >
-                      {validTarget ? `Drop to move to ${label}` : `No ${label.toLowerCase()} tasks`}
+                <div
+                  className={`flex flex-col gap-2.5 min-h-[160px] transition-colors rounded-lg ${
+                    validTarget ? 'bg-primary-soft/20 p-1' : ''
+                  }`}
+                >
+                  {validTarget && (
+                    <div className="flex items-center justify-center h-14 border-2 border-dashed border-teal-400 bg-teal-50/80 rounded-xl text-xs font-semibold text-teal-800 shadow-2xs select-none animate-pulse">
+                      Drop to move to {label}
+                    </div>
+                  )}
+
+                  {tasksInCol.length === 0 && !validTarget ? (
+                    <div className="flex items-center justify-center h-28 border border-dashed rounded-lg text-xs select-none border-border text-text-subtle">
+                      No {label.toLowerCase()} tasks
                     </div>
                   ) : (
                     tasksInCol.map((task) => (
-                      <TaskCard
+                      <div
                         key={task.id}
-                        task={task}
-                        onSelect={onSelectTask}
-                        onStatusChange={onStatusChange}
-                        onToggleDailyDone={onToggleDailyDone}
-                        onDragStart={(t, canCompleteOrReopen) => {
-                          setDropNotice(null);
-                          setDraggedItem({ task: t, canCompleteOrReopen });
-                        }}
-                        onDragEnd={() => {
-                          setDraggedItem(null);
-                          setDragOverCol(null);
-                        }}
-                        isDragging={draggedItem?.task.id === task.id}
-                        currentEmployeeId={currentEmployeeId}
-                        isAdmin={isAdmin}
-                      />
+                        className={
+                          draggedItem && draggedItem.task.id !== task.id
+                            ? 'pointer-events-none'
+                            : undefined
+                        }
+                      >
+                        <TaskCard
+                          task={task}
+                          onSelect={onSelectTask}
+                          onStatusChange={onStatusChange}
+                          onToggleDailyDone={onToggleDailyDone}
+                          onDragStart={(t, canCompleteOrReopen) => {
+                            setDropNotice(null);
+                            setDraggedItem({ task: t, canCompleteOrReopen });
+                          }}
+                          onDragEnd={() => {
+                            setDraggedItem(null);
+                            setDragOverCol(null);
+                          }}
+                          isDragging={draggedItem?.task.id === task.id}
+                          currentEmployeeId={currentEmployeeId}
+                          isAdmin={isAdmin}
+                        />
+                      </div>
                     ))
                   )}
                 </div>

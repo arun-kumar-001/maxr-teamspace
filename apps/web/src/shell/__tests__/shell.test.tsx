@@ -37,10 +37,10 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('Staff Management');
 
       // Staff navigation items
-      expect(html).toContain('Overview');
+      expect(html).toContain('Dashboard');
       expect(html).toContain('My Workspace');
       expect(html).toContain('My Profile');
-      expect(html).toContain('Check-In / Check-Out');
+      expect(html).toContain('Attendance Management');
       expect(html).toContain('My Leave');
       expect(html).toContain('My Tasks');
       expect(html).toContain('Payslips');
@@ -96,6 +96,21 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       // In Petalo design, active link has solid teal pill bg-primary text-sidebar
       expect(html).toContain('bg-primary text-sidebar');
       expect(html).toContain('href="/staff/leave"');
+    });
+
+    it('should include My Profile sidebar link across Admin, HR, Team Lead, and Staff portals', () => {
+      for (const role of [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF]) {
+        const html = renderToStaticMarkup(
+          <AuthProvider initialRole={role} persistSession={false}>
+            <AppShell currentPath="/profile" onNavigate={() => {}}>
+              <div>My Profile</div>
+            </AppShell>
+          </AuthProvider>,
+        );
+
+        expect(html).toContain('href="/profile"');
+        expect(html).toContain('My Profile');
+      }
     });
   });
 });

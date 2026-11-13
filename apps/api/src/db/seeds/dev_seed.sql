@@ -160,3 +160,55 @@ INSERT INTO user_roles (user_id, role_id) VALUES
   ('60000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003'), -- Team Lead -> team_lead
   ('60000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004')  -- Staff -> staff
 ON CONFLICT (user_id, role_id) DO NOTHING;
+
+
+-- 10. Sample Monthly Payslips (Development Only, Read-Only Published Examples)
+INSERT INTO payslips (
+  id, employee_id, pay_month, pay_year, status, published_at, published_by_employee_id,
+  employee_display_name, emp_no, designation, uan, pan, bank_name, account_number, days_paid,
+  leave_sl, leave_el, leave_cl, leave_fl, leave_lc,
+  location, base_branch, work_location, beneficiary_id,
+  basic_arrears_paise, basic_current_paise, hra_arrears_paise, hra_current_paise,
+  performance_arrears_paise, performance_current_paise, variable_arrears_paise, variable_current_paise,
+  pf_deduction_paise, income_tax_paise, professional_tax_paise, other_deduction_label, other_deduction_paise,
+  retiral_pf_paise, retiral_gratuity_paise,
+  annual_income_paise, annual_deductions_paise, net_taxable_income_paise,
+  total_tax_payable_paise, tax_deducted_till_now_paise, balance_tax_paise
+) VALUES
+  (
+    '81000000-0000-0000-0000-000000000001',
+    '50000000-0000-0000-0000-000000000004',
+    10, 2026, 'published', '2026-10-31T12:00:00Z', '50000000-0000-0000-0000-000000000002',
+    'Ms Ananya Sen', 'EMP-0004', 'Software Engineer', '101458290341', 'BNZPS4821K', 'HDFC Bank Ltd.', '50100482917304', 31,
+    2, 11, 3, 1, 0,
+    'Chennai', 'Chennai', 'Chennai', 'BEN0048219',
+    0, 4800000, 0, 2100000, 0, 950000, 0, 1250000,
+    360000, 220000, 20000, 'Desc.', 0,
+    360000, 230800,
+    109200000, 15000000, 94200000, 4680000, 1540000, 3140000
+  ),
+  (
+    '81000000-0000-0000-0000-000000000002',
+    '50000000-0000-0000-0000-000000000004',
+    9, 2026, 'published', '2026-09-30T12:00:00Z', '50000000-0000-0000-0000-000000000002',
+    'Ms Ananya Sen', 'EMP-0004', 'Software Engineer', '101458290341', 'BNZPS4821K', 'HDFC Bank Ltd.', '50100482917304', 30,
+    2, 10, 3, 1, 0,
+    'Chennai', 'Chennai', 'Chennai', 'BEN0048219',
+    0, 4800000, 0, 2100000, 0, 950000, 0, 1250000,
+    360000, 220000, 20000, 'Desc.', 0,
+    360000, 230800,
+    109200000, 15000000, 94200000, 4680000, 1320000, 3360000
+  ),
+  (
+    '81000000-0000-0000-0000-000000000003',
+    '50000000-0000-0000-0000-000000000004',
+    8, 2026, 'published', '2026-08-31T12:00:00Z', '50000000-0000-0000-0000-000000000002',
+    'Ms Ananya Sen', 'EMP-0004', 'Software Engineer', '101458290341', 'BNZPS4821K', 'HDFC Bank Ltd.', '50100482917304', 31,
+    3, 9, 3, 1, 0,
+    'Chennai', 'Chennai', 'Chennai', 'BEN0048219',
+    150000, 4800000, 0, 2100000, 0, 800000, 0, 1250000,
+    360000, 220000, 20000, 'Desc.', 0,
+    360000, 230800,
+    109200000, 15000000, 94200000, 4680000, 1100000, 3580000
+  )
+ON CONFLICT (id) DO NOTHING;

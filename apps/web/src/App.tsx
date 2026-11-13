@@ -29,7 +29,7 @@ import {
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
 import { DesignationsPage } from './features/designations';
-import { MyProfilePage } from './features/profile';
+import { MyProfilePage, ProfilePortalPage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
@@ -42,6 +42,7 @@ import { TasksPage } from './features/tasks';
 import { CompanySettingsPage } from './features/settings';
 import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
+import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
 
 // The gallery is a developer tool; it must not ship to production.
@@ -318,9 +319,17 @@ function AppRoutes() {
         }
       />
 
-      {/* My Employee Profile Routes (Issue #22) */}
+      {/* My Profile Portal & Personal Details Routes */}
       <Route
         path="/profile"
+        element={
+          <ShellLayout>
+            <ProfilePortalPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/profile/details"
         element={
           <ShellLayout>
             <MyProfilePage />
@@ -457,10 +466,18 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/attendance/check-in-out"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="check-in-out" />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/staff/attendance"
         element={
           <ShellLayout>
-            <AttendancePage initialTab="on-duty" />
+            <AttendancePage initialTab="my-attendance" />
           </ShellLayout>
         }
       />
@@ -717,7 +734,7 @@ function AppRoutes() {
         path="/staff/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="requests" />
           </ShellLayout>
         }
       />
@@ -734,6 +751,22 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <LeaveManagementPage initialTab="calendar" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/requests"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/approvals"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="approvals" />
           </ShellLayout>
         }
       />
@@ -804,6 +837,40 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* Payslips Routes */}
+      <Route
+        path="/staff/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
           </ShellLayout>
         }
       />
