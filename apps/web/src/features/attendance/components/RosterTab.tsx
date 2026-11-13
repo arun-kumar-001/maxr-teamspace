@@ -1071,9 +1071,9 @@ export function RosterTab({
               aria-label="Attendance Shift Roster Grid"
             >
               <colgroup>
-                <col className="w-[23%] min-w-[170px]" />
+                <col className="w-[22%] min-w-[190px]" />
                 {weekDays.map((wd) => (
-                  <col key={wd.dateStr} className="w-[11%]" />
+                  <col key={wd.dateStr} className="w-[11.1%] min-w-[106px]" />
                 ))}
               </colgroup>
 
@@ -1111,142 +1111,111 @@ export function RosterTab({
                 {filteredEmployees.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center text-xs text-text-muted">
-                      No employees match the selected department or search filter.
+                      No employees match the selected filter.
                     </td>
                   </tr>
                 ) : (
-                  departmentGroups.map(({ deptName, employees: deptEmps }) => {
-                    const isCollapsed = collapsedDepts.has(deptName);
+                  filteredEmployees.map((emp) => {
                     return (
-                      <Fragment key={deptName}>
-                        {/* Collapsible Department Header */}
-                        <tr
-                          onClick={() => toggleDeptCollapse(deptName)}
-                          className="bg-surface-muted/40 hover:bg-surface-muted/60 cursor-pointer transition-colors border-y border-border/80"
-                        >
-                          <td colSpan={8} className="px-4 py-2.5">
-                            <div className="flex items-center gap-2 text-xs font-bold text-text">
-                              <span
-                                className={`transition-transform duration-200 ${
-                                  isCollapsed ? '-rotate-90' : 'rotate-0'
-                                }`}
-                              >
-                                <IconChevronDown className="w-3.5 h-3.5 text-text-muted" />
+                      <tr
+                        key={emp.id}
+                        className="hover:bg-surface-muted/20 transition-colors border-b border-border/40"
+                      >
+                        {/* Employee Profile Cell */}
+                        <td className="px-4 py-2.5 align-middle">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/80 shadow-xs">
+                              {emp.firstName[0]}
+                              {emp.lastName[0]}
+                            </div>
+                            <div className="min-w-0 truncate">
+                              <span className="font-semibold text-text block truncate text-xs sm:text-sm">
+                                {emp.firstName} {emp.lastName}
                               </span>
-                              <IconUsers className="w-3.5 h-3.5 text-primary-deep" />
-                              <span>{deptName}</span>
-                              <span className="text-text-muted font-normal text-[11px]">
-                                ({deptEmps.length})
+                              <span className="text-[11px] text-text-muted block truncate font-normal">
+                                {emp.designation?.title || emp.employeeCode}
+                                {emp.department?.name ? ` · ${emp.department.name}` : ''}
                               </span>
                             </div>
-                          </td>
-                        </tr>
+                          </div>
+                        </td>
 
-                        {/* Department Employees Rows */}
-                        {!isCollapsed &&
-                          deptEmps.map((emp) => {
-                            return (
-                              <tr
-                                key={emp.id}
-                                className="hover:bg-surface-muted/20 transition-colors border-b border-border/40"
-                              >
-                                {/* Employee Profile Cell */}
-                                <td className="px-4 py-2.5 align-middle">
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/80 shadow-xs">
-                                      {emp.firstName[0]}
-                                      {emp.lastName[0]}
-                                    </div>
-                                    <div className="min-w-0 truncate">
-                                      <span className="font-semibold text-text block truncate text-xs sm:text-sm">
-                                        {emp.firstName} {emp.lastName}
-                                      </span>
-                                      <span className="text-[11px] text-text-muted block truncate font-normal">
-                                        {emp.designation?.title || emp.employeeCode}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </td>
+                        {/* Day Shift Cells: Full Real-time Check-In and Check-Out without '..' */}
+                        {weekDays.map((wd) => {
+                          const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
+                          const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
+                          const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
+                          const cellConfig = getShiftCellConfig(
+                            shift,
+                            !!leave,
+                            wd.isWeekend,
+                          );
+                          const punch = resolveEmployeePunch(emp, wd, record);
 
-                                {/* Day Shift Cells: Real-time Check-In and Check-Out times */}
-                                {weekDays.map((wd) => {
-                                  const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
-                                  const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
-                                  const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
-                                  const cellConfig = getShiftCellConfig(
-                                    shift,
-                                    !!leave,
-                                    wd.isWeekend,
-                                  );
-                                  const punch = resolveEmployeePunch(emp, wd, record);
-
-                                  return (
-                                    <td
-                                      key={wd.dateStr}
-                                      className={`px-1 py-2 text-center align-middle transition-colors ${
-                                        wd.isToday ? 'bg-primary-soft/30' : ''
-                                      }`}
-                                    >
-                                      {cellConfig.isOff ? (
-                                        <div className="h-8 w-full max-w-[100px] mx-auto rounded-lg flex items-center justify-center text-text-muted/50 bg-surface-muted/20 text-xs font-medium select-none">
-                                          Off
-                                        </div>
-                                      ) : cellConfig.isLeave ? (
-                                        <div className="h-8 w-full max-w-[100px] mx-auto rounded-lg flex items-center justify-center bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold select-none">
-                                          On Leave
-                                        </div>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          disabled={!canManageRoster}
-                                          onClick={() => {
-                                            if (canManageRoster) {
-                                              openAssignModal(emp, wd.dateStr, shift);
-                                            }
-                                          }}
-                                          title={
-                                            canManageRoster
-                                              ? `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} · Click to edit shift`
-                                              : `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''}`
-                                          }
-                                          className={`h-8 w-full max-w-[100px] mx-auto rounded-lg flex items-center justify-center gap-1.5 px-2 transition-all text-xs font-semibold tabular-nums ${
-                                            punch.status === 'present'
-                                              ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70'
-                                              : punch.status === 'active'
-                                                ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
-                                                : punch.status === 'late'
-                                                  ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
-                                                  : 'bg-surface-muted/60 text-text border border-border/80 hover:bg-surface-muted'
-                                          } ${
-                                            canManageRoster
-                                              ? 'cursor-pointer hover:shadow-xs'
-                                              : 'cursor-default'
-                                          }`}
-                                        >
-                                          <span className="truncate text-[11px] leading-tight font-semibold">
-                                            {punch.display}
-                                          </span>
-                                          <span
-                                            title={`Status: ${punch.status}`}
-                                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                              punch.status === 'late'
-                                                ? 'bg-warning'
-                                                : punch.status === 'absent'
-                                                  ? 'bg-danger'
-                                                  : punch.status === 'active'
-                                                    ? 'bg-primary-deep animate-pulse'
-                                                    : 'bg-emerald-600'
-                                            }`}
-                                          />
-                                        </button>
-                                      )}
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            );
-                          })}
-                      </Fragment>
+                          return (
+                            <td
+                              key={wd.dateStr}
+                              className={`px-1 py-2 text-center align-middle transition-colors ${
+                                wd.isToday ? 'bg-primary-soft/30' : ''
+                              }`}
+                            >
+                              {cellConfig.isOff ? (
+                                <div className="h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center text-text-muted/50 bg-surface-muted/20 text-xs font-medium select-none">
+                                  Off
+                                </div>
+                              ) : cellConfig.isLeave ? (
+                                <div className="h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold select-none">
+                                  On Leave
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={!canManageRoster}
+                                  onClick={() => {
+                                    if (canManageRoster) {
+                                      openAssignModal(emp, wd.dateStr, shift);
+                                    }
+                                  }}
+                                  title={
+                                    canManageRoster
+                                      ? `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} · Click to edit shift`
+                                      : `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''}`
+                                  }
+                                  className={`h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center gap-1 px-1.5 transition-all text-xs font-semibold tabular-nums ${
+                                    punch.status === 'present'
+                                      ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70'
+                                      : punch.status === 'active'
+                                        ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
+                                        : punch.status === 'late'
+                                          ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
+                                          : 'bg-surface-muted/60 text-text border border-border/80 hover:bg-surface-muted'
+                                  } ${
+                                    canManageRoster
+                                      ? 'cursor-pointer hover:shadow-xs'
+                                      : 'cursor-default'
+                                  }`}
+                                >
+                                  <span className="whitespace-nowrap text-[11px] leading-tight font-semibold">
+                                    {punch.display}
+                                  </span>
+                                  <span
+                                    title={`Status: ${punch.status}`}
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                      punch.status === 'late'
+                                        ? 'bg-warning'
+                                        : punch.status === 'absent'
+                                          ? 'bg-danger'
+                                          : punch.status === 'active'
+                                            ? 'bg-primary-deep animate-pulse'
+                                            : 'bg-emerald-600'
+                                    }`}
+                                  />
+                                </button>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
                     );
                   })
                 )}
@@ -1316,133 +1285,100 @@ export function RosterTab({
                     </td>
                   </tr>
                 ) : (
-                  departmentGroups.map(({ deptName, employees: deptEmps }) => {
-                    const isCollapsed = collapsedDepts.has(deptName);
+                  filteredEmployees.map((emp) => {
+                    let monthlyHours = 0;
                     return (
-                      <Fragment key={deptName}>
-                        {/* Collapsible Department Header with Pinned Sticky Title */}
-                        <tr
-                          onClick={() => toggleDeptCollapse(deptName)}
-                          className="bg-surface-muted/50 hover:bg-surface-muted/80 cursor-pointer transition-colors border-y border-border/80"
-                        >
-                          <td
-                            colSpan={currentMonthDate.days.length + 2}
-                            className="p-0 bg-surface-muted/40"
-                          >
-                            <div className="sticky left-0 w-[240px] px-4 py-2.5 flex items-center gap-2 text-xs font-extrabold text-text bg-surface-muted z-20 border-r border-border/80 shadow-[2px_0_6px_-1px_rgba(0,0,0,0.08)]">
-                              <span
-                                className={`transition-transform duration-200 ${
-                                  isCollapsed ? '-rotate-90' : 'rotate-0'
-                                }`}
-                              >
-                                <IconChevronDown className="w-3.5 h-3.5 text-text-muted" />
+                      <tr
+                        key={emp.id}
+                        className="hover:bg-surface-muted/20 transition-colors border-b border-border/40"
+                      >
+                        {/* Sticky Employee Column */}
+                        <td className="px-4 py-2.5 sticky left-0 bg-white z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-border/80 shadow-[2px_0_6px_-1px_rgba(0,0,0,0.08)]">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-800 font-bold text-[11px] flex items-center justify-center shrink-0 border border-border/60">
+                              {emp.firstName[0]}
+                              {emp.lastName[0]}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-text block truncate text-xs">
+                                {emp.firstName} {emp.lastName}
                               </span>
-                              <IconUsers className="w-3.5 h-3.5 text-primary-deep shrink-0" />
-                              <span className="truncate">{deptName}</span>
-                              <span className="text-text-muted font-normal text-[11px] shrink-0">
-                                ({deptEmps.length})
+                              <span className="text-[10px] text-text-muted block truncate font-medium">
+                                {emp.designation?.title || emp.employeeCode}
+                                {emp.department?.name ? ` · ${emp.department.name}` : ''}
                               </span>
                             </div>
-                          </td>
-                        </tr>
+                          </div>
+                        </td>
 
-                        {!isCollapsed &&
-                          deptEmps.map((emp) => {
-                            let monthlyHours = 0;
-                            return (
-                              <tr
-                                key={emp.id}
-                                className="hover:bg-surface-muted/20 transition-colors border-b border-border/40"
-                              >
-                                {/* Sticky Employee Column */}
-                                <td className="px-4 py-2.5 sticky left-0 bg-white z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-border/80 shadow-[2px_0_6px_-1px_rgba(0,0,0,0.08)]">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-800 font-bold text-[11px] flex items-center justify-center shrink-0 border border-border/60">
-                                      {emp.firstName[0]}
-                                      {emp.lastName[0]}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <span className="font-bold text-text block truncate text-xs">
-                                        {emp.firstName} {emp.lastName}
-                                      </span>
-                                      <span className="text-[10px] text-text-muted block truncate font-medium">
-                                        {emp.designation?.title || emp.employeeCode}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </td>
+                        {/* Day Cells for Month (Neat rounded pill badges) */}
+                        {currentMonthDate.days.map((d) => {
+                          const leave = leaveByEmpDate.get(`${emp.id}__${d.dateStr}`);
+                          const record = recordByEmpDate.get(`${emp.id}__${d.dateStr}`);
+                          const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
+                          const cellConfig = getShiftCellConfig(
+                            shift,
+                            !!leave,
+                            d.isWeekend,
+                          );
+                          const punch = resolveEmployeePunch(emp, d, record);
 
-                                {/* Day Cells for Month (Neat rounded pill badges) */}
-                                {currentMonthDate.days.map((d) => {
-                                  const leave = leaveByEmpDate.get(`${emp.id}__${d.dateStr}`);
-                                  const record = recordByEmpDate.get(`${emp.id}__${d.dateStr}`);
-                                  const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
-                                  const cellConfig = getShiftCellConfig(
-                                    shift,
-                                    !!leave,
-                                    d.isWeekend,
-                                  );
-                                  const punch = resolveEmployeePunch(emp, d, record);
+                          if (!d.isWeekend && !leave) {
+                            const h = shift
+                              ? parseShiftHours(shift.startTime, shift.endTime)
+                              : 8;
+                            monthlyHours += h;
+                          }
 
-                                  if (!d.isWeekend && !leave) {
-                                    const h = shift
-                                      ? parseShiftHours(shift.startTime, shift.endTime)
-                                      : 8;
-                                    monthlyHours += h;
-                                  }
+                          return (
+                            <td
+                              key={d.dateStr}
+                              className={`px-1 py-1.5 text-center align-middle border-r border-border/30 w-[68px] min-w-[68px] max-w-[68px] ${
+                                d.isToday
+                                  ? 'bg-emerald-50/25 border-x border-emerald-200/40'
+                                  : ''
+                              }`}
+                            >
+                              {cellConfig.isOff ? (
+                                <div className="h-[34px] w-[58px] mx-auto rounded-lg flex items-center justify-center text-[10px] font-semibold text-slate-300">
+                                  Off
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={!canManageRoster}
+                                  onClick={() => {
+                                    if (canManageRoster) {
+                                      openAssignModal(emp, d.dateStr, shift);
+                                    }
+                                  }}
+                                  title={`${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} on ${d.dateStr}`}
+                                  className={`h-[34px] w-[58px] mx-auto rounded-lg text-[10px] font-bold flex items-center justify-center transition-all ${
+                                    punch.status === 'present'
+                                      ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70'
+                                      : punch.status === 'active'
+                                        ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
+                                        : punch.status === 'late'
+                                          ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
+                                          : 'bg-surface-muted/60 text-text border border-border/80'
+                                  } ${
+                                    canManageRoster
+                                      ? 'cursor-pointer hover:scale-105 hover:shadow-xs'
+                                      : 'cursor-default'
+                                  }`}
+                                >
+                                  {punch.status === 'active' ? 'In' : punch.inTime}
+                                </button>
+                              )}
+                            </td>
+                          );
+                        })}
 
-                                  return (
-                                    <td
-                                      key={d.dateStr}
-                                      className={`px-1 py-1.5 text-center align-middle border-r border-border/30 w-[68px] min-w-[68px] max-w-[68px] ${
-                                        d.isToday
-                                          ? 'bg-emerald-50/25 border-x border-emerald-200/40'
-                                          : ''
-                                      }`}
-                                    >
-                                      {cellConfig.isOff ? (
-                                        <div className="h-[34px] w-[58px] mx-auto rounded-lg flex items-center justify-center text-[10px] font-semibold text-slate-300">
-                                          Off
-                                        </div>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          disabled={!canManageRoster}
-                                          onClick={() => {
-                                            if (canManageRoster) {
-                                              openAssignModal(emp, d.dateStr, shift);
-                                            }
-                                          }}
-                                          title={`${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} on ${d.dateStr}`}
-                                          className={`h-[34px] w-[58px] mx-auto rounded-lg text-[10px] font-bold flex items-center justify-center transition-all ${
-                                            punch.status === 'present'
-                                              ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70'
-                                              : punch.status === 'active'
-                                                ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
-                                                : punch.status === 'late'
-                                                  ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
-                                                  : 'bg-surface-muted/60 text-text border border-border/80'
-                                          } ${
-                                            canManageRoster
-                                              ? 'cursor-pointer hover:scale-105 hover:shadow-xs'
-                                              : 'cursor-default'
-                                          }`}
-                                        >
-                                          {punch.status === 'active' ? 'In' : punch.inTime}
-                                        </button>
-                                      )}
-                                    </td>
-                                  );
-                                })}
-
-                                {/* Monthly Total Hours */}
-                                <td className="px-2 py-2 text-center font-bold text-xs font-mono text-text tabular-nums w-[84px] min-w-[84px] max-w-[84px]">
-                                  {Math.round(monthlyHours)}h
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </Fragment>
+                        {/* Monthly Total Hours */}
+                        <td className="px-2 py-2 text-center font-bold text-xs font-mono text-text tabular-nums w-[84px] min-w-[84px] max-w-[84px]">
+                          {Math.round(monthlyHours)}h
+                        </td>
+                      </tr>
                     );
                   })
                 )}
