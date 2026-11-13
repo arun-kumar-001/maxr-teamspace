@@ -21,10 +21,10 @@ export interface NavItem {
 }
 
 export const NAVIGATION_REGISTRY: readonly NavItem[] = [
-  // Shared / My Profile Dashboard Route
+  // Shared / Overview Route
   {
     id: 'dashboard',
-    label: 'My Profile',
+    label: 'Overview',
     path: '/dashboard',
     iconName: 'home',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
@@ -188,9 +188,17 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'file-text',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
+  // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
+  {
+    id: 'my-profile',
+    label: 'My Profile',
+    path: '/profile',
+    iconName: 'user',
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
   {
     id: 'staff-attendance',
-    label: 'Attendance Management',
+    label: 'Check-In / Check-Out',
     path: '/staff/attendance',
     iconName: 'clock',
     allowedRoles: [ROLES.STAFF],
@@ -259,14 +267,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   // Notifications route - accessible to all authenticated roles
   if (path === '/notifications' || path.startsWith('/notifications/')) {
     return true;
-  }
-
-  // Payslips routes
-  if (path === '/payslips' || path.startsWith('/payslips/') || path === '/staff/payslips') {
-    return true;
-  }
-  if (path === '/hr/payslips' || path === '/admin/payslips') {
-    return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
   // Projects route (Issue #42) - accessible to all authenticated roles
@@ -906,13 +906,19 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       items: [
         {
           id: '/dashboard',
-          label: 'My Profile',
+          label: 'Overview',
           href: '/dashboard',
           icon: <NavSvgIcon name="home" />,
         },
         {
+          id: '/profile',
+          label: 'My Profile',
+          href: '/profile',
+          icon: <NavSvgIcon name="user" />,
+        },
+        {
           id: '/staff/attendance',
-          label: 'Attendance Management',
+          label: 'Check-In / Check-Out',
           href: '/staff/attendance',
           icon: <NavSvgIcon name="clock" />,
         },
@@ -921,12 +927,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'My Leave',
           href: '/staff/leave',
           icon: <NavSvgIcon name="calendar" />,
-        },
-        {
-          id: '/projects',
-          label: 'Projects',
-          href: '/projects',
-          icon: <NavSvgIcon name="briefcase" />,
         },
         {
           id: '/staff/tasks',

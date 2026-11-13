@@ -36,12 +36,11 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('MAXR Teamspace');
       expect(html).toContain('Staff Management');
 
-      // Staff navigation items ('Overview' renamed to 'My Profile'; duplicate '/profile' link removed)
-      expect(html).not.toContain('>Overview<');
+      // Staff navigation items
+      expect(html).toContain('Overview');
       expect(html).toContain('My Workspace');
       expect(html).toContain('My Profile');
-      expect(html).not.toContain('href="/profile"');
-      expect(html).toContain('Attendance Management');
+      expect(html).toContain('Check-In / Check-Out');
       expect(html).toContain('My Leave');
       expect(html).toContain('My Tasks');
       expect(html).toContain('Payslips');
