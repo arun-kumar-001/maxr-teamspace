@@ -6,96 +6,8 @@ import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/type
 import type { Shift } from '../../shifts/types';
 import type { LeaveCalendarEntry } from '../../leave/types';
 
-// Code-based Modern Duotone SVG icons (Zero Raw Hex compliant)
+// Code-based SVG icons (Zero Raw Hex compliant)
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="9.5" cy="7.5" r="3.5" fill="currentColor" fillOpacity="0.18" />
-      <path d="M3 19.5c0-3 2.9-5 6.5-5s6.5 2 6.5 5" fill="currentColor" fillOpacity="0.14" />
-      <path d="M16.5 4.7a3.2 3.2 0 0 1 0 5.6" />
-      <path d="M21 19.5c0-2.3-1.8-4.1-4.3-4.7" />
-    </svg>
-  );
-}
-
-function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="9.25" fill="currentColor" fillOpacity="0.15" />
-      <path d="M12 7v5.2l3.4 2" />
-      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function IconUserX({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="9.5" cy="7.5" r="3.5" fill="currentColor" fillOpacity="0.18" />
-      <path d="M3 19.5c0-3 2.9-5 6.5-5s6.5 2 6.5 5" fill="currentColor" fillOpacity="0.14" />
-      <path d="m17.25 8.25 4 4M21.25 8.25l-4 4" />
-    </svg>
-  );
-}
-
-function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <rect
-        x="3.25"
-        y="4.75"
-        width="17.5"
-        height="16"
-        rx="4"
-        fill="currentColor"
-        fillOpacity="0.12"
-      />
-      <path d="M3.25 9.75h17.5" />
-      <path d="M8 2.75v3.5M16 2.75v3.5" />
-      <circle cx="8.5" cy="14" r="1" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="14" r="1" fill="currentColor" stroke="none" />
-      <circle cx="15.5" cy="14" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function IconLayers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -107,9 +19,68 @@ function IconLayers({ className = 'w-5 h-5' }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function IconUserX({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <line x1="17" y1="8" x2="22" y2="13" />
+      <line x1="22" y1="8" x2="17" y2="13" />
+    </svg>
+  );
+}
+
+function IconCalendar({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
   );
 }
@@ -145,30 +116,20 @@ function formatTimeDisplay(isoString?: string | null): string {
 }
 
 function formatDurationDisplay(minutes?: number | null): string {
-  if (minutes === undefined || minutes === null) return 'None';
+  if (minutes === undefined || minutes === null || minutes <= 0) return 'None';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h ${String(m).padStart(2, '0')}m`;
-}
-
-function getAvatarColors(name: string) {
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const colorSets = [
-    'bg-emerald-100 text-emerald-800',
-    'bg-sky-100 text-sky-800',
-    'bg-purple-100 text-purple-800',
-    'bg-amber-100 text-amber-800',
-    'bg-rose-100 text-rose-800',
-    'bg-teal-100 text-teal-800',
-  ];
-  return colorSets[hash % colorSets.length];
 }
 
 export interface OnDutyRow {
   id: string;
   employeeId: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   employeeCode: string;
+  designationTitle?: string;
   departmentName: string;
   shiftName: string;
   shiftHours: string;
@@ -212,6 +173,7 @@ export function OnDutyTab({
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<'all' | 'late_absent'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
   const pageSize = 10;
 
@@ -242,7 +204,10 @@ export function OnDutyTab({
         id: r.id || `rec-${idx}`,
         employeeId: r.employeeId,
         name: r.employeeName || 'Jane Doe',
+        firstName: r.employeeName?.split(' ')[0] || 'Jane',
+        lastName: r.employeeName?.split(' ')[1] || 'Doe',
         employeeCode: `EMP-000${idx + 1}`,
+        designationTitle: 'Software Engineer',
         departmentName: 'Engineering',
         shiftName: 'General',
         shiftHours: '09:00 - 18:00',
@@ -276,13 +241,16 @@ export function OnDutyTab({
         id: rec?.id || `emp-${emp.id}`,
         employeeId: emp.id,
         name: `${emp.firstName} ${emp.lastName}`,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
         employeeCode: emp.employeeCode,
+        designationTitle: emp.designation?.title || emp.employeeCode,
         departmentName: emp.department?.name || 'General',
         shiftName: defaultShift.name || 'General',
         shiftHours: `${defaultShift.startTime} - ${defaultShift.endTime}`,
-        checkInTime: rec ? formatTimeDisplay(rec.checkInTime) : null,
-        checkOutTime: rec ? formatTimeDisplay(rec.checkOutTime) : null,
-        hoursWorked: rec ? formatDurationDisplay(rec.durationMinutes) : 'None',
+        checkInTime: rec ? formatTimeDisplay(rec.checkInTime) : 'None',
+        checkOutTime: rec ? formatTimeDisplay(rec.checkOutTime) : 'None',
+        hoursWorked: rec && rec.durationMinutes ? formatDurationDisplay(rec.durationMinutes) : 'None',
         status,
         notes: rec?.notes,
         rawRecord: rec,
@@ -320,6 +288,10 @@ export function OnDutyTab({
       if (filterMode === 'late_absent' && row.status !== 'late' && row.status !== 'absent') {
         return false;
       }
+      // Status filter from chart click (On Time, Late, Absent)
+      if (selectedStatusFilter && row.status !== selectedStatusFilter) {
+        return false;
+      }
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -330,7 +302,7 @@ export function OnDutyTab({
       }
       return true;
     });
-  }, [allRows, departmentFilter, filterMode, searchQuery]);
+  }, [allRows, departmentFilter, filterMode, selectedStatusFilter, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
@@ -339,14 +311,45 @@ export function OnDutyTab({
     return filteredRows.slice(start, start + pageSize);
   }, [filteredRows, page, pageSize]);
 
-  // Shift coverage mock/calculation
-  const shiftCoverage = useMemo(() => {
+  // Real-time Attendance Breakdown for On Time, Late, Absent
+  const attendanceBreakdown = useMemo(() => {
+    const total = allRows.length || 1;
+    const onTimeCount = allRows.filter((r) => r.status === 'present').length;
+    const lateCount = allRows.filter((r) => r.status === 'late').length;
+    const absentCount = allRows.filter((r) => r.status === 'absent').length;
+
+    const calcPercent = (cnt: number) => Math.round((cnt / total) * 100);
+
     return [
-      { name: 'General', hours: '09:00 - 18:00', percent: 92 },
-      { name: 'Morning', hours: '06:00 - 14:00', percent: 88 },
-      { name: 'Evening', hours: '14:00 - 22:00', percent: 86 },
+      {
+        id: 'present',
+        name: 'On Time',
+        count: onTimeCount,
+        percent: calcPercent(onTimeCount),
+        barColor: 'bg-emerald-500',
+        activeBarColor: 'bg-emerald-600',
+        activeBadgeColor: 'bg-emerald-700',
+      },
+      {
+        id: 'late',
+        name: 'Late',
+        count: lateCount,
+        percent: calcPercent(lateCount),
+        barColor: 'bg-amber-400',
+        activeBarColor: 'bg-amber-500',
+        activeBadgeColor: 'bg-amber-600',
+      },
+      {
+        id: 'absent',
+        name: 'Absent',
+        count: absentCount,
+        percent: calcPercent(absentCount),
+        barColor: 'bg-rose-400',
+        activeBarColor: 'bg-rose-500',
+        activeBadgeColor: 'bg-rose-600',
+      },
     ];
-  }, []);
+  }, [allRows]);
 
   // Employees on leave
   const onLeaveEmployees = useMemo(() => {
@@ -362,93 +365,79 @@ export function OnDutyTab({
 
   return (
     <div className="space-y-6">
-      {/* 1. Four Top KPI Cards */}
+      {/* 1. Four Top KPI Cards (Solid Vibrant Pastels from Reference Image) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* On Duty */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <IconUsers className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                On Duty
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {onDutyCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                {onDutyPercent}% of total employees
-              </span>
-            </div>
+        <div className="p-5 bg-[#faebe6] border border-[#f2d4cb] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">On Duty</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {onDutyCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              {onDutyPercent}% of total employees
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-rose-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconUsers className="w-6 h-6" />
           </div>
         </div>
 
         {/* Late Today */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Late Today
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {lateCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                &gt; 15 min after shift start
-              </span>
-            </div>
+        <div className="p-5 bg-[#e4f5ed] border border-[#c6eadb] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">Late Today</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {lateCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              &gt; 15 min after shift start
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconClock className="w-6 h-6" />
           </div>
         </div>
 
         {/* Absent Today */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <IconUserX className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Absent Today
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {absentCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">Not checked in yet</span>
-            </div>
+        <div className="p-5 bg-[#e5effb] border border-[#ccdef4] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">Absent Today</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {absentCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              Not checked in yet
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-sky-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconUserX className="w-6 h-6" />
           </div>
         </div>
 
         {/* On Leave */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <IconCalendar className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                On Leave
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {onLeaveCount}
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                Approved leave today
-              </span>
-            </div>
+        <div className="p-5 bg-[#fef4d8] border border-[#fae6b4] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
+          <div className="space-y-1 min-w-0">
+            <span className="text-xs font-semibold text-slate-700 block">On Leave</span>
+            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
+              {onLeaveCount}
+            </span>
+            <span className="text-xs text-slate-600 font-medium block truncate">
+              Approved leave today
+            </span>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-white/80 text-amber-700 flex items-center justify-center shrink-0 shadow-xs">
+            <IconCalendar className="w-6 h-6" />
           </div>
         </div>
       </div>
 
-      {/* 2. Main Two-Column Layout (75% Left Table, 25% Right Panels) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Attendance Table & Quick Filters (9 cols on lg) */}
-        <div className="lg:col-span-9 space-y-4 min-w-0">
-          {/* Quick Filters Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* 2. Main Two-Column Layout (70% Left Table, 30% Right Panels) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Attendance Table & Quick Filters (8 cols on lg, 9 cols on 2xl) */}
+        <div className="lg:col-span-8 2xl:col-span-9 space-y-4 min-w-0">
+          {/* Quick Filters Bar (Enclosed in clean solid white card) */}
+          <div className="p-3 sm:p-4 bg-surface rounded-2xl border border-border/80 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               {/* Department Selector */}
               <select
@@ -458,9 +447,9 @@ export function OnDutyTab({
                   setDepartmentFilter(e.target.value);
                   setPage(1);
                 }}
-                className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-white border border-border/80 rounded-xl text-text outline-none cursor-pointer hover:bg-surface-muted shadow-xs"
+                className="min-h-[38px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border/80 rounded-xl text-text outline-none cursor-pointer hover:bg-surface-muted transition-colors"
               >
-                <option value="all">Department ▾</option>
+                <option value="all">All Departments</option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.name}>
                     {dept.name}
@@ -473,12 +462,13 @@ export function OnDutyTab({
                 type="button"
                 onClick={() => {
                   setFilterMode('all');
+                  setSelectedStatusFilter(null);
                   setPage(1);
                 }}
-                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all shadow-xs ${
-                  filterMode === 'all'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-white text-text-muted hover:text-text border border-border/80 hover:bg-surface-muted'
+                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  filterMode === 'all' && !selectedStatusFilter
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-surface text-text-muted hover:text-text border border-border/80'
                 }`}
               >
                 All Employees
@@ -489,12 +479,13 @@ export function OnDutyTab({
                 type="button"
                 onClick={() => {
                   setFilterMode('late_absent');
+                  setSelectedStatusFilter(null);
                   setPage(1);
                 }}
-                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all shadow-xs ${
+                className={`min-h-[38px] px-3.5 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
                   filterMode === 'late_absent'
-                    ? 'bg-primary-deep text-white'
-                    : 'bg-white text-text-muted hover:text-text border border-border/80 hover:bg-surface-muted'
+                    ? 'bg-primary-deep text-white shadow-xs font-bold'
+                    : 'bg-surface text-text-muted hover:text-text border border-border/80'
                 }`}
               >
                 <span>Late &amp; Absent</span>
@@ -502,6 +493,26 @@ export function OnDutyTab({
                   {lateAbsentCount}
                 </span>
               </button>
+
+              {/* Active Chart Filter Pill (if selected) */}
+              {selectedStatusFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatusFilter(null)}
+                  className="min-h-[38px] px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 bg-primary-soft text-primary-deep border border-primary-strong/30 hover:bg-primary-soft/80 transition-all cursor-pointer"
+                  title="Click to clear filter"
+                >
+                  <span>
+                    Filter:{' '}
+                    {selectedStatusFilter === 'present'
+                      ? 'On Time'
+                      : selectedStatusFilter === 'late'
+                        ? 'Late'
+                        : 'Absent'}
+                  </span>
+                  <span className="text-sm font-bold leading-none">&times;</span>
+                </button>
+              )}
             </div>
 
             {/* Search Input */}
@@ -514,152 +525,110 @@ export function OnDutyTab({
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full min-h-[38px] px-3 py-1.5 text-xs bg-white border border-border/80 rounded-xl text-text placeholder:text-text-muted outline-none focus:border-primary-strong shadow-xs"
+                className="w-full min-h-[38px] px-3 py-1.5 text-xs bg-surface border border-border/80 rounded-xl text-text placeholder:text-text-muted outline-none focus:border-primary-deep transition-colors"
               />
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="bg-white border border-border/80 rounded-card shadow-xs overflow-hidden">
+          {/* Table Container (Matching RosterTab Clean White Card) */}
+          <div className="bg-white rounded-card border border-border/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table
-                className="w-full text-left text-xs sm:text-sm"
+                className="w-full text-left text-xs border-collapse min-w-[580px]"
                 aria-label="On Duty Attendance Table"
               >
-                <thead className="bg-surface-muted/50 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
+                <thead className="bg-surface-muted/80 border-b border-border/80 text-xs font-bold text-text">
                   <tr>
-                    <th scope="col" className="px-3 xl:px-4 py-3.5">
+                    <th scope="col" className="px-4 py-3 whitespace-nowrap min-w-[180px]">
                       Employee
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
-                      Shift
-                    </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[85px]">
                       Check-in
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[85px]">
                       Check-out
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[70px]">
                       Hours
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[90px]">
                       Status
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
+                    <th scope="col" className="px-4 py-3 whitespace-nowrap text-right min-w-[70px]">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border text-text">
+                <tbody className="divide-y divide-border/60 text-text">
                   {paginatedRows.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-xs text-text-muted">
+                      <td colSpan={6} className="px-6 py-12 text-center text-xs text-text-muted">
                         No employees matching criteria for this date.
                       </td>
                     </tr>
                   ) : (
                     paginatedRows.map((row) => {
-                      const avatarBg = getAvatarColors(row.name);
-                      const initials = row.name
-                        .split(' ')
-                        .map((n) => n[0] || '')
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase();
+                      const initials = `${row.firstName?.[0] || row.name[0] || ''}${row.lastName?.[0] || ''}`.toUpperCase();
 
                       return (
-                        <tr key={row.id} className="hover:bg-surface-muted/40 transition-colors">
-                          {/* Employee */}
-                          <td className="px-3 xl:px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              {row.rawRecord?.checkInPhoto || row.rawRecord?.checkOutPhoto ? (
-                                <img
-                                  src={
-                                    row.rawRecord.checkOutPhoto || row.rawRecord.checkInPhoto || ''
-                                  }
-                                  alt={`${row.name} verification`}
-                                  className="w-8 h-8 rounded-full object-cover border border-primary/50 shrink-0 shadow-xs"
-                                />
-                              ) : (
-                                <div
-                                  className={`w-8 h-8 rounded-full ${avatarBg} font-bold text-xs flex items-center justify-center shrink-0 shadow-xs`}
-                                >
-                                  {initials}
-                                </div>
-                              )}
-                              <div className="min-w-0">
+                        <tr
+                          key={row.id}
+                          className="hover:bg-surface-muted/20 transition-colors border-b border-border/40"
+                        >
+                          {/* Employee (Matching RosterTab style) */}
+                          <td className="px-4 py-2.5 align-middle">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/80 shadow-xs">
+                                {initials}
+                              </div>
+                              <div className="min-w-0 truncate">
                                 <a
                                   href={`/employees/${row.employeeId}`}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     navigate(`/employees/${row.employeeId}`);
                                   }}
-                                  className="font-bold text-text hover:text-primary-deep hover:underline truncate block"
+                                  className="font-semibold text-text hover:text-primary-deep hover:underline truncate block text-xs sm:text-sm"
                                   data-testid={`employee-link-${row.employeeId}`}
                                 >
                                   {row.name}
                                 </a>
-                                <span className="text-[11px] text-text-muted block truncate">
-                                  {row.employeeCode} • {row.departmentName}
+                                <span className="text-[11px] text-text-muted block truncate font-normal">
+                                  {row.designationTitle || row.employeeCode}
                                 </span>
-                                {row.notes && (
-                                  <span className="text-[11px] text-text-subtle block italic truncate max-w-xs">
-                                    {row.notes}
-                                  </span>
-                                )}
                               </div>
                             </div>
                           </td>
 
-                          {/* Shift */}
-                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
-                            <span className="font-semibold text-text block">{row.shiftName}</span>
-                          </td>
-
                           {/* Check-in */}
-                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium">
-                            <span className="whitespace-nowrap block">
-                              {row.checkInTime || 'None'}
-                            </span>
-                            {row.rawRecord?.location?.address && (
-                              <span
-                                className="text-[10.5px] text-text-subtle block truncate max-w-[160px]"
-                                title={row.rawRecord.location.address}
-                              >
-                                {row.rawRecord.location.address}
-                              </span>
+                          <td className="px-3 py-2.5 whitespace-nowrap text-center text-xs font-semibold tabular-nums">
+                            {row.checkInTime && row.checkInTime !== 'None' ? (
+                              <span className="text-text">{row.checkInTime}</span>
+                            ) : (
+                              <span className="text-text-muted font-normal">None</span>
                             )}
                           </td>
 
                           {/* Check-out */}
-                          <td className="px-2.5 xl:px-3.5 py-3.5 text-text-muted font-medium">
-                            <span className="whitespace-nowrap block">
-                              {row.checkOutTime || 'None'}
-                            </span>
-                            {row.rawRecord?.checkOutLocation?.address && (
-                              <span
-                                className="text-[10.5px] text-text-subtle block truncate max-w-[160px]"
-                                title={row.rawRecord.checkOutLocation.address}
-                              >
-                                {row.rawRecord.checkOutLocation.address}
-                              </span>
+                          <td className="px-3 py-2.5 whitespace-nowrap text-center text-xs font-semibold tabular-nums">
+                            {row.checkOutTime && row.checkOutTime !== 'None' ? (
+                              <span className="text-text">{row.checkOutTime}</span>
+                            ) : (
+                              <span className="text-text-muted font-normal">None</span>
                             )}
                           </td>
 
                           {/* Hours */}
-                          <td
-                            className={`px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap ${
-                              row.hoursWorked === 'None'
-                                ? 'text-text-muted font-medium'
-                                : 'font-bold text-text'
-                            }`}
-                          >
-                            {row.hoursWorked}
+                          <td className="px-3 py-2.5 whitespace-nowrap text-center text-xs font-bold tabular-nums">
+                            {row.hoursWorked && row.hoursWorked !== 'None' ? (
+                              <span className="text-text">{row.hoursWorked}</span>
+                            ) : (
+                              <span className="text-text-muted font-normal">None</span>
+                            )}
                           </td>
 
                           {/* Status */}
-                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                          <td className="px-3 py-2.5 whitespace-nowrap text-center">
                             <span
                               className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                                 row.status === 'present'
@@ -693,7 +662,7 @@ export function OnDutyTab({
                           </td>
 
                           {/* Actions */}
-                          <td className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
+                          <td className="px-4 py-2.5 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-1">
                               {row.rawRecord && (
                                 <button
@@ -774,56 +743,114 @@ export function OnDutyTab({
           </div>
         </div>
 
-        {/* Right Column: Shift Coverage & On Leave Today (3 cols on lg) */}
-        <div className="lg:col-span-3 space-y-4 min-w-0">
-          {/* Shift Coverage Card */}
-          <div className="p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <IconLayers className="w-4 h-4" />
+        {/* Right Column: Shift Coverage & On Leave Today (4 cols on lg, 3 cols on 2xl) */}
+        <div className="lg:col-span-4 2xl:col-span-3 space-y-4">
+          {/* Attendance Status Card (Replaces Shift Coverage with Real Punctuality & Presence) */}
+          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base sm:text-lg font-extrabold text-text font-display tracking-tight leading-tight">
+                  Attendance Status
+                </h3>
+                <p className="text-xs text-text-muted font-normal mt-0.5">
+                  On time, late &amp; absent today
+                </p>
               </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-bold text-text leading-tight">Shift Coverage</h3>
-                <span className="text-[11px] text-text-muted">3 Active Shifts</span>
-              </div>
+              {selectedStatusFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatusFilter(null)}
+                  className="text-[11px] font-bold text-primary-deep hover:underline cursor-pointer"
+                >
+                  Clear filter
+                </button>
+              )}
             </div>
 
-            <div className="space-y-3 pt-1">
-              {shiftCoverage.map((sc) => (
-                <div key={sc.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-semibold text-text truncate min-w-0">
-                      {sc.name} <span className="text-text-muted text-[11px]">({sc.hours})</span>
-                    </span>
-                    <span className="font-bold text-emerald-600 shrink-0">{sc.percent}%</span>
-                  </div>
-                  {/* Progress bar */}
-                  <div className="w-full h-2 rounded-full bg-surface-muted overflow-hidden">
+            {/* Vertical Bar Chart with 4 Dashed Grid Lines */}
+            <div className="relative pt-6 pb-2">
+              {/* 4 Dashed Horizontal Grid Lines */}
+              <div className="absolute inset-x-0 top-6 bottom-8 flex flex-col justify-between pointer-events-none">
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+              </div>
+
+              {/* Bars and Status Labels */}
+              <div className="relative z-10 flex items-end justify-around gap-2 h-44 px-2">
+                {attendanceBreakdown.map((item) => {
+                  const isSelected = selectedStatusFilter === item.id;
+                  return (
                     <div
-                      className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                      style={{ width: `${sc.percent}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                      key={item.id}
+                      onClick={() =>
+                        setSelectedStatusFilter((prev) => (prev === item.id ? null : item.id))
+                      }
+                      title={`Click to filter ${item.name} (${item.count} employees)`}
+                      className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group relative"
+                    >
+                      {/* Floating Percentage Badge on hover or click */}
+                      <div
+                        className={`absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-xs whitespace-nowrap transition-all pointer-events-none z-20 ${
+                          isSelected
+                            ? `${item.activeBadgeColor} text-white scale-105 shadow-md opacity-100`
+                            : 'bg-slate-800 text-white opacity-0 group-hover:opacity-100'
+                        }`}
+                      >
+                        {item.count} ({item.percent}%)
+                      </div>
+
+                      {/* Bar */}
+                      <div className="w-full max-w-[48px] flex items-end justify-center h-full pb-1">
+                        <div
+                          className={`w-full rounded-t-xl transition-all duration-300 ${
+                            isSelected
+                              ? `${item.activeBarColor} shadow-md scale-y-[1.02] origin-bottom`
+                              : `${item.barColor} opacity-90 group-hover:opacity-100 group-hover:scale-y-[1.02] origin-bottom`
+                          }`}
+                          style={{ height: `${Math.max(item.percent, item.count > 0 ? 14 : 6)}%` }}
+                        />
+                      </div>
+
+                      {/* Status Name */}
+                      <span
+                        className={`text-xs mt-2 transition-colors text-center ${
+                          isSelected
+                            ? 'font-extrabold text-text'
+                            : 'font-medium text-text-muted group-hover:text-text'
+                        }`}
+                      >
+                        {item.name}
+                      </span>
+                      {/* Count */}
+                      <span className="text-[11px] font-bold text-text tabular-nums mt-0.5">
+                        {item.count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* On Leave Today Card */}
-          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                <IconCalendar className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-text leading-tight">On Leave Today</h3>
-                <span className="text-[11px] text-text-muted">{onLeaveCount} Employees</span>
+          {/* On Leave Today Card (Clean Solid White Card) */}
+          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-border/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <IconCalendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-text leading-tight">On Leave Today</h3>
+                  <span className="text-[11px] text-text-muted">{onLeaveCount} Employees</span>
+                </div>
               </div>
             </div>
 
             <div className="space-y-3 pt-1">
               {onLeaveEmployees.length === 0 ? (
-                <p className="text-xs text-text-muted text-center py-2">
+                <p className="text-xs text-text-muted text-center py-4">
                   No employees on leave today.
                 </p>
               ) : (
@@ -857,16 +884,18 @@ export function OnDutyTab({
               )}
             </div>
 
-            <div className="pt-2 border-t border-border/60 text-right">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/staff/leave')}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 border-none p-0"
-              >
-                View All ({onLeaveCount}) &rarr;
-              </Button>
-            </div>
+            {onLeaveEmployees.length > 0 && (
+              <div className="pt-2 border-t border-border/60 text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/staff/leave')}
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 border-none p-0 cursor-pointer"
+                >
+                  View All ({onLeaveCount}) &rarr;
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

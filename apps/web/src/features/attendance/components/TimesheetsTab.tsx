@@ -57,25 +57,6 @@ function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
-function IconAlertTriangle({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  );
-}
-
 export interface TimesheetEntry {
   id: string;
   employeeId: string;
@@ -109,6 +90,7 @@ export function TimesheetsTab({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailedEntry, setDetailedEntry] = useState<TimesheetEntry | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
 
   // Derive timesheets by aggregating records per employee
   const [timesheetList, setTimesheetList] = useState<TimesheetEntry[]>(() => {
@@ -177,7 +159,15 @@ export function TimesheetsTab({
     return timesheetList.filter((ts) => ts.status === 'flagged').length;
   }, [timesheetList]);
 
-  // Filtered Timesheets
+  // Status counts for filter pills
+  const statusCounts = useMemo(() => {
+    return {
+      all: timesheetList.length,
+      submitted: timesheetList.filter((t) => t.status === 'submitted').length,
+      flagged: timesheetList.filter((t) => t.status === 'flagged').length,
+      approved: timesheetList.filter((t) => t.status === 'approved').length,
+    };
+  }, [timesheetList]);
   const filteredTimesheets = useMemo(() => {
     return timesheetList.filter((ts) => {
       if (
@@ -232,15 +222,6 @@ export function TimesheetsTab({
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
-  const handleRejectSelected = () => {
-    setTimesheetList((prev) =>
-      prev.map((ts) => (selectedIds.has(ts.id) ? { ...ts, status: 'flagged' } : ts)),
-    );
-    setSelectedIds(new Set());
-    setSuccessToast(`${selectedIds.size} timesheets flagged for review.`);
-    setTimeout(() => setSuccessToast(null), 3000);
-  };
-
   // CSV Export
   const handleExportCSV = () => {
     const headers = [
@@ -275,15 +256,15 @@ export function TimesheetsTab({
     document.body.removeChild(link);
   };
 
-  // Mock Hours by Day data
+  // Hours by Day data (Matches user design: Mon-Sun with active day)
   const hoursByDay = [
-    { day: 'Mon', hours: 184, percent: 92 },
-    { day: 'Tue', hours: 192, percent: 96 },
-    { day: 'Wed', hours: 178, percent: 89 },
-    { day: 'Thu', hours: 188, percent: 94 },
-    { day: 'Fri', hours: 172, percent: 86 },
-    { day: 'Sat', hours: 24, percent: 12 },
-    { day: 'Sun', hours: 0, percent: 0 },
+    { day: 'Mon', hours: 38.5, percent: 52 },
+    { day: 'Tue', hours: 39.0, percent: 54 },
+    { day: 'Wed', hours: 41.2, percent: 56 },
+    { day: 'Thu', hours: 38.0, percent: 53 },
+    { day: 'Fri', hours: 40.5, percent: 55 },
+    { day: 'Sat', hours: 42.0, percent: 58 },
+    { day: 'Sun', hours: 39.0, percent: 53 },
   ];
 
   return (
@@ -298,112 +279,95 @@ export function TimesheetsTab({
         </div>
       )}
 
-      {/* 1. Four Top KPI Cards */}
+      {/* 1. Four Top KPI Cards (Solid Vibrant Pastels from Reference Image) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Hours Worked */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Total Hours Worked
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {totalHoursWorked} hrs
-              </span>
-              <span className="text-[11px] text-text-muted block truncate">
-                Current work period
-              </span>
-            </div>
+        {/* Card 1: Hours worked (Soft Peach / Terracotta) */}
+        <div className="p-5 bg-[#faebe6] border border-[#f2d4cb] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <IconClock className="w-4 h-4 text-slate-600" />
+            <span>Hours worked</span>
+          </div>
+          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
+            {Number(totalHoursWorked).toLocaleString()}h
+          </div>
+          <div className="text-xs text-slate-600 font-medium">
+            {timesheetList.length} timesheets
           </div>
         </div>
 
-        {/* Overtime Hours */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Overtime Hours
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {totalOvertime} hrs
-              </span>
-              <span className="text-[11px] text-emerald-600 font-semibold block truncate">
-                Eligible for compensation
-              </span>
-            </div>
+        {/* Card 2: Overtime (Soft Mint Green) */}
+        <div className="p-5 bg-[#e4f5ed] border border-[#c6eadb] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <span className="text-sm">⚡</span>
+            <span>Overtime</span>
           </div>
+          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
+            {totalOvertime}h
+          </div>
+          <div className="text-xs text-slate-600 font-medium">at time and a half</div>
         </div>
 
-        {/* Pending Approval */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Pending Approval
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {pendingCount}
-              </span>
-              <span className="text-[11px] text-amber-700 block truncate font-semibold">
-                Needs manager sign-off
-              </span>
-            </div>
+        {/* Card 3: To approve (Soft Sky Blue) */}
+        <div className="p-5 bg-[#e5effb] border border-[#ccdef4] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <span className="text-sm">📥</span>
+            <span>To approve</span>
           </div>
+          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
+            {pendingCount}
+          </div>
+          <div className="text-xs text-slate-600 font-medium">submitted, not yet signed off</div>
         </div>
 
-        {/* Flagged Timesheets */}
-        <div className="p-4 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <IconAlertTriangle className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-bold text-text-muted uppercase tracking-wider block">
-                Flagged Timesheets
-              </span>
-              <span className="text-2xl font-extrabold text-text font-display leading-tight block">
-                {flaggedCount}
-              </span>
-              <span className="text-[11px] text-rose-600 block truncate font-semibold">
-                Missing check-outs or variance
-              </span>
-            </div>
+        {/* Card 4: Flagged (Soft Butter Yellow) */}
+        <div className="p-5 bg-[#fef4d8] border border-[#fae6b4] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <span className="text-sm">🚩</span>
+            <span>Flagged</span>
           </div>
+          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
+            {flaggedCount}
+          </div>
+          <div className="text-xs text-slate-600 font-medium">short of their contract</div>
         </div>
       </div>
 
-      {/* 2. Main Layout (9 cols Table & Bulk Actions, 3 cols Panels) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left 9 cols: Filters, Table, Bulk Actions */}
-        <div className="lg:col-span-9 space-y-4 min-w-0">
-          {/* Controls Bar */}
+      {/* 2. Main Layout (8 cols Table & Bulk Actions, 4 cols Panels) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left 8 cols: Filters, Table, Bulk Actions */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Controls Bar (Matches Reference Image Filter Pills and Approve Button) */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Status Tabs */}
-              <div className="flex items-center p-1 bg-white border border-border/80 rounded-xl shadow-xs">
-                {(['all', 'submitted', 'flagged', 'approved'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setStatusTab(tab)}
-                    className={`px-3 py-1 text-xs font-bold rounded-lg capitalize transition-all ${
-                      statusTab === tab
-                        ? 'bg-primary-deep text-white shadow-xs'
-                        : 'text-text-muted hover:text-text'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+              {/* Status Filter Pills with Counts */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {(['all', 'submitted', 'flagged', 'approved'] as const).map((tab) => {
+                  const isActive = statusTab === tab;
+                  const count = statusCounts[tab];
+                  return (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setStatusTab(tab)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl capitalize transition-all flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-[#13222d] text-white shadow-xs'
+                          : 'bg-surface border border-border/80 text-text hover:bg-surface-muted'
+                      }`}
+                    >
+                      <span>{tab}</span>
+                      {count > 0 && tab !== 'all' && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                            isActive ? 'bg-white/20 text-white' : 'bg-surface-muted text-text-muted'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Department Dropdown */}
@@ -411,7 +375,7 @@ export function TimesheetsTab({
                 aria-label="Filter by Department"
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="min-h-[36px] px-3 py-1.5 text-xs font-semibold bg-white border border-border/80 rounded-xl text-text outline-none hover:bg-surface-muted cursor-pointer shadow-xs"
+                className="min-h-[36px] px-3 py-1.5 text-xs font-semibold bg-surface border border-border/80 rounded-xl text-text outline-none hover:bg-surface-muted cursor-pointer"
               >
                 <option value="all">All Departments</option>
                 {departments.map((d) => (
@@ -428,54 +392,45 @@ export function TimesheetsTab({
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-40 min-h-[36px] px-3 py-1.5 text-xs bg-white border border-border/80 rounded-xl text-text outline-none focus:border-primary-strong shadow-xs"
+                className="w-36 sm:w-44 min-h-[36px] px-3 py-1.5 text-xs bg-surface border border-border/80 rounded-xl text-text outline-none focus:border-primary-strong"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExportCSV}
-                className="min-h-[36px] px-3 text-xs font-semibold flex items-center gap-1.5 bg-white shadow-xs"
+                className="min-h-[36px] px-3 text-xs font-semibold flex items-center gap-1.5 rounded-xl"
               >
                 <IconDownload />
                 Export
               </Button>
+              {canApproveTimesheets && (
+                <button
+                  type="button"
+                  onClick={handleApproveSelected}
+                  disabled={selectedIds.size === 0}
+                  className={`min-h-[36px] px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs ${
+                    selectedIds.size > 0
+                      ? 'bg-[#78b3bd] hover:bg-[#68a3ad] text-white cursor-pointer'
+                      : 'bg-[#78b3bd]/60 text-white cursor-not-allowed opacity-80'
+                  }`}
+                >
+                  <IconCheck className="w-3.5 h-3.5" />
+                  <span>Approve {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Bulk Action Bar (when checkboxes selected) */}
-          {selectedIds.size > 0 && canApproveTimesheets && (
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between gap-3 text-xs">
-              <span className="font-bold text-emerald-900">
-                {selectedIds.size} timesheet{selectedIds.size > 1 ? 's' : ''} selected
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleApproveSelected}
-                  className="min-h-[32px] text-xs font-bold bg-primary-deep text-white"
-                >
-                  Approve Selected
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={handleRejectSelected}
-                  className="min-h-[32px] text-xs font-bold"
-                >
-                  Flag Selected
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Timesheets Table */}
-          <div className="bg-white border border-border/80 rounded-card shadow-xs overflow-hidden">
+          <div className="bg-surface rounded-2xl border border-border/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm" aria-label="Timesheets Table">
-                <thead className="bg-surface-muted/60 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
+              <table
+                className="w-full text-left text-xs border-collapse min-w-[620px]"
+                aria-label="Timesheets Table"
+              >
+                <thead className="bg-surface-muted/60 border-b border-border/80 text-xs font-bold text-text-muted">
                   <tr>
-                    <th scope="col" className="w-8 pl-3.5 pr-2 py-3.5">
+                    <th scope="col" className="w-8 px-3.5 py-3 whitespace-nowrap">
                       <input
                         type="checkbox"
                         aria-label="Select all timesheets"
@@ -487,44 +442,50 @@ export function TimesheetsTab({
                         className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
                       />
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
-                      Employee
+                    <th scope="col" className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[160px]">
+                      Person
                     </th>
-                    <th
-                      scope="col"
-                      className="px-2.5 xl:px-3.5 py-3.5 hidden md:table-cell whitespace-nowrap"
-                    >
-                      Dept
-                    </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[65px]">
                       Planned
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[75px]">
                       Worked
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
-                      OT
+                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]">
+                      Overtime
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[60px]">
+                      Breaks
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[85px]">
                       Status
                     </th>
-                    <th scope="col" className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
+                    <th scope="col" className="px-3.5 py-3 text-right whitespace-nowrap min-w-[70px]">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border text-text">
+                <tbody className="divide-y divide-border/60 text-text">
                   {filteredTimesheets.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-xs text-text-muted">
+                      <td colSpan={8} className="px-4 py-10 text-center text-xs text-text-muted">
                         No timesheets found matching filters.
                       </td>
                     </tr>
                   ) : (
                     filteredTimesheets.map((ts) => {
+                      const isFlagged = ts.status === 'flagged';
+                      const variance = Math.round((ts.workedHours - ts.plannedHours) * 10) / 10;
                       return (
-                        <tr key={ts.id} className="hover:bg-surface-muted/40 transition-colors">
-                          <td className="w-8 pl-3.5 pr-2 py-3.5">
+                        <tr
+                          key={ts.id}
+                          className={`transition-colors ${
+                            isFlagged
+                              ? 'bg-[#fff8f7] hover:bg-[#ffefed]'
+                              : 'hover:bg-surface-muted/30'
+                          }`}
+                        >
+                          <td className="w-8 px-4 py-3.5 align-middle">
                             <input
                               type="checkbox"
                               aria-label={`Select ${ts.name}`}
@@ -534,52 +495,79 @@ export function TimesheetsTab({
                             />
                           </td>
 
-                          <td className="px-2.5 xl:px-3.5 py-3.5">
-                            <span className="font-bold text-text block truncate">{ts.name}</span>
-                            <span className="text-[11px] text-text-muted block">
-                              {ts.employeeCode}
-                            </span>
+                          {/* Person: Avatar + Name + Subtitle */}
+                          <td className="px-4 py-3.5 align-middle">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0 border border-border/60">
+                                {ts.name
+                                  .split(' ')
+                                  .map((n) => n[0])
+                                  .slice(0, 2)
+                                  .join('')}
+                              </div>
+                              <div className="min-w-0">
+                                <span className="font-bold text-text block truncate text-xs sm:text-sm">
+                                  {ts.name}
+                                </span>
+                                <span className="text-[11px] text-text-muted block truncate font-medium">
+                                  {ts.employeeCode} · {ts.departmentName}
+                                </span>
+                              </div>
+                            </div>
                           </td>
 
-                          <td className="px-2.5 xl:px-3.5 py-3.5 hidden md:table-cell text-xs text-text-muted whitespace-nowrap">
-                            {ts.departmentName}
-                          </td>
-
-                          <td className="px-2.5 xl:px-3.5 py-3.5 text-xs text-text-muted whitespace-nowrap">
+                          <td className="px-4 py-3.5 text-center text-xs text-text-muted align-middle">
                             {ts.plannedHours}h
                           </td>
 
-                          <td className="px-2.5 xl:px-3.5 py-3.5 font-bold text-text whitespace-nowrap">
-                            {ts.workedHours}h
-                          </td>
-
-                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
-                            {ts.overtimeHours > 0 ? (
-                              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs">
-                                +{ts.overtimeHours}h
+                          {/* Worked with Colored Variance Tag */}
+                          <td className="px-4 py-3.5 text-center align-middle font-bold text-text text-xs sm:text-sm">
+                            <span>{ts.workedHours}h</span>
+                            {variance < 0 && (
+                              <span className="ml-1.5 text-rose-600 font-extrabold text-[11px]">
+                                {variance}h
                               </span>
-                            ) : (
-                              <span className="text-text-muted text-xs font-medium">None</span>
+                            )}
+                            {variance > 0 && (
+                              <span className="ml-1.5 text-emerald-600 font-extrabold text-[11px]">
+                                +{variance}h
+                              </span>
                             )}
                           </td>
 
-                          <td className="px-2.5 xl:px-3.5 py-3.5 whitespace-nowrap">
+                          {/* Overtime (Proper em dash, no \u2014) */}
+                          <td className="px-4 py-3.5 text-center align-middle">
+                            {ts.overtimeHours > 0 ? (
+                              <span className="font-bold text-amber-600 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg text-xs">
+                                +{ts.overtimeHours}h
+                              </span>
+                            ) : (
+                              <span className="text-text-muted">—</span>
+                            )}
+                          </td>
+
+                          <td className="px-4 py-3.5 text-center text-xs text-text-muted align-middle">
+                            {ts.breakDuration || '1.0h'}
+                          </td>
+
+                          {/* Status Badge with Colored Dot */}
+                          <td className="px-4 py-3.5 text-center align-middle">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                                 ts.status === 'approved'
-                                  ? 'bg-emerald-500/10 text-emerald-700'
+                                  ? 'bg-[#e6f7ef] text-[#1b7a4b] border border-[#cbece0]'
                                   : ts.status === 'flagged'
-                                    ? 'bg-rose-500/10 text-rose-700'
-                                    : 'bg-amber-500/10 text-amber-700'
+                                    ? 'bg-[#fdeeed] text-[#d63f3a] border border-[#fbd6d4]'
+                                    : 'bg-[#fef6e7] text-[#c07d1a] border border-[#fae7c8]'
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full ${
                                   ts.status === 'approved'
-                                    ? 'bg-emerald-500'
+                                    ? 'bg-[#1b7a4b]'
                                     : ts.status === 'flagged'
-                                      ? 'bg-rose-500'
-                                      : 'bg-amber-500'
+                                      ? 'bg-[#d63f3a]'
+                                      : 'bg-[#c07d1a]'
                                 }`}
                               />
                               {ts.status === 'approved'
@@ -590,13 +578,14 @@ export function TimesheetsTab({
                             </span>
                           </td>
 
-                          <td className="px-2.5 xl:px-4 py-3.5 text-right whitespace-nowrap">
+                          {/* Action Button: Checkmark button & Details */}
+                          <td className="px-4 py-3.5 text-right align-middle">
                             <div className="flex items-center justify-end gap-1.5">
-                              {ts.status === 'submitted' && canApproveTimesheets && (
+                              {ts.status !== 'approved' && canApproveTimesheets && (
                                 <button
                                   type="button"
                                   onClick={() => handleApproveSingle(ts.id)}
-                                  className="p-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold"
+                                  className="w-7 h-7 rounded-lg border border-border/80 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
                                   title="Approve timesheet"
                                 >
                                   <IconCheck className="w-3.5 h-3.5" />
@@ -606,7 +595,7 @@ export function TimesheetsTab({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setDetailedEntry(ts)}
-                                className="min-h-[28px] text-[11px] px-2 py-0.5"
+                                className="min-h-[28px] text-[11px] px-2.5 py-0.5 rounded-lg"
                               >
                                 Details
                               </Button>
@@ -622,62 +611,92 @@ export function TimesheetsTab({
           </div>
         </div>
 
-        {/* Right 3 cols: Hours by Day & Overtime Claims */}
-        <div className="lg:col-span-3 space-y-4 min-w-0">
-          {/* Hours by Day Card */}
-          <div className="p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <h3 className="text-sm font-bold text-text leading-tight">Hours by Day</h3>
-              <span className="text-[11px] font-semibold text-text-muted">Weekly Total</span>
+        {/* Right 4 cols: Hours by Day & Overtime Claims */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Hours by day Card (Matches reference design in media_1794554581559_b350b711.png) */}
+          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-extrabold text-text font-display tracking-tight leading-tight">
+                Hours by day
+              </h3>
+              <p className="text-xs text-text-muted font-normal mt-0.5">
+                Every timesheet, last week
+              </p>
             </div>
 
-            <div className="space-y-2.5 pt-1">
-              {hoursByDay.map((d) => (
-                <div key={d.day} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-text">{d.day}</span>
-                    <span className="text-text-muted tabular-nums">{d.hours} hrs</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-surface-muted overflow-hidden">
+            {/* Vertical Bar Chart with 4 Dashed Grid Lines */}
+            <div className="relative pt-6 pb-2">
+              {/* 4 Dashed Horizontal Grid Lines */}
+              <div className="absolute inset-x-0 top-6 bottom-8 flex flex-col justify-between pointer-events-none">
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+                <div className="w-full border-b border-dashed border-border/70" />
+              </div>
+
+              {/* Bars and Day Labels */}
+              <div className="relative z-10 flex items-end justify-between gap-1.5 sm:gap-2 h-44 px-2">
+                {hoursByDay.map((d) => {
+                  const isSelected = selectedChartDay === d.day;
+                  return (
                     <div
-                      className="h-full rounded-full bg-emerald-500"
-                      style={{ width: `${d.percent}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                      key={d.day}
+                      onClick={() => setSelectedChartDay((prev) => (prev === d.day ? null : d.day))}
+                      className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group relative"
+                    >
+                      {/* Floating Percentage / Hours badge on click */}
+                      {isSelected && (
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-[#0c6b75] text-white text-[10px] font-bold shadow-md whitespace-nowrap animate-in fade-in zoom-in-95 pointer-events-none z-20">
+                          {d.percent}% ({d.hours}h)
+                        </div>
+                      )}
+
+                      {/* Bar */}
+                      <div className="w-full max-w-[38px] flex items-end justify-center h-full pb-1">
+                        <div
+                          className={`w-full rounded-t-xl transition-all duration-300 ${
+                            isSelected
+                              ? 'bg-[#0c6b75] shadow-xs scale-y-[1.02] origin-bottom'
+                              : 'bg-[#74a8b5] group-hover:bg-[#5f97a5] opacity-90 group-hover:opacity-100 group-hover:scale-y-[1.02] origin-bottom'
+                          }`}
+                          style={{ height: `${d.percent}%` }}
+                        />
+                      </div>
+
+                      {/* Day Label */}
+                      <span
+                        className={`text-xs mt-2 transition-colors ${
+                          isSelected
+                            ? 'font-extrabold text-[#0c6b75]'
+                            : 'font-medium text-text-muted group-hover:text-text'
+                        }`}
+                      >
+                        {d.day}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Pending Overtime Claims */}
-          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <h3 className="text-sm font-bold text-text leading-tight">Overtime Claims</h3>
-              <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                2 Pending
-              </span>
+          {/* Overtime Claims Card (Matches Reference Image media_1794555317041_658c6c57.jpg) */}
+          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-extrabold text-text font-display tracking-tight leading-tight">
+                Overtime claims
+              </h3>
+              <p className="text-xs text-text-muted font-normal mt-0.5">None waiting</p>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-2.5 rounded-xl bg-surface border border-border/60 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-text">Arun Kumar</span>
-                  <span className="font-semibold text-emerald-600">+2.5 hrs</span>
-                </div>
-                <p className="text-[11px] text-text-muted">
-                  Production deployment on Friday night.
-                </p>
+            {/* Decided State with Center Checkmark Box */}
+            <div className="py-8 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-surface-muted/90 border border-border/70 flex items-center justify-center mb-3 shadow-2xs text-slate-700">
+                <IconCheck className="w-6 h-6" />
               </div>
-
-              <div className="p-2.5 rounded-xl bg-surface border border-border/60 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-text">Rajesh Patel</span>
-                  <span className="font-semibold text-emerald-600">+3.0 hrs</span>
-                </div>
-                <p className="text-[11px] text-text-muted">
-                  Critical incident resolution on server downtime.
-                </p>
-              </div>
+              <span className="text-xs font-extrabold text-text block">
+                All claimed hours decided
+              </span>
             </div>
           </div>
         </div>
@@ -729,9 +748,7 @@ export function TimesheetsTab({
                     className="flex items-center justify-between p-2.5 bg-surface text-text"
                   >
                     <span className="font-semibold">{day}</span>
-                    <span className="text-text-muted tabular-nums">
-                      09:00 AM – 06:00 PM (8.5 hrs)
-                    </span>
+                    <span className="text-text-muted font-mono">09:00 AM – 06:00 PM (8.5 hrs)</span>
                   </div>
                 ))}
               </div>
