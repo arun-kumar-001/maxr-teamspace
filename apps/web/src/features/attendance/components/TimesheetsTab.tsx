@@ -442,25 +442,46 @@ export function TimesheetsTab({
                         className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
                       />
                     </th>
-                    <th scope="col" className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[160px]">
+                    <th
+                      scope="col"
+                      className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[160px]"
+                    >
                       Person
                     </th>
-                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[65px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[65px]"
+                    >
                       Planned
                     </th>
-                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[75px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[75px]"
+                    >
                       Worked
                     </th>
-                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
+                    >
                       Overtime
                     </th>
-                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[60px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[60px]"
+                    >
                       Breaks
                     </th>
-                    <th scope="col" className="px-3 py-3 text-center whitespace-nowrap min-w-[85px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[85px]"
+                    >
                       Status
                     </th>
-                    <th scope="col" className="px-3.5 py-3 text-right whitespace-nowrap min-w-[70px]">
+                    <th
+                      scope="col"
+                      className="px-3.5 py-3 text-right whitespace-nowrap min-w-[70px]"
+                    >
                       Actions
                     </th>
                   </tr>

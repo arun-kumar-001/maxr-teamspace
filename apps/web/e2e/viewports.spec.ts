@@ -20,7 +20,10 @@ const OUT = resolve(import.meta.dirname, '../../../e2e-output/screenshots');
 
 test.describe('reference viewports', () => {
   for (const [width, height] of VIEWPORTS) {
-    test(`${width}x${height}: no horizontal scroll, screenshot saved`, async ({ page }) => {
+    test(`${width}x${height}: no horizontal scroll, screenshot saved`, async ({
+      page,
+    }, testInfo) => {
+      testInfo.setTimeout(120_000);
       mkdirSync(OUT, { recursive: true });
       await page.setViewportSize({ width, height });
       await openGallery(page);

@@ -138,34 +138,6 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
     return updated;
   }
 
-  async updateBreaks(
-    sessionId: string,
-    breaks: AttendanceBreak[],
-    breakMinutes: number,
-  ): Promise<AttendanceRecord | null> {
-    const record = this.items.get(sessionId);
-    if (!record || record.checkOutTime !== null) {
-      return null;
-    }
-    const updated: AttendanceRecord = {
-      ...record,
-      breaks,
-      breakMinutes,
-      updatedAt: new Date().toISOString(),
-    };
-    this.items.set(sessionId, updated);
-    return updated;
-  }
-
-  async getTeamCalendar(): Promise<TeamCalendarData> {
-    return {
-      employees: [],
-      departments: [],
-      holidays: [],
-      entries: [],
-    };
-  }
-
   async findMany(
     params: AttendanceFindManyParams,
     scope: ScopeFilter,
