@@ -160,6 +160,17 @@ describe('users and roles API: reading', () => {
     expect((await as.admin.get('/api/v1/users/not-a-uuid')).status).toBe(400);
   });
 
+  it('accepts seeded 8-4-4-4-12 hex user IDs (e.g. 60000000-0000-0000-0000-000000000001)', async () => {
+    const seededAdmin: UserAccount = {
+      ...account(1, [ROLES.ADMIN]),
+      id: '60000000-0000-0000-0000-000000000001',
+    };
+    const { as } = await setup([seededAdmin]);
+    const res = await as.admin.get('/api/v1/users/60000000-0000-0000-0000-000000000001');
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe('60000000-0000-0000-0000-000000000001');
+  });
+
   it('lists the four roles', async () => {
     const { as } = await setup([target]);
     const res = await as.admin.get('/api/v1/roles');
