@@ -7,11 +7,12 @@ const PORT = 4173;
 export default defineConfig({
   testDir: './e2e',
   outputDir: '../../e2e-output/results',
-  fullyParallel: true,
+  fullyParallel: !process.env.CI,
+  workers: process.env.CI ? 2 : 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
@@ -45,6 +46,7 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       VITE_DEV_MOCK_AUTH: 'true',
+      NODE_OPTIONS: '--max-old-space-size=4096',
     },
   },
 });
