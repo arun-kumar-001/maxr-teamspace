@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { ErrorState, Skeleton } from '../../../components/ui';
+import { ErrorState, PrimaryActionButton, Skeleton } from '../../../components/ui';
 import {
   fetchMyAttendanceHistory,
   fetchTeamAttendance,
@@ -371,14 +371,12 @@ function AttendanceOpsWorkspace({
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {activeTab === 'roster' && canManage && (
-            <button
+            <PrimaryActionButton
               type="button"
               onClick={() => setIsCreateRosterOpen(true)}
-              className="min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 bg-primary-deep text-white hover:bg-primary-deep/90 shadow-xs transition-colors cursor-pointer"
             >
-              <span className="text-base leading-none font-bold">+</span>
-              <span>Create Roster</span>
-            </button>
+              Create Roster
+            </PrimaryActionButton>
           )}
 
           <div className="relative">

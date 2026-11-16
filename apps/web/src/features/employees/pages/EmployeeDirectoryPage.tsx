@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Button, ErrorState, ForbiddenState, Skeleton, KpiCard } from '../../../components/ui';
+import { Badge, Button, ErrorState, ForbiddenState, Skeleton, KpiCard, PrimaryActionButton } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
@@ -145,23 +145,6 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
 
 function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -555,16 +538,13 @@ export function EmployeeDirectoryPage() {
           </Button>
 
           {canCreateEmployee && (
-            <Button
+            <PrimaryActionButton
               type="button"
-              variant="primary"
               onClick={() => navigate('/employees/new')}
               data-testid="add-employee-button"
-              className="min-h-[44px] px-4 shadow-sm text-xs font-bold flex items-center gap-2 bg-primary-deep text-white hover:bg-primary-ink"
             >
-              <IconPlus className="w-4 h-4" />
               Add Employee
-            </Button>
+            </PrimaryActionButton>
           )}
         </div>
       </div>

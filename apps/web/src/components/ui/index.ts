@@ -20,3 +20,4 @@ export * from './IconButton.js';
 export * from './Sidebar.js';
 export * from './DonutChart.js';
 export * from './KpiCard.js';
+export * from './PrimaryActionButton.js';

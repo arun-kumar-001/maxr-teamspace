@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { DepartmentsPage } from '../pages/DepartmentsPage';
 import * as departmentsApi from '../api/departmentsApi';
 import { AuthProvider } from '../../../auth/AuthContext';
@@ -36,6 +36,7 @@ describe('DepartmentsPage Component', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 

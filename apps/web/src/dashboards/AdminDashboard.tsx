@@ -1,30 +1,13 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
-import { DonutChart, type DonutChartSegment, KpiCard } from '../components/ui';
+import { DonutChart, type DonutChartSegment, KpiCard, PrimaryActionButton } from '../components/ui';
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import { cn } from '../lib/utils';
 
 // --- Shared Code-Based Modern Duotone SVG Icons ---
-
-function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
 
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
@@ -604,14 +587,12 @@ export function AdminDashboard() {
           </h1>
         </div>
         <div className="shrink-0">
-          <button
+          <PrimaryActionButton
             type="button"
             onClick={() => navigateTo('/tasks')}
-            className="inline-flex items-center gap-1.5 whitespace-nowrap px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-primary hover:bg-primary-deep text-sidebar font-semibold text-xs sm:text-sm shadow-xs transition-all duration-200 hover:scale-102 hover:shadow-md active:scale-95 shrink-0 cursor-pointer focus:outline-hidden"
           >
-            <IconPlus className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
-            <span className="whitespace-nowrap font-semibold">Create task</span>
-          </button>
+            Create task
+          </PrimaryActionButton>
         </div>
       </section>
 
