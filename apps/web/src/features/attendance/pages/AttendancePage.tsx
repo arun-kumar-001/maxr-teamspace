@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { ErrorState, Skeleton } from '../../../components/ui';
@@ -244,9 +244,26 @@ function AttendanceOpsWorkspace({
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
-  const [selectedDate, setSelectedDate] = useState<string>('2026-11-03');
+  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
+
+  const quickDates = useMemo(() => {
+    const list: Array<{ label: string; val: string }> = [];
+    const now = new Date();
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const val = d.toISOString().slice(0, 10);
+      const label =
+        i === 0
+          ? `Today (${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })})`
+          : i === 1
+            ? `Yesterday (${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })})`
+            : `${d.toLocaleDateString('en-GB', { weekday: 'short' })} (${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })})`;
+      list.push({ label, val });
+    }
+    return list;
+  }, []);
 
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
@@ -379,12 +396,7 @@ function AttendanceOpsWorkspace({
                 <span className="text-[11px] font-bold text-text-muted px-2 block">
                   Quick Date Select
                 </span>
-                {[
-                  { label: 'Today (03 Nov 2026)', val: '2026-11-03' },
-                  { label: 'Yesterday (02 Nov 2026)', val: '2026-11-02' },
-                  { label: 'Friday (31 Oct 2026)', val: '2026-10-31' },
-                  { label: 'Thursday (30 Oct 2026)', val: '2026-10-30' },
-                ].map((d) => (
+                {quickDates.map((d: { label: string; val: string }) => (
                   <button
                     key={d.val}
                     type="button"
