@@ -54,8 +54,8 @@ INSERT INTO employees (
   (
     '50000000-0000-0000-0000-000000000001',
     'EMP-0001',
-    'Arun',
-    'Kumar',
+    'Shagul',
+    'Hamithu',
     'admin@maxr.internal',
     '+91-9876543210',
     '30000000-0000-0000-0000-000000000001',

@@ -40,7 +40,6 @@ import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { CompanySettingsPage } from './features/settings';
-import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
 import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
@@ -602,39 +601,11 @@ function AppRoutes() {
         }
       />
 
-      {/* Meetings Routes (Issue #45) */}
-      <Route
-        path="/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/staff/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/lead/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
+      {/* Meetings Routes (Removed per user request) */}
+      <Route path="/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/staff/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/lead/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/admin/meetings" element={<Navigate to="/dashboard" replace />} />
 
       {/* Expenses Routes (Issue #29) */}
       <Route

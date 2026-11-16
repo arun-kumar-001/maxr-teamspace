@@ -186,14 +186,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'briefcase',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
-  // Shared Meetings Route (Issue #45 - Available to all authenticated roles)
-  {
-    id: 'meetings',
-    label: 'Meetings',
-    path: '/meetings',
-    iconName: 'calendar',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
-  },
   // Shared Expenses Route (Issue #29 - Available to all authenticated roles)
   {
     id: 'expenses',
@@ -296,19 +288,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
-  // Meetings routes (Issue #45) - accessible to all authenticated roles
-  if (
-    path === '/meetings' ||
-    path.startsWith('/meetings/') ||
-    path === '/staff/meetings' ||
-    path.startsWith('/staff/meetings/') ||
-    path === '/lead/meetings' ||
-    path.startsWith('/lead/meetings/') ||
-    path === '/admin/meetings' ||
-    path.startsWith('/admin/meetings/')
-  ) {
-    return true;
-  }
 
   // Expenses routes (Issue #29) - accessible to all authenticated roles
   if (
@@ -616,12 +595,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           ],
         },
         {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
           id: '/expenses',
           label: 'Expenses & Claims',
           href: '/expenses',
@@ -764,12 +737,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="check" />,
         },
         {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
           id: '/expenses',
           label: 'Expenses',
           href: '/expenses',
@@ -885,12 +852,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="briefcase" />,
         },
         {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
           id: '/expenses',
           label: 'Expenses',
           href: '/expenses',
@@ -960,12 +921,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'My Tasks',
           href: '/staff/tasks',
           icon: <NavSvgIcon name="check" />,
-        },
-        {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
         },
         {
           id: '/expenses',

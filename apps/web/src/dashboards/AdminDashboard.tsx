@@ -4,7 +4,6 @@ import { apiFetch } from '../api/client';
 import { DonutChart, type DonutChartSegment, KpiCard } from '../components/ui';
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
-import { fetchMeetings } from '../features/meetings/api/meetingsApi';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import { cn } from '../lib/utils';
 
@@ -222,36 +221,6 @@ function IconEye({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   );
 }
 
-function IconVideo({ className = 'w-3.5 h-3.5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <rect
-        x="2.5"
-        y="6.25"
-        width="13.5"
-        height="11.5"
-        rx="3"
-        fill="currentColor"
-        fillOpacity="0.16"
-      />
-      <path
-        d="m16 10.2 5.2-3a.6.6 0 0 1 .9.52v8.56a.6.6 0 0 1-.9.52l-5.2-3v-3.6Z"
-        fill="currentColor"
-        fillOpacity="0.22"
-      />
-    </svg>
-  );
-}
-
 interface ApprovalItem {
   id: string;
   name: string;
@@ -285,21 +254,13 @@ export function AdminDashboard() {
     pendingApprovalsTotal: 0,
   });
 
-  // State: Priority Tasks & Upcoming Meetings
+  // State: Priority Tasks
   const [priorityTasks, setPriorityTasks] = useState<
     Array<{
       title: string;
       owner: string;
       badge: string;
       badgeClass: string;
-    }>
-  >([]);
-
-  const [upcomingMeetings, setUpcomingMeetings] = useState<
-    Array<{
-      time: string;
-      title: string;
-      desc: string;
     }>
   >([]);
 
@@ -326,18 +287,12 @@ export function AdminDashboard() {
     async function loadData() {
       const now = new Date();
       const todayIso = now.toISOString().slice(0, 10);
-      const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const [meRes, empRes, approvalsRes, tasksRes, meetingsRes, teamAttRes, leaveReqRes] =
+      const [meRes, empRes, approvalsRes, tasksRes, teamAttRes, leaveReqRes] =
         await Promise.allSettled([
           apiFetch('/api/v1/auth/me').then((r) => (r.ok ? r.json() : null)),
           apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
           fetchApprovals({ status: 'pending', pageSize: 3 }),
           fetchTeamTasks({ pageSize: 100 }),
-          fetchMeetings({
-            from: now.toISOString(),
-            to: weekLater.toISOString(),
-            pageSize: 3,
-          }),
           fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
           apiFetch('/api/v1/leave-requests?status=pending&pageSize=1').then((r) =>
             r.ok ? r.json() : null,
@@ -460,22 +415,6 @@ export function AdminDashboard() {
                     ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-surface-muted text-text-muted border border-border',
           })),
-        );
-      }
-
-      if (meetingsRes.status === 'fulfilled') {
-        const list = meetingsRes.value.data ?? [];
-        setUpcomingMeetings(
-          list.slice(0, 3).map((m) => {
-            const dt = new Date(m.startsAt);
-            const hh = String(dt.getHours()).padStart(2, '0');
-            const mm = String(dt.getMinutes()).padStart(2, '0');
-            return {
-              time: Number.isNaN(dt.getTime()) ? '10:00' : `${hh}:${mm}`,
-              title: m.title,
-              desc: `${m.organizerName || 'Organizer'} • ${m.attendeeCount || 1} attendees`,
-            };
-          }),
         );
       }
     }
@@ -958,8 +897,8 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      {/* 4. Bottom Section: 3 Cards (Pending Approvals, Priority Tasks, Upcoming Meetings) */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
+      {/* 4. Bottom Section: 2 Cards (Pending Approvals, Priority Tasks) */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-stretch">
         {/* Card 1: Pending Approvals */}
         <div
           style={{ animationDelay: '400ms' }}
@@ -1111,69 +1050,6 @@ export function AdminDashboard() {
               className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
             >
               <span>Explore all tasks</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">
-                &rarr;
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Card 3: Upcoming Meetings - Perfectly Balanced */}
-        <div
-          onClick={() => navigateTo('/meetings')}
-          style={{ animationDelay: '500ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconCalendar className="w-3.5 h-3.5" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-sm font-bold text-text truncate">Upcoming Meetings</h2>
-                <p className="text-[10.5px] text-text-muted truncate">Today&apos;s calendar</p>
-              </div>
-            </div>
-            <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
-          </div>
-
-          {/* Meeting Rows */}
-          <div className="space-y-2 my-auto py-1.5 min-w-0">
-            {upcomingMeetings.length === 0 ? (
-              <p className="text-xs text-text-muted py-5 text-center">No upcoming meetings scheduled</p>
-            ) : (
-              upcomingMeetings.map((m, idx) => (
-                <div
-                  key={`${m.time}-${idx}`}
-                  className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="px-2 py-1 rounded-lg bg-surface-muted border border-border/80 font-mono font-bold text-text shrink-0 text-[11px] shadow-xs flex items-center gap-1 whitespace-nowrap">
-                      <IconClock className="w-2.5 h-2.5 text-text-muted" />
-                      <span>{m.time}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-text truncate leading-tight">{m.title}</p>
-                      <p className="text-[10.5px] text-text-muted truncate mt-0.5">{m.desc}</p>
-                    </div>
-                  </div>
-                  <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                    <IconVideo className="w-3 h-3" />
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer Link matching other cards */}
-          <div className="pt-2.5 border-t border-border/80">
-            <button
-              type="button"
-              onClick={() => navigateTo('/meetings')}
-              className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
-            >
-              <span>View full calendar</span>
               <span className="transition-transform duration-200 group-hover:translate-x-1">
                 &rarr;
               </span>

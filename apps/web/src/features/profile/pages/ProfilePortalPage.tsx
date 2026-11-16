@@ -6,9 +6,7 @@ import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
 import { fetchMyTasks } from '../../tasks/api/tasksApi';
 import { fetchProjects } from '../../projects/api/projectsApi';
-import { fetchMeetings } from '../../meetings/api/meetingsApi';
 import type { PayslipRecord } from '../../payslips/types';
-import type { MeetingSummary } from '../../meetings/types';
 
 interface OnboardingChecklistItem {
   id: number;
@@ -145,7 +143,6 @@ export function ProfilePortalPage() {
     useState<OnboardingChecklistItem[]>(INITIAL_ONBOARDING_TASKS);
   const [activeTasksCount, setActiveTasksCount] = useState(0);
   const [totalProjectsCount, setTotalProjectsCount] = useState(0);
-  const [meetings, setMeetings] = useState<MeetingSummary[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -169,17 +166,6 @@ export function ProfilePortalPage() {
       .then((res) => {
         if (active && typeof res.meta?.total === 'number') {
           setTotalProjectsCount(res.meta.total);
-        }
-      })
-      .catch(() => {});
-
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    void fetchMeetings({ from: start.toISOString(), to: end.toISOString() })
-      .then((res) => {
-        if (active && res.data) {
-          setMeetings(res.data);
         }
       })
       .catch(() => {});
@@ -778,52 +764,20 @@ export function ProfilePortalPage() {
             })}
           </div>
 
-          {meetings.length > 0 ? (
-            <div className="space-y-2 text-xs overflow-y-auto max-h-48 pr-1">
-              {meetings.map((m) => (
-                <div
-                  key={m.id}
-                  className="p-2.5 rounded-2xl flex items-center justify-between shadow-xs"
-                  style={{
-                    backgroundColor: 'rgb(244, 247, 246)',
-                    border: '1px solid rgba(8, 11, 12, 0.08)',
-                    color: 'rgb(8, 11, 12)',
-                  }}
-                >
-                  <div>
-                    <p className="text-xs font-bold leading-tight">{m.title}</p>
-                    <p className="text-[10px]" style={{ color: 'rgba(8, 11, 12, 0.6)' }}>
-                      {new Date(m.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(m.endsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <span
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{
-                      backgroundColor: 'rgba(85, 205, 179, 0.25)',
-                      color: 'rgb(8, 11, 12)',
-                    }}
-                  >
-                    {m.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div
-              className="rounded-2xl p-6 text-center border border-dashed flex flex-col items-center justify-center gap-1.5 my-auto"
-              style={{
-                backgroundColor: 'rgba(244, 247, 246, 0.5)',
-                borderColor: 'rgba(8, 11, 12, 0.1)',
-              }}
-            >
-              <p className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
-                No meetings scheduled
-              </p>
-              <p className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.45)' }}>
-                You have no scheduled calls or reviews for this day.
-              </p>
-            </div>
-          )}
+          <div
+            className="rounded-2xl p-6 text-center border border-dashed flex flex-col items-center justify-center gap-1.5 my-auto"
+            style={{
+              backgroundColor: 'rgba(244, 247, 246, 0.5)',
+              borderColor: 'rgba(8, 11, 12, 0.1)',
+            }}
+          >
+            <p className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+              Work Schedule: 09:00 - 18:00
+            </p>
+            <p className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.55)' }}>
+              General Shift active for selected date.
+            </p>
+          </div>
         </div>
 
         {/* Right Column: Dark Tasks Checklist */}
