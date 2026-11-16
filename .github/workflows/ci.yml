@@ -260,6 +260,8 @@ jobs:
 
       - name: Playwright tests (phone, tablet, desktop, 9 reference viewports)
         run: npm run e2e
+        env:
+          VITE_DEV_MOCK_AUTH: 'true'
 
       - name: Upload screenshots and report
         if: always()

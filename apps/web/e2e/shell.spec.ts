@@ -2,6 +2,24 @@ import { test, expect } from '@playwright/test';
 import { expectNoHorizontalScroll } from './helpers';
 
 test.describe('Issue #12: Responsive App Shell & Role Navigation', () => {
+  test.beforeEach(async ({ page }) => {
+    // Intercept any unmocked API calls from dashboards/shell to avoid proxy drops
+    await page.route('**/api/v1/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: [],
+          meta: { page: 1, pageSize: 20, total: 0, unreadCount: 0 },
+        }),
+      });
+    });
+
+    await page.addInitScript(() => {
+      window.localStorage.setItem('maxr_auth_session', 'staff');
+    });
+  });
+
   test('desktop/tablet layout renders persistent sidebar, role view and collapse toggle', async ({
     page,
   }, info) => {

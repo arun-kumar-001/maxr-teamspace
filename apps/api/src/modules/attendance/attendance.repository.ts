@@ -52,19 +52,6 @@ export interface IAttendanceRepository {
     checkOutLocation?: AttendanceLocation,
     checkOutPhoto?: string,
   ): Promise<AttendanceRecord | null>;
-  updateBreaks(
-    sessionId: string,
-    breaks: AttendanceBreak[],
-    breakMinutes: number,
-  ): Promise<AttendanceRecord | null>;
-  getTeamCalendar(params: {
-    callerEmployeeId: string;
-    callerRole: string;
-    startDate: string;
-    endDate: string;
-    departmentId?: string;
-    employeeId?: string;
-  }): Promise<TeamCalendarData>;
   findMany(
     params: AttendanceFindManyParams,
     scope: ScopeFilter,
