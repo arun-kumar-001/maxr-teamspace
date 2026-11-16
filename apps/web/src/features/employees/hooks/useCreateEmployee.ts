@@ -72,6 +72,7 @@ export function useCreateEmployee({
     employeeCode: initialPrefill?.employeeCode ?? '',
     firstName: initialPrefill?.firstName ?? '',
     lastName: initialPrefill?.lastName ?? '',
+    parentName: initialPrefill?.parentName ?? '',
     email: initialPrefill?.email ?? '',
     additionalEmails: initialPrefill?.additionalEmails ?? [],
     phone: initialPrefill?.phone ?? '',
@@ -523,7 +524,7 @@ export function useCreateEmployee({
   };
 
   const nextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 3));
+    setCurrentStep((prev) => Math.min(prev + 1, 5));
   };
 
   const prevStep = () => {
@@ -668,6 +669,7 @@ export function useCreateEmployee({
       employeeCode: '',
       firstName: '',
       lastName: '',
+      parentName: '',
       email: '',
       additionalEmails: [],
       phone: '',

@@ -6,8 +6,10 @@ interface StepItem {
 
 const STEPS: StepItem[] = [
   { number: 1, label: 'Personal', subtitle: 'Name & Contact' },
-  { number: 2, label: 'Employment', subtitle: 'Role & Department' },
-  { number: 3, label: 'Access', subtitle: 'Role & Review' },
+  { number: 2, label: 'Employment', subtitle: 'Role & Salary' },
+  { number: 3, label: 'Bank Details', subtitle: 'Account & IDs' },
+  { number: 4, label: 'Access', subtitle: 'Role & Login' },
+  { number: 5, label: 'Declaration', subtitle: 'Checklist & Submit' },
 ];
 
 export interface CreateEmployeeStepperProps {
@@ -55,12 +57,14 @@ export function CreateEmployeeStepper({
       </div>
 
       {/* Desktop / Tablet view (>= 640px): Expanded visual stepper */}
-      <ol className="hidden sm:grid grid-cols-3 gap-3">
+      <ol className="hidden sm:grid grid-cols-2 md:grid-cols-5 gap-2.5">
         {STEPS.map((step) => {
           const isCurrent = step.number === currentStep;
           const status = stepStatus?.[step.number];
           const isError = status === 'error';
-          const isCompleted = status === 'complete' || (!status && step.number < currentStep);
+          // A step is only completed if the user has navigated past it (step.number < currentStep) and it is not in error.
+          // Future steps (step.number > currentStep) never display a completed check tick.
+          const isCompleted = step.number < currentStep && !isError;
 
           return (
             <li key={step.number} className="relative">

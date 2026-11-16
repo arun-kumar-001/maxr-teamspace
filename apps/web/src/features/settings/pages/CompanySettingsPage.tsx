@@ -33,7 +33,7 @@ export function CompanySettingsPage() {
     refetch,
   } = useSettings();
 
-  // Role Gate: Only Admin is allowed to view and manage company settings
+  // Role Gate: Only System Administrators can access this configuration
   if (!authLoading && role !== ROLES.ADMIN) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">

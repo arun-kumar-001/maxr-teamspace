@@ -59,6 +59,7 @@ export interface CreateEmployeeFormState {
   employeeCode: string;
   firstName: string;
   lastName: string;
+  parentName?: string;
   email: string;
   phone: string;
   departmentId: string;
