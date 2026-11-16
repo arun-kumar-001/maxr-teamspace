@@ -1,7 +1,7 @@
 -- Update standard shifts to 09:00 - 19:00 (9 to 7) as requested
 UPDATE shifts
 SET start_time = '09:00', end_time = '19:00', name = 'Standard Shift (9 to 7)'
-WHERE LOWER(code) IN ('standard', 'general');
+WHERE LOWER(code) = 'standard';
 
 INSERT INTO shifts (id, code, name, start_time, end_time, grace_minutes)
 VALUES

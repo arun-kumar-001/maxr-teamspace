@@ -41,9 +41,9 @@ test.describe('Issue #12: Responsive App Shell & Role Navigation', () => {
     await expect(page.getByRole('link', { name: 'My Tasks' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Payslips' })).toBeVisible();
 
-    // Staff Dashboard content with Sample data badge (B2)
+    // Staff Dashboard content
     await expect(page.getByTestId('staff-dashboard')).toBeVisible();
-    await expect(page.getByText('Sample data').first()).toBeVisible();
+    await expect(page.getByTestId('attendance-toggle-button')).toBeVisible();
 
     // Collapse to rail and re-expand
     const collapseButton = page.getByRole('button', { name: 'Collapse sidebar' });
