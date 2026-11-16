@@ -265,7 +265,7 @@ export function HRDashboard() {
       {/* 4 Core HR Operational KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Headcount */}
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Total Headcount
@@ -292,7 +292,7 @@ export function HRDashboard() {
         </div>
 
         {/* Card 2: Today's Turnout / Attendance */}
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Today&apos;s Attendance
@@ -321,7 +321,7 @@ export function HRDashboard() {
         </div>
 
         {/* Card 3: Onboarding Pipeline */}
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Onboarding Pipeline
@@ -345,7 +345,7 @@ export function HRDashboard() {
         </div>
 
         {/* Card 4: Pending HR Approvals (Action Center) */}
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Pending Actions
@@ -376,7 +376,7 @@ export function HRDashboard() {
       </div>
 
       {/* Interactive HR Analytics & Trends Chart Section */}
-      <div className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-6">
+      <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -561,7 +561,7 @@ export function HRDashboard() {
       {/* Main Two Column Layout: Onboarding Pipeline & Department Capacity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Onboarding Checklist Summary (4-step per AGENTS.md §9) */}
-        <div className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5">
+        <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -684,7 +684,7 @@ export function HRDashboard() {
         </div>
 
         {/* Department Distribution & Capacity */}
-        <div className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5">
+        <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-text font-display">
@@ -777,7 +777,7 @@ export function HRDashboard() {
       {/* Leave Management & Compliance Alert Hub */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Out of Office Today (2 cols on lg) */}
-        <div className="lg:col-span-2 p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+        <div className="lg:col-span-2 p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
@@ -865,7 +865,7 @@ export function HRDashboard() {
         </div>
 
         {/* HR Action & Compliance Quick Radar */}
-        <div className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+        <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
               <SparklesIcon className="w-4 h-4 text-warning" />

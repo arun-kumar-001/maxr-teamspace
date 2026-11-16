@@ -71,6 +71,54 @@ export async function createEmployee(
     cleanBody.managerId = payload.managerId.trim();
   }
 
+  if (payload.additionalEmails && payload.additionalEmails.length > 0) {
+    cleanBody.additionalEmails = payload.additionalEmails;
+  }
+
+  if (payload.additionalPhones && payload.additionalPhones.length > 0) {
+    cleanBody.additionalPhones = payload.additionalPhones;
+  }
+
+  if (payload.permanentAddress && payload.permanentAddress.trim()) {
+    cleanBody.permanentAddress = payload.permanentAddress.trim();
+  }
+
+  if (payload.currentAddress && payload.currentAddress.trim()) {
+    cleanBody.currentAddress = payload.currentAddress.trim();
+  }
+
+  if (payload.bloodGroup && payload.bloodGroup.trim()) {
+    cleanBody.bloodGroup = payload.bloodGroup.trim();
+  }
+
+  if (payload.panNumber && payload.panNumber.trim()) {
+    cleanBody.panNumber = payload.panNumber.trim().toUpperCase();
+  }
+
+  if (payload.aadhaarNumber && payload.aadhaarNumber.trim()) {
+    cleanBody.aadhaarNumber = payload.aadhaarNumber.replace(/\s+/g, '');
+  }
+
+  if (payload.bankAccountHolder && payload.bankAccountHolder.trim()) {
+    cleanBody.bankAccountHolder = payload.bankAccountHolder.trim();
+  }
+
+  if (payload.bankName && payload.bankName.trim()) {
+    cleanBody.bankName = payload.bankName.trim();
+  }
+
+  if (payload.bankAccountNumber && payload.bankAccountNumber.trim()) {
+    cleanBody.bankAccountNumber = payload.bankAccountNumber.replace(/\s+/g, '');
+  }
+
+  if (payload.bankIfscCode && payload.bankIfscCode.trim()) {
+    cleanBody.bankIfscCode = payload.bankIfscCode.trim().toUpperCase();
+  }
+
+  if (payload.bankBranch && payload.bankBranch.trim()) {
+    cleanBody.bankBranch = payload.bankBranch.trim();
+  }
+
   const res = await apiFetch('/api/v1/employees', {
     method: 'POST',
     headers: {

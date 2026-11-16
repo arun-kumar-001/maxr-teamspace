@@ -214,6 +214,8 @@ export class AttendanceService {
       nowIso,
       durationMinutes,
       dto.notes,
+      dto.location,
+      dto.photoDataUrl,
     );
 
     if (!updated) {

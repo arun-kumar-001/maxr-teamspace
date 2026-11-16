@@ -28,7 +28,7 @@ export function TeamLeadDashboard() {
 
       {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Team Size
           </p>
@@ -36,7 +36,7 @@ export function TeamLeadDashboard() {
           <p className="mt-1 text-xs text-positive-ink font-medium">10 present today</p>
         </div>
 
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Pending Approvals
           </p>
@@ -44,7 +44,7 @@ export function TeamLeadDashboard() {
           <p className="mt-1 text-xs text-warning font-medium">Leave requests awaiting action</p>
         </div>
 
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Sprint Velocity
           </p>
@@ -54,7 +54,7 @@ export function TeamLeadDashboard() {
           <p className="mt-1 text-xs text-text-muted">Tasks completed on track</p>
         </div>
 
-        <div className="p-5 bg-surface border border-border rounded-card shadow-card">
+        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Blocked Issues
           </p>
@@ -66,7 +66,7 @@ export function TeamLeadDashboard() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Approvals Widget */}
-        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+        <div className="p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display">Pending Leave Approvals</h2>
             <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export function TeamLeadDashboard() {
         </div>
 
         {/* Team Tasks Snapshot */}
-        <div className="p-6 bg-surface border border-border rounded-card shadow-card space-y-4">
+        <div className="p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display">Active Sprint Tasks</h2>
             <Badge variant="neutral">Sample data</Badge>

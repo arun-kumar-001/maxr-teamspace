@@ -37,10 +37,10 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('Staff Management');
 
       // Staff navigation items
-      expect(html).toContain('Overview');
+      expect(html).toContain('Dashboard');
       expect(html).toContain('My Workspace');
       expect(html).toContain('My Profile');
-      expect(html).toContain('Check-In / Check-Out');
+      expect(html).toContain('Attendance Management');
       expect(html).toContain('My Leave');
       expect(html).toContain('My Tasks');
       expect(html).toContain('Payslips');

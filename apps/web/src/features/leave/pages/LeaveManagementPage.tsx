@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
@@ -38,6 +38,20 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           ? 'requests'
           : initialTab,
   );
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(
+        initialTab === 'policies' && !canManage
+          ? 'requests'
+          : initialTab === 'approvals' && !canReviewApprovals
+            ? 'requests'
+            : initialTab === 'calendar'
+              ? 'requests'
+              : initialTab,
+      );
+    }
+  }, [initialTab, canManage, canReviewApprovals]);
 
   const {
     policies,

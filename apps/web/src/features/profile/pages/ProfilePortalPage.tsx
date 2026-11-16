@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_DISPLAY_NAMES, ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
+import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
 import type { PayslipRecord } from '../../payslips/types';
 
@@ -154,10 +155,6 @@ export function ProfilePortalPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [isCheckedIn, setIsCheckedIn] = useState(true);
-  const [checkInTime, setCheckInTime] = useState('09:15 AM');
-  const [timeTrackerRunning, setTimeTrackerRunning] = useState(true);
-  const [secondsElapsed, setSecondsElapsed] = useState(9314);
   const [selectedDay, setSelectedDay] = useState(24);
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
   const [payslipNotice, setPayslipNotice] = useState<string | null>(null);
@@ -185,42 +182,6 @@ export function ProfilePortalPage() {
   const displayRole = user?.role ? ROLE_DISPLAY_NAMES[user.role] : 'Staff Member';
   const leaveRoute = user?.role === ROLES.STAFF ? '/staff/leave' : '/leave';
   const attendanceRoute = user?.role === ROLES.STAFF ? '/staff/attendance' : '/attendance';
-
-  const handleAttendanceToggle = () => {
-    if (isCheckedIn) {
-      setIsCheckedIn(false);
-      setTimeTrackerRunning(false);
-    } else {
-      setIsCheckedIn(true);
-      setTimeTrackerRunning(true);
-      const now = new Date();
-      setCheckInTime(
-        now.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }),
-      );
-    }
-  };
-
-  useEffect(() => {
-    if (!timeTrackerRunning) return;
-    const trackerInterval = setInterval(() => {
-      setSecondsElapsed((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(trackerInterval);
-  }, [timeTrackerRunning]);
-
-  const formatWorkTime = (totalSec: number) => {
-    const hrs = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = totalSec % 60;
-    return {
-      hoursMinutes: `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`,
-      seconds: String(secs).padStart(2, '0'),
-    };
-  };
 
   const toggleTask = (id: number) => {
     setOnboardingTasks((prev) =>
@@ -556,195 +517,12 @@ export function ProfilePortalPage() {
           </div>
         </div>
 
-        {/* Card 3: Time Tracker Card */}
-        <div
-          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72"
-          style={{
-            backgroundColor: 'rgb(255, 255, 255)',
-            border: '1px solid rgba(8, 11, 12, 0.08)',
-          }}
-        >
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-                Time tracker
-              </span>
-              <button
-                type="button"
-                onClick={() => navigate(attendanceRoute)}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-xs shrink-0"
-                style={{
-                  backgroundColor: 'rgb(244, 247, 246)',
-                  color: 'rgb(8, 11, 12)',
-                  border: '1px solid rgba(8, 11, 12, 0.08)',
-                }}
-                aria-label="View time tracker details"
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M7 17L17 7M17 7H7M17 7V17"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <p
-                className="text-2xl sm:text-[26px] font-bold font-display leading-none whitespace-nowrap"
-                style={{ color: 'rgb(8, 11, 12)' }}
-              >
-                {checkInTime}
-              </p>
-              <p
-                className="text-xs inline-flex items-center gap-1.5 whitespace-nowrap"
-                style={{ color: isCheckedIn ? 'rgb(13, 148, 136)' : 'rgba(8, 11, 12, 0.6)' }}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                    isCheckedIn ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'
-                  }`}
-                />
-                {isCheckedIn ? 'Checked In' : 'Checked Out'}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative flex items-center justify-center">
-            <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke="rgba(8, 11, 12, 0.12)"
-                strokeWidth="4"
-                strokeDasharray="2 3"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke={isCheckedIn ? 'rgb(85, 205, 179)' : 'rgba(8, 11, 12, 0.2)'}
-                strokeWidth="6"
-                strokeLinecap="round"
-                strokeDasharray="251.2"
-                strokeDashoffset={Math.max(251.2 * (1 - Math.min(secondsElapsed / 28800, 1)), 25)}
-                className="transition-all duration-1000 ease-linear"
-              />
-            </svg>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="flex items-baseline gap-0.5">
-                <p
-                  className="text-2xl font-bold font-display leading-tight tracking-tight"
-                  style={{ color: 'rgb(8, 11, 12)' }}
-                >
-                  {formatWorkTime(secondsElapsed).hoursMinutes}
-                </p>
-                <span
-                  className="text-xs font-display font-bold tabular-nums animate-pulse"
-                  style={{ color: isCheckedIn ? 'rgb(85, 205, 179)' : 'rgba(8, 11, 12, 0.4)' }}
-                >
-                  :{formatWorkTime(secondsElapsed).seconds}
-                </span>
-              </div>
-              <p
-                className="text-[10px] flex items-center gap-1.5"
-                style={{ color: 'rgba(8, 11, 12, 0.6)' }}
-              >
-                {isCheckedIn && timeTrackerRunning ? (
-                  <span className="relative flex h-2 w-2">
-                    <span
-                      className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                      style={{ backgroundColor: 'rgb(85, 205, 179)' }}
-                    />
-                    <span
-                      className="relative inline-flex rounded-full h-2 w-2"
-                      style={{ backgroundColor: 'rgb(85, 205, 179)' }}
-                    />
-                  </span>
-                ) : (
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: 'rgba(8, 11, 12, 0.3)' }}
-                  />
-                )}
-                {isCheckedIn ? 'Work Time' : 'Session Paused'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={handleAttendanceToggle}
-              data-testid="attendance-toggle-button"
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 ${
-                isCheckedIn && timeTrackerRunning ? 'animate-pulse-ring' : 'hover:opacity-90'
-              }`}
-              style={{
-                backgroundColor: isCheckedIn ? 'rgb(8, 11, 12)' : 'rgb(85, 205, 179)',
-                color: isCheckedIn ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
-                border: '1px solid rgba(8, 11, 12, 0.12)',
-              }}
-              aria-label={
-                isCheckedIn ? 'Check Out of attendance session' : 'Check In to attendance session'
-              }
-            >
-              <span className="text-[10px]">{isCheckedIn ? '⏹' : '▷'}</span>
-              <span>{isCheckedIn ? 'Check Out' : 'Check In'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setTimeTrackerRunning(!timeTrackerRunning)}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:scale-105 active:scale-95"
-              style={{
-                backgroundColor: !timeTrackerRunning ? 'rgb(73, 53, 72)' : 'rgb(244, 247, 246)',
-                color: !timeTrackerRunning ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
-                border: '1px solid rgba(8, 11, 12, 0.12)',
-              }}
-              aria-label={timeTrackerRunning ? 'Pause work time' : 'Play work time'}
-              title={timeTrackerRunning ? 'Pause work time' : 'Play work time'}
-            >
-              <span>{timeTrackerRunning ? '❚❚' : '▷'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setSecondsElapsed(0)}
-              className="w-8 h-8 rounded-full flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:rotate-180 hover:scale-105 active:scale-95 duration-300"
-              style={{
-                backgroundColor: 'rgb(8, 11, 12)',
-                color: 'rgb(255, 255, 255)',
-              }}
-              aria-label="Reset timer"
-              title="Reset timer"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        {/* Card 3: Shared Time Tracker Card */}
+        <TimeTrackerCard
+          attendanceRoute={attendanceRoute}
+          onNavigate={navigate}
+          className="h-64 sm:h-72"
+        />
 
         {/* Card 4: Task Completion Process Card */}
         <div

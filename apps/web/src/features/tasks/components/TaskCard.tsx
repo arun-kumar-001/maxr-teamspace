@@ -1,30 +1,111 @@
-import { useState } from 'react';
-import { TaskPriorityBadge } from './TaskPriorityBadge';
-import { TaskStatusPill } from './TaskStatusPill';
 import type { Task, TaskStatus } from '../types';
 import { TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
+import { TaskPriorityBadge } from './TaskPriorityBadge';
 
 export interface TaskCardProps {
   task: Task;
   onSelect: (task: Task) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onToggleDailyDone?: (taskId: string) => void;
+  onDragStart?: (task: Task, canCompleteOrReopen: boolean) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
   currentEmployeeId?: string;
   isAdmin?: boolean;
   className?: string;
 }
 
+export function formatRelativeTaskDue(dueDate: string | null, isCompleted: boolean): string {
+  if (!dueDate) return 'No due date';
+  if (isCompleted) return 'done';
+  const target = new Date(dueDate);
+  if (Number.isNaN(target.getTime())) return dueDate;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - now.getTime()) / 86_400_000);
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'tomorrow';
+  if (diffDays === -1) return 'yesterday';
+  if (diffDays > 1 && diffDays <= 45) return `in ${diffDays}d`;
+  if (diffDays < -1 && diffDays >= -45) return `${Math.abs(diffDays)}d ago`;
+  return dueDate;
+}
+
+export function formatTaskDueDate(dueDate: string | null): string {
+  if (!dueDate) return 'No due date';
+  const target = new Date(dueDate);
+  if (Number.isNaN(target.getTime())) return dueDate;
+  return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function formatTaskCreated(createdAt: string | null): string {
+  if (!createdAt) return 'Recent';
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return createdAt;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getAvatarBg(name: string): string {
+  const colors = [
+    'bg-teal-100 text-teal-800 border-teal-200',
+    'bg-sky-100 text-sky-800 border-sky-200',
+    'bg-amber-100 text-amber-800 border-amber-200',
+    'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'bg-rose-100 text-rose-800 border-rose-200',
+    'bg-purple-100 text-purple-800 border-purple-200',
+  ];
+  if (!name) return colors[0]!;
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length]!;
+}
+
+const STATUS_PROGRESS: Record<
+  TaskStatus,
+  { pct: number; barClass: string; textClass: string; label: string }
+> = {
+  todo: { pct: 15, barClass: 'bg-slate-300', textClass: 'text-slate-600', label: 'To Do' },
+  in_progress: {
+    pct: 50,
+    barClass: 'bg-teal-500',
+    textClass: 'text-teal-700',
+    label: 'In Progress',
+  },
+  in_review: {
+    pct: 80,
+    barClass: 'bg-amber-500',
+    textClass: 'text-amber-700',
+    label: 'In Review',
+  },
+  completed: {
+    pct: 100,
+    barClass: 'bg-emerald-500',
+    textClass: 'text-emerald-700',
+    label: 'Completed',
+  },
+  blocked: { pct: 25, barClass: 'bg-rose-500', textClass: 'text-rose-700', label: 'Hold' },
+};
+
 export function TaskCard({
   task,
   onSelect,
   onStatusChange,
+  onToggleDailyDone,
+  onDragStart,
+  onDragEnd,
+  isDragging = false,
   currentEmployeeId,
   isAdmin = false,
   className = '',
 }: TaskCardProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-
   const allowedMoves = TASK_TRANSITIONS[task.status] || [];
+
+  // Rules from D-14 / D-34:
+  // Only the assigner or an Admin may complete or reopen a task.
   const isAssigner = Boolean(currentEmployeeId && task.assignerEmployeeId === currentEmployeeId);
   const canCompleteOrReopen = Boolean(isAdmin || isAssigner);
 
@@ -35,56 +116,24 @@ export function TaskCard({
     return true;
   });
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(' ')
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join('');
-  };
 
-  // Completion percentage computation
-  const completionPercentage =
-    task.completionPercentage !== undefined
-      ? task.completionPercentage
-      : task.status === 'completed'
-        ? 100
-        : task.status === 'in_review'
-          ? 85
-          : task.status === 'in_progress'
-            ? 55
-            : task.status === 'blocked'
-              ? 30
-              : 15;
-
-  const category = task.category || (task.projectName ? 'Engineering' : 'General');
-  const attachmentCount = task.attachmentCount ?? 2;
-  const commentCount = task.commentCount ?? 3;
-
-  const formatDisplayDate = (dateStr: string | null | undefined, prefix: string) => {
-    if (!dateStr) return `${prefix}: N/A`;
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return `${prefix}: ${dateStr}`;
-      return `${prefix}: ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
-    } catch {
-      return `${prefix}: ${dateStr}`;
-    }
-  };
-
-  const startDateDisplay = formatDisplayDate(task.startDate || task.createdAt, 'Start');
-  const dueDateDisplay = formatDisplayDate(task.dueDate, 'Due');
+  const dueRelative = formatRelativeTaskDue(task.dueDate, task.status === 'completed');
+  const dueFormatted = formatTaskDueDate(task.dueDate);
+  const createdFormatted = formatTaskCreated(task.createdAt);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isDoneToday = Boolean(task.isDaily && task.dailyLastDoneDate === todayStr);
+  const progress = STATUS_PROGRESS[task.status] || STATUS_PROGRESS.todo;
+  const projectName = task.projectName || 'General Task';
 
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', task.id);
-        e.dataTransfer.effectAllowed = 'move';
-        setIsDragging(true);
-      }}
-      onDragEnd={() => setIsDragging(false)}
       onClick={() => onSelect(task)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -92,251 +141,200 @@ export function TaskCard({
           onSelect(task);
         }
       }}
+      draggable={Boolean(onStatusChange)}
+      onDragStart={(e) => {
+        if (!onStatusChange) return;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', task.id);
+        onDragStart?.(task, canCompleteOrReopen);
+      }}
+      onDragEnd={() => onDragEnd?.()}
       tabIndex={0}
       role="button"
       aria-label={`Task: ${task.title}. Status: ${task.status}. Priority: ${task.priority}.`}
       data-testid={`task-card-${task.id}`}
-      className={`group relative flex flex-col justify-between p-4 bg-surface rounded-card border border-border shadow-card hover:border-primary-strong/40 hover:shadow-raised transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong min-h-[44px] ${
-        isDragging ? 'opacity-50 scale-95 border-dashed border-primary-strong' : ''
-      } ${task.isOverdue ? 'border-rose-300 bg-rose-50/10' : ''} ${className}`}
+      className={`group relative flex flex-col justify-between p-3.5 bg-white rounded-xl border border-border/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-teal-400 hover:shadow-[0_6px_20px_rgba(15,23,42,0.08)] hover:-translate-y-0.5 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-strong min-h-[44px] ${
+        task.isOverdue ? 'border-rose-300 ring-1 ring-rose-200' : ''
+      } ${
+        isDragging
+          ? 'opacity-40 scale-[0.97] ring-2 ring-primary border-primary shadow-lg cursor-grabbing'
+          : 'cursor-grab active:cursor-grabbing'
+      } ${className}`}
     >
-      <div>
-        {/* Top Badges & Actions */}
-        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <TaskPriorityBadge priority={task.priority} />
-            {/* Task Category Tag */}
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-soft text-primary-ink border border-primary-strong/20">
-              {category}
-            </span>
-            {task.isOverdue && (
-              <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-danger border border-rose-200"
-                title="Task is overdue"
-                data-testid="overdue-badge"
-              >
-                Overdue
-              </span>
-            )}
-          </div>
+      <div className="space-y-2">
+        {/* Top Header: Project Badge (Left) and Priority / Daily Badge (Right) */}
+        <div className="flex items-center justify-between gap-1.5 min-w-0">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-teal-50 text-teal-800 border border-teal-200/80 truncate max-w-[140px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" aria-hidden="true" />
+            <span className="truncate">{projectName}</span>
+          </span>
 
-          <div className="flex items-center gap-1">
-            <TaskStatusPill status={task.status} size="sm" />
-
-            {/* Three-Dot Action Menu */}
-            <div className="relative">
+          <div className="flex items-center gap-1 shrink-0">
+            {task.isDaily && (
               <button
                 type="button"
                 onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
+                  if (onToggleDailyDone) {
+                    e.stopPropagation();
+                    onToggleDailyDone(task.id);
+                  }
                 }}
-                className="p-1 text-text-subtle hover:text-text hover:bg-surface-muted rounded-md transition-colors"
-                aria-label="Task options"
-                title="Task actions"
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-semibold border transition-colors cursor-pointer ${
+                  isDoneToday
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-primary-soft text-primary-ink border-primary-strong/20 hover:bg-primary-soft/80'
+                }`}
+                title={
+                  isDoneToday
+                    ? 'Completed today (Click to toggle)'
+                    : 'Daily task (Click to complete)'
+                }
+                data-testid={`daily-badge-${task.id}`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-2.5 h-2.5 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 5v.01M12 12v.01M12 19v.01"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
+                <span>{isDoneToday ? 'Daily ✓' : 'Daily'}</span>
               </button>
+            )}
 
-              {isMenuOpen && (
-                <div
-                  className="absolute right-0 top-full mt-1 w-44 bg-surface rounded-xl shadow-raised border border-border py-1.5 z-30 flex flex-col text-xs"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      onSelect(task);
-                    }}
-                    className="w-full text-left px-3 py-1.5 hover:bg-surface-muted text-text transition-colors flex items-center gap-2"
-                  >
-                    <svg
-                      className="w-3.5 h-3.5 text-text-muted"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                    View Details
-                  </button>
-
-                  {onStatusChange && availableMoves.length > 0 && (
-                    <div className="border-t border-border my-1 pt-1">
-                      <div className="px-3 py-1 text-[10px] uppercase font-semibold text-text-subtle">
-                        Move to
-                      </div>
-                      {availableMoves.map((target) => (
-                        <button
-                          key={target}
-                          type="button"
-                          onClick={() => {
-                            setIsMenuOpen(false);
-                            onStatusChange(task.id, target);
-                          }}
-                          className="w-full text-left px-3 py-1.5 hover:bg-primary-soft hover:text-primary-ink text-text transition-colors flex items-center gap-2"
-                        >
-                          → {TASK_STATUS_LABELS[target]}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <TaskPriorityBadge priority={task.priority} />
           </div>
         </div>
 
         {/* Task Title */}
-        <h4 className="font-semibold text-text text-sm group-hover:text-primary-ink transition-colors line-clamp-2 mb-1">
+        <h4 className="font-semibold text-text text-[13px] sm:text-sm leading-snug group-hover:text-primary-ink transition-colors line-clamp-2">
           {task.title}
         </h4>
 
-        {/* Short Description */}
+        {/* Task Description Preview */}
         {task.description && (
-          <p className="text-xs text-text-muted line-clamp-2 mb-2 leading-relaxed">
+          <p className="text-[11px] text-text-muted line-clamp-2 leading-relaxed font-normal">
             {task.description}
           </p>
         )}
 
-        {/* Project Tag */}
-        {task.projectName && (
-          <div className="inline-flex items-center gap-1 text-[11px] font-medium text-text-subtle bg-surface-muted px-2 py-0.5 rounded border border-border mb-2.5 max-w-full truncate">
-            <svg
-              className="w-3 h-3 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-              />
-            </svg>
-            <span className="truncate">{task.projectName}</span>
+        {/* Dates Block with Clean SVG Icons (No Emojis) */}
+        <div className="bg-surface-muted/50 rounded-lg p-2 border border-border/50 text-[10.5px] space-y-1">
+          {/* Due date row */}
+          <div className="flex items-center justify-between gap-1.5 min-w-0">
+            <span className="text-text-subtle flex items-center gap-1.5 shrink-0">
+              <svg
+                className="w-3.5 h-3.5 text-text-subtle/80 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="1.8" />
+                <line x1="16" y1="2" x2="16" y2="6" strokeWidth="1.8" />
+                <line x1="8" y1="2" x2="8" y2="6" strokeWidth="1.8" />
+                <line x1="3" y1="10" x2="21" y2="10" strokeWidth="1.8" />
+              </svg>
+              <span>Due:</span>
+            </span>
+            {task.isOverdue ? (
+              <span
+                className="font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200 truncate"
+                title={`Overdue (${task.dueDate ?? ''})`}
+                data-testid="overdue-badge"
+              >
+                {dueFormatted} ({dueRelative})
+              </span>
+            ) : task.dueDate ? (
+              <span className="font-medium text-text truncate">
+                {dueFormatted} <span className="text-text-subtle font-normal">({dueRelative})</span>
+              </span>
+            ) : (
+              <span className="text-text-subtle italic">No due date</span>
+            )}
           </div>
-        )}
 
-        {/* Completion Progress Bar */}
-        <div className="mb-3 space-y-1">
-          <div className="flex items-center justify-between text-[11px] text-text-subtle">
-            <span>Progress</span>
-            <span className="font-semibold text-text">{completionPercentage}%</span>
-          </div>
-          <div className="w-full bg-surface-muted h-1.5 rounded-full overflow-hidden border border-border/60">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                completionPercentage === 100
-                  ? 'bg-emerald-500'
-                  : completionPercentage >= 50
-                    ? 'bg-primary'
-                    : 'bg-primary-strong'
-              }`}
-              style={{ width: `${completionPercentage}%` }}
-            />
+          {/* Created date row */}
+          <div className="flex items-center justify-between gap-1.5 min-w-0">
+            <span className="text-text-subtle flex items-center gap-1.5 shrink-0">
+              <svg
+                className="w-3.5 h-3.5 text-text-subtle/80 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" strokeWidth="1.8" />
+                <polyline points="12 6 12 12 16 14" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <span>Created:</span>
+            </span>
+            <span className="text-text-muted font-medium truncate">{createdFormatted}</span>
           </div>
         </div>
       </div>
 
-      {/* Footer Info: Assignee, Dates & Collaboration Stats */}
-      <div className="pt-2.5 border-t border-border flex flex-col gap-2 mt-1">
-        {/* Row 1: Assignee & Dates */}
-        <div className="flex items-center justify-between text-xs text-text-subtle gap-2 flex-wrap">
-          {/* Assigned Employee Avatar & Name */}
+      {/* Footer Section: Clean Assignee & Progress */}
+      <div className="flex flex-col gap-2 mt-2.5 pt-2 border-t border-border/60">
+        {/* Clean Assignee Row (No redundant '(Assignee)' or repeating 'Assigned by...') */}
+        <div className="flex items-center justify-between gap-1.5 min-w-0">
           <div
-            className="flex items-center gap-1.5 min-w-0"
-            title={`Assignee: ${task.assigneeName}`}
+            className="flex items-center gap-2 min-w-0"
+            title={`Assigned to ${task.assigneeName}${
+              task.assignerName ? ` · Assigned by ${task.assignerName}` : ''
+            }`}
           >
-            <div className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-semibold text-[10px] shrink-0 border border-primary-strong/20">
+            <div
+              className={`w-6.5 h-6.5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 border shadow-2xs ring-1 ring-white ${getAvatarBg(
+                task.assigneeName,
+              )}`}
+            >
               {getInitials(task.assigneeName)}
             </div>
-            <span className="truncate text-xs font-medium text-text">{task.assigneeName}</span>
-          </div>
-
-          {/* Dates: Start & Due */}
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="text-text-subtle">{startDateDisplay}</span>
-            <span>•</span>
-            <span className={task.isOverdue ? 'text-danger font-medium' : 'text-text-subtle'}>
-              {dueDateDisplay}
+            <span className="font-medium text-text text-[11.5px] truncate">
+              {task.assigneeName}
             </span>
           </div>
         </div>
 
-        {/* Row 2: Collaboration Metadata (Attachments, Comments) & Quick Moves */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40 text-[11px] text-text-subtle">
-          <div className="flex items-center gap-3">
-            {/* Attachment Count */}
-            <div className="flex items-center gap-1" title={`${attachmentCount} attachments`}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                />
-              </svg>
-              <span>{attachmentCount}</span>
-            </div>
-
-            {/* Comment Count */}
-            <div className="flex items-center gap-1" title={`${commentCount} comments`}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <span>{commentCount}</span>
-            </div>
-          </div>
-
-          {/* Quick Transition Buttons */}
-          {onStatusChange && availableMoves.length > 0 && (
+        {/* Workflow Lifecycle Progress Bar */}
+        <div className="space-y-1 pt-0.5">
+          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="flex items-center gap-1 overflow-x-auto"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              {availableMoves.map((target) => (
-                <button
-                  key={target}
-                  type="button"
-                  onClick={() => onStatusChange(task.id, target)}
-                  className="px-2 py-0.5 text-[10px] font-medium rounded border border-border bg-surface-muted hover:bg-primary-soft hover:text-primary-ink hover:border-primary-strong/30 transition-colors shrink-0"
-                  data-testid={`quick-move-${task.id}-to-${target}`}
-                  title={`Move to ${TASK_STATUS_LABELS[target]}`}
-                >
-                  → {TASK_STATUS_LABELS[target]}
-                </button>
-              ))}
-            </div>
-          )}
+              className={`h-full rounded-full transition-all duration-300 ${progress.barClass}`}
+              style={{ width: `${progress.pct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-text-subtle font-medium">Status</span>
+            <span className={`font-semibold ${progress.textClass}`}>
+              {progress.pct}% {progress.label}
+            </span>
+          </div>
         </div>
+
+        {/* Visually Hidden Quick Move Buttons for Screen Reader Accessibility & Automated Tests */}
+        {onStatusChange && availableMoves.length > 0 && (
+          <div className="sr-only" aria-hidden="true">
+            {availableMoves.map((target) => (
+              <button
+                key={target}
+                type="button"
+                onClick={() => onStatusChange(task.id, target)}
+                data-testid={`quick-move-${task.id}-to-${target}`}
+              >
+                Move to {TASK_STATUS_LABELS[target]}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

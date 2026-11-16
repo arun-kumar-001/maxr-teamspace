@@ -60,7 +60,7 @@ describe('TC-12-01: AuthContext & Real API Integration', () => {
     expect(html).toContain('Email or Username');
     expect(html).toContain('Password');
     expect(html).toContain('Remember me');
-    expect(html).toContain('Forgot password?');
+    expect(html).not.toContain('Forgot password?');
   });
 
   it('correctly parses real API response shape { data: { user, csrfToken } } on login', async () => {

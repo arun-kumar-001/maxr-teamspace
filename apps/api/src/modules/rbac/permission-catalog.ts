@@ -386,6 +386,12 @@ export const PERMISSION_CATALOG = {
     description: 'Create, update, and publish employee payslips',
     grants: { [ADMIN]: ALL, [HR_MANAGER]: HR },
   },
+
+  // Personal To-Do List
+  'todos.manage': {
+    description: 'Manage personal to-do list',
+    grants: everyone(OWN),
+  },
 } as const satisfies Record<string, { description: string; grants: Grants }>;
 
 export type PermissionKey = keyof typeof PERMISSION_CATALOG;

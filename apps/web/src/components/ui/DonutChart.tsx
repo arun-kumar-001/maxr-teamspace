@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 export interface DonutChartSegment {
   value: number;

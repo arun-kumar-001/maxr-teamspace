@@ -27,6 +27,9 @@ export interface AttendanceRecord extends Record<string, unknown> {
   breakMinutes?: number;
   status: AttendanceStatus;
   location: AttendanceLocation | null;
+  checkOutLocation?: AttendanceLocation | null;
+  checkInPhoto?: string | null;
+  checkOutPhoto?: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -42,10 +45,13 @@ export interface TodayAttendanceSummary {
 
 export interface CheckInRequest {
   location?: AttendanceLocation;
+  photoDataUrl?: string;
   notes?: string;
 }
 
 export interface CheckOutRequest {
+  location?: AttendanceLocation;
+  photoDataUrl?: string;
   notes?: string;
 }
 

@@ -35,6 +35,8 @@ export interface ITasksRepository {
   lockForUpdate(tx: TaskTx, id: string): Promise<Omit<Task, 'isOverdue'> | null>;
   /** Writes the values, sets or clears `completed_at` to match the status, and bumps the version. */
   update(tx: TaskTx, id: string, values: TaskValues): Promise<void>;
+  /** Records or clears the date a daily recurring task was last completed. */
+  setDailyLastDoneDate(tx: TaskTx, id: string, date: string | null): Promise<void>;
   /** One task, only when the viewer is party to it, manages its assignee, or is an Admin. */
   find(id: string, viewer: TaskViewer): Promise<Omit<Task, 'isOverdue'> | null>;
   findMany(
@@ -55,6 +57,8 @@ interface Row {
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
+  is_daily: boolean;
+  daily_last_done_date: string | null;
   completed_at: Date | null;
   version: number;
   created_at: Date;
@@ -74,6 +78,8 @@ const toTask = (row: Row): Omit<Task, 'isOverdue'> => ({
   status: row.status,
   priority: row.priority,
   dueDate: row.due_date,
+  isDaily: row.is_daily,
+  dailyLastDoneDate: row.daily_last_done_date,
   completedAt: row.completed_at ? row.completed_at.toISOString() : null,
   version: row.version,
   createdAt: row.created_at.toISOString(),
@@ -85,7 +91,8 @@ const SELECT = `
   SELECT t.id, t.title, t.description, t.project_id, p.name AS project_name,
          t.assignee_employee_id, a.first_name || ' ' || a.last_name AS assignee_name,
          t.assigner_employee_id, r.first_name || ' ' || r.last_name AS assigner_name,
-         t.status, t.priority, t.due_date::text AS due_date, t.completed_at, t.version,
+         t.status, t.priority, t.due_date::text AS due_date, t.is_daily,
+         t.daily_last_done_date::text AS daily_last_done_date, t.completed_at, t.version,
          t.created_at, t.updated_at
     FROM tasks t
     JOIN employees a ON a.id = t.assignee_employee_id
@@ -126,8 +133,8 @@ export class PgTasksRepository implements ITasksRepository {
   async insert(tx: TaskTx, input: NewTask): Promise<string> {
     const res = await tx.query<{ id: string }>(
       `INSERT INTO tasks (title, description, project_id, assignee_employee_id,
-                          assigner_employee_id, priority, due_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+                          assigner_employee_id, priority, due_date, is_daily)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [
         input.title,
         input.description,
@@ -136,6 +143,7 @@ export class PgTasksRepository implements ITasksRepository {
         input.assignerEmployeeId,
         input.priority,
         input.dueDate,
+        input.isDaily ?? false,
       ],
     );
     return (res.rows[0] as { id: string }).id;
@@ -152,7 +160,7 @@ export class PgTasksRepository implements ITasksRepository {
     await tx.query(
       `UPDATE tasks
           SET title = $2, description = $3, project_id = $4, assignee_employee_id = $5,
-              priority = $6, due_date = $7, status = $8::varchar,
+              priority = $6, due_date = $7, status = $8::varchar, is_daily = $9,
               completed_at = CASE WHEN $8::varchar = 'completed' THEN COALESCE(completed_at, NOW()) ELSE NULL END,
               version = version + 1, updated_at = NOW()
         WHERE id = $1`,
@@ -165,7 +173,15 @@ export class PgTasksRepository implements ITasksRepository {
         values.priority,
         values.dueDate,
         values.status,
+        values.isDaily ?? false,
       ],
+    );
+  }
+
+  async setDailyLastDoneDate(tx: TaskTx, id: string, date: string | null): Promise<void> {
+    await tx.query(
+      `UPDATE tasks SET daily_last_done_date = $2::date, version = version + 1, updated_at = NOW() WHERE id = $1`,
+      [id, date],
     );
   }
 

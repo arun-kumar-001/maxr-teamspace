@@ -29,6 +29,18 @@ export interface EmployeeDetail {
   updatedAt: string;
   /** Send it back with an edit; an edit made on an older version is refused with 409. */
   version: number;
+  additionalEmails?: string[];
+  additionalPhones?: string[];
+  permanentAddress?: string | null;
+  currentAddress?: string | null;
+  bloodGroup?: string | null;
+  panNumber?: string | null;
+  aadhaarNumber?: string | null;
+  bankAccountHolder?: string | null;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankIfscCode?: string | null;
+  bankBranch?: string | null;
   /** Present only for callers allowed to edit employees. */
   account?: EmployeeAccountInfo;
 }

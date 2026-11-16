@@ -12,13 +12,13 @@ function EyeIcon({ open }: { open: boolean }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8"
+      className="w-4 h-4"
       aria-hidden="true"
     >
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
       <circle cx="12" cy="12" r="3" />
     </svg>
   ) : (
@@ -27,15 +27,16 @@ function EyeIcon({ open }: { open: boolean }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8"
+      className="w-4 h-4"
       aria-hidden="true"
     >
-      <path d="M2 12s3.8-7 10-7c2.4 0 4.6 1.1 6.4 2.8M22 12s-3.8 7-10 7c-2.4 0-4.6-1.1-6.4-2.8" />
-      <path d="M10 10a3 3 0 0 0 4 4" />
-      <line x1="20" y1="4" x2="4" y2="20" />
+      <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+      <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+      <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+      <path d="m2 2 20 20" />
     </svg>
   );
 }
@@ -66,67 +67,31 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
   };
 
   return (
-    <div
-      className="min-h-[100dvh] w-full flex items-center justify-center relative overflow-hidden select-none"
-      style={{ backgroundColor: 'rgb(255, 255, 255)' }}
-    >
-      {/* Top-left curved corner accent matching login 22 reference */}
-      <svg
-        className="pointer-events-none absolute top-0 left-0 w-28 h-28 xs:w-32 xs:h-32 sm:w-64 sm:h-64 lg:w-80 lg:h-80 2xl:w-96 2xl:h-96"
-        viewBox="0 0 360 360"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <div className="min-h-[100dvh] w-full flex items-center justify-center relative overflow-hidden select-none bg-bg px-4 py-8 sm:px-8">
+      {/* Subtle Admin Dashboard Mint/Teal Ambient Background */}
+      <div
         aria-hidden="true"
-      >
-        {/* Outer thin teal arc swoosh */}
-        <path
-          d="M 278 0 C 232 94 128 202 0 264"
-          stroke="rgb(20, 204, 179)"
-          strokeWidth="2"
-          fill="none"
-        />
-        {/* Vibrant teal mid ribbon */}
-        <path d="M 0 0 L 218 0 C 176 74 96 154 0 206 Z" fill="rgb(20, 204, 179)" />
-        {/* Deep plum corner wedge */}
-        <path d="M 0 0 L 138 0 C 102 52 54 102 0 134 Z" fill="rgb(73, 18, 66)" />
-      </svg>
-
-      {/* Bottom-right curved corner accent matching login 22 reference */}
-      <svg
-        className="pointer-events-none absolute bottom-0 right-0 w-28 h-28 xs:w-32 xs:h-32 sm:w-72 sm:h-72 lg:w-96 lg:h-96 2xl:w-[440px] 2xl:h-[440px]"
-        viewBox="0 0 400 400"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+        className="pointer-events-none absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full bg-primary/15 blur-3xl"
+      />
+      <div
         aria-hidden="true"
-      >
-        {/* Thin delicate teal arc */}
-        <path
-          d="M 88 400 C 138 296 266 196 400 136"
-          stroke="rgb(20, 204, 179)"
-          strokeWidth="2"
-          fill="none"
-        />
-        {/* Vibrant teal lower-right wave */}
-        <path d="M 400 400 L 146 400 C 206 324 304 246 400 206 Z" fill="rgb(20, 204, 179)" />
-        {/* Deep plum corner wedge */}
-        <path d="M 400 400 L 222 400 C 272 348 338 300 400 272 Z" fill="rgb(73, 18, 66)" />
-      </svg>
+        className="pointer-events-none absolute -bottom-32 -right-32 w-[460px] h-[460px] rounded-full bg-primary-deep/10 blur-3xl"
+      />
 
-      {/* Main Centered Two-Column Split Layout */}
-      <div className="relative z-10 w-full max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] mx-auto px-5 sm:px-10 lg:px-14 pt-10 pb-16 sm:py-12 flex flex-col lg:flex-row items-center justify-center gap-8 sm:gap-10 lg:gap-12 2xl:gap-16">
-        {/* LEFT COLUMN: Official MaxR Teamspace Logo + Collaboration Illustration */}
-        <div className="flex-1 w-full flex flex-col items-center justify-center text-center gap-3 sm:gap-5">
+      {/* Main Centered Two-Column Layout directly on Admin Dashboard background */}
+      <div className="relative z-10 w-full max-w-5xl 2xl:max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-6 sm:py-10 flex flex-col lg:flex-row items-center justify-center gap-8 sm:gap-10 lg:gap-12">
+        {/* LEFT COLUMN: Crisp Official MaxR Logo + Collaboration Illustration */}
+        <div className="flex-1 w-full flex flex-col items-center justify-center text-center gap-4 sm:gap-5">
           <img
-            src="/maxr-teamspace-logo-4k.png"
-            srcSet="/maxr-teamspace-logo.png 1x, /maxr-teamspace-logo-4k.png 2x"
+            src="/maxr.png"
             alt="MaxR Teamspace"
-            className="w-[210px] xs:w-[240px] sm:w-[300px] lg:w-[340px] 2xl:w-[400px] 3xl:w-[460px] h-auto object-contain select-none"
+            className="w-[130px] sm:w-[155px] lg:w-[175px] h-auto object-contain select-none"
             draggable={false}
           />
           <img
             src="/login-illustration.png"
             alt="MaxR Teamspace team collaboration illustration"
-            className="w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[500px] 2xl:max-w-[580px] 3xl:max-w-[660px] h-auto object-contain select-none"
+            className="w-full max-w-[300px] sm:max-w-[380px] lg:max-w-[420px] h-auto object-contain select-none mix-blend-multiply"
             draggable={false}
           />
         </div>
@@ -150,26 +115,16 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           />
         </div>
 
-        {/* RIGHT COLUMN: Clean Borderless Sign In Form directly on white canvas */}
-        <div className="flex-1 w-full max-w-[420px] sm:max-w-[440px] 2xl:max-w-[500px] flex flex-col items-center">
-          <h1
-            className="font-display text-3xl xs:text-[34px] sm:text-[40px] 2xl:text-5xl font-extrabold tracking-tight text-center"
-            style={{ color: 'rgb(15, 23, 21)' }}
-          >
+        {/* RIGHT COLUMN: Clean Industrial Standard Sign In Form */}
+        <div className="flex-1 w-full max-w-[380px] sm:max-w-[400px] flex flex-col items-center">
+          <h1 className="font-display text-2xl sm:text-[28px] font-bold tracking-tight text-text text-center">
             Sign In
           </h1>
 
           {/* Teal Rounded Accent Underline */}
-          <div
-            aria-hidden="true"
-            className="w-20 sm:w-24 h-1.5 rounded-full mt-2.5 mb-4"
-            style={{ backgroundColor: 'rgb(20, 204, 179)' }}
-          />
+          <div aria-hidden="true" className="w-12 h-1 rounded-full mt-2 mb-3 bg-primary" />
 
-          <p
-            className="text-sm sm:text-[15px] 2xl:text-lg font-medium mb-7 sm:mb-8 text-center"
-            style={{ color: 'rgb(31, 41, 39)' }}
-          >
+          <p className="text-sm font-medium text-text-muted mb-6 text-center">
             Access your MaxR Teamspace account
           </p>
 
@@ -177,80 +132,56 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           {error && (
             <div
               role="alert"
-              className="w-full mb-5 p-3.5 rounded-2xl text-sm font-medium text-center"
-              style={{
-                background: 'rgb(254, 242, 242)',
-                border: '1px solid rgb(254, 202, 202)',
-                color: 'rgb(185, 28, 28)',
-              }}
+              className="w-full mb-4 px-3.5 py-2.5 rounded-control text-xs sm:text-sm font-medium text-center border border-danger/30 bg-danger/10 text-danger"
             >
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
-            {/* Email or Username Pill Field */}
+          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3.5">
+            {/* Email or Username Field */}
             <div className="relative">
-              <span
-                className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none"
-                style={{ color: 'rgb(19, 32, 30)' }}
-              >
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-text-muted">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth="1.75"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   aria-hidden="true"
                 >
                   <rect x="2" y="4" width="20" height="16" rx="2" />
-                  <polyline points="2,4 12,13 22,4" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
               </span>
               <input
                 id="login-email"
                 type="text"
-                placeholder="Email or Username"
+                placeholder="Email or username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
                 required
                 aria-label="Email or Username"
-                className="w-full text-sm sm:text-[15px] 2xl:text-base rounded-full outline-none transition-all pl-12 sm:pl-14 pr-5 h-12 sm:h-[54px] 2xl:h-[58px] placeholder:text-slate-500"
-                style={{
-                  border: '1.5px solid rgb(203, 213, 225)',
-                  color: 'rgb(19, 32, 30)',
-                  backgroundColor: 'rgb(255, 255, 255)',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(20, 204, 179)';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(20, 204, 179, 0.16)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(203, 213, 225)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                className="w-full h-11 rounded-control border border-border-strong bg-surface-raised pl-10 pr-4 text-sm text-text placeholder:text-sm placeholder:text-text-subtle outline-none transition-all focus:border-primary-strong focus:ring-2 focus:ring-primary-soft"
               />
             </div>
 
-            {/* Password Pill Field */}
+            {/* Password Field */}
             <div className="relative">
-              <span
-                className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none"
-                style={{ color: 'rgb(19, 32, 30)' }}
-              >
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-text-muted">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth="1.75"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   aria-hidden="true"
                 >
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -265,38 +196,21 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 aria-label="Password"
-                className="w-full text-sm sm:text-[15px] 2xl:text-base rounded-full outline-none transition-all pl-12 sm:pl-14 pr-14 h-12 sm:h-[54px] 2xl:h-[58px] placeholder:text-slate-500"
-                style={{
-                  border: '1.5px solid rgb(203, 213, 225)',
-                  color: 'rgb(19, 32, 30)',
-                  backgroundColor: 'rgb(255, 255, 255)',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(20, 204, 179)';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(20, 204, 179, 0.16)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(203, 213, 225)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                className="w-full h-11 rounded-control border border-border-strong bg-surface-raised pl-10 pr-11 text-sm text-text placeholder:text-sm placeholder:text-text-subtle outline-none transition-all focus:border-primary-strong focus:ring-2 focus:ring-primary-soft"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer min-w-[44px] min-h-[44px] rounded-full transition-colors"
-                style={{ color: 'rgb(19, 32, 30)' }}
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer w-9 h-9 rounded-lg text-text-muted hover:text-text transition-colors"
               >
                 <EyeIcon open={showPassword} />
               </button>
             </div>
 
-            {/* Remember me & Forgot password? */}
-            <div className="flex items-center justify-between px-1 mt-0.5">
-              <label
-                className="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm font-bold select-none min-h-[44px]"
-                style={{ color: 'rgb(19, 32, 30)' }}
-              >
+            {/* Remember me */}
+            <div className="flex items-center px-0.5">
+              <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-text-muted select-none min-h-[36px]">
                 <span
                   role="checkbox"
                   aria-checked={rememberMe}
@@ -311,20 +225,18 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                       setRememberMe((v) => !v);
                     }
                   }}
-                  className="flex items-center justify-center w-[18px] h-[18px] rounded-[4px] transition-all cursor-pointer shrink-0"
-                  style={{
-                    backgroundColor: rememberMe ? 'rgb(20, 204, 179)' : 'rgb(255, 255, 255)',
-                    border: rememberMe
-                      ? '2px solid rgb(20, 204, 179)'
-                      : '2px solid rgb(30, 41, 59)',
-                  }}
+                  className={`flex items-center justify-center w-4 h-4 rounded transition-all cursor-pointer shrink-0 border ${
+                    rememberMe
+                      ? 'bg-primary-deep border-primary-deep'
+                      : 'bg-surface-raised border-border-strong'
+                  }`}
                 >
                   {rememberMe && (
                     <svg
                       viewBox="0 0 12 12"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-3 h-3"
+                      className="w-2.5 h-2.5"
                       aria-hidden="true"
                     >
                       <polyline
@@ -339,45 +251,16 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 </span>
                 Remember me
               </label>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setError('Password reset instructions will be sent to your administrator.');
-                }}
-                className="font-bold text-xs sm:text-sm hover:underline cursor-pointer bg-transparent border-0 min-h-[44px] px-1"
-                style={{ color: 'rgb(92, 29, 104)' }}
-              >
-                Forgot password?
-              </button>
             </div>
 
-            {/* Primary Pill Sign In Button (dark bold text + arrow on vibrant mint teal) */}
+            {/* Primary Sign In Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-1 w-full flex items-center justify-center gap-2.5 font-extrabold text-base sm:text-lg 2xl:text-xl rounded-full cursor-pointer transition-all disabled:opacity-70 h-12 sm:h-[54px] 2xl:h-[58px]"
-              style={{
-                backgroundColor: 'rgb(24, 212, 186)',
-                color: 'rgb(11, 20, 18)',
-                boxShadow: '0 8px 20px rgba(20, 204, 179, 0.25)',
-                fontFamily: 'Outfit, Inter, sans-serif',
-              }}
-              onMouseOver={(e) => {
-                if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(16, 194, 170)';
-              }}
-              onMouseOut={(e) => {
-                if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(24, 212, 186)';
-              }}
+              className="mt-1 w-full h-11 flex items-center justify-center gap-2 font-semibold text-sm rounded-control bg-primary-deep hover:bg-primary-ink text-white shadow-primary cursor-pointer transition-all disabled:opacity-70"
             >
               {isLoading ? (
-                <span
-                  className="w-5 h-5 border-2 rounded-full animate-spin"
-                  style={{
-                    borderColor: 'rgba(11, 20, 18, 0.25)',
-                    borderTopColor: 'rgb(11, 20, 18)',
-                  }}
-                />
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Sign In</span>
@@ -386,10 +269,10 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.5"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     aria-hidden="true"
                   >
                     <line x1="5" y1="12" x2="19" y2="12" />

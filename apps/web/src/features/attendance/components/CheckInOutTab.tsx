@@ -366,23 +366,16 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
       {/* 1. Bottom Split: Recent Attendance + Monthly Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Attendance Table */}
-        <div
-          className="p-5 rounded-2xl border bg-white space-y-3"
-          style={{
-            borderColor: 'rgb(229, 231, 235)',
-            boxShadow: '0 2px 10px rgba(8, 11, 12, 0.03)',
-          }}
-        >
+        <div className="p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
+            <h3 className="text-base font-bold font-display text-text">
               Recent Attendance
             </h3>
             {onViewAllHistory && (
               <button
                 type="button"
                 onClick={onViewAllHistory}
-                className="text-xs font-semibold hover:underline cursor-pointer"
-                style={{ color: 'rgb(13, 148, 136)' }}
+                className="text-xs font-semibold text-primary-strong hover:underline cursor-pointer"
               >
                 View All
               </button>
@@ -390,17 +383,14 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
           </div>
 
           {recentRecords.length === 0 ? (
-            <p className="text-xs text-gray-500 py-6 text-center">
+            <p className="text-xs text-text-muted py-6 text-center">
               No recent attendance records found.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr
-                    className="border-b text-gray-500"
-                    style={{ borderColor: 'rgb(229, 231, 235)' }}
-                  >
+                  <tr className="border-b border-border/80 text-text-muted">
                     <th className="py-2 pr-3 font-medium">Date</th>
                     <th className="py-2 px-2 font-medium">Check-in</th>
                     <th className="py-2 px-2 font-medium">Check-out</th>
@@ -408,22 +398,19 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
                     <th className="py-2 pl-2 font-medium">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y" style={{ borderColor: 'rgb(243, 244, 246)' }}>
+                <tbody className="divide-y divide-border/60">
                   {recentRecords.map((rec) => (
-                    <tr key={rec.id}>
-                      <td
-                        className="py-2.5 pr-3 font-semibold whitespace-nowrap"
-                        style={{ color: 'rgb(8, 11, 12)' }}
-                      >
+                    <tr key={rec.id} className="hover:bg-surface-muted/30 transition-colors">
+                      <td className="py-2.5 pr-3 font-semibold whitespace-nowrap text-text">
                         {formatRecordDate(rec.workDate)}
                       </td>
-                      <td className="py-2.5 px-2 text-gray-700 whitespace-nowrap">
+                      <td className="py-2.5 px-2 text-text whitespace-nowrap">
                         {formatClock(rec.checkInTime)}
                       </td>
-                      <td className="py-2.5 px-2 text-gray-700 whitespace-nowrap">
+                      <td className="py-2.5 px-2 text-text-muted whitespace-nowrap">
                         {formatClock(rec.checkOutTime)}
                       </td>
-                      <td className="py-2.5 px-2 font-medium text-gray-800 whitespace-nowrap">
+                      <td className="py-2.5 px-2 font-medium text-text whitespace-nowrap">
                         {formatDuration(rec.durationMinutes)}
                       </td>
                       <td className="py-2.5 pl-2 whitespace-nowrap">
@@ -438,23 +425,16 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
         </div>
 
         {/* Monthly Attendance Summary */}
-        <div
-          className="p-5 rounded-2xl border bg-white space-y-3"
-          style={{
-            borderColor: 'rgb(229, 231, 235)',
-            boxShadow: '0 2px 10px rgba(8, 11, 12, 0.03)',
-          }}
-        >
+        <div className="p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-base font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
+            <h3 className="text-base font-bold font-display text-text">
               Monthly Attendance
             </h3>
             <select
               aria-label="Select month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border bg-white text-gray-800"
-              style={{ borderColor: 'rgb(229, 231, 235)' }}
+              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border/80 bg-white text-text shadow-xs"
             >
               {monthOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -465,14 +445,8 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div
-              className="p-3 rounded-xl border flex items-center gap-2.5"
-              style={{ backgroundColor: 'rgb(244, 247, 246)', borderColor: 'rgb(229, 231, 235)' }}
-            >
-              <span
-                className="w-8 h-8 rounded-lg inline-flex items-center justify-center bg-white border shrink-0"
-                style={{ borderColor: 'rgb(229, 231, 235)', color: 'rgb(8, 11, 12)' }}
-              >
+            <div className="p-3 rounded-xl border border-border/80 bg-surface-muted/50 flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center bg-white border border-border/80 text-text shrink-0 shadow-xs">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 24 24"
@@ -485,21 +459,15 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
                 </svg>
               </span>
               <div>
-                <p className="text-[11px] text-gray-500">Working Days</p>
-                <p className="text-base font-bold tabular-nums" style={{ color: 'rgb(8, 11, 12)' }}>
+                <p className="text-[11px] text-text-muted">Working Days</p>
+                <p className="text-base font-bold tabular-nums text-text">
                   {monthlyStats.workingDays}
                 </p>
               </div>
             </div>
 
-            <div
-              className="p-3 rounded-xl border flex items-center gap-2.5"
-              style={{ backgroundColor: 'rgb(244, 247, 246)', borderColor: 'rgb(229, 231, 235)' }}
-            >
-              <span
-                className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'rgb(220, 252, 231)', color: 'rgb(22, 163, 74)' }}
-              >
+            <div className="p-3 rounded-xl border border-border/80 bg-surface-muted/50 flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0 bg-emerald-100 text-emerald-700">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 24 24"
@@ -511,21 +479,15 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
                 </svg>
               </span>
               <div>
-                <p className="text-[11px] text-gray-500">Present</p>
-                <p className="text-base font-bold tabular-nums" style={{ color: 'rgb(8, 11, 12)' }}>
+                <p className="text-[11px] text-text-muted">Present</p>
+                <p className="text-base font-bold tabular-nums text-text">
                   {monthlyStats.present}
                 </p>
               </div>
             </div>
 
-            <div
-              className="p-3 rounded-xl border flex items-center gap-2.5"
-              style={{ backgroundColor: 'rgb(244, 247, 246)', borderColor: 'rgb(229, 231, 235)' }}
-            >
-              <span
-                className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'rgb(254, 226, 226)', color: 'rgb(220, 38, 38)' }}
-              >
+            <div className="p-3 rounded-xl border border-border/80 bg-surface-muted/50 flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0 bg-rose-100 text-rose-700">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 24 24"
@@ -537,21 +499,15 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
                 </svg>
               </span>
               <div>
-                <p className="text-[11px] text-gray-500">Absent</p>
-                <p className="text-base font-bold tabular-nums" style={{ color: 'rgb(8, 11, 12)' }}>
+                <p className="text-[11px] text-text-muted">Absent</p>
+                <p className="text-base font-bold tabular-nums text-text">
                   {monthlyStats.absent}
                 </p>
               </div>
             </div>
 
-            <div
-              className="p-3 rounded-xl border flex items-center gap-2.5"
-              style={{ backgroundColor: 'rgb(244, 247, 246)', borderColor: 'rgb(229, 231, 235)' }}
-            >
-              <span
-                className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'rgb(254, 243, 199)', color: 'rgb(217, 119, 6)' }}
-              >
+            <div className="p-3 rounded-xl border border-border/80 bg-surface-muted/50 flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0 bg-amber-100 text-amber-700">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 24 24"
@@ -564,21 +520,15 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
                 </svg>
               </span>
               <div>
-                <p className="text-[11px] text-gray-500">Late Arrivals</p>
-                <p className="text-base font-bold tabular-nums" style={{ color: 'rgb(8, 11, 12)' }}>
+                <p className="text-[11px] text-text-muted">Late Arrivals</p>
+                <p className="text-base font-bold tabular-nums text-text">
                   {monthlyStats.late}
                 </p>
               </div>
             </div>
 
-            <div
-              className="p-3 rounded-xl border flex items-center gap-2.5"
-              style={{ backgroundColor: 'rgb(244, 247, 246)', borderColor: 'rgb(229, 231, 235)' }}
-            >
-              <span
-                className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'rgb(243, 232, 255)', color: 'rgb(147, 51, 234)' }}
-              >
+            <div className="p-3 rounded-xl border border-border/80 bg-surface-muted/50 flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center shrink-0 bg-purple-100 text-purple-700">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 24 24"
@@ -591,8 +541,8 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
                 </svg>
               </span>
               <div>
-                <p className="text-[11px] text-gray-500">Leave Days</p>
-                <p className="text-base font-bold tabular-nums" style={{ color: 'rgb(8, 11, 12)' }}>
+                <p className="text-[11px] text-text-muted">Leave Days</p>
+                <p className="text-base font-bold tabular-nums text-text">
                   {monthlyStats.leave}
                 </p>
               </div>

@@ -124,6 +124,15 @@ export async function changeTaskStatus(id: string, status: TaskStatus): Promise<
   return data.data;
 }
 
+export async function toggleTaskDailyDone(id: string): Promise<Task> {
+  const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}/daily-done`, {
+    method: 'POST',
+  });
+
+  const data = await handleResponse<{ data: Task }>(res);
+  return data.data;
+}
+
 export async function fetchTaskComments(
   taskId: string,
   query?: { page?: number; pageSize?: number },

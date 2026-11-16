@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
-import { Badge, Button, ErrorState, ForbiddenState, Input, Select } from '../../../components/ui';
-import { OnboardingBoard } from '../components/OnboardingBoard';
+import { Button, ErrorState, ForbiddenState } from '../../../components/ui';
+import { AddCandidateModal } from '../components/AddCandidateModal';
+import { HiringPipelineBoard } from '../components/HiringPipelineBoard';
 import { OnboardingChecklistDetail } from '../components/OnboardingChecklistDetail';
+import { OnboardingWorkspaceTab } from '../components/OnboardingWorkspaceTab';
+import { OpenRoleModal } from '../components/OpenRoleModal';
+import { useHiringPipeline } from '../hooks/useHiringPipeline';
 import { useOnboardingList } from '../hooks/useOnboarding';
-import type { OnboardingStep } from '../types/onboarding';
+import type { HiringCandidate, HiringRoleOpening } from '../types/hiring';
+
+type LifecycleTab = 'hiring' | 'onboarding';
 
 export function OnboardingPage() {
   const { role } = useAuth();
@@ -13,21 +19,30 @@ export function OnboardingPage() {
   const navigate = useNavigate();
 
   const [selectedId, setSelectedId] = useState<string | null>(params.id ?? null);
+  const [activeTab, setActiveTab] = useState<LifecycleTab>('hiring');
+  const [isAddCandidateOpen, setIsAddCandidateOpen] = useState(false);
+  const [addCandidateDefaultRoleId, setAddCandidateDefaultRoleId] = useState<string | undefined>(
+    undefined,
+  );
+  const [isOpenRoleOpen, setIsOpenRoleOpen] = useState(false);
+
+  const { checklists, total, isLoading, error, statusCode, departments, refetch } =
+    useOnboardingList();
 
   const {
-    checklists,
-    total,
-    isLoading,
-    error,
-    statusCode,
-    departments,
-    query,
-    setSearch,
-    setStep,
-    setDepartmentId,
-    resetFilters,
-    refetch,
-  } = useOnboardingList();
+    roles,
+    rolesById,
+    candidates,
+    crmDepartments,
+    crmDesignations,
+    crmEmployees,
+    moveCandidateStage,
+    addCandidate,
+    updateCandidate,
+    removeCandidate,
+    addRoleOpening,
+    updateRoleStatus,
+  } = useHiringPipeline();
 
   if (statusCode === 403) {
     return (
@@ -67,86 +82,164 @@ export function OnboardingPage() {
     );
   }
 
-  const stepOptions = [
-    { value: '', label: 'All Stages' },
-    { value: 'hr', label: 'HR Setup' },
-    { value: 'system', label: 'System Access' },
-    { value: 'it_admin', label: 'IT / Admin' },
-    { value: 'employee', label: 'Employee Setup' },
-  ];
+  const getCreateEmployeePath = () => {
+    if (role === 'admin') return '/admin/employees/new';
+    if (role === 'hr_manager') return '/hr/employees/new';
+    return '/employees/new';
+  };
 
-  const departmentOptions = [
-    { value: '', label: 'All Departments' },
-    ...departments.map((d) => ({ value: d.id, label: d.name })),
-  ];
+  const handleStartCandidateOnboarding = (
+    candidate: HiringCandidate,
+    candidateRole?: HiringRoleOpening,
+  ) => {
+    const query = new URLSearchParams();
+    if (candidate.firstName) query.set('firstName', candidate.firstName);
+    if (candidate.lastName) query.set('lastName', candidate.lastName);
+    if (candidate.email) query.set('email', candidate.email);
+    if (candidate.phone) query.set('phone', candidate.phone);
+    if (candidateRole?.departmentId) query.set('departmentId', candidateRole.departmentId);
+    if (candidateRole?.designationId) query.set('designationId', candidateRole.designationId);
+    navigate(`${getCreateEmployeePath()}?${query.toString()}`);
+  };
+
+  const openRolesCount = roles.filter((r) => r.status === 'hiring').length;
+  const activeChecklistsCount = checklists.filter((c) => c.status !== 'completed').length;
+  const onboardingTabCount = openRolesCount + activeChecklistsCount;
+  const effectiveDepartments = crmDepartments.length > 0 ? crmDepartments : departments;
 
   return (
-    <div className="space-y-6" data-testid="onboarding-page">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-text font-display">
-              Employee Onboarding
-            </h1>
-            {!isLoading && (
-              <Badge variant="primary" data-testid="onboarding-total-badge">
-                {total} {total === 1 ? 'In Progress' : 'In Progress'}
-              </Badge>
-            )}
-          </div>
-          <p className="text-xs sm:text-sm text-text-muted">
-            Track and verify the 4-step onboarding checklist before granting account activation.
+    <div className="space-y-5" data-testid="onboarding-page">
+      {/* Header & Contextual Primary Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text font-display">
+            {activeTab === 'hiring' ? 'Hiring pipeline' : 'Onboarding'}
+          </h1>
+          <p className="text-xs sm:text-sm text-text-muted mt-1">
+            {openRolesCount} open {openRolesCount === 1 ? 'role' : 'roles'} &middot;{' '}
+            {candidates.length} candidates in play &middot; {total} active onboarding{' '}
+            {total === 1 ? 'checklist' : 'checklists'}
           </p>
         </div>
-      </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-4 bg-surface rounded-card border border-border shadow-card space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Input
-            placeholder="Search by name or code..."
-            value={query.search || ''}
-            onChange={(e) => setSearch(e.target.value)}
-            leftIcon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            }
-          />
-
-          <Select
-            options={stepOptions}
-            value={query.step || ''}
-            onChange={(e) => setStep((e.target.value as OnboardingStep) || undefined)}
-            aria-label="Filter by onboarding stage"
-          />
-
-          <Select
-            options={departmentOptions}
-            value={query.departmentId || ''}
-            onChange={(e) => setDepartmentId(e.target.value || undefined)}
-            aria-label="Filter by department"
-          />
-
-          <div className="flex items-center gap-2 justify-end">
-            <Button size="sm" variant="outline" onClick={resetFilters}>
-              Reset Filters
+        <div className="flex items-center gap-2 shrink-0">
+          {activeTab === 'hiring' ? (
+            <Button
+              type="button"
+              variant="primary"
+              data-testid="add-candidate-button"
+              onClick={() => {
+                setAddCandidateDefaultRoleId(undefined);
+                setIsAddCandidateOpen(true);
+              }}
+            >
+              + Add candidate
             </Button>
-          </div>
+          ) : (
+            <Button
+              type="button"
+              variant="primary"
+              data-testid="open-role-button"
+              onClick={() => setIsOpenRoleOpen(true)}
+            >
+              + Open a role
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Board View */}
-      <OnboardingBoard
-        checklists={checklists}
-        isLoading={isLoading}
-        onSelectEmployee={(empId) => setSelectedId(empId)}
+      {/* Underline Navigation Tabs: Hiring | Onboarding */}
+      <div
+        className="flex items-center gap-6 border-b border-border"
+        role="tablist"
+        aria-label="Onboarding and lifecycle views"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'hiring'}
+          data-testid="tab-hiring"
+          onClick={() => setActiveTab('hiring')}
+          className={`inline-flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer -mb-px ${
+            activeTab === 'hiring'
+              ? 'border-primary-deep text-text'
+              : 'border-transparent text-text-muted hover:text-text'
+          }`}
+        >
+          <span>Hiring</span>
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-muted text-text-muted">
+            {candidates.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'onboarding'}
+          data-testid="tab-onboarding"
+          onClick={() => setActiveTab('onboarding')}
+          className={`inline-flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer -mb-px ${
+            activeTab === 'onboarding'
+              ? 'border-primary-deep text-text'
+              : 'border-transparent text-text-muted hover:text-text'
+          }`}
+        >
+          <span>Onboarding</span>
+          <span
+            data-testid="onboarding-total-badge"
+            className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-muted text-text-muted"
+          >
+            {onboardingTabCount}
+          </span>
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'hiring' ? (
+        <HiringPipelineBoard
+          roles={roles}
+          rolesById={rolesById}
+          candidates={candidates}
+          onMoveStage={moveCandidateStage}
+          onUpdateCandidate={updateCandidate}
+          onRemoveCandidate={removeCandidate}
+          onStartOnboarding={handleStartCandidateOnboarding}
+        />
+      ) : (
+        <OnboardingWorkspaceTab
+          roles={roles}
+          candidates={candidates}
+          checklists={checklists}
+          checklistsLoading={isLoading}
+          departments={effectiveDepartments}
+          onSelectEmployeeChecklist={(empId) => setSelectedId(empId)}
+          onMoveCandidateStage={moveCandidateStage}
+          onUpdateRoleStatus={updateRoleStatus}
+          onOpenAddCandidateForRole={(roleId) => {
+            setAddCandidateDefaultRoleId(roleId);
+            setIsAddCandidateOpen(true);
+          }}
+          onOpenCreateEmployee={() => navigate(getCreateEmployeePath())}
+          onStartCandidateOnboarding={handleStartCandidateOnboarding}
+        />
+      )}
+
+      {/* Modals */}
+      <AddCandidateModal
+        isOpen={isAddCandidateOpen}
+        onClose={() => setIsAddCandidateOpen(false)}
+        roles={roles}
+        defaultRoleId={addCandidateDefaultRoleId}
+        onSubmit={addCandidate}
+      />
+
+      <OpenRoleModal
+        isOpen={isOpenRoleOpen}
+        onClose={() => setIsOpenRoleOpen(false)}
+        departments={effectiveDepartments}
+        designations={crmDesignations}
+        employees={crmEmployees}
+        onSubmit={addRoleOpening}
       />
     </div>
   );

@@ -9,7 +9,11 @@ import {
   CheckInDto,
   TeamCalendarData,
 } from './attendance.types';
-import { AttendanceFindManyParams, IAttendanceRepository } from './attendance.repository';
+import {
+  AttendanceFindManyParams,
+  IAttendanceRepository,
+  TeamCalendarParams,
+} from './attendance.repository';
 
 export function uniqueViolation(constraint = 'idx_attendance_single_open_session'): Error {
   return conflict(`duplicate key value violates unique constraint "${constraint}"`);
@@ -95,6 +99,9 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       breakMinutes: 0,
       status,
       location: (dto.location as AttendanceLocation) ?? null,
+      checkOutLocation: null,
+      checkInPhoto: dto.photoDataUrl ?? null,
+      checkOutPhoto: null,
       notes: dto.notes ?? null,
       createdAt: now,
       updatedAt: now,
@@ -109,6 +116,8 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
     checkOutTime: string,
     durationMinutes: number,
     notes?: string,
+    checkOutLocation?: AttendanceLocation,
+    checkOutPhoto?: string,
   ): Promise<AttendanceRecord | null> {
     const record = this.items.get(sessionId);
     if (!record || record.checkOutTime !== null) {
@@ -119,6 +128,8 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       ...record,
       checkOutTime,
       durationMinutes,
+      checkOutLocation: checkOutLocation ?? record.checkOutLocation,
+      checkOutPhoto: checkOutPhoto ?? record.checkOutPhoto,
       notes: notes ?? record.notes,
       updatedAt: new Date().toISOString(),
     };
@@ -194,6 +205,27 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       return null;
     }
     return record;
+  }
+
+  async updateBreaks(
+    sessionId: string,
+    breaks: AttendanceBreak[],
+    breakMinutes: number,
+  ): Promise<AttendanceRecord | null> {
+    const record = this.items.get(sessionId);
+    if (!record || record.checkOutTime !== null) return null;
+    const updated: AttendanceRecord = {
+      ...record,
+      breaks,
+      breakMinutes,
+      updatedAt: new Date().toISOString(),
+    };
+    this.items.set(sessionId, updated);
+    return updated;
+  }
+
+  async getTeamCalendar(_params: TeamCalendarParams): Promise<TeamCalendarData> {
+    return { employees: [], departments: [], holidays: [], entries: [] };
   }
 }
 

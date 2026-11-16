@@ -10,6 +10,7 @@ import { CompanyProfileSection } from '../components/CompanyProfileSection';
 import { WorkWeekSection } from '../components/WorkWeekSection';
 import { IntegrationsSection } from '../components/IntegrationsSection';
 import { SecuritySettingsSection } from '../components/SecuritySettingsSection';
+import { SystemHealthSection } from '../components/SystemHealthSection';
 import { AdminProfilePhotoSection } from '../components/AdminProfilePhotoSection';
 
 export function CompanySettingsPage() {
@@ -150,6 +151,8 @@ export function CompanySettingsPage() {
           />
 
           <SecuritySettingsSection />
+
+          <SystemHealthSection />
 
           {/* Sticky Action Footer */}
           <div className="sticky bottom-4 z-20 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-surface border border-border rounded-card shadow-raised">

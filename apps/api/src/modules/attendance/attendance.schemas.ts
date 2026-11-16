@@ -10,15 +10,26 @@ export const attendanceLocationSchema = z
   })
   .strict();
 
+export const photoDataUrlSchema = z
+  .string()
+  .max(600_000, 'Captured photo exceeds 600KB limit')
+  .regex(
+    /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/,
+    'Captured photo must be a valid base64 image data URL',
+  );
+
 export const checkInSchema = z
   .object({
     location: attendanceLocationSchema.optional(),
+    photoDataUrl: photoDataUrlSchema.optional(),
     notes: z.string().max(500).optional(),
   })
   .strict();
 
 export const checkOutSchema = z
   .object({
+    location: attendanceLocationSchema.optional(),
+    photoDataUrl: photoDataUrlSchema.optional(),
     notes: z.string().max(500).optional(),
   })
   .strict();

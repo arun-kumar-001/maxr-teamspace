@@ -50,6 +50,8 @@ export class MemoryTasksRepository implements ITasksRepository {
       status: 'todo',
       priority: input.priority,
       dueDate: input.dueDate,
+      isDaily: input.isDaily ?? false,
+      dailyLastDoneDate: null,
       completedAt: null,
       version: 1,
       createdAt: now,
@@ -75,6 +77,14 @@ export class MemoryTasksRepository implements ITasksRepository {
       version: found.version + 1,
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  async setDailyLastDoneDate(_tx: TaskTx, id: string, date: string | null): Promise<void> {
+    const found = this.tasks.find((t) => t.id === id);
+    if (!found) return;
+    found.dailyLastDoneDate = date;
+    found.version += 1;
+    found.updatedAt = new Date().toISOString();
   }
 
   private manages(viewerId: string, task: Stored): boolean {

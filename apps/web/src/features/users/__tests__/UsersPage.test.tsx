@@ -217,7 +217,7 @@ describe('UsersPage Component Suite (Issue #27)', () => {
     });
   });
 
-  it('opens AddUserModal when Admin clicks Add User', async () => {
+  it('does not render standalone Add User button since users are provisioned via Employee onboarding', async () => {
     setupAuth('admin');
     vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);
     vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
@@ -229,10 +229,11 @@ describe('UsersPage Component Suite (Issue #27)', () => {
       </MemoryRouter>,
     );
 
-    const addBtn = await screen.findByTestId('add-user-btn');
-    fireEvent.click(addBtn);
-
-    expect(await screen.findByTestId('add-user-modal')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('users-page')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('add-user-btn')).toBeNull();
+    expect(screen.queryByTestId('add-user-modal')).toBeNull();
   });
 
   it('toggles another user account status and disables self-deactivation', async () => {

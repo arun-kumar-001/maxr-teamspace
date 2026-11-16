@@ -18,7 +18,6 @@ import { getAuditLogs } from '../../audit-logs/api/auditLogsApi';
 import type { AuditLogItem } from '../../audit-logs/types';
 import { UserCard } from '../components/UserCard';
 import { RoleAssignmentModal } from '../components/RoleAssignmentModal';
-import { AddUserModal } from '../components/AddUserModal';
 import { RolesSummaryGrid } from '../components/RolesSummaryGrid';
 import { PermissionsMatrix } from '../components/PermissionsMatrix';
 import type { UserAccount } from '../types';
@@ -150,24 +149,6 @@ function IconClock({ className = 'w-4 h-4' }: { className?: string }) {
     >
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
-    </svg>
-  );
-}
-
-function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
 }
@@ -357,7 +338,6 @@ export function UsersPage() {
     'accounts',
   );
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [statusTarget, setStatusTarget] = useState<UserAccount | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -689,19 +669,6 @@ export function UsersPage() {
             </button>
           )}
         </div>
-
-        {/* Add User Action Button */}
-        {isAdmin && (
-          <Button
-            variant="primary"
-            onClick={() => setIsAddUserOpen(true)}
-            data-testid="add-user-btn"
-            className="bg-primary hover:bg-primary-deep text-sidebar font-semibold px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all duration-200 hover:scale-102 hover:shadow-md active:scale-95 shrink-0"
-          >
-            <IconPlus className="w-4 h-4" />
-            <span>Add User</span>
-          </Button>
-        )}
       </section>
 
       {/* D. Main Content Area */}
@@ -1268,23 +1235,6 @@ export function UsersPage() {
             onClose={() => setToast(null)}
           />
         </div>
-      )}
-
-      {/* Create User Modal */}
-      {isAdmin && (
-        <AddUserModal
-          isOpen={isAddUserOpen}
-          onClose={() => setIsAddUserOpen(false)}
-          onCreated={(created) => {
-            void refetchUsers();
-            void refetchRoles();
-            setToast({
-              variant: 'success',
-              title: 'User Account Created',
-              message: `${created.name} (${created.email}) has been added.`,
-            });
-          }}
-        />
       )}
 
       {/* Account Activation / Deactivation Modal */}
