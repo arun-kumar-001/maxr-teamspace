@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Modal } from '../../../components/ui';
 import { fetchMyAttendanceHistory, fetchTeamAttendance } from '../api/attendance';
 import type { AttendanceRecord } from '../types';
@@ -42,22 +42,7 @@ function IconChevronRight({ className = 'w-4 h-4 shrink-0' }: { className?: stri
   );
 }
 
-function IconChevronDown({ className = 'w-4 h-4 shrink-0' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
+
 
 function IconCalendar({ className = 'w-4 h-4 shrink-0' }: { className?: string }) {
   return (
@@ -294,10 +279,21 @@ export function RosterTab({
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [monthOffset, setMonthOffset] = useState<number>(0);
 
-  // Department collapse state
-  const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
-
-  // Create Roster Bulk Modal state
+  const fallbackDefaultShift: Shift = useMemo(
+    () => ({
+      id: 'standard-shift-9-to-7',
+      code: 'STANDARD',
+      name: 'Standard Shift (9 to 7)',
+      startTime: '09:00',
+      endTime: '19:00',
+      graceMinutes: 15,
+      isActive: true,
+      crossesMidnight: false,
+      createdAt: '2026-11-13T00:00:00Z',
+      updatedAt: '2026-11-13T00:00:00Z',
+    }),
+    [],
+  );
   const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
   const [createScope, setCreateScope] = useState<'department' | 'employee'>('department');
   const [selectedTargetDept, setSelectedTargetDept] = useState<string>('');
@@ -336,20 +332,6 @@ export function RosterTab({
     }
     return [1, 2, 3, 4, 5];
   }, [attendancePolicy]);
-
-  const fallbackDefaultShift: Shift = useMemo(
-    () => ({
-      id: 'standard-shift-9-to-7',
-      code: 'STANDARD',
-      name: 'Standard Shift (9 to 7)',
-      startTime: '09:00',
-      endTime: '19:00',
-      graceMinutes: 15,
-      isActive: true,
-      crossesMidnight: false,
-    }),
-    [],
-  );
 
   const defaultShift = useMemo<Shift | null>(() => {
     if (shifts.length === 0) return fallbackDefaultShift;
@@ -646,34 +628,6 @@ export function RosterTab({
     shifts,
     viewMode,
   ]);
-
-  // Department Grouping for Grid
-  const departmentGroups = useMemo(() => {
-    const map = new Map<string, EmployeeDirectoryItem[]>();
-    for (const emp of filteredEmployees) {
-      const deptName = emp.department?.name || 'Operations';
-      if (!map.has(deptName)) {
-        map.set(deptName, []);
-      }
-      map.get(deptName)!.push(emp);
-    }
-    return Array.from(map.entries()).map(([deptName, emps]) => ({
-      deptName,
-      employees: emps,
-    }));
-  }, [filteredEmployees]);
-
-  const toggleDeptCollapse = (deptName: string) => {
-    setCollapsedDepts((prev) => {
-      const next = new Set(prev);
-      if (next.has(deptName)) {
-        next.delete(deptName);
-      } else {
-        next.add(deptName);
-      }
-      return next;
-    });
-  };
 
   // Helper for Shift styling & categorization (compact, executive, MaxR Flow tokens)
   const getShiftCellConfig = (shift: Shift | null, isLeave: boolean, isWeekend: boolean) => {
