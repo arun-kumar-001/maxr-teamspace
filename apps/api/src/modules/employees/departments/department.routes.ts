@@ -68,5 +68,12 @@ export function createDepartmentRouter(options: DepartmentRouterOptions): Router
     asyncHandler(controller.deactivate),
   );
 
+  router.delete(
+    '/:id',
+    requirePermission('departments.deactivate'),
+    validate({ params: idParamSchema }),
+    asyncHandler(controller.delete),
+  );
+
   return router;
 }

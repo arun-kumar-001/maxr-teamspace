@@ -244,16 +244,17 @@ export function DepartmentsPage() {
             </Button>
           )}
 
-          {canDeactivate && row.isActive && (
+          {canDeactivate && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => openDeactivate(row)}
-              className="min-h-[44px] min-w-[44px] text-xs font-medium text-danger hover:bg-rose-50"
+              className="min-h-[44px] min-w-[44px] text-xs font-semibold text-danger hover:bg-rose-50"
               data-testid={`table-deactivate-dept-${row.id}`}
+              aria-label={`Deactivate or delete department ${row.name}`}
             >
-              Deactivate
+              Delete
             </Button>
           )}
         </div>

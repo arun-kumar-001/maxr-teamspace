@@ -27,37 +27,35 @@ export function DepartmentFilters({
 
   return (
     <div
-      className="p-4 bg-surface border border-border rounded-card shadow-card space-y-4"
+      className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
       data-testid="department-filters"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-end">
-        {/* Search Input */}
-        <div>
-          <label
-            htmlFor="department-search-input"
-            className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1"
-          >
-            Search
-          </label>
-          <Input
-            id="department-search-input"
-            name="search"
-            placeholder="Search by name or code..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="min-h-[44px]"
-            data-testid="department-search-input"
-          />
+      {/* Search Input on the Left */}
+      <div className="relative flex-1 max-w-sm">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-subtle">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
         </div>
+        <Input
+          id="department-search-input"
+          name="search"
+          placeholder="Search by name or code..."
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10 min-h-[42px] text-xs sm:text-sm bg-surface rounded-xl border border-border shadow-xs"
+          data-testid="department-search-input"
+        />
+      </div>
 
-        {/* Status Select */}
-        <div>
-          <label
-            htmlFor="department-status-select"
-            className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-1"
-          >
-            Status
-          </label>
+      {/* Right Side: Status Select + Clear Button */}
+      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+        <div className="w-40 sm:w-48">
           <Select
             id="department-status-select"
             aria-label="Filter by Status"
@@ -65,25 +63,22 @@ export function DepartmentFilters({
             options={statusOptions}
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="min-h-[44px]"
+            className="min-h-[42px] text-xs sm:text-sm bg-surface rounded-xl border border-border shadow-xs"
             data-testid="department-status-select"
           />
         </div>
 
-        {/* Clear Filters Button */}
         {hasActiveFilters && (
-          <div className="flex sm:justify-start">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onReset}
-              className="min-h-[44px] text-xs font-semibold"
-              data-testid="department-filters-reset"
-            >
-              Clear Filters
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            className="min-h-[42px] text-xs font-semibold text-text-muted hover:text-text"
+            data-testid="department-filters-reset"
+          >
+            Clear
+          </Button>
         )}
       </div>
     </div>

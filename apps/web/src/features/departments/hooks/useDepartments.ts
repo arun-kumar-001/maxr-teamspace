@@ -8,7 +8,7 @@ import type {
 } from '../types';
 import {
   createDepartment,
-  deactivateDepartment,
+  deleteDepartment,
   DepartmentsApiError,
   fetchDepartments,
   updateDepartment,
@@ -217,11 +217,11 @@ export function useDepartments(initialQuery: DepartmentQuery = {}) {
     setDeactivateServerError(null);
 
     try {
-      await deactivateDepartment(deactivatingDepartment.id);
+      await deleteDepartment(deactivatingDepartment.id);
       setToast({
         variant: 'success',
-        title: 'Department deactivated',
-        message: `Department '${deactivatingDepartment.name}' has been deactivated.`,
+        title: 'Department deleted',
+        message: `Department '${deactivatingDepartment.name}' has been deleted.`,
       });
       closeDeactivate();
       await loadDepartments();
@@ -231,7 +231,7 @@ export function useDepartments(initialQuery: DepartmentQuery = {}) {
       } else if (err instanceof Error) {
         setDeactivateServerError(err.message);
       } else {
-        setDeactivateServerError('Failed to deactivate department. Please try again.');
+        setDeactivateServerError('Failed to delete department. Please try again.');
       }
     } finally {
       setIsDeactivating(false);

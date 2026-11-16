@@ -39,13 +39,13 @@ export class MemoryEmployeeDetailRepository implements IEmployeeDetailRepository
     const copy = structuredClone(entry.detail);
     if (!withAccount) {
       delete copy.account;
-      delete (copy as Record<string, unknown>).panNumber;
-      delete (copy as Record<string, unknown>).aadhaarNumber;
-      delete (copy as Record<string, unknown>).bankAccountHolder;
-      delete (copy as Record<string, unknown>).bankName;
-      delete (copy as Record<string, unknown>).bankAccountNumber;
-      delete (copy as Record<string, unknown>).bankIfscCode;
-      delete (copy as Record<string, unknown>).bankBranch;
+      delete (copy as unknown as Record<string, unknown>).panNumber;
+      delete (copy as unknown as Record<string, unknown>).aadhaarNumber;
+      delete (copy as unknown as Record<string, unknown>).bankAccountHolder;
+      delete (copy as unknown as Record<string, unknown>).bankName;
+      delete (copy as unknown as Record<string, unknown>).bankAccountNumber;
+      delete (copy as unknown as Record<string, unknown>).bankIfscCode;
+      delete (copy as unknown as Record<string, unknown>).bankBranch;
     }
     return copy;
   }
