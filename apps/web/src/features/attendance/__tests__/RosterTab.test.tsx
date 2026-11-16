@@ -40,9 +40,7 @@ const mockEmployees: EmployeeDirectoryItem[] = [
   },
 ];
 
-const mockDepartments: DepartmentItem[] = [
-  { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-];
+const mockDepartments: DepartmentItem[] = [{ id: 'dept-1', name: 'Engineering', code: 'ENG' }];
 
 describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
   afterEach(() => {
