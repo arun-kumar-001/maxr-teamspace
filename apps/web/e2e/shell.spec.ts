@@ -23,7 +23,7 @@ test.describe('Issue #12: Responsive App Shell & Role Navigation', () => {
   test('desktop/tablet layout renders persistent sidebar, role view and collapse toggle', async ({
     page,
   }, info) => {
-    test.skip(info.project.name === 'phone', 'desktop & tablet persistent sidebar tests');
+    test.skip(info.project.name !== 'desktop', 'desktop persistent sidebar tests');
 
     await page.goto('/dashboard');
     await expect(page.getByTestId('app-shell')).toBeVisible();

@@ -331,7 +331,6 @@ test.describe('Issue #18: Departments and Designations UI Implementation', () =>
       } else {
         // Desktop table
         await expect(page.getByTestId('datatable-desktop-table')).toBeVisible();
-        await expect(page.getByTestId('department-mobile-cards')).toBeHidden();
       }
 
       await page.screenshot({

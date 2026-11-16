@@ -150,19 +150,14 @@ test.describe('Issue #20: Create Employee UI & Responsive QA', () => {
       // No horizontal scroll check across all viewports
       await expectNoHorizontalScroll(page);
 
-      // Verify touch target >= 44x44px for primary controls on mobile (<640px)
-      if (width < 640) {
-        const nextBtn = page.getByTestId('mobile-next-step-button');
-        await expect(nextBtn).toBeVisible();
-        const box = await nextBtn.boundingBox();
-        expect(box).not.toBeNull();
-        if (box) {
-          expect(box.width).toBeGreaterThanOrEqual(44);
-          expect(box.height).toBeGreaterThanOrEqual(44);
-        }
-      } else {
-        const submitBtn = page.getByTestId('desktop-submit-button');
-        await expect(submitBtn).toBeVisible();
+      // Verify primary action button is visible and touch target >= 44x44px on mobile (<640px)
+      const nextBtn = page.getByTestId('next-step-button');
+      await expect(nextBtn).toBeVisible();
+      const box = await nextBtn.boundingBox();
+      expect(box).not.toBeNull();
+      if (box && width < 640) {
+        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.height).toBeGreaterThanOrEqual(44);
       }
 
       await page.screenshot({
