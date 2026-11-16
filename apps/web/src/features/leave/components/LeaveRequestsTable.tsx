@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { LeaveBalance, LeaveRequest } from '../types';
-import { EmptyState } from '../../../components/ui';
+import { EmptyState, KpiCard } from '../../../components/ui';
 
 export interface LeaveRequestsTableProps {
   requests: LeaveRequest[];
@@ -451,34 +451,19 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         data-testid="leave-summary-cards"
       >
         {summaryCards.map((card) => (
-          <div
+          <KpiCard
             key={card.key}
+            label={card.label}
+            value={card.value}
+            icon={card.icon}
+            badge={card.badge}
+            borderColor={card.borderColor}
+            iconColor={card.iconColor}
+            pillBg={card.pillBg}
+            pillText={card.pillText}
+            isActive={statusFilter === card.filterValue}
             onClick={() => setStatusFilter(card.filterValue)}
-            className={`p-4 sm:p-4.5 bg-white border ${card.borderColor} rounded-card shadow-card flex items-center justify-between gap-3 min-w-0 cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === card.filterValue ? 'ring-2 ring-primary-strong/40' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className={`${card.iconColor} flex items-center justify-center shrink-0`}>
-                {card.icon}
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                  {card.label}
-                </span>
-                <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                  {card.value}
-                </span>
-              </div>
-            </div>
-            <div className="text-right shrink-0">
-              <span
-                className={`text-[11px] sm:text-xs font-semibold ${card.pillBg} ${card.pillText} px-2 py-0.5 rounded-full block whitespace-nowrap`}
-              >
-                {card.badge}
-              </span>
-            </div>
-          </div>
+          />
         ))}
       </div>
 

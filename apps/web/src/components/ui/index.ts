@@ -19,3 +19,4 @@ export * from './MetricStrip.js';
 export * from './IconButton.js';
 export * from './Sidebar.js';
 export * from './DonutChart.js';
+export * from './KpiCard.js';

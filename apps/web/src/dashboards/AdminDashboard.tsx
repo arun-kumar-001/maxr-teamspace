@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
-import { DonutChart, type DonutChartSegment } from '../components/ui';
+import { DonutChart, type DonutChartSegment, KpiCard } from '../components/ui';
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchMeetings } from '../features/meetings/api/meetingsApi';
@@ -715,108 +715,48 @@ export function AdminDashboard() {
       {/* 2. Top Section: 4 KPI Cards - Responsive & Fitted */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Team Members */}
-        <div
-          onClick={() => navigateTo('/employees')}
+        <KpiCard
+          label="Team Members"
+          value={metrics.teamMembers}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge="100% active"
+          variant="emerald"
           style={{ animationDelay: '50ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-emerald-600 flex items-center justify-center shrink-0">
-              <IconUsers className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Team Members
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.teamMembers}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              100% active accounts
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
 
         {/* Card 2: Present Today */}
-        <div
-          onClick={() => navigateTo('/attendance')}
+        <KpiCard
+          label="Present Today"
+          value={metrics.presentToday}
+          icon={<IconClock className="w-7 h-7" />}
+          badge={`${Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in`}
+          variant="purple"
           style={{ animationDelay: '100ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-purple-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Present Today
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.presentToday}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
 
         {/* Card 3: Leave Requests */}
-        <div
-          onClick={() => navigateTo('/approvals')}
+        <KpiCard
+          label="Leave Requests"
+          value={`0${metrics.leaveRequests}`}
+          icon={<IconCalendar className="w-7 h-7" />}
+          badge={`${metrics.leaveRequests} pending review`}
+          variant="teal"
           style={{ animationDelay: '150ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-teal-600 flex items-center justify-center shrink-0">
-              <IconCalendar className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Leave Requests
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                0{metrics.leaveRequests}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {metrics.leaveRequests} pending review
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
 
         {/* Card 4: Open Tasks */}
-        <div
-          onClick={() => navigateTo('/tasks')}
+        <KpiCard
+          label="Open Tasks"
+          value={metrics.openTasks}
+          icon={<IconCheckSquare className="w-7 h-7" />}
+          badge={`${taskCounts.overdue} overdue`}
+          variant="rose"
           style={{ animationDelay: '200ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-rose-600 flex items-center justify-center shrink-0">
-              <IconCheckSquare className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Open Tasks
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.openTasks}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {taskCounts.overdue} overdue
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
       </section>
 
       {/* 3. Middle Section: 3 Cards (My Watch, Attendance Overview, Task Overview) - Perfectly Sized */}

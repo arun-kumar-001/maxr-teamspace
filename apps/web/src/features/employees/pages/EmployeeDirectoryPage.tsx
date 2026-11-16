@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
+import { Badge, Button, ErrorState, ForbiddenState, Skeleton, KpiCard } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
@@ -570,175 +570,42 @@ export function EmployeeDirectoryPage() {
       </div>
 
       {/* 2. Workforce Summary Cards (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 dir-fade-in">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 dir-fade-in">
         {/* Card 1: Total Employees */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconUsers className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Total Employees</span>
-            </div>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 shrink-0">
-              ↑ +6%
-            </span>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {totalEmployees}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Green */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-green" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10"
-                fill="none"
-                stroke="rgb(16, 185, 129)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10 L160,30 L0,30 Z"
-                fill="url(#wave-green)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Total Employees"
+          value={totalEmployees}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge="↑ +6%"
+          variant="emerald"
+        />
 
         {/* Card 2: Active Employees */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconUserCheck className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Active Employees</span>
-            </div>
-            <span className="text-xs font-semibold text-text-muted">({activePercentage}%)</span>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {activeEmployees}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Teal */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-teal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(20, 184, 166)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(20, 184, 166)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14"
-                fill="none"
-                stroke="rgb(20, 184, 166)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14 L160,30 L0,30 Z"
-                fill="url(#wave-teal)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Active Employees"
+          value={activeEmployees}
+          icon={<IconUserCheck className="w-7 h-7" />}
+          badge={`${activePercentage}% active`}
+          variant="teal"
+        />
 
         {/* Card 3: Inactive Employees */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconUserMinus className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Inactive Employees</span>
-            </div>
-            <span className="text-xs font-semibold text-text-muted">({inactivePercentage}%)</span>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {inactiveEmployees}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Coral */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-coral" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(249, 115, 22)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18"
-                fill="none"
-                stroke="rgb(249, 115, 22)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18 L160,30 L0,30 Z"
-                fill="url(#wave-coral)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Inactive Employees"
+          value={inactiveEmployees}
+          icon={<IconUserMinus className="w-7 h-7" />}
+          badge={`${inactivePercentage}%`}
+          variant="amber"
+        />
 
         {/* Card 4: Departments */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconNetwork className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Departments</span>
-            </div>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {departments.length || 6}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Purple */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-purple" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(168, 85, 247)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10"
-                fill="none"
-                stroke="rgb(168, 85, 247)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10 L160,30 L0,30 Z"
-                fill="url(#wave-purple)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Departments"
+          value={departments.length || 6}
+          icon={<IconNetwork className="w-7 h-7" />}
+          badge="Active units"
+          variant="purple"
+        />
       </div>
 
       {/* 3. Directory Navigation Tabs */}
