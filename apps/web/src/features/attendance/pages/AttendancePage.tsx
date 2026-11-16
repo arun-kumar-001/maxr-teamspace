@@ -46,7 +46,7 @@ function addDaysIso(baseIso: string, offsetDays: number): string {
 }
 
 export interface AttendancePageProps {
-  initialTab?: 'on-duty' | 'roster' | 'timesheets' | AttendanceManagementTab;
+  initialTab?: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out' | AttendanceManagementTab;
 }
 
 const SUB_TABS: Array<{ id: AttendanceManagementTab; label: string }> = [
@@ -589,12 +589,13 @@ export function AttendancePage({ initialTab }: AttendancePageProps = {}) {
   }
 
   const defaultTab: AttendanceManagementTab =
-    initialTab === 'check-in' ||
-    initialTab === 'leave-requests' ||
-    initialTab === 'team-calendar' ||
-    initialTab === 'my-attendance'
-      ? initialTab
-      : 'my-attendance';
+    initialTab === 'check-in' || initialTab === 'check-in-out'
+      ? 'check-in'
+      : initialTab === 'leave-requests' ||
+          initialTab === 'team-calendar' ||
+          initialTab === 'my-attendance'
+        ? initialTab
+        : 'my-attendance';
 
   return <EmployeeAttendanceWorkspace defaultTab={defaultTab} />;
 }

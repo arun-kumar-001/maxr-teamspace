@@ -41,7 +41,7 @@ export default defineConfig({
     command: `${process.platform === 'win32' ? 'npm.cmd' : 'npm'} --workspace=@maxr/web run dev -- --port ${PORT} --host 127.0.0.1 --strictPort`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    timeout: 120_000,
     env: {
       VITE_DEV_MOCK_AUTH: 'true',
     },
