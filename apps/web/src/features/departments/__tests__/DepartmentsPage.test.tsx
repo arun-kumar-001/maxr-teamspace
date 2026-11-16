@@ -157,7 +157,7 @@ describe('DepartmentsPage Component', () => {
       expect(screen.getAllByText('Engineering').length).toBeGreaterThan(0);
     });
 
-    const viewBtns = screen.getAllByTestId('table-view-dept-dept-1');
+    const viewBtns = screen.getAllByTestId(/view-dept-dept-1/);
     fireEvent.click(viewBtns[0]!);
 
     await waitFor(() => {

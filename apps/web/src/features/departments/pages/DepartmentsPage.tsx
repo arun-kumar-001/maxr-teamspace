@@ -20,7 +20,7 @@ import { DepartmentModal } from '../components/DepartmentModal';
 import { useDepartments } from '../hooks/useDepartments';
 import type { Department } from '../types';
 
-type DeptViewMode = 'all' | 'cards' | 'table';
+type DeptViewMode = 'cards' | 'table';
 
 export function DepartmentsPage() {
   const { role } = useAuth();
@@ -29,7 +29,7 @@ export function DepartmentsPage() {
   const canEdit = role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   const canDeactivate = role === ROLES.ADMIN;
 
-  const [viewMode, setViewMode] = useState<DeptViewMode>('all');
+  const [viewMode, setViewMode] = useState<DeptViewMode>('cards');
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
 
@@ -302,7 +302,6 @@ export function DepartmentsPage() {
           >
             {(
               [
-                { id: 'all', label: 'All' },
                 { id: 'cards', label: 'Cards' },
                 { id: 'table', label: 'Table' },
               ] as const
@@ -311,7 +310,7 @@ export function DepartmentsPage() {
                 key={opt.id}
                 type="button"
                 onClick={() => setViewMode(opt.id)}
-                className={`px-2.5 py-1 rounded-input text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-input text-xs font-semibold transition-all cursor-pointer ${
                   viewMode === opt.id
                     ? 'bg-surface text-text shadow-sm'
                     : 'text-text-muted hover:text-text'
