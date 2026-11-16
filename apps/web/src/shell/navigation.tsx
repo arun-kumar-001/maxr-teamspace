@@ -53,13 +53,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     allowedRoles: [ROLES.ADMIN],
   },
   {
-    id: 'admin-designations',
-    label: 'Designations',
-    path: '/admin/designations',
-    iconName: 'file-text',
-    allowedRoles: [ROLES.ADMIN],
-  },
-  {
     id: 'admin-audit',
     label: 'Audit Logs',
     path: '/admin/audit',
@@ -101,13 +94,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Departments',
     path: '/hr/departments',
     iconName: 'briefcase',
-    allowedRoles: [ROLES.HR_MANAGER],
-  },
-  {
-    id: 'hr-designations',
-    label: 'Designations',
-    path: '/hr/designations',
-    iconName: 'file-text',
     allowedRoles: [ROLES.HR_MANAGER],
   },
   {
@@ -424,6 +410,17 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
+  // Role prefix protections
+  if (path.startsWith('/admin/') && role !== ROLES.ADMIN) {
+    return false;
+  }
+  if (path.startsWith('/hr/') && role !== ROLES.HR_MANAGER && role !== ROLES.ADMIN) {
+    return false;
+  }
+  if (path.startsWith('/lead/') && role !== ROLES.TEAM_LEAD && role !== ROLES.ADMIN) {
+    return false;
+  }
+
   const matchingItem = NAVIGATION_REGISTRY.find((item) => item.path === path);
   if (!matchingItem) {
     // Check prefix matching for subroutes
@@ -633,12 +630,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="briefcase" />,
         },
         {
-          id: '/admin/designations',
-          label: 'Designations',
-          href: '/admin/designations',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-        {
           id: '/admin/org-chart',
           label: 'Reporting Hierarchy',
           href: '/admin/org-chart',
@@ -772,12 +763,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Departments',
           href: '/hr/departments',
           icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/hr/designations',
-          label: 'Designations',
-          href: '/hr/designations',
-          icon: <NavSvgIcon name="file-text" />,
         },
         {
           id: '/hr/org-chart',

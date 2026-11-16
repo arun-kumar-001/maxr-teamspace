@@ -28,7 +28,6 @@ import {
   SetPasswordPage,
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
-import { DesignationsPage } from './features/designations';
 import { MyProfilePage, ProfilePortalPage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
@@ -292,30 +291,18 @@ function AppRoutes() {
         }
       />
 
-      {/* Designations Management Routes (Issue #18) */}
+      {/* Designations Management Routes Redirect to Departments */}
       <Route
         path="/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
+        element={<Navigate to="/departments" replace />}
       />
       <Route
         path="/admin/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
+        element={<Navigate to="/admin/departments" replace />}
       />
       <Route
         path="/hr/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
+        element={<Navigate to="/hr/departments" replace />}
       />
 
       {/* My Profile Portal & Personal Details Routes */}
