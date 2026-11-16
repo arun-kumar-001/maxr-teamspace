@@ -50,6 +50,10 @@ export function CreateEmployeeForm({
   const [uploadedDocs, setUploadedDocs] = useState<
     Record<string, { fileName: string; size: string } | null>
   >({
+    resume: null,
+    aadharCard: null,
+    panCard: null,
+    degreeCertificates: null,
     appointmentLetter: null,
     nda: null,
     kycProof: null,
@@ -57,7 +61,15 @@ export function CreateEmployeeForm({
   });
 
   const handleDocUpload = (
-    key: 'appointmentLetter' | 'nda' | 'kycProof' | 'educationResume',
+    key:
+      | 'resume'
+      | 'aadharCard'
+      | 'panCard'
+      | 'degreeCertificates'
+      | 'appointmentLetter'
+      | 'nda'
+      | 'kycProof'
+      | 'educationResume',
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
@@ -70,11 +82,86 @@ export function CreateEmployeeForm({
     }));
     if (key === 'appointmentLetter') setAppointmentLetterSigned(true);
     if (key === 'nda') setNdaSigned(true);
-    if (key === 'kycProof') setKycDocumentsSubmitted(true);
+    if (key === 'kycProof' || key === 'aadharCard' || key === 'panCard' || key === 'degreeCertificates') {
+      setKycDocumentsSubmitted(true);
+    }
   };
 
-  const handleRemoveDoc = (key: 'appointmentLetter' | 'nda' | 'kycProof' | 'educationResume') => {
+  const handleRemoveDoc = (
+    key:
+      | 'resume'
+      | 'aadharCard'
+      | 'panCard'
+      | 'degreeCertificates'
+      | 'appointmentLetter'
+      | 'nda'
+      | 'kycProof'
+      | 'educationResume',
+  ) => {
     setUploadedDocs((prev) => ({ ...prev, [key]: null }));
+  };
+
+  // Structured address states
+  const [permAddress, setPermAddress] = useState({
+    address1: formData.permanentAddress1 || '',
+    address2: formData.permanentAddress2 || '',
+    city: formData.permanentCity || '',
+    district: formData.permanentDistrict || '',
+    pincode: formData.permanentPincode || '',
+  });
+
+  const [currAddress, setCurrAddress] = useState({
+    address1: formData.currentAddress1 || '',
+    address2: formData.currentAddress2 || '',
+    city: formData.currentCity || '',
+    district: formData.currentDistrict || '',
+    pincode: formData.currentPincode || '',
+  });
+
+  const updatePermField = (field: keyof typeof permAddress, val: string) => {
+    const updated = { ...permAddress, [field]: val };
+    setPermAddress(updated);
+    const formatted = [updated.address1, updated.address2, updated.city, updated.district, updated.pincode]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(', ');
+    setFieldValue('permanentAddress', formatted);
+    setFieldValue(`permanent${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+
+    if (formData.sameAsPermanentAddress) {
+      setCurrAddress(updated);
+      setFieldValue('currentAddress', formatted);
+      setFieldValue(`current${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+    }
+  };
+
+  const updateCurrField = (field: keyof typeof currAddress, val: string) => {
+    const updated = { ...currAddress, [field]: val };
+    setCurrAddress(updated);
+    const formatted = [updated.address1, updated.address2, updated.city, updated.district, updated.pincode]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(', ');
+    setFieldValue('currentAddress', formatted);
+    setFieldValue(`current${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+  };
+
+  const handleSameAddressToggle = (checked: boolean) => {
+    setFieldValue('sameAsPermanentAddress', checked);
+    if (checked) {
+      setCurrAddress({ ...permAddress });
+      const formatted = [
+        permAddress.address1,
+        permAddress.address2,
+        permAddress.city,
+        permAddress.district,
+        permAddress.pincode,
+      ]
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join(', ');
+      setFieldValue('currentAddress', formatted);
+    }
   };
 
   // Department options formatted for Select
@@ -123,7 +210,7 @@ export function CreateEmployeeForm({
     errors.bankAccountNumber ||
     errors.bankIfscCode,
   );
-  const hasStep4Error = Boolean(errors.role);
+  const hasStep5Error = Boolean(errors.role);
 
   const stepStatus: Record<number, 'complete' | 'incomplete' | 'error'> = {
     1: hasStep1Error
@@ -145,12 +232,13 @@ export function CreateEmployeeForm({
       : currentStep > 3 && (formData.bankAccountNumber.trim() || formData.panNumber.trim())
         ? 'complete'
         : 'incomplete',
-    4: hasStep4Error
+    4: currentStep > 4 ? 'complete' : 'incomplete',
+    5: hasStep5Error
       ? 'error'
-      : currentStep > 4 && formData.role
+      : currentStep > 5 && formData.role
         ? 'complete'
         : 'incomplete',
-    5: 'incomplete',
+    6: 'incomplete',
   };
 
   const handleStepSelect = (step: number) => {
@@ -289,7 +377,7 @@ export function CreateEmployeeForm({
 
           <div className="space-y-2">
             <FormField
-              label="Work Email Address"
+              label="Email Address"
               htmlFor="create-emp-email"
               required
               error={errors.email}
@@ -300,7 +388,7 @@ export function CreateEmployeeForm({
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFieldValue('email', e.target.value)}
-                  placeholder="Enter work email address"
+                  placeholder="Enter email address"
                   disabled={isSubmitting}
                   autoCapitalize="none"
                   data-testid="input-email"
@@ -406,49 +494,219 @@ export function CreateEmployeeForm({
             )}
           </div>
 
-          <FormField label="Permanent Address" htmlFor="create-emp-perm-address">
-            <textarea
-              id="create-emp-perm-address"
-              rows={3}
-              value={formData.permanentAddress}
-              onChange={(e) => setFieldValue('permanentAddress', e.target.value)}
-              placeholder="Enter permanent address"
-              disabled={isSubmitting}
-              data-testid="input-permanent-address"
-              className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary shadow-xs"
-            />
-          </FormField>
+          {/* Permanent Address - Structured Fields */}
+          <div className="md:col-span-2 space-y-3.5 pt-2 border-t border-border/70">
+            <h3 className="text-xs font-bold text-text uppercase tracking-wider">
+              Permanent Address
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Address Line 1" htmlFor="create-emp-perm-addr1">
+                <Input
+                  id="create-emp-perm-addr1"
+                  type="text"
+                  value={permAddress.address1}
+                  onChange={(e) => updatePermField('address1', e.target.value)}
+                  placeholder="Door No, Building, Street name"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-address"
+                />
+              </FormField>
+              <FormField label="Address Line 2" htmlFor="create-emp-perm-addr2">
+                <Input
+                  id="create-emp-perm-addr2"
+                  type="text"
+                  value={permAddress.address2}
+                  onChange={(e) => updatePermField('address2', e.target.value)}
+                  placeholder="Area, Landmark, Locality"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-address2"
+                />
+              </FormField>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormField label="City / Town" htmlFor="create-emp-perm-city">
+                <Input
+                  id="create-emp-perm-city"
+                  type="text"
+                  value={permAddress.city}
+                  onChange={(e) => updatePermField('city', e.target.value)}
+                  placeholder="Enter city"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-city"
+                />
+              </FormField>
+              <FormField label="District" htmlFor="create-emp-perm-district">
+                <Input
+                  id="create-emp-perm-district"
+                  type="text"
+                  value={permAddress.district}
+                  onChange={(e) => updatePermField('district', e.target.value)}
+                  placeholder="Enter district"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-district"
+                />
+              </FormField>
+              <FormField label="PIN Code" htmlFor="create-emp-perm-pincode">
+                <Input
+                  id="create-emp-perm-pincode"
+                  type="text"
+                  maxLength={10}
+                  value={permAddress.pincode}
+                  onChange={(e) => updatePermField('pincode', e.target.value)}
+                  placeholder="Enter PIN code"
+                  disabled={isSubmitting}
+                  className="font-mono"
+                  data-testid="input-permanent-pincode"
+                />
+              </FormField>
+            </div>
+          </div>
 
-          <div className="space-y-1.5">
+          {/* Current Address - Structured Fields */}
+          <div className="md:col-span-2 space-y-3.5 pt-2 border-t border-border/70">
             <div className="flex items-center justify-between gap-2">
-              <label
-                htmlFor="create-emp-curr-address"
-                className="text-xs font-semibold text-text tracking-wide uppercase select-none"
-              >
-                Current Address
-              </label>
+              <h3 className="text-xs font-bold text-text uppercase tracking-wider">
+                Current Residential Address
+              </h3>
               <label className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={formData.sameAsPermanentAddress}
-                  onChange={(e) => setFieldValue('sameAsPermanentAddress', e.target.checked)}
+                  onChange={(e) => handleSameAddressToggle(e.target.checked)}
                   disabled={isSubmitting}
                   data-testid="same-address-checkbox"
                   className="rounded border-border text-primary-deep focus:ring-primary h-3.5 w-3.5"
                 />
-                <span>Same as permanent</span>
+                <span className="font-medium">Same as permanent address</span>
               </label>
             </div>
-            <textarea
-              id="create-emp-curr-address"
-              rows={3}
-              value={formData.currentAddress}
-              onChange={(e) => setFieldValue('currentAddress', e.target.value)}
-              placeholder="Enter current residential address"
-              disabled={isSubmitting || formData.sameAsPermanentAddress}
-              data-testid="input-current-address"
-              className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 shadow-xs"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Address Line 1" htmlFor="create-emp-curr-addr1">
+                <Input
+                  id="create-emp-curr-addr1"
+                  type="text"
+                  value={currAddress.address1}
+                  onChange={(e) => updateCurrField('address1', e.target.value)}
+                  placeholder="Door No, Building, Street name"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-address"
+                />
+              </FormField>
+              <FormField label="Address Line 2" htmlFor="create-emp-curr-addr2">
+                <Input
+                  id="create-emp-curr-addr2"
+                  type="text"
+                  value={currAddress.address2}
+                  onChange={(e) => updateCurrField('address2', e.target.value)}
+                  placeholder="Area, Landmark, Locality"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-address2"
+                />
+              </FormField>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormField label="City / Town" htmlFor="create-emp-curr-city">
+                <Input
+                  id="create-emp-curr-city"
+                  type="text"
+                  value={currAddress.city}
+                  onChange={(e) => updateCurrField('city', e.target.value)}
+                  placeholder="Enter city"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-city"
+                />
+              </FormField>
+              <FormField label="District" htmlFor="create-emp-curr-district">
+                <Input
+                  id="create-emp-curr-district"
+                  type="text"
+                  value={currAddress.district}
+                  onChange={(e) => updateCurrField('district', e.target.value)}
+                  placeholder="Enter district"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-district"
+                />
+              </FormField>
+              <FormField label="PIN Code" htmlFor="create-emp-curr-pincode">
+                <Input
+                  id="create-emp-curr-pincode"
+                  type="text"
+                  maxLength={10}
+                  value={currAddress.pincode}
+                  onChange={(e) => updateCurrField('pincode', e.target.value)}
+                  placeholder="Enter PIN code"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  className="font-mono"
+                  data-testid="input-current-pincode"
+                />
+              </FormField>
+            </div>
+          </div>
+
+          {/* Resume Upload inside Personal Details */}
+          <div className="md:col-span-2 pt-2 border-t border-border/70">
+            <FormField label="Candidate Resume / Curriculum Vitae (CV)" htmlFor="create-emp-resume">
+              <div className="p-4 rounded-xl border border-border bg-surface-muted/30 hover:border-primary-strong/40 transition-colors">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-text">Candidate Resume / CV</p>
+                      <p className="text-[11px] text-text-muted">Upload candidate CV (PDF, DOCX, DOC up to 10MB)</p>
+                    </div>
+                  </div>
+                  {uploadedDocs.resume ? (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Uploaded
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                      Optional
+                    </span>
+                  )}
+                </div>
+
+                {uploadedDocs.resume ? (
+                  <div className="mt-3 flex items-center justify-between p-2 rounded-lg bg-surface text-xs border border-border">
+                    <span className="truncate max-w-[260px] font-medium text-text">
+                      {uploadedDocs.resume.fileName} ({uploadedDocs.resume.size})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDoc('resume')}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="mt-2.5 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface cursor-pointer transition-colors">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Select Resume File</span>
+                    <input
+                      id="create-emp-resume"
+                      type="file"
+                      accept=".pdf,.docx,.doc"
+                      onChange={(e) => handleDocUpload('resume', e)}
+                      className="hidden"
+                      data-testid="input-resume-upload"
+                    />
+                  </label>
+                )}
+              </div>
+            </FormField>
           </div>
         </div>
       </div>
@@ -555,23 +813,37 @@ export function CreateEmployeeForm({
             />
           </FormField>
 
-          <div className="md:col-span-2">
-            <FormField
-              label="Reporting Manager"
-              htmlFor="create-emp-manager"
-              error={errors.managerId || managerError || undefined}
-            >
-              <Select
-                id="create-emp-manager"
-                value={formData.managerId}
-                onChange={(e) => setFieldValue('managerId', e.target.value)}
-                disabled={isSubmitting || isLoadingManagers}
-                placeholder={isLoadingManagers ? 'Loading managers...' : 'Select manager'}
-                options={managerOptions}
-                data-testid="select-manager"
-              />
-            </FormField>
-          </div>
+          <FormField
+            label="Work Email Address"
+            htmlFor="create-emp-work-email"
+          >
+            <Input
+              id="create-emp-work-email"
+              type="email"
+              value={formData.workEmail || ''}
+              onChange={(e) => setFieldValue('workEmail', e.target.value)}
+              placeholder="Enter official work email address"
+              disabled={isSubmitting}
+              autoCapitalize="none"
+              data-testid="input-work-email"
+            />
+          </FormField>
+
+          <FormField
+            label="Reporting Manager"
+            htmlFor="create-emp-manager"
+            error={errors.managerId || managerError || undefined}
+          >
+            <Select
+              id="create-emp-manager"
+              value={formData.managerId}
+              onChange={(e) => setFieldValue('managerId', e.target.value)}
+              disabled={isSubmitting || isLoadingManagers}
+              placeholder={isLoadingManagers ? 'Loading managers...' : 'Select manager'}
+              options={managerOptions}
+              data-testid="select-manager"
+            />
+          </FormField>
         </div>
 
         {/* Salary Details Subsection (per user requirement) */}
@@ -770,18 +1042,276 @@ export function CreateEmployeeForm({
       </div>
 
       {/* ============================================================== */}
-      {/* SECTION 4: Role & System Access */}
+      {/* SECTION 4: Onboarding Documents (Aadhaar, PAN, Degree Certificates) */}
       {/* ============================================================== */}
       <div
         className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
           currentStep === 4 ? 'block' : 'hidden'
+        }`}
+        data-testid="section-onboarding-documents"
+      >
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
+              4
+            </span>
+            Onboarding Documents
+          </h2>
+          <p className="text-sm text-text-muted mt-1">
+            Upload candidate identification proofs (Aadhaar Card, PAN Card) and educational degree certificates.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5" data-testid="document-upload-section">
+          {/* 1. Aadhaar Card Upload */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <circle cx="9" cy="10" r="2" />
+                    <line x1="15" y1="8" x2="17" y2="8" />
+                    <line x1="15" y1="12" x2="17" y2="12" />
+                    <line x1="7" y1="16" x2="17" y2="16" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Aadhaar Card</p>
+                  <p className="text-[11px] text-text-muted">UIDAI Government ID (PDF, JPG, PNG)</p>
+                </div>
+              </div>
+              {uploadedDocs.aadharCard ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.aadharCard ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.aadharCard.fileName} ({uploadedDocs.aadharCard.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('aadharCard')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload Aadhaar Card</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => handleDocUpload('aadharCard', e)}
+                  className="hidden"
+                  data-testid="upload-aadhaar"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* 2. PAN Card Upload */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <line x1="2" y1="10" x2="22" y2="10" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">PAN Card</p>
+                  <p className="text-[11px] text-text-muted">Income Tax Card (PDF, JPG, PNG)</p>
+                </div>
+              </div>
+              {uploadedDocs.panCard ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.panCard ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.panCard.fileName} ({uploadedDocs.panCard.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('panCard')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload PAN Card</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => handleDocUpload('panCard', e)}
+                  className="hidden"
+                  data-testid="upload-pan"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* 3. Degree Certificates Upload */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Degree Certificates</p>
+                  <p className="text-[11px] text-text-muted">UG / PG degrees &amp; certificates (PDF, JPG, PNG)</p>
+                </div>
+              </div>
+              {uploadedDocs.degreeCertificates ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.degreeCertificates ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.degreeCertificates.fileName} ({uploadedDocs.degreeCertificates.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('degreeCertificates')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload Degree Certificates</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.docx"
+                  onChange={(e) => handleDocUpload('degreeCertificates', e)}
+                  className="hidden"
+                  data-testid="upload-degrees"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* 4. Signed Appointment Letter */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Signed Appointment Letter</p>
+                  <p className="text-[11px] text-text-muted">Signed offer &amp; terms (PDF, DOCX)</p>
+                </div>
+              </div>
+              {uploadedDocs.appointmentLetter ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.appointmentLetter ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.appointmentLetter.fileName} ({uploadedDocs.appointmentLetter.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('appointmentLetter')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload Appointment Letter</span>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.doc"
+                  onChange={(e) => handleDocUpload('appointmentLetter', e)}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* SECTION 5: Role & System Access */}
+      {/* ============================================================== */}
+      <div
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
+          currentStep === 5 ? 'block' : 'hidden'
         }`}
         data-testid="section-role-access"
       >
         <div className="border-b border-border/70 pb-5">
           <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
-              4
+              5
             </span>
             System Role &amp; Access
           </h2>
@@ -853,18 +1383,18 @@ export function CreateEmployeeForm({
       </div>
 
       {/* ============================================================== */}
-      {/* SECTION 5: Declaration & Onboarding Checklist */}
+      {/* SECTION 6: Declaration & Onboarding Checklist */}
       {/* ============================================================== */}
       <div
         className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
-          currentStep === 5 ? 'block' : 'hidden'
+          currentStep === 6 ? 'block' : 'hidden'
         }`}
         data-testid="section-declaration-checklist"
       >
         <div className="border-b border-border/70 pb-5">
           <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
-              5
+              6
             </span>
             Declaration &amp; Onboarding Checklist
           </h2>
@@ -927,221 +1457,6 @@ export function CreateEmployeeForm({
           </label>
         </div>
 
-        {/* Onboarding Documents Upload Section */}
-        <div className="pt-6 border-t border-border/80 space-y-4" data-testid="document-upload-section">
-          <div>
-            <h3 className="text-sm font-bold text-text font-display flex items-center gap-2">
-              <svg className="w-4 h-4 text-primary-deep" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points="17 8 12 3 7 8" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="12" y1="3" x2="12" y2="15" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Upload Onboarding Documents
-            </h3>
-            <p className="text-xs text-text-muted mt-0.5">
-              Attach verified candidate paperwork (PDF, DOCX, JPG, PNG up to 10MB each).
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* 1. Signed Appointment Letter */}
-            <div className="p-4 rounded-xl border border-border bg-surface hover:border-primary-strong/40 transition-colors space-y-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs font-bold text-text">Signed Appointment Letter</p>
-                  <p className="text-[11px] text-text-muted">Signed offer &amp; terms acceptance</p>
-                </div>
-                {uploadedDocs.appointmentLetter ? (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Uploaded
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
-                    Optional
-                  </span>
-                )}
-              </div>
-
-              {uploadedDocs.appointmentLetter ? (
-                <div className="flex items-center justify-between p-2 rounded-lg bg-surface-muted text-xs border border-border">
-                  <span className="truncate max-w-[180px] font-medium text-text">
-                    {uploadedDocs.appointmentLetter.fileName} ({uploadedDocs.appointmentLetter.size})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveDoc('appointmentLetter')}
-                    className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/50 cursor-pointer transition-colors">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span>Select Appointment File</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.docx,.doc"
-                    onChange={(e) => handleDocUpload('appointmentLetter', e)}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* 2. Signed NDA */}
-            <div className="p-4 rounded-xl border border-border bg-surface hover:border-primary-strong/40 transition-colors space-y-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs font-bold text-text">Signed NDA Agreement</p>
-                  <p className="text-[11px] text-text-muted">Proprietary &amp; confidentiality deed</p>
-                </div>
-                {uploadedDocs.nda ? (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Uploaded
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
-                    Optional
-                  </span>
-                )}
-              </div>
-
-              {uploadedDocs.nda ? (
-                <div className="flex items-center justify-between p-2 rounded-lg bg-surface-muted text-xs border border-border">
-                  <span className="truncate max-w-[180px] font-medium text-text">
-                    {uploadedDocs.nda.fileName} ({uploadedDocs.nda.size})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveDoc('nda')}
-                    className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/50 cursor-pointer transition-colors">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span>Select NDA File</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.docx,.doc"
-                    onChange={(e) => handleDocUpload('nda', e)}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* 3. Government ID / KYC Proof */}
-            <div className="p-4 rounded-xl border border-border bg-surface hover:border-primary-strong/40 transition-colors space-y-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs font-bold text-text">Government ID / KYC Proof</p>
-                  <p className="text-[11px] text-text-muted">Aadhaar card / PAN card copy</p>
-                </div>
-                {uploadedDocs.kycProof ? (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Uploaded
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
-                    Optional
-                  </span>
-                )}
-              </div>
-
-              {uploadedDocs.kycProof ? (
-                <div className="flex items-center justify-between p-2 rounded-lg bg-surface-muted text-xs border border-border">
-                  <span className="truncate max-w-[180px] font-medium text-text">
-                    {uploadedDocs.kycProof.fileName} ({uploadedDocs.kycProof.size})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveDoc('kycProof')}
-                    className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/50 cursor-pointer transition-colors">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span>Select KYC Document</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => handleDocUpload('kycProof', e)}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* 4. Education & Resume */}
-            <div className="p-4 rounded-xl border border-border bg-surface hover:border-primary-strong/40 transition-colors space-y-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs font-bold text-text">Educational Degrees &amp; Resume</p>
-                  <p className="text-[11px] text-text-muted">Degree certificates and CV copy</p>
-                </div>
-                {uploadedDocs.educationResume ? (
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    Uploaded
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
-                    Optional
-                  </span>
-                )}
-              </div>
-
-              {uploadedDocs.educationResume ? (
-                <div className="flex items-center justify-between p-2 rounded-lg bg-surface-muted text-xs border border-border">
-                  <span className="truncate max-w-[180px] font-medium text-text">
-                    {uploadedDocs.educationResume.fileName} ({uploadedDocs.educationResume.size})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveDoc('educationResume')}
-                    className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/50 cursor-pointer transition-colors">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span>Select Resume / Certificate</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.docx,.doc"
-                    onChange={(e) => handleDocUpload('educationResume', e)}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* Review Summary */}
         <div
           className="p-5 bg-surface-muted/70 border border-border rounded-xl space-y-3 text-xs"
@@ -1163,7 +1478,7 @@ export function CreateEmployeeForm({
             </div>
             <div>
               <span className="text-text-muted block text-[11px]">Email:</span>
-              <span className="font-mono">{formData.email || '—'}</span>
+              <span className="font-mono">{formData.workEmail || formData.email || '—'}</span>
             </div>
             <div>
               <span className="text-text-muted block text-[11px]">Department:</span>
@@ -1216,14 +1531,14 @@ export function CreateEmployeeForm({
           variant="primary"
           isLoading={isSubmitting}
           disabled={isSubmitting}
-          className={currentStep === 5 ? 'h-12 px-8 text-sm font-semibold ml-auto shadow-md rounded-xl' : 'hidden'}
+          className={currentStep === 6 ? 'h-12 px-8 text-sm font-semibold ml-auto shadow-md rounded-xl' : 'hidden'}
           data-testid="desktop-submit-button"
         >
           Create Employee
         </Button>
 
         {/* Next Button: Only Arrow Mark */}
-        {currentStep < 5 && (
+        {currentStep < 6 && (
           <Button
             type="button"
             variant="primary"

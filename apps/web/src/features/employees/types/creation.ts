@@ -61,6 +61,7 @@ export interface CreateEmployeeFormState {
   lastName: string;
   parentName?: string;
   email: string;
+  workEmail?: string;
   phone: string;
   departmentId: string;
   designationId: string;
@@ -70,7 +71,17 @@ export interface CreateEmployeeFormState {
   additionalEmails: string[];
   additionalPhones: string[];
   permanentAddress: string;
+  permanentAddress1?: string;
+  permanentAddress2?: string;
+  permanentCity?: string;
+  permanentDistrict?: string;
+  permanentPincode?: string;
   currentAddress: string;
+  currentAddress1?: string;
+  currentAddress2?: string;
+  currentCity?: string;
+  currentDistrict?: string;
+  currentPincode?: string;
   sameAsPermanentAddress: boolean;
   bloodGroup: string;
   panNumber: string;

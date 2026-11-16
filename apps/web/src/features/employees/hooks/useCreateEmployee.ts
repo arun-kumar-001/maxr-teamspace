@@ -74,11 +74,22 @@ export function useCreateEmployee({
     lastName: initialPrefill?.lastName ?? '',
     parentName: initialPrefill?.parentName ?? '',
     email: initialPrefill?.email ?? '',
-    additionalEmails: initialPrefill?.additionalEmails ?? [],
+    workEmail: initialPrefill?.workEmail ?? '',
     phone: initialPrefill?.phone ?? '',
+    additionalEmails: initialPrefill?.additionalEmails ?? [],
     additionalPhones: initialPrefill?.additionalPhones ?? [],
     permanentAddress: initialPrefill?.permanentAddress ?? '',
+    permanentAddress1: initialPrefill?.permanentAddress1 ?? '',
+    permanentAddress2: initialPrefill?.permanentAddress2 ?? '',
+    permanentCity: initialPrefill?.permanentCity ?? '',
+    permanentDistrict: initialPrefill?.permanentDistrict ?? '',
+    permanentPincode: initialPrefill?.permanentPincode ?? '',
     currentAddress: initialPrefill?.currentAddress ?? '',
+    currentAddress1: initialPrefill?.currentAddress1 ?? '',
+    currentAddress2: initialPrefill?.currentAddress2 ?? '',
+    currentCity: initialPrefill?.currentCity ?? '',
+    currentDistrict: initialPrefill?.currentDistrict ?? '',
+    currentPincode: initialPrefill?.currentPincode ?? '',
     sameAsPermanentAddress: false,
     bloodGroup: initialPrefill?.bloodGroup ?? '',
     panNumber: initialPrefill?.panNumber ?? '',
@@ -524,7 +535,7 @@ export function useCreateEmployee({
   };
 
   const nextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 5));
+    setCurrentStep((prev) => Math.min(prev + 1, 6));
   };
 
   const prevStep = () => {
@@ -543,11 +554,7 @@ export function useCreateEmployee({
         validation.errors.email ||
         validation.errors.additionalEmails ||
         validation.errors.phone ||
-        validation.errors.additionalPhones ||
-        validation.errors.panNumber ||
-        validation.errors.aadhaarNumber ||
-        validation.errors.bankAccountNumber ||
-        validation.errors.bankIfscCode
+        validation.errors.additionalPhones
       ) {
         setCurrentStep(1);
       } else if (
@@ -557,8 +564,17 @@ export function useCreateEmployee({
         validation.errors.joiningDate
       ) {
         setCurrentStep(2);
-      } else {
+      } else if (
+        validation.errors.panNumber ||
+        validation.errors.aadhaarNumber ||
+        validation.errors.bankAccountNumber ||
+        validation.errors.bankIfscCode
+      ) {
         setCurrentStep(3);
+      } else if (validation.errors.role) {
+        setCurrentStep(5);
+      } else {
+        setCurrentStep(6);
       }
       return;
     }
@@ -566,11 +582,15 @@ export function useCreateEmployee({
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const effectiveCorporateEmail = formData.workEmail?.trim()
+      ? formData.workEmail.trim().toLowerCase()
+      : formData.email.trim().toLowerCase();
+
     const payload: CreateEmployeePayload = {
       employeeCode: formData.employeeCode.trim().toUpperCase(),
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
-      email: formData.email.trim().toLowerCase(),
+      email: effectiveCorporateEmail,
       departmentId: formData.departmentId,
       designationId: formData.designationId,
       joiningDate: formData.joiningDate,
@@ -586,8 +606,18 @@ export function useCreateEmployee({
     const extraEmails = formData.additionalEmails
       .map((em) => em.trim().toLowerCase())
       .filter(Boolean);
+
+    // If separate work email provided, ensure personal email is in additionalEmails
+    if (
+      formData.workEmail?.trim() &&
+      formData.email.trim().toLowerCase() !== formData.workEmail.trim().toLowerCase() &&
+      !extraEmails.includes(formData.email.trim().toLowerCase())
+    ) {
+      extraEmails.unshift(formData.email.trim().toLowerCase());
+    }
+
     if (extraEmails.length > 0) {
-      payload.additionalEmails = extraEmails;
+      payload.additionalEmails = extraEmails.slice(0, 5);
     }
     const extraPhones = formData.additionalPhones.map((ph) => ph.trim()).filter(Boolean);
     if (extraPhones.length > 0) {

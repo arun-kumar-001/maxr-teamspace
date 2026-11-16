@@ -5,11 +5,12 @@ interface StepItem {
 }
 
 const STEPS: StepItem[] = [
-  { number: 1, label: 'Personal', subtitle: 'Name & Contact' },
-  { number: 2, label: 'Employment', subtitle: 'Role & Salary' },
+  { number: 1, label: 'Personal', subtitle: 'Name & Resume' },
+  { number: 2, label: 'Employment', subtitle: 'Role & Work Email' },
   { number: 3, label: 'Bank Details', subtitle: 'Account & IDs' },
-  { number: 4, label: 'Access', subtitle: 'Role & Login' },
-  { number: 5, label: 'Declaration', subtitle: 'Checklist & Submit' },
+  { number: 4, label: 'Documents', subtitle: 'KYC & Degrees' },
+  { number: 5, label: 'Access', subtitle: 'Role & Login' },
+  { number: 6, label: 'Declaration', subtitle: 'Checklist & Submit' },
 ];
 
 export interface CreateEmployeeStepperProps {
@@ -57,7 +58,7 @@ export function CreateEmployeeStepper({
       </div>
 
       {/* Desktop / Tablet view (>= 640px): Expanded visual stepper */}
-      <ol className="hidden sm:grid grid-cols-2 md:grid-cols-5 gap-2.5">
+      <ol className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
         {STEPS.map((step) => {
           const isCurrent = step.number === currentStep;
           const status = stepStatus?.[step.number];
