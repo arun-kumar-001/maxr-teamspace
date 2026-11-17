@@ -108,7 +108,7 @@ describe('Projects Feature (Issue #42)', () => {
           phone: '+1555007',
           status: 'active',
           department: { id: 'd1', name: 'Engineering', code: 'ENG' },
-          designation: { id: 'des1', title: 'Senior Specialist', code: 'SR-SPEC' },
+          designation: { id: 'des1', title: 'Senior Specialist' },
           manager: null,
           joiningDate: '2024-01-01',
           createdAt: '2024-01-01',

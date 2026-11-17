@@ -23,7 +23,6 @@ const makeEmployee = (overrides: Partial<EmployeeDirectoryItem> = {}): EmployeeD
     designation: overrides.designation ?? {
       id: '22222222-2222-2222-2222-222222222222',
       title: 'Software Engineer',
-      code: 'SWE',
     },
     manager: overrides.manager ?? null,
     status: overrides.status ?? 'active',

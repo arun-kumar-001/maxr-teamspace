@@ -91,10 +91,9 @@ describe('PgDepartmentRepository (PostgreSQL Integration)', () => {
 
     // Insert designation
     const desigRes = await pool.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code, is_active)
-       VALUES ($1, 'Test Desig', $2, true)
+      `INSERT INTO designations (department_id, title, is_active) VALUES ($1, 'Test Desig', true)
        RETURNING id`,
-      [dept.id, `DSG_${randomUUID().slice(0, 8)}`],
+      [dept.id],
     );
     const desigId = desigRes.rows[0]!.id;
 

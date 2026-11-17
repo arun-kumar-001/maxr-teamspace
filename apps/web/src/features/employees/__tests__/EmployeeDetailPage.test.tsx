@@ -15,7 +15,7 @@ const mockEmployeeAdminView: EmployeeDetail = {
   email: 'jane.doe@example.com',
   phone: '+91 98765 43210',
   department: { id: 'dept-eng', name: 'Engineering', code: 'ENG' },
-  designation: { id: 'desig-swe', title: 'Software Engineer', code: 'SWE' },
+  designation: { id: 'desig-swe', title: 'Software Engineer' },
   manager: { id: 'mgr-1', firstName: 'Kavita', lastName: 'Iyer', employeeCode: 'MGR-001' },
   status: 'active',
   joiningDate: '2026-01-15',
@@ -51,14 +51,14 @@ const mockDesignations = [
   {
     id: 'desig-swe',
     title: 'Software Engineer',
-    code: 'SWE',
+
     departmentId: 'dept-eng',
     isActive: true,
   },
   {
     id: 'desig-pm',
     title: 'Product Manager',
-    code: 'PM',
+
     departmentId: 'dept-product',
     isActive: true,
   },

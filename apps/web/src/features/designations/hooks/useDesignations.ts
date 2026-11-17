@@ -46,9 +46,7 @@ export function useDesignations(initialQuery: DesignationQuery = {}) {
   );
   const [page, setPage] = useState<number>(initialQuery.page ?? 1);
   const [pageSize, setPageSize] = useState<number>(initialQuery.pageSize ?? 20);
-  const [sortBy, setSortBy] = useState<'title' | 'code' | 'createdAt'>(
-    initialQuery.sortBy ?? 'title',
-  );
+  const [sortBy, setSortBy] = useState<'title' | 'createdAt'>(initialQuery.sortBy ?? 'title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialQuery.sortOrder ?? 'asc');
 
   // Modal states
@@ -284,7 +282,7 @@ export function useDesignations(initialQuery: DesignationQuery = {}) {
     setPage(1);
   }, []);
 
-  const setSort = useCallback((key: 'title' | 'code' | 'createdAt', direction: 'asc' | 'desc') => {
+  const setSort = useCallback((key: 'title' | 'createdAt', direction: 'asc' | 'desc') => {
     setSortBy(key);
     setSortOrder(direction);
   }, []);

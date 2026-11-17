@@ -121,7 +121,6 @@ export interface DepartmentSelectOption {
 export interface DesignationSelectOption {
   id: string;
   title: string;
-  code: string;
   departmentId: string;
 }
 

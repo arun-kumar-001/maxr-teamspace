@@ -17,7 +17,7 @@ const sampleDesignations: Designation[] = [
     id: 'desig-1',
     departmentId: 'dept-1',
     title: 'Staff Engineer',
-    code: 'STAFF_ENG',
+
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z',
@@ -26,7 +26,7 @@ const sampleDesignations: Designation[] = [
     id: 'desig-2',
     departmentId: 'dept-2',
     title: 'Associate PM',
-    code: 'APM',
+
     isActive: false,
     createdAt: '2025-01-02T00:00:00Z',
     updatedAt: '2025-01-02T00:00:00Z',

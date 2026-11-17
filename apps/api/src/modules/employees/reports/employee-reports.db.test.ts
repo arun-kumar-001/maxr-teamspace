@@ -81,8 +81,8 @@ describe('employee reports against PostgreSQL', () => {
     const desig = async (department: string, code: string) =>
       (
         await outer.query<{ id: string }>(
-          `INSERT INTO designations (department_id, title, code) VALUES ($1, $2, $3) RETURNING id`,
-          [department, `Title ${code}`, `RP-${run}-${code}`],
+          `INSERT INTO designations (department_id, title) VALUES ($1, $2) RETURNING id`,
+          [department, `Title ${code}`],
         )
       ).rows[0]?.id ?? '';
     ids.deptA = await dept('A');

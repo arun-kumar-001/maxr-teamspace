@@ -290,21 +290,21 @@ describe('Employee Creation API Client (Issue #20)', () => {
               {
                 id: 'desig-1',
                 title: 'Software Engineer',
-                code: 'SWE',
+
                 departmentId: 'dept-1',
                 isActive: true,
               },
               {
                 id: 'desig-2',
                 title: 'QA Engineer',
-                code: 'QA',
+
                 departmentId: 'dept-1',
                 isActive: true,
               },
               {
                 id: 'desig-3',
                 title: 'Inactive Title',
-                code: 'INA',
+
                 departmentId: 'dept-1',
                 isActive: false,
               },

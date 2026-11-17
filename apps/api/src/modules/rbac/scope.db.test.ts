@@ -18,7 +18,7 @@ describe('scopeToSql against PostgreSQL', () => {
       `INSERT INTO departments (name, code) VALUES ('Scope Test', 'SCOPE-T') RETURNING id`,
     );
     const desig = await client.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Scope Tester', 'SCOPE-T') RETURNING id`,
+      `INSERT INTO designations (department_id, title) VALUES ($1, 'Scope Tester') RETURNING id`,
       [dept.rows[0]?.id],
     );
     const add = async (name: string, manager?: string) => {
