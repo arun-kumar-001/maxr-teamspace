@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
-import { Modal, Button, FormField } from '../../../components/ui';
+import { Modal } from '../../../components/ui';
 
 export interface ApplyLeaveModalProps {
   isOpen: boolean;
@@ -110,6 +110,18 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Supporting Document state
+  const [supportingDoc, setSupportingDoc] = useState<{
+    name: string;
+    size: string;
+    file?: File;
+  } | null>({
+    name: 'Medical_Certificate.pdf',
+    size: '482 KB',
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -125,6 +137,10 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       setSearchQuery('');
       setIsDropdownOpen(false);
       setHighlightedIndex(0);
+      setSupportingDoc({
+        name: 'Medical_Certificate.pdf',
+        size: '482 KB',
+      });
     }
   }, [isOpen, resolvedPolicies, todayStr]);
 
@@ -243,6 +259,39 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       e.preventDefault();
       setIsDropdownOpen(false);
     }
+  };
+
+  const handleFileUpload = (uploadedFile: File) => {
+    if (uploadedFile.type !== 'application/pdf' && !uploadedFile.name.toLowerCase().endsWith('.pdf')) {
+      setError('Please upload a valid PDF document.');
+      return;
+    }
+    const maxBytes = 5 * 1024 * 1024;
+    if (uploadedFile.size > maxBytes) {
+      setError('File size exceeds 5 MB limit.');
+      return;
+    }
+    const sizeKB = Math.round(uploadedFile.size / 1024);
+    const sizeStr = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
+    setSupportingDoc({
+      name: uploadedFile.name,
+      size: sizeStr,
+      file: uploadedFile,
+    });
+    setError(null);
+  };
+
+  const handleViewDoc = () => {
+    if (supportingDoc?.file) {
+      const url = URL.createObjectURL(supportingDoc.file);
+      window.open(url, '_blank');
+    } else {
+      window.open('#', '_blank');
+    }
+  };
+
+  const handleDeleteDoc = () => {
+    setSupportingDoc(null);
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -373,8 +422,8 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       );
     }
     return (
-      <span className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <span className="w-7 h-7 rounded-lg bg-primary-soft text-primary-strong flex items-center justify-center shrink-0 border border-primary/20">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -386,39 +435,55 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     );
   };
 
+  const calendarHeaderIcon = (
+    <div className="w-10 h-10 rounded-xl bg-primary-soft border border-primary/30 flex items-center justify-center text-primary-strong shrink-0">
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    </div>
+  );
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Apply for Leave"
+      subtitle="Request time off from work"
+      headerIcon={calendarHeaderIcon}
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
-          <Button
+          <button
             type="button"
-            variant="outline"
             onClick={onClose}
             disabled={isSubmitting}
-            className="min-h-[44px]"
+            className="min-h-[44px] px-6 rounded-xl bg-surface-muted text-text font-bold text-xs hover:bg-border transition-colors border border-border"
           >
             Cancel
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant="primary"
             onClick={handleSubmit}
             disabled={isSubmitting || estimatedDays === 0}
             data-testid="submit-leave-request-btn"
-            className="min-h-[44px]"
+            className="min-h-[44px] px-6 rounded-xl bg-primary text-text font-bold text-xs hover:bg-primary-strong hover:text-white transition-all flex items-center gap-2 shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <svg className="w-4 h-4 rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
             {isSubmitting ? 'Submitting...' : 'Submit Application'}
-          </Button>
+          </button>
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 py-2" data-testid="apply-leave-form">
+      <form onSubmit={handleSubmit} className="space-y-4 py-1" data-testid="apply-leave-form">
         {error && (
           <div
-            className="p-3 rounded-control bg-rose-50 border border-rose-200 text-xs text-rose-800"
+            className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800"
             role="alert"
             data-testid="apply-leave-error-banner"
           >
@@ -448,16 +513,10 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         </select>
 
         {/* Enhanced Searchable Combobox Leave Type Dropdown */}
-        <FormField
-          label="Leave Type"
-          htmlFor="apply-leave-type-input"
-          required
-          helperText={
-            selectedBalance
-              ? `${selectedBalance.remaining} days available out of ${selectedBalance.allotted + selectedBalance.carriedForward} total days.`
-              : 'Select policy to request leave.'
-          }
-        >
+        <div className="space-y-1.5">
+          <label htmlFor="apply-leave-type-input" className="block text-xs font-bold text-text">
+            Leave Type <span className="text-rose-500">*</span>
+          </label>
           <div ref={dropdownRef} className="relative w-full" data-testid="leave-type-combobox">
             {/* Input Trigger Box */}
             <div
@@ -465,14 +524,25 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                 setIsDropdownOpen(true);
                 inputRef.current?.focus();
               }}
-              className={`w-full rounded-control border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
+              className={`w-full rounded-xl border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
                 isDropdownOpen
                   ? 'border-primary-strong ring-1 ring-primary-strong'
                   : 'border-border hover:border-border-strong'
               }`}
             >
               <div className="flex items-center gap-2.5 flex-1 min-w-0 mr-2">
-                {selectedPolicy && !isDropdownOpen && getPolicyIcon(selectedPolicy.name)}
+                {selectedPolicy && !isDropdownOpen && (
+                  <div className="w-7 h-7 rounded-lg bg-primary-soft border border-primary/20 flex items-center justify-center text-primary-strong shrink-0">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )}
 
                 <input
                   ref={inputRef}
@@ -489,19 +559,13 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                   placeholder={
                     selectedPolicy ? selectedPolicy.name : 'Search or select leave type...'
                   }
-                  className="w-full bg-transparent border-none p-0 text-sm font-medium text-text placeholder-text-muted/60 focus:outline-none focus:ring-0 truncate"
+                  className="w-full bg-transparent border-none p-0 text-sm font-semibold text-text placeholder-text-muted/60 focus:outline-none focus:ring-0 truncate"
                   disabled={isSubmitting}
                 />
               </div>
 
-              {/* Action Buttons: Clear + Dropdown toggle arrow */}
+              {/* Action Buttons: Dropdown toggle arrow */}
               <div className="flex items-center gap-1 shrink-0 text-text-muted">
-                {selectedPolicy && !isDropdownOpen && (
-                  <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-muted text-text-muted border border-border">
-                    {selectedPolicy.code}
-                  </span>
-                )}
-
                 <button
                   type="button"
                   onClick={(e) => {
@@ -604,11 +668,24 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               </div>
             )}
           </div>
-        </FormField>
+
+          {selectedBalance ? (
+            <p className="text-xs text-text-subtle mt-1.5 font-medium">
+              <span className="font-bold text-primary-strong">
+                {selectedBalance.remaining} {selectedBalance.remaining === 1 ? 'day' : 'days'}
+              </span>{' '}
+              available out of {selectedBalance.allotted + selectedBalance.carriedForward} total days.
+            </p>
+          ) : (
+            <p className="text-xs text-text-subtle mt-1.5 font-medium">
+              Select policy to request leave.
+            </p>
+          )}
+        </div>
 
         {/* Half Day Toggle */}
         {selectedPolicy?.allowHalfDay && (
-          <div className="flex items-center gap-3 p-3 rounded-tile bg-surface-muted border border-border">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-surface-muted border border-border/50">
             <input
               id="apply-half-day-toggle"
               data-testid="apply-half-day-toggle"
@@ -616,14 +693,14 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               checked={halfDay}
               disabled={isSubmitting}
               onChange={(e) => handleHalfDayToggle(e.target.checked)}
-              className="h-5 w-5 rounded border-border-strong text-primary-deep focus:ring-primary-strong"
+              className="mt-0.5 h-4 w-4 rounded border-border-strong text-primary-deep focus:ring-primary-strong cursor-pointer"
             />
             <label
               htmlFor="apply-half-day-toggle"
-              className="text-xs font-semibold text-text cursor-pointer select-none"
+              className="text-xs font-bold text-text cursor-pointer select-none"
             >
               Half-Day Leave (0.5 day)
-              <span className="block font-normal text-text-muted mt-0.5">
+              <span className="block font-normal text-text-subtle text-[11px] mt-0.5">
                 Applies to a single working day.
               </span>
             </label>
@@ -632,68 +709,97 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
 
         {/* Date Pickers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            label={halfDay ? 'Date' : 'Start Date'}
-            htmlFor="apply-start-date"
-            required
-            helperText="Format: YYYY-MM-DD"
-          >
-            <input
-              id="apply-start-date"
-              data-testid="apply-start-date-input"
-              type="date"
-              value={startDate}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              disabled={isSubmitting}
-              className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
-              required
-            />
-          </FormField>
-
-          {!halfDay && (
-            <FormField
-              label="End Date"
-              htmlFor="apply-end-date"
-              required
-              helperText="Format: YYYY-MM-DD"
-            >
+          <div className="space-y-1.5">
+            <label htmlFor="apply-start-date" className="block text-xs font-bold text-text">
+              {halfDay ? 'Date' : 'Start Date'} <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.8"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
               <input
-                id="apply-end-date"
-                data-testid="apply-end-date-input"
+                id="apply-start-date"
+                data-testid="apply-start-date-input"
                 type="date"
-                min={startDate}
-                value={endDate}
-                onChange={(e) => handleEndDateChange(e.target.value)}
+                value={startDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
+                className="w-full rounded-xl border border-border bg-surface pl-10 pr-3 py-2 text-sm text-text font-medium focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
                 required
               />
-            </FormField>
+            </div>
+          </div>
+
+          {!halfDay && (
+            <div className="space-y-1.5">
+              <label htmlFor="apply-end-date" className="block text-xs font-bold text-text">
+                End Date <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  id="apply-end-date"
+                  data-testid="apply-end-date-input"
+                  type="date"
+                  min={startDate}
+                  value={endDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full rounded-xl border border-border bg-surface pl-10 pr-3 py-2 text-sm text-text font-medium focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
+                  required
+                />
+              </div>
+            </div>
           )}
         </div>
 
         {/* Dynamic Duration Calculation Preview */}
-        <div className="p-3 rounded-tile bg-surface-muted border border-border flex items-center justify-between text-xs">
-          <div>
-            <span className="text-text-subtle block font-semibold">Calculated Duration</span>
-            <span className="text-xs text-text-muted">Excludes weekends and company holidays</span>
+        <div className="p-3.5 rounded-xl bg-primary-soft/60 border border-primary/20 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary-strong shrink-0">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 7v5l3 2" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-text font-bold block text-xs">Calculated Duration</span>
+              <span className="text-[11px] text-text-subtle">
+                Excludes weekends and company holidays
+              </span>
+            </div>
           </div>
           <div className="text-right">
             <span
-              className="text-sm font-bold text-primary-deep font-mono"
+              className="px-3.5 py-1 rounded-full bg-primary/20 text-primary-deep font-bold text-xs font-display inline-block"
               data-testid="estimated-days-badge"
             >
-              {estimatedDays} {estimatedDays === 1 ? 'day' : 'days'}
+              {estimatedDays} {estimatedDays === 1 ? 'Day' : 'Days'}
             </span>
           </div>
         </div>
 
-        {/* Reason */}
-        <FormField
-          label="Reason / Notes (Optional)"
-          htmlFor="apply-reason"
-          helperText={`${reason.length}/500 characters`}
-        >
+        {/* Reason / Notes */}
+        <div className="space-y-1.5">
+          <label htmlFor="apply-reason" className="block text-xs font-bold text-text">
+            Reason / Notes
+          </label>
           <textarea
             id="apply-reason"
             data-testid="apply-reason-input"
@@ -702,10 +808,142 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             disabled={isSubmitting}
-            placeholder="Provide context for your team lead and approvers..."
-            className="w-full rounded-control border border-border bg-surface p-3 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong"
+            className="w-full rounded-xl border border-border bg-surface p-3 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-y min-h-[72px]"
           />
-        </FormField>
+          <div className="text-right text-xs text-text-subtle font-mono">
+            {reason.length} / 500
+          </div>
+        </div>
+
+        {/* Supporting Document */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-1.5 text-xs font-bold text-text">
+            <svg
+              className="w-4 h-4 text-text-muted rotate-45"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+              />
+            </svg>
+            Supporting Document
+          </label>
+
+          {/* Dashed Dropzone */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileUpload(e.dataTransfer.files[0]);
+              }
+            }}
+            className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+              isDragging
+                ? 'border-primary bg-primary-soft/50 ring-2 ring-primary/30'
+                : 'border-primary/50 hover:border-primary bg-surface-muted/40 hover:bg-primary-soft/20'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleFileUpload(e.target.files[0]);
+                }
+              }}
+            />
+            <div className="flex justify-center text-primary-strong mb-1">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+            </div>
+            <div className="text-xs text-text font-medium flex items-center justify-center gap-1.5 flex-wrap">
+              <span>Drag & drop your PDF here, or</span>
+              <span className="px-2 py-0.5 rounded-md bg-primary-soft text-primary-deep font-semibold text-xs border border-primary/20 hover:bg-primary/20 transition-colors">
+                Browse File
+              </span>
+            </div>
+            <p className="text-[11px] text-text-subtle mt-1 font-medium">
+              PDF only • Max size: 5 MB
+            </p>
+          </div>
+
+          {/* Uploaded PDF Card Preview */}
+          {supportingDoc && (
+            <div className="p-2.5 rounded-xl bg-surface-muted border border-border flex items-center justify-between animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0 shadow-xs">
+                  PDF
+                </div>
+                <div className="min-w-0 truncate">
+                  <p className="text-xs font-bold text-text truncate">{supportingDoc.name}</p>
+                  <p className="text-[11px] text-text-subtle font-mono">{supportingDoc.size}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleViewDoc}
+                  className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted hover:text-text hover:border-border-strong transition-colors"
+                  title="View document"
+                  aria-label="View document"
+                  data-testid="view-doc-btn"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteDoc}
+                  className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-rose-500 hover:text-rose-600 hover:border-rose-200 transition-colors"
+                  title="Delete document"
+                  aria-label="Delete document"
+                  data-testid="delete-doc-btn"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </form>
     </Modal>
   );
