@@ -464,40 +464,48 @@ export function DailyChecklistPage() {
         </div>
       </div>
 
-      {/* 3. Daily Metrics Strip */}
+      {/* 3. Daily Metrics Strip (White Background with Themed Outlines) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-border/80 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-text-muted">Total Routines</span>
-          <div className="flex items-baseline justify-between mt-2">
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-sky-300 shadow-xs flex flex-col justify-between min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Total Routines
+          </span>
+          <div className="flex items-baseline justify-between mt-1">
             <span className="font-display text-2xl sm:text-3xl font-bold text-text">
               {dateTotalCount}
             </span>
-            <span className="text-xs text-text-muted">Habits active</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-border/80 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-text-muted">Completed for Date</span>
-          <div className="flex items-baseline justify-between mt-2">
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-emerald-300 shadow-xs flex flex-col justify-between min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Completed for Date
+          </span>
+          <div className="flex items-baseline justify-between mt-1">
             <span className="font-display text-2xl sm:text-3xl font-bold text-emerald-600">
               {dateCompletedCount}
             </span>
-            <span className="text-xs text-emerald-700 font-medium">{datePct}% Rate</span>
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+              {datePct}%
+            </span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-border/80 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-text-muted">Pending Items</span>
-          <div className="flex items-baseline justify-between mt-2">
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-amber-300 shadow-xs flex flex-col justify-between min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Pending Items
+          </span>
+          <div className="flex items-baseline justify-between mt-1">
             <span className="font-display text-2xl sm:text-3xl font-bold text-amber-600">
               {Math.max(0, dateTotalCount - dateCompletedCount)}
             </span>
-            <span className="text-xs text-text-muted">Remaining</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-border/80 shadow-xs flex flex-col justify-between">
-          <span className="text-xs font-semibold text-text-muted">Daily Target Status</span>
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-indigo-300 shadow-xs flex flex-col justify-between min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+            Daily Target Status
+          </span>
           <div className="flex items-center gap-2 mt-2">
             <div className="h-2 flex-1 bg-surface-muted rounded-full overflow-hidden border border-border/40">
               <div

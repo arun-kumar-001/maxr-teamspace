@@ -38,23 +38,41 @@ export function StaffDashboard() {
           </h2>
           <Badge variant="neutral">Sample data</Badge>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
-            <p className="text-xs font-semibold text-text-muted">Annual Leave</p>
-            <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">14</p>
-            <p className="mt-1 text-xs text-positive-ink font-medium">14 of 18 days available</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="p-3.5 sm:p-4 bg-white border border-emerald-300 rounded-2xl shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Annual Leave
+            </p>
+            <div className="flex items-baseline justify-between mt-1">
+              <span className="text-2xl sm:text-3xl font-extrabold text-text font-display">14</span>
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                14 / 18 days
+              </span>
+            </div>
           </div>
 
-          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
-            <p className="text-xs font-semibold text-text-muted">Sick Leave</p>
-            <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">8</p>
-            <p className="mt-1 text-xs text-primary-ink font-medium">8 of 10 days available</p>
+          <div className="p-3.5 sm:p-4 bg-white border border-teal-300 rounded-2xl shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Sick Leave
+            </p>
+            <div className="flex items-baseline justify-between mt-1">
+              <span className="text-2xl sm:text-3xl font-extrabold text-text font-display">8</span>
+              <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">
+                8 / 10 days
+              </span>
+            </div>
           </div>
 
-          <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all">
-            <p className="text-xs font-semibold text-text-muted">Casual Leave</p>
-            <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-text font-display">4</p>
-            <p className="mt-1 text-xs text-warning font-medium">4 of 6 days available</p>
+          <div className="p-3.5 sm:p-4 bg-white border border-amber-300 rounded-2xl shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
+            <p className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Casual Leave
+            </p>
+            <div className="flex items-baseline justify-between mt-1">
+              <span className="text-2xl sm:text-3xl font-extrabold text-text font-display">4</span>
+              <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                4 / 6 days
+              </span>
+            </div>
           </div>
         </div>
       </div>

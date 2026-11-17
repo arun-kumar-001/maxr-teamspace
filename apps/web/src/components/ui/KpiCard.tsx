@@ -73,7 +73,7 @@ const VARIANT_STYLES: Record<
 
 /**
  * Universal KPI summary card with themed border, icon, title, big stat, and pill badge.
- * Matches the approved design pattern from the Leave Requests KPI cards.
+ * Matches the approved design pattern: white background, themed outline, compact resize.
  */
 export function KpiCard({
   label,
@@ -100,21 +100,23 @@ export function KpiCard({
     <div
       onClick={onClick}
       style={style}
-      className={`relative p-4 sm:p-4.5 bg-white border ${border} rounded-card shadow-card flex items-center gap-3 min-w-0 transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : 'hover:shadow-card'
+      className={`relative p-3.5 sm:p-4 bg-white border ${border} rounded-2xl shadow-xs flex items-center justify-between gap-3 min-w-0 transition-all duration-200 ${
+        onClick ? 'cursor-pointer hover:shadow-card hover:-translate-y-0.5' : 'hover:shadow-xs'
       } ${isActive ? 'ring-2 ring-primary-strong/40' : ''} ${className}`}
     >
-      <div className={`${iconCls} flex items-center justify-center shrink-0`}>{icon}</div>
-      <div className="min-w-0 flex-1 pr-16 sm:pr-20">
-        <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-          {label}
-        </span>
-        <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-          {value}
-        </span>
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className={`${iconCls} flex items-center justify-center shrink-0`}>{icon}</div>
+        <div className="min-w-0 flex-1">
+          <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+            {label}
+          </span>
+          <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight block mt-0.5">
+            {value}
+          </span>
+        </div>
       </div>
       {badge && (
-        <div className="absolute bottom-2.5 right-3.5 shrink-0 pointer-events-none">
+        <div className="shrink-0 pointer-events-none self-end sm:self-center">
           <span
             className={`text-[10.5px] sm:text-[11px] font-semibold ${bgPill} ${textPill} px-2 py-0.5 rounded-full block whitespace-nowrap`}
           >

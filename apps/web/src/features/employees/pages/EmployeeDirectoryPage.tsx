@@ -562,8 +562,8 @@ export function EmployeeDirectoryPage() {
         <KpiCard
           label="Total Employees"
           value={totalEmployees}
-          icon={<IconUsers className="w-7 h-7" />}
-          badge="↑ +6%"
+          icon={<IconUsers className="w-6 h-6" />}
+          badge="+6%"
           variant="emerald"
         />
 
@@ -571,8 +571,8 @@ export function EmployeeDirectoryPage() {
         <KpiCard
           label="Active Employees"
           value={activeEmployees}
-          icon={<IconUserCheck className="w-7 h-7" />}
-          badge={`${activePercentage}% active`}
+          icon={<IconUserCheck className="w-6 h-6" />}
+          badge={`${activePercentage}%`}
           variant="teal"
         />
 
@@ -580,7 +580,7 @@ export function EmployeeDirectoryPage() {
         <KpiCard
           label="Inactive Employees"
           value={inactiveEmployees}
-          icon={<IconUserMinus className="w-7 h-7" />}
+          icon={<IconUserMinus className="w-6 h-6" />}
           badge={`${inactivePercentage}%`}
           variant="amber"
         />
@@ -589,8 +589,7 @@ export function EmployeeDirectoryPage() {
         <KpiCard
           label="Departments"
           value={departments.length || 6}
-          icon={<IconNetwork className="w-7 h-7" />}
-          badge="Active units"
+          icon={<IconNetwork className="w-6 h-6" />}
           variant="purple"
         />
       </div>

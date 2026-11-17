@@ -278,49 +278,97 @@ export function TimesheetsTab({
         </div>
       )}
 
-      {/* 1. Four Top KPI Cards (Compact Design System Pastels) */}
+      {/* 1. Four Top KPI Cards (Clean White Background with Themed Outlines) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Card 1: Hours worked (Soft Peach) */}
-        <div className="p-3.5 sm:p-4 bg-tile-peach/60 border border-tile-peach rounded-2xl shadow-xs flex flex-col justify-between min-h-[82px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-text-muted">
-            <IconClock className="w-4 h-4 text-text-muted" />
-            <span>Hours worked</span>
+        {/* Card 1: Hours worked (Themed Sky/Teal Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-sky-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+            <IconClock className="w-5 h-5 text-sky-600" />
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight mt-1">
-            {Number(totalHoursWorked).toLocaleString()}h
-          </div>
-        </div>
-
-        {/* Card 2: Overtime (Soft Mint Green) */}
-        <div className="p-3.5 sm:p-4 bg-tile-green/60 border border-tile-green rounded-2xl shadow-xs flex flex-col justify-between min-h-[82px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-text-muted">
-            <span className="text-sm">⚡</span>
-            <span>Overtime</span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight mt-1">
-            {totalOvertime}h
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              Hours Worked
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {Number(totalHoursWorked).toLocaleString()}h
+            </span>
           </div>
         </div>
 
-        {/* Card 3: To approve (Soft Sky Blue) */}
-        <div className="p-3.5 sm:p-4 bg-tile-blue/60 border border-tile-blue rounded-2xl shadow-xs flex flex-col justify-between min-h-[82px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-text-muted">
-            <span className="text-sm">📥</span>
-            <span>To approve</span>
+        {/* Card 2: Overtime (Themed Amber/Yellow Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-amber-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight mt-1">
-            {pendingCount}
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              Overtime
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {totalOvertime}h
+            </span>
           </div>
         </div>
 
-        {/* Card 4: Flagged (Soft Butter Yellow) */}
-        <div className="p-3.5 sm:p-4 bg-tile-yellow/60 border border-tile-yellow rounded-2xl shadow-xs flex flex-col justify-between min-h-[82px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-text-muted">
-            <span className="text-sm">🚩</span>
-            <span>Flagged</span>
+        {/* Card 3: To approve (Themed Emerald/Green Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-emerald-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight mt-1">
-            {flaggedCount}
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              To Approve
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {pendingCount}
+            </span>
+          </div>
+        </div>
+
+        {/* Card 4: Flagged (Themed Rose/Red Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-rose-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              Flagged
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {flaggedCount}
+            </span>
           </div>
         </div>
       </div>

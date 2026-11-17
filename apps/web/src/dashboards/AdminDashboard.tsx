@@ -634,8 +634,7 @@ export function AdminDashboard() {
         <KpiCard
           label="Team Members"
           value={metrics.teamMembers}
-          icon={<IconUsers className="w-7 h-7" />}
-          badge={metrics.teamMembers > 0 ? '100% active' : '0 active'}
+          icon={<IconUsers className="w-6 h-6" />}
           variant="emerald"
           style={{ animationDelay: '50ms' }}
           className="maxr-card-entrance"
@@ -645,8 +644,7 @@ export function AdminDashboard() {
         <KpiCard
           label="Present Today"
           value={metrics.presentToday}
-          icon={<IconClock className="w-7 h-7" />}
-          badge={`${Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in`}
+          icon={<IconClock className="w-6 h-6" />}
           variant="purple"
           style={{ animationDelay: '100ms' }}
           className="maxr-card-entrance"
@@ -656,8 +654,7 @@ export function AdminDashboard() {
         <KpiCard
           label="Leave Requests"
           value={metrics.leaveRequests}
-          icon={<IconCalendar className="w-7 h-7" />}
-          badge={`${metrics.leaveRequests} pending review`}
+          icon={<IconCalendar className="w-6 h-6" />}
           variant="teal"
           style={{ animationDelay: '150ms' }}
           className="maxr-card-entrance"
@@ -667,8 +664,8 @@ export function AdminDashboard() {
         <KpiCard
           label="Open Tasks"
           value={metrics.openTasks}
-          icon={<IconCheckSquare className="w-7 h-7" />}
-          badge={`${taskCounts.overdue} overdue`}
+          icon={<IconCheckSquare className="w-6 h-6" />}
+          badge={taskCounts.overdue > 0 ? `${taskCounts.overdue} overdue` : undefined}
           variant="rose"
           style={{ animationDelay: '200ms' }}
           className="maxr-card-entrance"

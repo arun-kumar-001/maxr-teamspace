@@ -542,8 +542,7 @@ export function UsersPage() {
         <KpiCard
           label="Total Users"
           value={totalUsersCount}
-          icon={<IconUsers className="w-7 h-7" />}
-          badge="Accounts"
+          icon={<IconUsers className="w-6 h-6" />}
           variant="emerald"
         />
 
@@ -551,7 +550,7 @@ export function UsersPage() {
         <KpiCard
           label="Active Users"
           value={activeUsersCount}
-          icon={<IconUserCheck className="w-7 h-7" />}
+          icon={<IconUserCheck className="w-6 h-6" />}
           badge={
             users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'
           }
@@ -563,7 +562,7 @@ export function UsersPage() {
         <KpiCard
           label="Inactive Users"
           value={inactiveUsersCount}
-          icon={<IconUserMinus className="w-7 h-7" />}
+          icon={<IconUserMinus className="w-6 h-6" />}
           badge={
             users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'
           }
@@ -575,8 +574,7 @@ export function UsersPage() {
         <KpiCard
           label="Roles"
           value={totalRolesCount}
-          icon={<IconShield className="w-7 h-7" />}
-          badge="Configured"
+          icon={<IconShield className="w-6 h-6" />}
           variant="blue"
           style={{ animationDelay: '180ms' }}
         />
