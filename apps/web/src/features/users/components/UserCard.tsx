@@ -6,6 +6,9 @@ export interface UserCardProps {
   user: UserAccount;
   canAssignRoles?: boolean;
   onAssignRoles?: (user: UserAccount) => void;
+  canToggleStatus?: boolean;
+  onToggleStatus?: (user: UserAccount) => void;
+  disableDeactivate?: boolean;
 }
 
 const ROLE_BADGE_VARIANTS: Record<Role, 'primary' | 'secondary' | 'outline' | 'neutral'> = {
@@ -22,7 +25,14 @@ const ROLE_DISPLAY_NAMES: Record<Role, string> = {
   [ROLES.STAFF]: 'Staff',
 };
 
-export function UserCard({ user, canAssignRoles = false, onAssignRoles }: UserCardProps) {
+export function UserCard({
+  user,
+  canAssignRoles = false,
+  onAssignRoles,
+  canToggleStatus = false,
+  onToggleStatus,
+  disableDeactivate = false,
+}: UserCardProps) {
   const initials = user.name
     ? user.name
         .trim()
@@ -84,17 +94,38 @@ export function UserCard({ user, canAssignRoles = false, onAssignRoles }: UserCa
           <span className="font-medium text-text">{formattedLastLogin}</span>
         </div>
 
-        {canAssignRoles && onAssignRoles && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onAssignRoles(user)}
-            data-testid={`assign-roles-btn-card-${user.id}`}
-            className="w-full sm:w-auto min-h-[44px] text-xs font-medium"
-          >
-            Manage Roles
-          </Button>
-        )}
+        {(canAssignRoles && onAssignRoles) || (canToggleStatus && onToggleStatus) ? (
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            {canAssignRoles && onAssignRoles && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAssignRoles(user)}
+                data-testid={`assign-roles-btn-card-${user.id}`}
+                className="w-full sm:w-auto min-h-[44px] text-xs font-medium"
+              >
+                Manage Roles
+              </Button>
+            )}
+            {canToggleStatus && onToggleStatus && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={user.isActive && disableDeactivate}
+                title={
+                  user.isActive && disableDeactivate
+                    ? 'You cannot deactivate your own account'
+                    : undefined
+                }
+                onClick={() => onToggleStatus(user)}
+                data-testid={`toggle-status-btn-card-${user.id}`}
+                className="w-full sm:w-auto min-h-[44px] text-xs font-medium"
+              >
+                {user.isActive ? 'Deactivate' : 'Activate'}
+              </Button>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );

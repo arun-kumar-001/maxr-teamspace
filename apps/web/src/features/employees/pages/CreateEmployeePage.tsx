@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ForbiddenState } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { useCreateEmployee } from '../hooks/useCreateEmployee';
@@ -7,6 +8,7 @@ import { CreateEmployeeSuccessView } from '../components/CreateEmployeeSuccessVi
 
 export function CreateEmployeePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   let userRole = null;
   try {
@@ -18,13 +20,29 @@ export function CreateEmployeePage() {
 
   const isAuthorized = userRole === 'admin' || userRole === 'hr_manager';
 
+  const initialPrefill = useMemo(
+    () => ({
+      firstName: searchParams.get('firstName') ?? '',
+      lastName: searchParams.get('lastName') ?? '',
+      email: searchParams.get('email') ?? '',
+      phone: searchParams.get('phone') ?? '',
+      departmentId: searchParams.get('departmentId') ?? '',
+      designationId: searchParams.get('designationId') ?? '',
+    }),
+    [searchParams],
+  );
+
   const formProps = useCreateEmployee({
     callerRole: userRole ?? 'admin',
+    initialPrefill,
   });
 
   if (!isAuthorized && userRole !== null) {
     return (
-      <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto" data-testid="create-employee-page">
+      <div
+        className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto"
+        data-testid="create-employee-page"
+      >
         <div data-testid="create-employee-forbidden">
           <ForbiddenState
             title="Access Restricted"
@@ -38,7 +56,10 @@ export function CreateEmployeePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto" data-testid="create-employee-page">
+    <div
+      className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto"
+      data-testid="create-employee-page"
+    >
       {/* Header Banner & Breadcrumb */}
       <div className="space-y-2 border-b border-border pb-4">
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-muted">

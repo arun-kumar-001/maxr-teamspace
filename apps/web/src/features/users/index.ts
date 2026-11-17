@@ -6,6 +6,7 @@ export * from './hooks/useRolesAndPermissions';
 export { UserFilters as UserFiltersBar, type UserFiltersProps } from './components/UserFilters';
 export * from './components/UserCard';
 export * from './components/RoleAssignmentModal';
+export * from './components/AddUserModal';
 export * from './components/RolesSummaryGrid';
 export * from './components/PermissionsMatrix';
 export * from './pages/UsersPage';

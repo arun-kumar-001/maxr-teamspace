@@ -105,7 +105,7 @@ function NotificationBellContent({
         aria-label={
           unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications (no unread)'
         }
-        className="relative inline-flex items-center justify-center rounded-input border border-border bg-surface text-text-muted hover:bg-surface-raised hover:text-text focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] min-w-[44px]"
+        className="relative inline-flex items-center justify-center rounded-full border border-border bg-surface text-text-muted hover:bg-surface-raised hover:text-text focus:outline-none focus:ring-2 focus:ring-primary h-10 w-10 min-h-[40px] min-w-[40px] transition-colors shadow-sm"
         data-testid="notification-bell-button"
       >
         <svg

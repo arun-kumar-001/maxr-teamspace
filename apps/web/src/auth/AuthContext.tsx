@@ -14,9 +14,10 @@ export interface AuthContextValue {
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   switchRole: (newRole: Role) => void;
+  updateUserAvatar?: (avatarUrl: string | null) => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'maxr_auth_session';
 
@@ -99,7 +100,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
       } catch {
         // Fallback gracefully on storage access errors
       }
-      return MOCK_USERS[ROLES.STAFF];
+      return null;
     }
     // 3. Default: unauthenticated (deny by default)
     return null;
@@ -185,17 +186,23 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
 
     // 2. In DEV mode with explicit VITE_DEV_MOCK_AUTH flag: fallback demo matching
     if (isDevMockAuth) {
-      let matchedUser: AuthUser | undefined;
-      if (cleanEmail === 'admin@maxr.com' || cleanEmail === 'admin@maxr.internal') {
-        matchedUser = MOCK_USERS[ROLES.ADMIN];
-      } else if (cleanEmail === 'hr@maxr.com' || cleanEmail === 'hr@maxr.internal') {
-        matchedUser = MOCK_USERS[ROLES.HR_MANAGER];
-      } else if (cleanEmail === 'lead@maxr.com' || cleanEmail === 'teamlead@maxr.internal') {
-        matchedUser = MOCK_USERS[ROLES.TEAM_LEAD];
-      } else if (cleanEmail === 'staff@maxr.com' || cleanEmail === 'staff@maxr.internal') {
-        matchedUser = MOCK_USERS[ROLES.STAFF];
+      let matchedRole: Role = ROLES.ADMIN;
+      if (cleanEmail === 'hr' || cleanEmail.startsWith('hr@') || cleanEmail.includes('shajitha')) {
+        matchedRole = ROLES.HR_MANAGER;
+      } else if (
+        cleanEmail === 'lead' ||
+        cleanEmail.startsWith('lead@') ||
+        cleanEmail.startsWith('teamlead') ||
+        cleanEmail.includes('marcus')
+      ) {
+        matchedRole = ROLES.TEAM_LEAD;
+      } else if (cleanEmail === 'staff' || cleanEmail.startsWith('staff@')) {
+        matchedRole = ROLES.STAFF;
+      } else {
+        matchedRole = ROLES.ADMIN;
       }
 
+      const matchedUser = MOCK_USERS[matchedRole];
       if (matchedUser) {
         setUser(matchedUser);
         setIsLoading(false);
@@ -221,6 +228,29 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     }
   };
 
+  const updateUserAvatar = (avatarUrl: string | null) => {
+    setUser((prev) => (prev ? { ...prev, avatarUrl: avatarUrl || undefined } : null));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const key = `maxr_avatar_${user?.role || 'admin'}`;
+      if (avatarUrl) {
+        localStorage.setItem(key, avatarUrl);
+      } else {
+        localStorage.removeItem(key);
+      }
+    }
+  };
+
+  // Sync saved avatar from localStorage if available
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && window.localStorage) {
+      const key = `maxr_avatar_${user.role}`;
+      const saved = localStorage.getItem(key);
+      if (saved && user.avatarUrl !== saved) {
+        setUser((prev) => (prev ? { ...prev, avatarUrl: saved } : null));
+      }
+    }
+  }, [user?.role]);
+
   const value: AuthContextValue = {
     user,
     role: user ? user.role : null,
@@ -229,6 +259,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     login,
     logout,
     switchRole,
+    updateUserAvatar,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

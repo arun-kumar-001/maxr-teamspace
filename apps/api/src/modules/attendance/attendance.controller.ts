@@ -2,7 +2,12 @@ import { Request, Response } from 'express';
 import { unauthorized } from '../../http/errors';
 import { validated } from '../../http/validate';
 import { accessFor } from '../rbac';
-import { checkInSchema, checkOutSchema, listAttendanceQuerySchema } from './attendance.schemas';
+import {
+  checkInSchema,
+  checkOutSchema,
+  listAttendanceQuerySchema,
+  teamCalendarQuerySchema,
+} from './attendance.schemas';
 import { AttendanceService, RequestContext } from './attendance.service';
 
 export class AttendanceController {
@@ -62,5 +67,23 @@ export class AttendanceController {
     const { query } = validated(req, { query: listAttendanceQuerySchema });
     const page = await this.service.list(query, accessFor(req).filter);
     res.status(200).json(page);
+  };
+
+  breakStart = async (req: Request, res: Response): Promise<void> => {
+    const actor = this.getActor(req);
+    const session = await this.service.startBreak(actor.employeeId, this.context(req));
+    res.status(200).json({ data: session });
+  };
+
+  breakEnd = async (req: Request, res: Response): Promise<void> => {
+    const actor = this.getActor(req);
+    const session = await this.service.endBreak(actor.employeeId, this.context(req));
+    res.status(200).json({ data: session });
+  };
+
+  getTeamCalendar = async (req: Request, res: Response): Promise<void> => {
+    const { query } = validated(req, { query: teamCalendarQuerySchema });
+    const data = await this.service.getTeamCalendar(query, this.context(req));
+    res.status(200).json({ data });
   };
 }

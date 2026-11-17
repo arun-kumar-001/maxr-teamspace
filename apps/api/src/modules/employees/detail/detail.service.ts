@@ -35,10 +35,23 @@ export class EmployeeDetailService {
     return resolveScope(caller.roles, 'employees.update') !== null;
   }
 
+  private sanitizeSensitive(detail: EmployeeDetail, caller: DetailCaller): EmployeeDetail {
+    if (this.mayEdit(caller)) return detail;
+    const sanitized = { ...detail };
+    delete (sanitized as Record<string, unknown>).panNumber;
+    delete (sanitized as Record<string, unknown>).aadhaarNumber;
+    delete (sanitized as Record<string, unknown>).bankAccountHolder;
+    delete (sanitized as Record<string, unknown>).bankName;
+    delete (sanitized as Record<string, unknown>).bankAccountNumber;
+    delete (sanitized as Record<string, unknown>).bankIfscCode;
+    delete (sanitized as Record<string, unknown>).bankBranch;
+    return sanitized;
+  }
+
   async get(id: string, filter: ScopeFilter, caller: DetailCaller): Promise<EmployeeDetail> {
     const found = await this.repository.findById(id, filter, this.mayEdit(caller));
     if (!found) throw notFound('Employee not found');
-    return found;
+    return this.sanitizeSensitive(found, caller);
   }
 
   /**

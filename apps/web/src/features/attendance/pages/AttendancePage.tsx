@@ -1,41 +1,69 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
+import { ErrorState, PrimaryActionButton, Skeleton } from '../../../components/ui';
 import {
-  DataTable,
-  type Column,
-  EmptyState,
-  ErrorState,
-  Skeleton,
-  Button,
-} from '../../../components/ui';
-import { AttendanceCalendarView } from '../components/AttendanceCalendarView';
-import { AttendanceFilters } from '../components/AttendanceFilters';
-import { AttendanceStatusBadge } from '../components/AttendanceStatusBadge';
-import { AttendanceWidget } from '../components/AttendanceWidget';
-import { TeamAttendanceGrid } from '../components/TeamAttendanceGrid';
+  fetchMyAttendanceHistory,
+  fetchTeamAttendance,
+  fetchTodayAttendance,
+} from '../api/attendance';
+import { CheckInOutTab } from '../components/CheckInOutTab';
+import { CompanyCheckInOutTab } from '../components/CompanyCheckInOutTab';
+import { LeaveRequestsTab } from '../components/LeaveRequestsTab';
+import { MyAttendanceTab } from '../components/MyAttendanceTab';
+import { OnDutyTab } from '../components/OnDutyTab';
 import { RequestCorrectionModal } from '../components/RequestCorrectionModal';
-import { CorrectionsHistoryView } from '../components/CorrectionsHistoryView';
-import { useAttendanceHistory } from '../hooks/useAttendanceHistory';
+import { RosterTab } from '../components/RosterTab';
+import { TeamCalendarTab } from '../components/TeamCalendarTab';
+import { TimesheetsTab } from '../components/TimesheetsTab';
 import { useAttendanceCorrections } from '../hooks/useAttendanceCorrections';
-import type { AttendanceRecord } from '../types';
+import { useAttendanceHistory } from '../hooks/useAttendanceHistory';
+import { fetchDepartments, fetchEmployeeDirectory } from '../../employees/api/employees';
+import type { DepartmentItem, EmployeeDirectoryItem } from '../../employees/types';
+import { fetchLeaveCalendar } from '../../leave/api/leave';
+import type { LeaveCalendarEntry } from '../../leave/types';
+import { fetchShifts } from '../../shifts/api/shifts';
+import type { Shift } from '../../shifts/types';
+import type { AttendanceRecord, TodayAttendanceSummary } from '../types';
 
-function formatTime(isoString: string | null): string {
-  if (!isoString) return '\u2014';
-  try {
-    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return isoString;
-  }
+export type AttendanceManagementTab =
+  'my-attendance' | 'check-in' | 'leave-requests' | 'team-calendar';
+
+export interface AttendancePageProps {
+  initialTab?: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out' | AttendanceManagementTab;
 }
 
-export function AttendancePage() {
+const SUB_TABS: Array<{ id: AttendanceManagementTab; label: string }> = [
+  { id: 'my-attendance', label: 'My Attendance' },
+  { id: 'check-in', label: 'Check-In / Check-Out' },
+];
+
+function EmployeeAttendanceWorkspace({
+  defaultTab = 'my-attendance',
+}: {
+  defaultTab?: AttendanceManagementTab;
+}) {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<AttendanceManagementTab>(defaultTab);
+  const [todaySummary, setTodaySummary] = useState<TodayAttendanceSummary | null>(null);
 
   const canViewTeam = Boolean(
     user &&
     (user.role === ROLES.TEAM_LEAD || user.role === ROLES.HR_MANAGER || user.role === ROLES.ADMIN),
   );
+
+  const loadTodaySummary = useCallback(async () => {
+    try {
+      const summary = await fetchTodayAttendance();
+      setTodaySummary(summary);
+    } catch {
+      // Non-fatal on summary banner; widget handles explicit session errors
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTodaySummary();
+  }, [loadTodaySummary]);
 
   const {
     records,
@@ -80,173 +108,110 @@ export function AttendancePage() {
     handleCancel,
   } = useAttendanceCorrections();
 
-  const columns = useMemo<Column<AttendanceRecord>[]>(
-    () => [
-      {
-        key: 'workDate',
-        header: 'Date',
-        sortable: true,
-        priority: 'high',
-        render: (row) => <span className="font-semibold text-text">{row.workDate}</span>,
-      },
-      {
-        key: 'checkInTime',
-        header: 'Check-In',
-        sortable: true,
-        priority: 'high',
-        render: (row) => <span className="text-text">{formatTime(row.checkInTime)}</span>,
-      },
-      {
-        key: 'checkOutTime',
-        header: 'Check-Out',
-        priority: 'high',
-        render: (row) => <span className="text-text-muted">{formatTime(row.checkOutTime)}</span>,
-      },
-      {
-        key: 'durationMinutes',
-        header: 'Duration',
-        priority: 'medium',
-        render: (row) =>
-          row.durationMinutes !== null ? (
-            <span className="font-medium text-text">
-              {Math.floor(row.durationMinutes / 60)}h {row.durationMinutes % 60}m
-            </span>
-          ) : (
-            <span className="text-text-subtle">&mdash;</span>
-          ),
-      },
-      {
-        key: 'workMode',
-        header: 'Mode',
-        priority: 'medium',
-        render: (row) => (
-          <span className="capitalize text-text-muted">{row.location?.workMode ?? 'Office'}</span>
-        ),
-      },
-      {
-        key: 'status',
-        header: 'Status',
-        priority: 'high',
-        render: (row) => <AttendanceStatusBadge status={row.status} size="sm" />,
-      },
-      {
-        key: 'notes',
-        header: 'Notes',
-        priority: 'low',
-        render: (row) => (
-          <span className="text-xs text-text-muted truncate max-w-xs block">
-            {row.notes ?? '\u2014'}
-          </span>
-        ),
-      },
-      {
-        key: 'actions',
-        header: 'Actions',
-        priority: 'high',
-        render: (row) => (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => openRequestModal(row)}
-            data-testid={`request-correction-btn-${row.id}`}
-            className="text-xs min-h-[44px]"
-          >
-            Correct
-          </Button>
-        ),
-      },
-    ],
-    [openRequestModal],
-  );
-
   return (
-    <div className="space-y-6" data-testid="attendance-page">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-text font-display">
-            Attendance & Shifts
-          </h1>
-          <p className="text-xs sm:text-sm text-text-muted mt-1">
-            Check-in, daily sessions, work hours, and team attendance records
-          </p>
+    <div
+      className="relative rounded-card p-4 sm:p-6 md:p-7 border border-border/80 space-y-5 bg-white shadow-xs"
+      data-testid="attendance-page"
+    >
+      {/* Top Clean White Header & Sub-Navigation */}
+      <div className="pb-4 border-b border-border/80 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary-strong">
+              MAXR TEAMSPACE WORKFORCE HUB
+            </p>
+            <h1 className="text-xl sm:text-2xl font-bold font-display text-text mt-0.5">
+              Attendance Management
+            </h1>
+            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+              Track your attendance, manage check-in/out, leaves and view team attendance.
+            </p>
+          </div>
         </div>
+
+        {/* 4 Mint-Teal Sub-Navigation Tabs */}
+        <nav
+          aria-label="Attendance sections"
+          className="flex flex-wrap gap-2"
+          data-testid="attendance-subnav"
+        >
+          {SUB_TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold min-h-[42px] transition-all cursor-pointer border ${
+                  active
+                    ? 'bg-primary-deep text-white border-primary-deep shadow-xs'
+                    : 'bg-white border-border/80 text-text hover:bg-surface-muted'
+                }`}
+                aria-current={active ? 'page' : undefined}
+                data-testid={`attendance-tab-${tab.id}`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Attendance Check-in Widget */}
-      <AttendanceWidget onSessionChange={refresh} />
-
-      {/* Filters and View Toggles */}
-      <AttendanceFilters
-        startDate={startDate}
-        endDate={endDate}
-        status={status}
-        scope={scope}
-        displayMode={displayMode}
-        canViewTeam={canViewTeam}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onStatusChange={setStatus}
-        onScopeChange={setScope}
-        onDisplayModeChange={setDisplayMode}
-        onReset={resetFilters}
-      />
-
-      {/* Main Content Area */}
-      {isLoading ? (
-        <div
-          className="p-6 bg-surface border border-border rounded-card space-y-4"
-          data-testid="attendance-loading-skeleton"
-        >
-          <Skeleton variant="rectangular" height={24} className="w-48" />
-          <Skeleton variant="rectangular" height={40} className="w-full" />
-          <Skeleton variant="rectangular" height={40} className="w-full" />
-          <Skeleton variant="rectangular" height={40} className="w-full" />
-        </div>
-      ) : error ? (
-        <ErrorState title="Could not load attendance records" message={error} onRetry={refresh} />
-      ) : displayMode === 'corrections' ? (
-        <CorrectionsHistoryView
-          corrections={corrections}
-          meta={correctionsMeta}
-          isLoading={isCorrectionsLoading}
-          error={correctionsError}
-          page={correctionsPage}
-          onPageChange={setCorrectionsPage}
-          onCancelCorrection={handleCancel}
-          onRetry={refetchCorrections}
-        />
-      ) : displayMode === 'calendar' ? (
-        <AttendanceCalendarView records={records} />
-      ) : displayMode === 'teamGrid' && canViewTeam && scope === 'team' ? (
-        <TeamAttendanceGrid records={records} />
-      ) : records.length === 0 ? (
-        <EmptyState
-          title="No attendance records found"
-          description="There are no attendance sessions matching your current filters or date range."
-          actionLabel="Reset Filters"
-          onAction={resetFilters}
-        />
-      ) : (
-        <DataTable<AttendanceRecord>
-          data={records}
-          columns={columns}
-          keyExtractor={(row) => row.id}
-          ariaLabel="Attendance Records Table"
+      {/* Tab Content */}
+      {activeTab === 'my-attendance' && (
+        <MyAttendanceTab
+          records={records}
+          meta={meta}
+          isLoading={isLoading}
+          error={error}
+          scope={scope}
+          setScope={setScope}
+          displayMode={displayMode}
+          setDisplayMode={setDisplayMode}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          status={status}
+          setStatus={setStatus}
           page={page}
-          pageSize={meta.pageSize}
-          total={meta.total}
-          onPageChange={setPage}
-          sortKey={sortBy}
-          sortDirection={sortOrder}
-          onSortChange={(col, order) => {
-            if (col === 'workDate' || col === 'checkInTime' || col === 'createdAt') {
-              setSorting(col, order);
-            }
-          }}
+          setPage={setPage}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          setSorting={setSorting}
+          resetFilters={resetFilters}
+          refresh={refresh}
+          canViewTeam={canViewTeam}
+          todaySummary={todaySummary}
+          corrections={corrections}
+          correctionsMeta={correctionsMeta}
+          isCorrectionsLoading={isCorrectionsLoading}
+          correctionsError={correctionsError}
+          correctionsPage={correctionsPage}
+          setCorrectionsPage={setCorrectionsPage}
+          onCancelCorrection={handleCancel}
+          onRefetchCorrections={refetchCorrections}
+          onOpenCorrectionModal={openRequestModal}
+          onGoToCheckIn={() => setActiveTab('check-in')}
         />
       )}
+
+      {activeTab === 'check-in' && (
+        <CheckInOutTab
+          employeeName={user?.name}
+          designation={user?.title ?? user?.role}
+          records={records}
+          onSessionChange={() => {
+            void refresh();
+            void loadTodaySummary();
+          }}
+          onViewAllHistory={() => setActiveTab('my-attendance')}
+        />
+      )}
+
+      {activeTab === 'leave-requests' && <LeaveRequestsTab />}
+
+      {activeTab === 'team-calendar' && <TeamCalendarTab />}
 
       {/* Correction Request Modal */}
       <RequestCorrectionModal
@@ -255,9 +220,364 @@ export function AttendancePage() {
         record={selectedRecord}
         onSuccess={() => {
           refetchCorrections();
-          refresh();
+          void refresh();
         }}
       />
     </div>
   );
 }
+
+function AttendanceOpsWorkspace({
+  initialTab = 'on-duty',
+}: {
+  initialTab: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out';
+}) {
+  const { role } = useAuth();
+  const isAdmin = role === ROLES.ADMIN;
+  const isHr = role === ROLES.HR_MANAGER;
+  const isLead = role === ROLES.TEAM_LEAD;
+  const canManage = isAdmin || isHr || isLead;
+
+  const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets' | 'check-in-out'>(
+    initialTab,
+  );
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+  const [selectedDate, setSelectedDate] = useState<string>(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
+
+  const quickDates = useMemo(() => {
+    const list: Array<{ label: string; val: string }> = [];
+    const now = new Date();
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const val = d.toISOString().slice(0, 10);
+      const label =
+        i === 0
+          ? `Today (${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })})`
+          : i === 1
+            ? `Yesterday (${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })})`
+            : `${d.toLocaleDateString('en-GB', { weekday: 'short' })} (${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })})`;
+      list.push({ label, val });
+    }
+    return list;
+  }, []);
+
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
+  const [departments, setDepartments] = useState<DepartmentItem[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [leaveEntries, setLeaveEntries] = useState<LeaveCalendarEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const {
+    isRequestModalOpen,
+    selectedRecord,
+    openRequestModal,
+    closeRequestModal,
+    refetch: refetchCorrections,
+  } = useAttendanceCorrections();
+
+  const loadData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const fetchRecordsPromise = canManage
+        ? fetchTeamAttendance({ startDate: selectedDate, endDate: selectedDate })
+        : fetchMyAttendanceHistory({ startDate: selectedDate, endDate: selectedDate });
+
+      const [recRes, empRes, deptRes, shiftRes, leaveRes] = await Promise.allSettled([
+        fetchRecordsPromise,
+        fetchEmployeeDirectory({ pageSize: 100 }),
+        fetchDepartments(),
+        fetchShifts(),
+        fetchLeaveCalendar(selectedDate, selectedDate),
+      ]);
+
+      if (recRes.status === 'fulfilled') setRecords(recRes.value.data || []);
+      if (empRes.status === 'fulfilled') setEmployees(empRes.value.data || []);
+      if (deptRes.status === 'fulfilled') setDepartments(deptRes.value || []);
+      if (shiftRes.status === 'fulfilled') setShifts(shiftRes.value || []);
+      if (leaveRes.status === 'fulfilled') setLeaveEntries(leaveRes.value || []);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load attendance records';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [canManage, selectedDate]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData, role]);
+
+  const formattedSelectedDate = (() => {
+    try {
+      const d = new Date(`${selectedDate}T00:00:00`);
+      return d.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return selectedDate;
+    }
+  })();
+
+  const tabSubtitle = (() => {
+    if (activeTab === 'on-duty') {
+      if (canManage) return 'Today \u2013 Company-wide employee attendance.';
+      return 'Today \u2013 My attendance records and session details.';
+    }
+    if (activeTab === 'roster') {
+      return 'Weekly shift schedules and employee assignments.';
+    }
+    if (activeTab === 'timesheets') {
+      return 'Review and approve employee working hours and overtime.';
+    }
+    return 'Live employee check-in and check-out tracking with photos, locations, and break statuses.';
+  })();
+
+  const tabBreadcrumb = (() => {
+    if (activeTab === 'on-duty') return 'On Duty';
+    if (activeTab === 'roster') return 'Roster';
+    if (activeTab === 'timesheets') return 'Timesheets';
+    return 'Check-In / Check-Out';
+  })();
+
+  return (
+    <div
+      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
+      data-testid="attendance-page"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
+        <div className="space-y-1">
+          <div className="text-xs text-text-muted flex items-center gap-1.5 font-medium">
+            <span>Attendance</span>
+            <span>&gt;</span>
+            <span className="text-text font-semibold">{tabBreadcrumb}</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight">
+            Attendance
+          </h1>
+          <p className="text-xs sm:text-sm text-text-muted">{tabSubtitle}</p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {activeTab === 'roster' && canManage && (
+            <PrimaryActionButton type="button" onClick={() => setIsCreateRosterOpen(true)}>
+              Create Roster
+            </PrimaryActionButton>
+          )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-white border border-border/80 shadow-xs text-xs font-semibold text-text flex items-center gap-2 hover:bg-surface-muted transition-colors"
+            >
+              <span>{formattedSelectedDate}</span>
+              <span className="text-text-muted text-[10px]">&#9660;</span>
+            </button>
+
+            {isDatePickerOpen && (
+              <div className="absolute right-0 mt-2 z-20 w-48 p-2 bg-white border border-border/80 rounded-card shadow-lg space-y-1">
+                <span className="text-[11px] font-bold text-text-muted px-2 block">
+                  Quick Date Select
+                </span>
+                {quickDates.map((d: { label: string; val: string }) => (
+                  <button
+                    key={d.val}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(d.val);
+                      setIsDatePickerOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                      selectedDate === d.val
+                        ? 'bg-primary-soft text-primary-deep font-bold'
+                        : 'text-text hover:bg-surface-muted'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-b border-border/80 flex items-center gap-6 text-sm font-semibold">
+        <button
+          type="button"
+          onClick={() => setActiveTab('on-duty')}
+          className={`pb-3 relative transition-colors ${
+            activeTab === 'on-duty'
+              ? 'text-emerald-700 font-bold'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          <span>On Duty</span>
+          {activeTab === 'on-duty' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('roster')}
+          className={`pb-3 relative transition-colors ${
+            activeTab === 'roster'
+              ? 'text-emerald-700 font-bold'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          <span>Roster</span>
+          {activeTab === 'roster' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('timesheets')}
+          className={`pb-3 relative transition-colors ${
+            activeTab === 'timesheets'
+              ? 'text-emerald-700 font-bold'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          <span>Timesheets</span>
+          {activeTab === 'timesheets' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('check-in-out')}
+          className={`pb-3 relative transition-colors ${
+            activeTab === 'check-in-out'
+              ? 'text-emerald-700 font-bold'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          <span>Check-In / Check-Out</span>
+          {activeTab === 'check-in-out' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+          )}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
+          <Skeleton variant="rectangular" height={36} className="w-1/3" />
+          <Skeleton variant="rectangular" height={100} className="w-full" />
+          <Skeleton variant="rectangular" height={240} className="w-full" />
+        </div>
+      ) : error ? (
+        <ErrorState
+          title="Could not load attendance data"
+          message={error}
+          onRetry={() => void loadData()}
+        />
+      ) : (
+        <>
+          {activeTab === 'on-duty' && (
+            <OnDutyTab
+              records={records}
+              employees={employees}
+              departments={departments}
+              shifts={shifts}
+              leaveEntries={leaveEntries}
+              selectedDate={selectedDate}
+              canManageAttendance={canManage}
+              onRequestCorrection={(rec) => openRequestModal(rec)}
+            />
+          )}
+
+          {activeTab === 'roster' && (
+            <RosterTab
+              employees={employees}
+              departments={departments}
+              shifts={shifts}
+              selectedDate={selectedDate}
+              initialRecords={records}
+              initialLeaves={leaveEntries}
+              canManageRoster={canManage}
+              onRefresh={() => void loadData()}
+              openCreateModal={isCreateRosterOpen}
+              onCloseCreateModal={() => setIsCreateRosterOpen(false)}
+            />
+          )}
+
+          {activeTab === 'timesheets' && (
+            <TimesheetsTab
+              records={records}
+              employees={employees}
+              departments={departments}
+              canApproveTimesheets={canManage}
+            />
+          )}
+
+          {activeTab === 'check-in-out' && (
+            <CompanyCheckInOutTab
+              records={records}
+              employees={employees}
+              departments={departments}
+              selectedDate={selectedDate}
+              onRequestCorrection={(rec) => openRequestModal(rec)}
+            />
+          )}
+        </>
+      )}
+
+      {selectedRecord && (
+        <RequestCorrectionModal
+          isOpen={isRequestModalOpen}
+          onClose={closeRequestModal}
+          record={selectedRecord}
+          onSuccess={() => {
+            refetchCorrections();
+            void loadData();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+export function AttendancePage({ initialTab }: AttendancePageProps = {}) {
+  const { role } = useAuth();
+  const isOpsView =
+    role !== ROLES.STAFF &&
+    (initialTab === 'on-duty' ||
+      initialTab === 'roster' ||
+      initialTab === 'timesheets' ||
+      initialTab === 'check-in-out');
+
+  if (isOpsView) {
+    return <AttendanceOpsWorkspace initialTab={initialTab} />;
+  }
+
+  const defaultTab: AttendanceManagementTab =
+    initialTab === 'check-in' ||
+    initialTab === 'leave-requests' ||
+    initialTab === 'team-calendar' ||
+    initialTab === 'my-attendance'
+      ? initialTab
+      : 'my-attendance';
+
+  return <EmployeeAttendanceWorkspace defaultTab={defaultTab} />;
+}
+
+export default AttendancePage;

@@ -1,20 +1,93 @@
 import type { Project } from '../types';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
 
+export type ProjectLifecycleStage = 'in_process' | 'waiting' | 'delivered';
+
+export interface ProjectTaskSummary {
+  total: number;
+  open: number;
+  completed: number;
+  allTodoOrBlocked?: boolean;
+}
+
+export function getProjectLifecycleStage(
+  project: Project,
+  taskSummary?: ProjectTaskSummary,
+): ProjectLifecycleStage {
+  if (project.status === 'archived') {
+    return 'delivered';
+  }
+  if (taskSummary && taskSummary.total > 0 && taskSummary.completed === taskSummary.total) {
+    return 'delivered';
+  }
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (project.startDate && project.startDate > todayStr) {
+    return 'waiting';
+  }
+  if (taskSummary && taskSummary.total > 0 && taskSummary.allTodoOrBlocked) {
+    return 'waiting';
+  }
+  return 'in_process';
+}
+
+export const PROJECT_STAGE_STYLES: Record<
+  ProjectLifecycleStage,
+  { label: string; badgeClass: string; dotClass: string; topBorderClass: string }
+> = {
+  in_process: {
+    label: 'In Process',
+    badgeClass: 'bg-tile-yellow text-warning border border-warning/20',
+    dotClass: 'bg-warning',
+    topBorderClass: 'border-t-primary-strong',
+  },
+  waiting: {
+    label: 'Waiting',
+    badgeClass: 'bg-primary-soft text-primary-strong border border-primary-soft-border',
+    dotClass: 'bg-primary-strong',
+    topBorderClass: 'border-t-primary',
+  },
+  delivered: {
+    label: 'Delivered',
+    badgeClass: 'bg-positive-soft text-positive-ink border border-positive-ink/20',
+    dotClass: 'bg-positive-ink',
+    topBorderClass: 'border-t-positive-ink',
+  },
+};
+
 export interface ProjectCardProps {
   project: Project;
   onSelect: (projectId: string) => void;
+  selected?: boolean;
+  taskSummary?: ProjectTaskSummary;
   className?: string;
 }
 
-export function ProjectCard({ project, onSelect, className = '' }: ProjectCardProps) {
-  const formatDateRange = (start: string | null, end: string | null) => {
-    if (!start && !end) return 'Ongoing';
-    if (start && end) return `${start} → ${end}`;
-    if (start) return `Started ${start}`;
-    return `Ends ${end}`;
-  };
+export function formatProjectDueSummary(start: string | null, end: string | null): string {
+  if (!end) {
+    return start ? `Started ${start}` : 'Ongoing';
+  }
+  const target = new Date(end);
+  if (Number.isNaN(target.getTime())) {
+    return end;
+  }
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - now.getTime()) / 86_400_000);
+  if (diffDays === 0) return 'due today';
+  if (diffDays === 1) return 'due tomorrow';
+  if (diffDays > 1 && diffDays <= 90) return `due in ${diffDays} days`;
+  if (diffDays < 0 && diffDays >= -60) return `${Math.abs(diffDays)}d overdue`;
+  return `due ${end}`;
+}
 
+export function ProjectCard({
+  project,
+  onSelect,
+  selected = false,
+  taskSummary,
+  className = '',
+}: ProjectCardProps) {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -23,6 +96,20 @@ export function ProjectCard({ project, onSelect, className = '' }: ProjectCardPr
       .map((part) => part[0]?.toUpperCase())
       .join('');
   };
+
+  const stage = getProjectLifecycleStage(project, taskSummary);
+  const stageStyle = PROJECT_STAGE_STYLES[stage];
+
+  const progressPct =
+    taskSummary && taskSummary.total > 0
+      ? Math.round((taskSummary.completed / taskSummary.total) * 100)
+      : stage === 'delivered'
+        ? 100
+        : 0;
+
+  const dueSummary = formatProjectDueSummary(project.startDate, project.endDate);
+  const rightMeta =
+    taskSummary && taskSummary.total > 0 ? `${taskSummary.open} open · ${dueSummary}` : dueSummary;
 
   return (
     <div
@@ -37,88 +124,90 @@ export function ProjectCard({ project, onSelect, className = '' }: ProjectCardPr
       role="button"
       aria-label={`View details for project ${project.name} (${project.code})`}
       data-testid={`project-card-${project.id}`}
-      className={`group relative flex flex-col justify-between p-5 bg-surface rounded-card border border-border shadow-card hover:border-primary-strong/40 hover:shadow-raised transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong min-h-[44px] ${className}`}
+      className={`group relative flex flex-col justify-between p-5 bg-surface rounded-card border border-t-2 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong min-h-[44px] ${
+        stageStyle.topBorderClass
+      } ${
+        selected
+          ? 'border-primary-strong ring-2 ring-primary/30 shadow-raised'
+          : 'border-border shadow-card hover:border-primary-strong/50 hover:shadow-raised hover:-translate-y-0.5'
+      } ${className}`}
     >
       <div>
-        <div className="flex items-start justify-between gap-3 mb-2.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-muted border border-border text-text">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-8 h-8 rounded-tile bg-surface-muted border border-border text-primary-ink flex items-center justify-center shrink-0">
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+            </span>
+            <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-surface-muted border border-border text-text truncate">
               {project.code}
             </span>
-            <ProjectStatusBadge status={project.status} />
           </div>
-          <span className="text-xs text-text-subtle whitespace-nowrap">v{project.version}</span>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${stageStyle.badgeClass}`}
+            title={project.status === 'archived' ? 'Archived' : 'Active'}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${stageStyle.dotClass}`}
+              aria-hidden="true"
+            />
+            {stageStyle.label}
+          </span>
+          <span className="sr-only">
+            <ProjectStatusBadge status={project.status} />
+          </span>
         </div>
 
-        <h3 className="font-display text-lg font-semibold text-text group-hover:text-primary-ink transition-colors line-clamp-1 mb-1.5">
+        <h3 className="font-display text-base font-bold text-text group-hover:text-primary-ink transition-colors line-clamp-1">
           {project.name}
         </h3>
 
-        {project.description ? (
-          <p className="text-sm text-text-muted line-clamp-2 mb-4">{project.description}</p>
-        ) : (
-          <p className="text-sm text-text-subtle italic mb-4">No description provided</p>
-        )}
-      </div>
+        <p className="text-xs text-text-muted line-clamp-1 mt-1">
+          {project.description ? project.description : `Lead: ${project.ownerName}`}
+        </p>
 
-      <div className="pt-3 border-t border-border flex flex-col gap-2.5">
-        <div className="flex items-center justify-between text-xs text-text-muted">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-medium text-[11px] shrink-0">
-              {getInitials(project.ownerName)}
-            </div>
-            <span
-              className="truncate max-w-[130px] font-medium text-text"
-              title={project.ownerName}
-            >
-              {project.ownerName}
-            </span>
+        {/* Progress Track */}
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex-1 h-1.5 rounded-full bg-track overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                project.status === 'archived' ? 'bg-text-subtle' : 'bg-primary'
+              }`}
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
-
-          <div className="flex items-center gap-1.5 text-text-subtle">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-            <span>
-              {project.memberCount} {project.memberCount === 1 ? 'member' : 'members'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-text-subtle">
-          <div className="flex items-center gap-1">
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <span>{formatDateRange(project.startDate, project.endDate)}</span>
-          </div>
-
-          <span className="text-primary-ink font-medium group-hover:underline inline-flex items-center gap-0.5">
-            Details →
+          <span className="text-xs font-semibold text-text tabular-nums shrink-0">
+            {progressPct}%
           </span>
         </div>
+      </div>
+
+      {/* Bottom Footer */}
+      <div className="pt-3 mt-4 border-t border-border flex items-center justify-between gap-2 text-xs text-text-subtle">
+        <div className="flex items-center gap-1.5 min-w-0" title={`Lead: ${project.ownerName}`}>
+          <div className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-semibold text-[10px] shrink-0">
+            {getInitials(project.ownerName)}
+          </div>
+          <span className="px-1.5 py-0.5 rounded-full bg-surface-muted border border-border text-[10px] font-semibold text-text-muted tabular-nums shrink-0">
+            {project.memberCount} {project.memberCount === 1 ? 'member' : 'members'}
+          </span>
+        </div>
+
+        <span className="text-[11px] font-medium text-text-muted truncate" title={rightMeta}>
+          {rightMeta}
+        </span>
       </div>
     </div>
   );

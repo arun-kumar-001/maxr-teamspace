@@ -1,9 +1,9 @@
-import { MAX_PAGE_SIZE, ROLES, type Role } from '@maxr/shared';
+import { idParamSchema, MAX_PAGE_SIZE, ROLES, type Role, uuidString } from '@maxr/shared';
 import { z } from 'zod';
 
 const roleKey = z.enum(Object.values(ROLES) as [Role, ...Role[]]);
 
-export const userIdParamsSchema = z.object({ id: z.string().uuid() }).strict();
+export const userIdParamsSchema = idParamSchema;
 
 const booleanQuery = z.enum(['true', 'false']).transform((value) => value === 'true');
 
@@ -31,10 +31,35 @@ export const replaceRolesSchema = z
   })
   .strict();
 
+/** Body for `POST /users`: directly provisions an account + linked employee record in one transaction. */
+export const createUserSchema = z
+  .object({
+    firstName: z.string().trim().min(1, 'First name is required').max(100),
+    lastName: z.string().trim().min(1, 'Last name is required').max(100),
+    email: z.string().trim().email('Valid email address is required').max(255),
+    roles: z
+      .array(roleKey)
+      .min(1, 'An account needs at least one role')
+      .max(Object.keys(ROLES).length)
+      .refine((roles) => new Set(roles).size === roles.length, 'Each role may be listed once'),
+    password: z.string().min(12, 'Password must be at least 12 characters').max(128).optional(),
+    isActive: z.boolean().default(true),
+    departmentId: uuidString.optional(),
+    designationId: uuidString.optional(),
+  })
+  .strict();
+
+/** Body for `PATCH /users/{id}/status`: activate or deactivate a user account. */
+export const updateUserStatusSchema = z
+  .object({
+    isActive: z.boolean(),
+  })
+  .strict();
+
 export const userAccountSchema = z
   .object({
-    id: z.string().uuid(),
-    employeeId: z.string().uuid(),
+    id: uuidString,
+    employeeId: uuidString,
     employeeCode: z.string(),
     name: z.string(),
     email: z.string().email(),
@@ -47,7 +72,7 @@ export const userAccountSchema = z
 
 export const roleSummarySchema = z
   .object({
-    id: z.string().uuid(),
+    id: uuidString,
     key: roleKey,
     name: z.string(),
     description: z.string().nullable(),

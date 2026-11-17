@@ -6,6 +6,8 @@ import { InMemoryAuditStore } from '../platform/audit/stores';
 import { Platform, createTestPlatform } from '../platform';
 import { PdfExporter, ReportRegistry } from '../modules/reports';
 import { TestAuthKit, createTestAuth } from '../modules/auth/auth.testing';
+import { IEmployeeDirectoryRepository } from '../modules/employees/directory/directory.repository';
+import { IEmployeeDetailRepository } from '../modules/employees/detail/detail.repository';
 import { HttpConfig } from '../http/http-config';
 import { Logger, createLogger } from '../logging/logger';
 import { createErrorHandler } from '../middleware/error-handler';
@@ -48,6 +50,8 @@ export function makeApp(
     auth?: TestAuthKit;
     reportRegistry?: ReportRegistry;
     reportPdfExporter?: PdfExporter;
+    employeeDirectoryRepository?: IEmployeeDirectoryRepository;
+    employeeDetailRepository?: IEmployeeDetailRepository;
   } = {},
 ): {
   app: Express;
@@ -70,6 +74,8 @@ export function makeApp(
     auth: authKit.auth,
     reportRegistry: overrides.reportRegistry,
     reportPdfExporter: overrides.reportPdfExporter,
+    employeeDirectoryRepository: overrides.employeeDirectoryRepository,
+    employeeDetailRepository: overrides.employeeDetailRepository,
   });
   return {
     app,

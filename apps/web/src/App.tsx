@@ -28,8 +28,7 @@ import {
   SetPasswordPage,
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
-import { DesignationsPage } from './features/designations';
-import { MyProfilePage } from './features/profile';
+import { MyProfilePage, ProfilePortalPage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
 import { ShiftsAndPoliciesPage } from './features/shifts';
@@ -40,8 +39,8 @@ import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { CompanySettingsPage } from './features/settings';
-import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
+import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
 
 // The gallery is a developer tool; it must not ship to production.
@@ -292,35 +291,22 @@ function AppRoutes() {
         }
       />
 
-      {/* Designations Management Routes (Issue #18) */}
-      <Route
-        path="/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/hr/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
-      />
+      {/* Designations Management Routes Redirect to Departments */}
+      <Route path="/designations" element={<Navigate to="/departments" replace />} />
+      <Route path="/admin/designations" element={<Navigate to="/admin/departments" replace />} />
+      <Route path="/hr/designations" element={<Navigate to="/hr/departments" replace />} />
 
-      {/* My Employee Profile Routes (Issue #22) */}
+      {/* My Profile Portal & Personal Details Routes */}
       <Route
         path="/profile"
+        element={
+          <ShellLayout>
+            <ProfilePortalPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/profile/details"
         element={
           <ShellLayout>
             <MyProfilePage />
@@ -428,7 +414,39 @@ function AppRoutes() {
         path="/attendance"
         element={
           <ShellLayout>
-            <AttendancePage />
+            <AttendancePage initialTab="on-duty" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/on-duty"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="on-duty" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/roster"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="roster" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/timesheets"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="timesheets" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/attendance/check-in-out"
+        element={
+          <ShellLayout>
+            <AttendancePage initialTab="check-in-out" />
           </ShellLayout>
         }
       />
@@ -436,7 +454,7 @@ function AppRoutes() {
         path="/staff/attendance"
         element={
           <ShellLayout>
-            <AttendancePage />
+            <AttendancePage initialTab="my-attendance" />
           </ShellLayout>
         }
       />
@@ -444,7 +462,7 @@ function AppRoutes() {
         path="/lead/attendance"
         element={
           <ShellLayout>
-            <AttendancePage />
+            <AttendancePage initialTab="on-duty" />
           </ShellLayout>
         }
       />
@@ -561,39 +579,11 @@ function AppRoutes() {
         }
       />
 
-      {/* Meetings Routes (Issue #45) */}
-      <Route
-        path="/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/staff/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/lead/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
+      {/* Meetings Routes (Removed per user request - Redirect to dashboard) */}
+      <Route path="/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/staff/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/lead/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/admin/meetings" element={<Navigate to="/dashboard" replace />} />
 
       {/* Expenses Routes (Issue #29) */}
       <Route
@@ -693,7 +683,7 @@ function AppRoutes() {
         path="/staff/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="requests" />
           </ShellLayout>
         }
       />
@@ -701,7 +691,23 @@ function AppRoutes() {
         path="/leave"
         element={
           <ShellLayout>
-            <LeaveManagementPage initialTab="balances" />
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/requests"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/approvals"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="approvals" />
           </ShellLayout>
         }
       />
@@ -772,6 +778,40 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <DashboardRouter />
+          </ShellLayout>
+        }
+      />
+
+      {/* Payslips Routes */}
+      <Route
+        path="/staff/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
           </ShellLayout>
         }
       />

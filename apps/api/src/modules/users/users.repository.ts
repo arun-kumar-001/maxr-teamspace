@@ -1,8 +1,12 @@
+import { randomBytes } from 'node:crypto';
 import { ROLES, type Role } from '@maxr/shared';
 import type { Pool, PoolClient } from 'pg';
 import {
+  CreateUserInput,
+  CreateUserResult,
   ReplaceRolesResult,
   RoleSummary,
+  UpdateUserStatusResult,
   UserAccount,
   UserFindManyParams,
   UserSortField,
@@ -18,6 +22,14 @@ export interface IUsersRepository {
    * other at the same moment.
    */
   replaceRoles(userId: string, roles: readonly Role[]): Promise<ReplaceRolesResult>;
+  /** Provisions a user account + linked employee record in one atomic transaction. */
+  createUser(input: CreateUserInput): Promise<CreateUserResult>;
+  /** Activates or deactivates a user account while enforcing self and last-admin safeguards. */
+  setStatus(
+    userId: string,
+    isActive: boolean,
+    actorUserId: string,
+  ): Promise<UpdateUserStatusResult>;
 }
 
 interface UserRow {
@@ -186,6 +198,179 @@ export class PgUsersRepository implements IUsersRepository {
       const updated = await this.loadAccount(client, userId);
       await client.query('COMMIT');
       return { status: 'changed', user: updated as UserAccount, before: before as Role[] };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async createUser(input: CreateUserInput): Promise<CreateUserResult> {
+    const email = input.email.trim().toLowerCase();
+    const client = await this.getPool().connect();
+    try {
+      await client.query('BEGIN');
+
+      const existing = await client.query<{ id: string }>(
+        `SELECT id FROM users WHERE LOWER(email) = $1
+         UNION ALL
+         SELECT id FROM employees WHERE LOWER(email) = $1
+         LIMIT 1`,
+        [email],
+      );
+      if (existing.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return { status: 'duplicate_email' };
+      }
+
+      let departmentId = input.departmentId;
+      if (departmentId) {
+        const deptCheck = await client.query<{ id: string }>(
+          `SELECT id FROM departments WHERE id = $1 AND is_active = true`,
+          [departmentId],
+        );
+        if (deptCheck.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return { status: 'missing_reference', message: 'Selected department was not found' };
+        }
+      } else {
+        const defaultDept = await client.query<{ id: string }>(
+          `SELECT id FROM departments WHERE is_active = true ORDER BY created_at ASC LIMIT 1`,
+        );
+        departmentId = defaultDept.rows[0]?.id;
+      }
+
+      let designationId = input.designationId;
+      if (designationId) {
+        const desigCheck = await client.query<{ id: string }>(
+          `SELECT id FROM designations WHERE id = $1 AND is_active = true`,
+          [designationId],
+        );
+        if (desigCheck.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return { status: 'missing_reference', message: 'Selected designation was not found' };
+        }
+      } else {
+        const defaultDesig = await client.query<{ id: string }>(
+          `SELECT id FROM designations
+            WHERE is_active = true
+            ORDER BY (department_id = $1) DESC, created_at ASC
+            LIMIT 1`,
+          [departmentId ?? null],
+        );
+        designationId = defaultDesig.rows[0]?.id;
+      }
+
+      if (!departmentId || !designationId) {
+        await client.query('ROLLBACK');
+        return {
+          status: 'missing_reference',
+          message: 'An active department and designation are required before creating users',
+        };
+      }
+
+      const employeeCode = `USR-${randomBytes(3).toString('hex').toUpperCase()}`;
+      const isActive = input.isActive ?? true;
+      const employeeStatus = isActive ? 'active' : 'deactivated';
+      const empRes = await client.query<{ id: string }>(
+        `INSERT INTO employees (
+           employee_code, first_name, last_name, email, department_id, designation_id, status, joining_date
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)
+         RETURNING id`,
+        [
+          employeeCode,
+          input.firstName,
+          input.lastName,
+          email,
+          departmentId,
+          designationId,
+          employeeStatus,
+        ],
+      );
+      const employeeId = empRes.rows[0]?.id as string;
+
+      const userRes = await client.query<{ id: string }>(
+        `INSERT INTO users (employee_id, email, password_hash, is_active)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
+        [employeeId, email, input.passwordHash, isActive],
+      );
+      const userId = userRes.rows[0]?.id as string;
+
+      await client.query(
+        `INSERT INTO user_roles (user_id, role_id)
+         SELECT $1, id FROM roles WHERE key = ANY($2::text[])`,
+        [userId, [...input.roles]],
+      );
+
+      const created = await this.loadAccount(client, userId);
+      await client.query('COMMIT');
+      return { status: 'created', user: created as UserAccount };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      if (typeof err === 'object' && err !== null && 'code' in err && err.code === '23505') {
+        return { status: 'duplicate_email' };
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async setStatus(
+    userId: string,
+    isActive: boolean,
+    actorUserId: string,
+  ): Promise<UpdateUserStatusResult> {
+    if (!isActive && userId === actorUserId) {
+      return { status: 'self_deactivate' };
+    }
+
+    const client = await this.getPool().connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT id FROM roles WHERE key = $1 FOR UPDATE`, [ROLES.ADMIN]);
+      const current = await this.loadAccount(client, userId);
+      if (!current) {
+        await client.query('ROLLBACK');
+        return { status: 'not_found' };
+      }
+      if (current.isActive === isActive) {
+        await client.query('ROLLBACK');
+        return { status: 'unchanged', user: current };
+      }
+      if (!isActive && current.roles.includes(ROLES.ADMIN)) {
+        const others = await client.query<{ count: number }>(
+          `SELECT COUNT(*)::int AS count
+             FROM user_roles ur
+             JOIN roles r ON r.id = ur.role_id AND r.key = $1
+             JOIN users u ON u.id = ur.user_id
+            WHERE u.is_active AND u.id <> $2`,
+          [ROLES.ADMIN, userId],
+        );
+        if ((others.rows[0]?.count ?? 0) === 0) {
+          await client.query('ROLLBACK');
+          return { status: 'last_admin' };
+        }
+      }
+
+      await client.query(`UPDATE users SET is_active = $2, updated_at = NOW() WHERE id = $1`, [
+        userId,
+        isActive,
+      ]);
+      await client.query(
+        `UPDATE employees
+            SET status = CASE WHEN $2 THEN 'active' ELSE 'deactivated' END,
+                deactivated_at = CASE WHEN $2 THEN NULL ELSE COALESCE(deactivated_at, NOW()) END,
+                updated_at = NOW()
+          WHERE id = $1`,
+        [current.employeeId, isActive],
+      );
+
+      const updated = await this.loadAccount(client, userId);
+      await client.query('COMMIT');
+      return { status: 'changed', user: updated as UserAccount, before: current.isActive };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

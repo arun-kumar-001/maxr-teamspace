@@ -13,4 +13,5 @@ export interface AuthUser {
   title?: string;
   department?: string;
   avatarInitials: string;
+  avatarUrl?: string;
 }

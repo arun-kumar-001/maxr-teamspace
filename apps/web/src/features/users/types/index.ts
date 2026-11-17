@@ -54,3 +54,19 @@ export interface RoleAssignmentResult {
   user: UserAccount;
   unchanged?: boolean;
 }
+
+export interface CreateUserPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: Role[];
+  password?: string;
+  isActive?: boolean;
+  departmentId?: string;
+  designationId?: string;
+}
+
+export interface CreateUserResult {
+  user: UserAccount;
+  temporaryPassword?: string;
+}

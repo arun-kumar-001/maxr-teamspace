@@ -256,6 +256,99 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
         });
       });
     });
+
+    it('opens dropdown, filters on typing, and selects option with mouse', async () => {
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+
+      render(
+        <ApplyLeaveModal
+          isOpen={true}
+          onClose={onClose}
+          policies={mockPolicies}
+          balances={mockBalances}
+          holidays={mockHolidays}
+          onSubmit={onSubmit}
+        />,
+      );
+
+      // Open dropdown via arrow button
+      const dropdownBtn = screen.getByTestId('leave-type-dropdown-btn');
+      fireEvent.click(dropdownBtn);
+
+      expect(screen.getByTestId('leave-type-options-list')).toBeInTheDocument();
+      expect(screen.getByTestId('leave-type-option-pol-001')).toBeInTheDocument();
+      expect(screen.getByTestId('leave-type-option-pol-002')).toBeInTheDocument();
+
+      // Search / filter by typing
+      const searchInput = screen.getByTestId('apply-leave-type-search-input');
+      fireEvent.change(searchInput, { target: { value: 'Sick' } });
+
+      // Only Sick Leave should match
+      expect(screen.queryByTestId('leave-type-option-pol-001')).not.toBeInTheDocument();
+      expect(screen.getByTestId('leave-type-option-pol-002')).toBeInTheDocument();
+
+      // Click the option
+      fireEvent.click(screen.getByTestId('leave-type-option-pol-002'));
+
+      // Dropdown closes after selection
+      expect(screen.queryByTestId('leave-type-options-list')).not.toBeInTheDocument();
+    });
+
+    it('supports keyboard navigation (ArrowDown, Enter, Escape)', async () => {
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+
+      render(
+        <ApplyLeaveModal
+          isOpen={true}
+          onClose={onClose}
+          policies={mockPolicies}
+          balances={mockBalances}
+          holidays={mockHolidays}
+          onSubmit={onSubmit}
+        />,
+      );
+
+      const searchInput = screen.getByTestId('apply-leave-type-search-input');
+
+      // Press ArrowDown to open dropdown
+      fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+      expect(screen.getByTestId('leave-type-options-list')).toBeInTheDocument();
+
+      // Press Escape to close
+      fireEvent.keyDown(searchInput, { key: 'Escape' });
+      expect(screen.queryByTestId('leave-type-options-list')).not.toBeInTheDocument();
+
+      // Press ArrowDown to open, ArrowDown to highlight second item, then Enter
+      fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+      fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+      fireEvent.keyDown(searchInput, { key: 'Enter' });
+
+      expect(screen.queryByTestId('leave-type-options-list')).not.toBeInTheDocument();
+    });
+
+    it('renders fallback options gracefully when policies prop is empty', () => {
+      render(
+        <ApplyLeaveModal
+          isOpen={true}
+          onClose={vi.fn()}
+          policies={[]}
+          balances={[]}
+          holidays={[]}
+          onSubmit={vi.fn()}
+        />,
+      );
+
+      const dropdownBtn = screen.getByTestId('leave-type-dropdown-btn');
+      fireEvent.click(dropdownBtn);
+
+      expect(screen.getByText('Annual Leave')).toBeInTheDocument();
+      expect(screen.getByText('Sick Leave')).toBeInTheDocument();
+      expect(screen.getByText('Casual Leave')).toBeInTheDocument();
+      expect(screen.getByText('Work From Home')).toBeInTheDocument();
+      expect(screen.getByText('Permission / Other')).toBeInTheDocument();
+    });
   });
 
   describe('LeaveRequestCard', () => {

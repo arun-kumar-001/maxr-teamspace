@@ -70,7 +70,7 @@ export function AttendanceCalendarView({
 
   return (
     <div
-      className="p-4 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-4"
+      className="p-4 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-4"
       data-testid="attendance-calendar-view"
     >
       {/* Month Navigation */}

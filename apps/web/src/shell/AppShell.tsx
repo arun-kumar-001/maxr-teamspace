@@ -1,9 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Header } from './Header';
 import { Sidebar, SidebarDrawer, PageContainer } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
 import { getSidebarGroupsForRole, getNavItemsForRole } from './navigation';
-import { ROLE_DISPLAY_NAMES } from '@maxr/shared';
 
 export interface AppShellProps {
   currentPath: string;
@@ -12,9 +11,20 @@ export interface AppShellProps {
 }
 
 export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [, setNavRevision] = useState(0);
+
+  useEffect(() => {
+    const handleNavChange = () => setNavRevision((r) => r + 1);
+    window.addEventListener('storage', handleNavChange);
+    window.addEventListener('maxr:staff-payslips-change', handleNavChange);
+    return () => {
+      window.removeEventListener('storage', handleNavChange);
+      window.removeEventListener('maxr:staff-payslips-change', handleNavChange);
+    };
+  }, []);
 
   const groups = role ? getSidebarGroupsForRole(role) : [];
   const roleNavItems = role ? getNavItemsForRole(role) : [];
@@ -22,40 +32,43 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   const bottomNavItems = roleNavItems.slice(0, 4);
 
   const brand = {
-    name: 'MAXR Teamspace',
+    name: (
+      <span aria-label="MAXR Teamspace">
+        Max<span className="text-primary font-bold">R</span> Teamspace
+      </span>
+    ),
     subtitle: 'Staff Management',
     logo: (
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sidebar font-display font-bold shadow-sm">
-        <span className="text-xl font-black">M</span>
-        <span className="text-xl font-black text-brand-red">1</span>
-      </div>
+      <img
+        src="/maxr-symbol.png"
+        alt="MAXR"
+        className="w-9 h-9 object-contain select-none drop-shadow-[0_1px_2px_rgba(255,255,255,0.3)]"
+      />
     ),
   };
 
-  const sidebarUser = user
-    ? {
-        name: user.name,
-        role: ROLE_DISPLAY_NAMES[user.role] ?? user.role,
-        initials: user.avatarInitials,
-      }
-    : undefined;
+  const activeNavPath =
+    currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance'
+      ? '/attendance'
+      : currentPath;
 
   return (
-    <div className="min-h-screen bg-bg flex overflow-x-hidden" data-testid="app-shell">
+    <div
+      className="fixed inset-0 h-dvh w-full bg-bg flex overflow-hidden overflow-x-hidden"
+      data-testid="app-shell"
+    >
       {/* Desktop / Tablet Persistent Floating Sidebar (DESIGN.md §5) */}
-      <div className="hidden md:flex p-4 shrink-0 h-screen sticky top-0" data-testid="app-sidebar">
+      <div className="hidden md:flex p-4 shrink-0 h-full" data-testid="app-sidebar">
         <Sidebar
           brand={brand}
           groups={groups}
-          activeId={currentPath}
+          activeId={activeNavPath}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
           onNavigate={(id, e) => {
             e?.preventDefault?.();
             onNavigate(id);
           }}
-          onUserMenu={() => onNavigate('/profile')}
-          user={sidebarUser}
         />
       </div>
 
@@ -65,21 +78,16 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         onClose={() => setIsMobileNavOpen(false)}
         brand={brand}
         groups={groups}
-        activeId={currentPath}
+        activeId={activeNavPath}
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);
           setIsMobileNavOpen(false);
         }}
-        onUserMenu={() => {
-          onNavigate('/profile');
-          setIsMobileNavOpen(false);
-        }}
-        user={sidebarUser}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
         <Header
           onToggleMobileNav={() => setIsMobileNavOpen(true)}
           activePath={currentPath}

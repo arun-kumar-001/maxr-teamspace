@@ -150,6 +150,26 @@ jobs:
       - name: Database integration tests
         run: npm run test:db
 
+      # Verifies the encrypted backup and restore drill against the real migrated database (TL-15 / Issue #17)
+      - name: Backup and restore drill
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/backups /tmp/secret
+          openssl rand -base64 32 > /tmp/secret/backup.pass
+          chmod 600 /tmp/secret/backup.pass
+          export BACKUP_DIR=/tmp/backups
+          export BACKUP_PASSPHRASE_FILE=/tmp/secret/backup.pass
+          export PGUSER=postgres
+          export PGDATABASE=maxr_teamspace
+          # Use the matching PostgreSQL 16 container binary for pg_dump and pg_restore
+          PG_CONTAINER="$(docker ps -q --filter ancestor=postgres:16-alpine | head -1)"
+          export PG_EXEC="docker exec -i $PG_CONTAINER"
+          # 1. Run encrypted backup
+          ./deploy/scripts/backup.sh
+          # 2. Run verify-restore into ephemeral database
+          backup_file="$(ls -t /tmp/backups/maxr-db-*.dump.enc | head -1)"
+          ./deploy/scripts/verify-restore.sh "$backup_file"
+
   # Deployment files are code too: build the images, test the Nginx config and boot the stack once.
   docker:
     name: Docker

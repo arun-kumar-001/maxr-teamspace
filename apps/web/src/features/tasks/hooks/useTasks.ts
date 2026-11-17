@@ -5,15 +5,18 @@ import {
   fetchMyTasks,
   fetchTeamTasks,
   TasksApiError,
+  toggleTaskDailyDone,
   updateTask,
 } from '../api/tasksApi';
-import type {
-  CreateTaskInput,
-  ListTasksQuery,
-  Task,
-  TaskPriority,
-  TaskStatus,
-  UpdateTaskInput,
+import {
+  TASK_TRANSITIONS,
+  TASK_TRANSITION_PATHS,
+  type CreateTaskInput,
+  type ListTasksQuery,
+  type Task,
+  type TaskPriority,
+  type TaskStatus,
+  type UpdateTaskInput,
 } from '../types';
 
 export interface UseTasksOptions {
@@ -147,7 +150,39 @@ export function useTasks(options: UseTasksOptions = {}) {
   };
 
   const handleChangeStatus = async (id: string, newStatus: TaskStatus): Promise<Task> => {
-    const updated = await changeTaskStatus(id, newStatus);
+    const current = tasks.find((t) => t.id === id);
+    if (!current || current.status === newStatus) {
+      return current ?? tasks[0]!;
+    }
+
+    const path =
+      TASK_TRANSITION_PATHS[current.status]?.[newStatus] ??
+      (TASK_TRANSITIONS[current.status]?.includes(newStatus) ? [newStatus] : [newStatus]);
+
+    // Optimistic UI update: instantly moves the card to the target column
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+
+    let latest: Task | null = null;
+    try {
+      for (const step of path) {
+        latest = await changeTaskStatus(id, step);
+      }
+      if (latest) {
+        const finalTask = latest;
+        setTasks((prev) => prev.map((t) => (t.id === id ? finalTask : t)));
+        return finalTask;
+      }
+    } catch (err) {
+      // Revert optimistic update on failure
+      setTasks((prev) => prev.map((t) => (t.id === id ? current : t)));
+      throw err;
+    }
+
+    return current;
+  };
+
+  const handleToggleDailyDone = async (id: string): Promise<Task> => {
+    const updated = await toggleTaskDailyDone(id);
     setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
     return updated;
   };
@@ -188,5 +223,6 @@ export function useTasks(options: UseTasksOptions = {}) {
     createTask: handleCreateTask,
     updateTask: handleUpdateTask,
     changeStatus: handleChangeStatus,
+    toggleDailyDone: handleToggleDailyDone,
   };
 }

@@ -50,11 +50,13 @@ const ALL_ROLE_OPTIONS: RoleOption[] = [
 export interface UseCreateEmployeeOptions {
   callerRole?: Role | null;
   onSuccess?: (created: CreatedEmployee) => void;
+  initialPrefill?: Partial<CreateEmployeeFormState>;
 }
 
 export function useCreateEmployee({
   callerRole = ROLES.ADMIN,
   onSuccess,
+  initialPrefill,
 }: UseCreateEmployeeOptions = {}) {
   const isAdmin = callerRole === ROLES.ADMIN;
   const isHRManager = callerRole === ROLES.HR_MANAGER;
@@ -67,16 +69,41 @@ export function useCreateEmployee({
   const getInitialDate = () => new Date().toISOString().slice(0, 10);
 
   const [formData, setFormData] = useState<CreateEmployeeFormState>({
-    employeeCode: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    departmentId: '',
-    designationId: '',
-    managerId: '',
-    joiningDate: getInitialDate(),
-    role: ROLES.STAFF,
+    employeeCode: initialPrefill?.employeeCode ?? '',
+    firstName: initialPrefill?.firstName ?? '',
+    lastName: initialPrefill?.lastName ?? '',
+    parentName: initialPrefill?.parentName ?? '',
+    email: initialPrefill?.email ?? '',
+    workEmail: initialPrefill?.workEmail ?? '',
+    phone: initialPrefill?.phone ?? '',
+    additionalEmails: initialPrefill?.additionalEmails ?? [],
+    additionalPhones: initialPrefill?.additionalPhones ?? [],
+    permanentAddress: initialPrefill?.permanentAddress ?? '',
+    permanentAddress1: initialPrefill?.permanentAddress1 ?? '',
+    permanentAddress2: initialPrefill?.permanentAddress2 ?? '',
+    permanentCity: initialPrefill?.permanentCity ?? '',
+    permanentDistrict: initialPrefill?.permanentDistrict ?? '',
+    permanentPincode: initialPrefill?.permanentPincode ?? '',
+    currentAddress: initialPrefill?.currentAddress ?? '',
+    currentAddress1: initialPrefill?.currentAddress1 ?? '',
+    currentAddress2: initialPrefill?.currentAddress2 ?? '',
+    currentCity: initialPrefill?.currentCity ?? '',
+    currentDistrict: initialPrefill?.currentDistrict ?? '',
+    currentPincode: initialPrefill?.currentPincode ?? '',
+    sameAsPermanentAddress: false,
+    bloodGroup: initialPrefill?.bloodGroup ?? '',
+    panNumber: initialPrefill?.panNumber ?? '',
+    aadhaarNumber: initialPrefill?.aadhaarNumber ?? '',
+    bankAccountHolder: initialPrefill?.bankAccountHolder ?? '',
+    bankName: initialPrefill?.bankName ?? '',
+    bankAccountNumber: initialPrefill?.bankAccountNumber ?? '',
+    bankIfscCode: initialPrefill?.bankIfscCode ?? '',
+    bankBranch: initialPrefill?.bankBranch ?? '',
+    departmentId: initialPrefill?.departmentId ?? '',
+    designationId: initialPrefill?.designationId ?? '',
+    managerId: initialPrefill?.managerId ?? '',
+    joiningDate: initialPrefill?.joiningDate ?? getInitialDate(),
+    role: initialPrefill?.role ?? ROLES.STAFF,
   });
 
   const [errors, setErrors] = useState<CreateEmployeeValidationErrors>({});
@@ -185,6 +212,21 @@ export function useCreateEmployee({
             designationId: '',
           };
         }
+        if (field === 'permanentAddress' && prev.sameAsPermanentAddress) {
+          return {
+            ...prev,
+            permanentAddress: value as string,
+            currentAddress: value as string,
+          };
+        }
+        if (field === 'sameAsPermanentAddress') {
+          const checked = Boolean(value);
+          return {
+            ...prev,
+            sameAsPermanentAddress: checked,
+            currentAddress: checked ? prev.permanentAddress : prev.currentAddress,
+          };
+        }
         return {
           ...prev,
           [field]: value,
@@ -192,10 +234,11 @@ export function useCreateEmployee({
       });
 
       // Clear field-specific error as user edits
+      const errKey = field as keyof CreateEmployeeValidationErrors;
       setErrors((prev) => {
-        if (!prev[field]) return prev;
+        if (!prev[errKey]) return prev;
         const updated = { ...prev };
-        delete updated[field];
+        delete updated[errKey];
         return updated;
       });
 
@@ -203,6 +246,70 @@ export function useCreateEmployee({
     },
     [],
   );
+
+  const addAdditionalEmail = useCallback(() => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    setFormData((prev) =>
+      prev.additionalEmails.length >= 5
+        ? prev
+        : { ...prev, additionalEmails: [...prev.additionalEmails, ''] },
+    );
+  }, []);
+
+  const updateAdditionalEmail = useCallback((index: number, value: string) => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    setFormData((prev) => {
+      const next = [...prev.additionalEmails];
+      next[index] = value;
+      return { ...prev, additionalEmails: next };
+    });
+    setErrors((prev) => {
+      if (!prev.additionalEmails) return prev;
+      const updated = { ...prev };
+      delete updated.additionalEmails;
+      return updated;
+    });
+  }, []);
+
+  const removeAdditionalEmail = useCallback((index: number) => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    setFormData((prev) => ({
+      ...prev,
+      additionalEmails: prev.additionalEmails.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  const addAdditionalPhone = useCallback(() => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    setFormData((prev) =>
+      prev.additionalPhones.length >= 5
+        ? prev
+        : { ...prev, additionalPhones: [...prev.additionalPhones, ''] },
+    );
+  }, []);
+
+  const updateAdditionalPhone = useCallback((index: number, value: string) => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    setFormData((prev) => {
+      const next = [...prev.additionalPhones];
+      next[index] = value;
+      return { ...prev, additionalPhones: next };
+    });
+    setErrors((prev) => {
+      if (!prev.additionalPhones) return prev;
+      const updated = { ...prev };
+      delete updated.additionalPhones;
+      return updated;
+    });
+  }, []);
+
+  const removeAdditionalPhone = useCallback((index: number) => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    setFormData((prev) => ({
+      ...prev,
+      additionalPhones: prev.additionalPhones.filter((_, i) => i !== index),
+    }));
+  }, []);
 
   // Validation rules conforming to createEmployeeSchema
   const validateField = (
@@ -248,6 +355,38 @@ export function useCreateEmployee({
         if (!trimmed) return undefined; // Phone is optional
         if (!/^[0-9+()\-\s]{6,50}$/.test(trimmed)) {
           return 'Phone number may only contain digits, spaces, +, (, ) and - (6–50 characters).';
+        }
+        return undefined;
+      }
+      case 'panNumber': {
+        const trimmed = value.trim().toUpperCase();
+        if (!trimmed) return undefined;
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(trimmed)) {
+          return 'PAN number must be 10 characters (e.g. ABCDE1234F).';
+        }
+        return undefined;
+      }
+      case 'aadhaarNumber': {
+        const digits = value.replace(/\s+/g, '');
+        if (!digits) return undefined;
+        if (!/^\d{12}$/.test(digits)) {
+          return 'Aadhaar number must be exactly 12 digits.';
+        }
+        return undefined;
+      }
+      case 'bankAccountNumber': {
+        const cleaned = value.replace(/\s+/g, '');
+        if (!cleaned) return undefined;
+        if (!/^[A-Za-z0-9]{6,30}$/.test(cleaned)) {
+          return 'Account number must be 6 to 30 letters or digits.';
+        }
+        return undefined;
+      }
+      case 'bankIfscCode': {
+        const trimmed = value.trim().toUpperCase();
+        if (!trimmed) return undefined;
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(trimmed)) {
+          return 'IFSC code must be 11 characters (e.g. HDFC0001234).';
         }
         return undefined;
       }
@@ -302,6 +441,33 @@ export function useCreateEmployee({
 
       const phoneErr = validateField('phone', formData.phone);
       if (phoneErr) newErrors.phone = phoneErr;
+
+      const invalidExtraEmail = formData.additionalEmails.find(
+        (em) => em.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim().toLowerCase()),
+      );
+      if (invalidExtraEmail !== undefined) {
+        newErrors.additionalEmails = 'One or more additional email addresses are invalid.';
+      }
+
+      const invalidExtraPhone = formData.additionalPhones.find(
+        (ph) => ph.trim() && !/^[0-9+()\-\s]{6,50}$/.test(ph.trim()),
+      );
+      if (invalidExtraPhone !== undefined) {
+        newErrors.additionalPhones =
+          'Additional phone numbers may only contain digits, spaces, +, (, ) and - (6–50 characters).';
+      }
+
+      const panErr = validateField('panNumber', formData.panNumber);
+      if (panErr) newErrors.panNumber = panErr;
+
+      const aadhaarErr = validateField('aadhaarNumber', formData.aadhaarNumber);
+      if (aadhaarErr) newErrors.aadhaarNumber = aadhaarErr;
+
+      const bankAccErr = validateField('bankAccountNumber', formData.bankAccountNumber);
+      if (bankAccErr) newErrors.bankAccountNumber = bankAccErr;
+
+      const bankIfscErr = validateField('bankIfscCode', formData.bankIfscCode);
+      if (bankIfscErr) newErrors.bankIfscCode = bankIfscErr;
     } else if (stepNumber === 2) {
       const codeErr = validateField('employeeCode', formData.employeeCode);
       if (codeErr) newErrors.employeeCode = codeErr;
@@ -325,21 +491,40 @@ export function useCreateEmployee({
 
   const validateAll = (): { isValid: boolean; errors: CreateEmployeeValidationErrors } => {
     const newErrors: CreateEmployeeValidationErrors = {};
-    const fields: (keyof CreateEmployeeFormState)[] = [
+    const fields = [
       'employeeCode',
       'firstName',
       'lastName',
       'email',
       'phone',
+      'panNumber',
+      'aadhaarNumber',
+      'bankAccountNumber',
+      'bankIfscCode',
       'departmentId',
       'designationId',
       'joiningDate',
       'role',
-    ];
+    ] as const;
 
     for (const f of fields) {
       const err = validateField(f, formData[f]);
-      if (err) newErrors[f] = err;
+      if (err) newErrors[f as keyof CreateEmployeeValidationErrors] = err;
+    }
+
+    const invalidExtraEmail = formData.additionalEmails.find(
+      (em) => em.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim().toLowerCase()),
+    );
+    if (invalidExtraEmail !== undefined) {
+      newErrors.additionalEmails = 'One or more additional email addresses are invalid.';
+    }
+
+    const invalidExtraPhone = formData.additionalPhones.find(
+      (ph) => ph.trim() && !/^[0-9+()\-\s]{6,50}$/.test(ph.trim()),
+    );
+    if (invalidExtraPhone !== undefined) {
+      newErrors.additionalPhones =
+        'Additional phone numbers may only contain digits, spaces, +, (, ) and - (6–50 characters).';
     }
 
     setErrors(newErrors);
@@ -350,9 +535,7 @@ export function useCreateEmployee({
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep((prev) => Math.min(prev + 1, 3));
-    }
+    setCurrentStep((prev) => Math.min(prev + 1, 6));
   };
 
   const prevStep = () => {
@@ -369,7 +552,9 @@ export function useCreateEmployee({
         validation.errors.firstName ||
         validation.errors.lastName ||
         validation.errors.email ||
-        validation.errors.phone
+        validation.errors.additionalEmails ||
+        validation.errors.phone ||
+        validation.errors.additionalPhones
       ) {
         setCurrentStep(1);
       } else if (
@@ -379,8 +564,17 @@ export function useCreateEmployee({
         validation.errors.joiningDate
       ) {
         setCurrentStep(2);
-      } else {
+      } else if (
+        validation.errors.panNumber ||
+        validation.errors.aadhaarNumber ||
+        validation.errors.bankAccountNumber ||
+        validation.errors.bankIfscCode
+      ) {
         setCurrentStep(3);
+      } else if (validation.errors.role) {
+        setCurrentStep(5);
+      } else {
+        setCurrentStep(6);
       }
       return;
     }
@@ -388,11 +582,15 @@ export function useCreateEmployee({
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const effectiveCorporateEmail = formData.workEmail?.trim()
+      ? formData.workEmail.trim().toLowerCase()
+      : formData.email.trim().toLowerCase();
+
     const payload: CreateEmployeePayload = {
       employeeCode: formData.employeeCode.trim().toUpperCase(),
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
-      email: formData.email.trim().toLowerCase(),
+      email: effectiveCorporateEmail,
       departmentId: formData.departmentId,
       designationId: formData.designationId,
       joiningDate: formData.joiningDate,
@@ -404,6 +602,56 @@ export function useCreateEmployee({
     }
     if (formData.managerId.trim()) {
       payload.managerId = formData.managerId.trim();
+    }
+    const extraEmails = formData.additionalEmails
+      .map((em) => em.trim().toLowerCase())
+      .filter(Boolean);
+
+    // If separate work email provided, ensure personal email is in additionalEmails
+    if (
+      formData.workEmail?.trim() &&
+      formData.email.trim().toLowerCase() !== formData.workEmail.trim().toLowerCase() &&
+      !extraEmails.includes(formData.email.trim().toLowerCase())
+    ) {
+      extraEmails.unshift(formData.email.trim().toLowerCase());
+    }
+
+    if (extraEmails.length > 0) {
+      payload.additionalEmails = extraEmails.slice(0, 5);
+    }
+    const extraPhones = formData.additionalPhones.map((ph) => ph.trim()).filter(Boolean);
+    if (extraPhones.length > 0) {
+      payload.additionalPhones = extraPhones;
+    }
+    if (formData.permanentAddress.trim()) {
+      payload.permanentAddress = formData.permanentAddress.trim();
+    }
+    if (formData.currentAddress.trim()) {
+      payload.currentAddress = formData.currentAddress.trim();
+    }
+    if (formData.bloodGroup.trim()) {
+      payload.bloodGroup = formData.bloodGroup.trim();
+    }
+    if (formData.panNumber.trim()) {
+      payload.panNumber = formData.panNumber.trim().toUpperCase();
+    }
+    if (formData.aadhaarNumber.trim()) {
+      payload.aadhaarNumber = formData.aadhaarNumber.replace(/\s+/g, '');
+    }
+    if (formData.bankAccountHolder.trim()) {
+      payload.bankAccountHolder = formData.bankAccountHolder.trim();
+    }
+    if (formData.bankName.trim()) {
+      payload.bankName = formData.bankName.trim();
+    }
+    if (formData.bankAccountNumber.trim()) {
+      payload.bankAccountNumber = formData.bankAccountNumber.replace(/\s+/g, '');
+    }
+    if (formData.bankIfscCode.trim()) {
+      payload.bankIfscCode = formData.bankIfscCode.trim().toUpperCase();
+    }
+    if (formData.bankBranch.trim()) {
+      payload.bankBranch = formData.bankBranch.trim();
     }
 
     try {
@@ -451,8 +699,22 @@ export function useCreateEmployee({
       employeeCode: '',
       firstName: '',
       lastName: '',
+      parentName: '',
       email: '',
+      additionalEmails: [],
       phone: '',
+      additionalPhones: [],
+      permanentAddress: '',
+      currentAddress: '',
+      sameAsPermanentAddress: false,
+      bloodGroup: '',
+      panNumber: '',
+      aadhaarNumber: '',
+      bankAccountHolder: '',
+      bankName: '',
+      bankAccountNumber: '',
+      bankIfscCode: '',
+      bankBranch: '',
       departmentId: '',
       designationId: '',
       managerId: '',
@@ -486,6 +748,12 @@ export function useCreateEmployee({
     isAdmin,
     isHRManager,
     setFieldValue,
+    addAdditionalEmail,
+    updateAdditionalEmail,
+    removeAdditionalEmail,
+    addAdditionalPhone,
+    updateAdditionalPhone,
+    removeAdditionalPhone,
     setCurrentStep,
     nextStep,
     prevStep,

@@ -22,23 +22,24 @@ ON CONFLICT (id) DO UPDATE SET
 --      20261030000001_rbac_reference_data.sql (they exist in production too).
 
 
--- 5. Sample Departments
+-- 5. Departments
 INSERT INTO departments (id, name, code, is_active) VALUES
-  ('30000000-0000-0000-0000-000000000001', 'Engineering', 'ENG', true),
-  ('30000000-0000-0000-0000-000000000002', 'Human Resources', 'HR', true),
-  ('30000000-0000-0000-0000-000000000003', 'Operations', 'OPS', true)
+  ('30000000-0000-0000-0000-000000000001', 'HR Department', 'HR', true),
+  ('30000000-0000-0000-0000-000000000002', 'Sales Department', 'SALES', true),
+  ('30000000-0000-0000-0000-000000000003', 'Digital Marketing Department', 'MKTG', true),
+  ('30000000-0000-0000-0000-000000000004', 'AI Department', 'AI', true),
+  ('30000000-0000-0000-0000-000000000005', 'Research Analyst Department', 'RA', true)
 ON CONFLICT (LOWER(code)) DO UPDATE SET
   name = EXCLUDED.name,
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
 
 
--- 6. Sample Designations
+-- 6. Designations
 INSERT INTO designations (id, department_id, title, code, level, is_active) VALUES
-  ('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'Engineering Director', 'ENG-DIR', 4, true),
-  ('40000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001', 'Staff Engineer', 'STAFF-ENG', 3, true),
-  ('40000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000002', 'HR Manager', 'HR-MGR', 3, true),
-  ('40000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000001', 'Software Engineer', 'SWE', 2, true)
+  ('40000000-0000-0000-0000-000000000001', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'System Administrator', 'SYS-ADMIN', 4, true),
+  ('40000000-0000-0000-0000-000000000002', (SELECT id FROM departments WHERE LOWER(code) = 'ai'), 'AI Intern', 'AI-INTERN', 1, true),
+  ('40000000-0000-0000-0000-000000000003', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'HR Manager', 'HR-MGR', 3, true)
 ON CONFLICT (LOWER(code)) DO UPDATE SET
   title = EXCLUDED.title,
   level = EXCLUDED.level,
@@ -46,7 +47,7 @@ ON CONFLICT (LOWER(code)) DO UPDATE SET
   updated_at = NOW();
 
 
--- 7. Sample Employees (1 per canonical role hierarchy)
+-- 7. Employees
 INSERT INTO employees (
   id, employee_code, first_name, last_name, email, phone,
   department_id, designation_id, manager_id, status, joining_date
@@ -54,12 +55,12 @@ INSERT INTO employees (
   (
     '50000000-0000-0000-0000-000000000001',
     'EMP-0001',
-    'Arun',
-    'Kumar',
+    'Shagul',
+    'Hamithu',
     'admin@maxr.internal',
-    '+91-9876543210',
-    '30000000-0000-0000-0000-000000000001',
-    '40000000-0000-0000-0000-000000000001',
+    NULL,
+    (SELECT id FROM departments WHERE LOWER(code) = 'hr'),
+    (SELECT id FROM designations WHERE LOWER(code) = 'sys-admin'),
     NULL,
     'active',
     '2024-01-01'
@@ -67,41 +68,28 @@ INSERT INTO employees (
   (
     '50000000-0000-0000-0000-000000000002',
     'EMP-0002',
-    'Priya',
-    'Sharma',
-    'hr@maxr.internal',
-    '+91-9876543211',
-    '30000000-0000-0000-0000-000000000002',
-    '40000000-0000-0000-0000-000000000003',
+    'Arunkumar',
+    '',
+    'arunkumar@maxr.internal',
+    NULL,
+    (SELECT id FROM departments WHERE LOWER(code) = 'ai'),
+    (SELECT id FROM designations WHERE LOWER(code) = 'ai-intern'),
     '50000000-0000-0000-0000-000000000001',
     'active',
-    '2024-02-01'
+    CURRENT_DATE
   ),
   (
     '50000000-0000-0000-0000-000000000003',
     'EMP-0003',
-    'Rajesh',
-    'Patel',
-    'teamlead@maxr.internal',
-    '+91-9876543212',
-    '30000000-0000-0000-0000-000000000001',
-    '40000000-0000-0000-0000-000000000002',
+    'Shajitha',
+    '',
+    'shajitha@maxr.internal',
+    NULL,
+    (SELECT id FROM departments WHERE LOWER(code) = 'hr'),
+    (SELECT id FROM designations WHERE LOWER(code) = 'hr-mgr'),
     '50000000-0000-0000-0000-000000000001',
     'active',
-    '2024-03-01'
-  ),
-  (
-    '50000000-0000-0000-0000-000000000004',
-    'EMP-0004',
-    'Ananya',
-    'Sen',
-    'staff@maxr.internal',
-    '+91-9876543213',
-    '30000000-0000-0000-0000-000000000001',
-    '40000000-0000-0000-0000-000000000004',
-    '50000000-0000-0000-0000-000000000003',
-    'active',
-    '2024-04-01'
+    CURRENT_DATE
   )
 ON CONFLICT (LOWER(employee_code)) DO UPDATE SET
   first_name = EXCLUDED.first_name,
@@ -114,9 +102,8 @@ ON CONFLICT (LOWER(employee_code)) DO UPDATE SET
   updated_at = NOW();
 
 
--- 8. Sample Users (Linked 1:1 to Employees via users.employee_id)
--- Development password for all four seeded users: Password123! (Argon2id, the production parameters; login is tested against it). Development only: the seeder refuses production.
--- Login (issue #7) checks this hash; its hashing library test also verifies the password.
+-- 8. Users (Linked 1:1 to Employee via users.employee_id)
+-- Development password: Password123! (Argon2id, the production parameters). Development only.
 INSERT INTO users (id, employee_id, email, password_hash, is_active) VALUES
   (
     '60000000-0000-0000-0000-000000000001',
@@ -128,27 +115,20 @@ INSERT INTO users (id, employee_id, email, password_hash, is_active) VALUES
   (
     '60000000-0000-0000-0000-000000000002',
     '50000000-0000-0000-0000-000000000002',
-    'hr@maxr.internal',
+    'arunkumar@maxr.internal',
     '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
     true
   ),
   (
     '60000000-0000-0000-0000-000000000003',
     '50000000-0000-0000-0000-000000000003',
-    'teamlead@maxr.internal',
-    '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
-    true
-  ),
-  (
-    '60000000-0000-0000-0000-000000000004',
-    '50000000-0000-0000-0000-000000000004',
-    'staff@maxr.internal',
+    'shajitha@maxr.internal',
     '$argon2id$v=19$m=65536,t=3,p=1$IUgwrqWvQGd2k+5O4xHReg$Gd838liTG4elh5hCpCM/Zxft1mJhgiVp3cJelTTEhVI',
     true
   )
 ON CONFLICT (employee_id) DO UPDATE SET
   email = EXCLUDED.email,
-  password_hash = EXCLUDED.password_hash, -- re-seeding resets the development password
+  password_hash = EXCLUDED.password_hash,
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
 
@@ -156,7 +136,7 @@ ON CONFLICT (employee_id) DO UPDATE SET
 -- 9. User Roles Mapping
 INSERT INTO user_roles (user_id, role_id) VALUES
   ('60000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001'), -- Admin -> admin
-  ('60000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002'), -- HR -> hr_manager
-  ('60000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003'), -- Team Lead -> team_lead
-  ('60000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004')  -- Staff -> staff
+  ('60000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004'), -- Arunkumar -> staff
+  ('60000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000002')  -- Shajitha -> hr_manager
 ON CONFLICT (user_id, role_id) DO NOTHING;
+

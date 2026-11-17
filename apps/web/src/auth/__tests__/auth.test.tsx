@@ -48,17 +48,19 @@ describe('TC-12-01: AuthContext & Real API Integration', () => {
     });
   });
 
-  it('should render LoginPage with work email and password inputs', () => {
+  it('should render LoginPage with email/username and password inputs', () => {
     const html = renderToStaticMarkup(
       <AuthProvider persistSession={false}>
         <LoginPage />
       </AuthProvider>,
     );
 
-    expect(html).toContain('MAXR Teamspace');
-    expect(html).toContain('Work Email');
+    expect(html).toContain('Sign In');
+    expect(html).toContain('Access your MaxR Teamspace account');
+    expect(html).toContain('Email or Username');
     expect(html).toContain('Password');
-    expect(html).toContain('Sign In to Teamspace');
+    expect(html).toContain('Remember me');
+    expect(html).not.toContain('Forgot password?');
   });
 
   it('correctly parses real API response shape { data: { user, csrfToken } } on login', async () => {

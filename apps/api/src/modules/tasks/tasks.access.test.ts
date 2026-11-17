@@ -120,8 +120,8 @@ describe('tasks API: access', () => {
   it('declares a permission on every route', async () => {
     const { app } = await setup();
     const routes = listRoutes(app).filter((r) => r.path.startsWith('/api/v1/tasks'));
-    // Six task routes and six for comments and attachments, all under the same path.
-    expect(routes).toHaveLength(12);
+    // Seven task routes and six for comments and attachments, all under the same path.
+    expect(routes).toHaveLength(13);
     for (const route of routes) expect(route.access, `${route.method} ${route.path}`).toBeDefined();
   });
 

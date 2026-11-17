@@ -5,6 +5,8 @@ import { Input } from '../../../components/ui/Input';
 import { Modal } from '../../../components/ui/Modal';
 import { fetchEmployeeDirectory } from '../../employees/api/employees';
 import type { EmployeeDirectoryItem } from '../../employees/types';
+import { fetchProjects } from '../../projects/api/projectsApi';
+import type { Project } from '../../projects/types';
 import {
   MAX_AGENDA_CHARS,
   MAX_INVITEES,
@@ -20,8 +22,24 @@ export interface MeetingFormModalProps {
   onClose: () => void;
   mode: 'create' | 'edit';
   initialMeeting?: Meeting | null;
+  defaultDate?: string;
   onSubmitCreate?: (input: ScheduleMeetingInput) => Promise<MeetingWithOverlaps>;
   onSubmitEdit?: (id: string, input: UpdateMeetingInput) => Promise<MeetingWithOverlaps>;
+}
+
+const EVENT_KINDS = ['Meeting', 'Review', 'Team Sync', 'Deadline'] as const;
+const DURATION_OPTIONS = [
+  { label: '30 min', minutes: 30 },
+  { label: '1 h', minutes: 60 },
+  { label: '1.5 h', minutes: 90 },
+  { label: '2 h', minutes: 120 },
+];
+
+function addMinutesToTime(timeStr: string, minutes: number): string {
+  const [hh, mm] = timeStr.split(':').map(Number);
+  if (hh === undefined || mm === undefined || Number.isNaN(hh) || Number.isNaN(mm)) return '11:00';
+  const total = Math.min(23 * 60 + 55, hh * 60 + mm + minutes);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 export function MeetingFormModal({
@@ -29,17 +47,22 @@ export function MeetingFormModal({
   onClose,
   mode,
   initialMeeting,
+  defaultDate,
   onSubmitCreate,
   onSubmitEdit,
 }: MeetingFormModalProps) {
   const [title, setTitle] = useState('');
+  const [eventKind, setEventKind] = useState<string>('Meeting');
+  const [projectId, setProjectId] = useState<string>('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [lengthMinutes, setLengthMinutes] = useState<number>(60);
   const [agenda, setAgenda] = useState('');
   const [selectedInviteeIds, setSelectedInviteeIds] = useState<string[]>([]);
 
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,6 +78,8 @@ export function MeetingFormModal({
 
     if (mode === 'edit' && initialMeeting) {
       setTitle(initialMeeting.title);
+      setEventKind('Meeting');
+      setProjectId('');
       setAgenda(initialMeeting.agenda ?? '');
 
       const s = new Date(initialMeeting.startsAt);
@@ -71,19 +96,39 @@ export function MeetingFormModal({
       setEndTime(
         `${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`,
       );
+      setLengthMinutes(Math.max(30, Math.round((e.getTime() - s.getTime()) / 60_000)));
       setSelectedInviteeIds(initialMeeting.attendees.map((a) => a.employeeId));
     } else {
-      // Default to tomorrow 10:00 - 11:00
-      const tomorrow = new Date();
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+        2,
+        '0',
+      )}-${String(now.getDate()).padStart(2, '0')}`;
+      const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      setDate(
-        `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(
-          tomorrow.getDate(),
-        ).padStart(2, '0')}`,
-      );
-      setStartTime('10:00');
-      setEndTime('11:00');
+      const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(
+        2,
+        '0',
+      )}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+      let resolvedDate = defaultDate && defaultDate >= todayKey ? defaultDate : tomorrowKey;
+      let startHr = 10;
+      if (resolvedDate === todayKey) {
+        if (now.getHours() >= 22) {
+          resolvedDate = tomorrowKey;
+        } else {
+          startHr = Math.max(10, now.getHours() + 1);
+        }
+      }
+
+      const startStr = `${String(startHr).padStart(2, '0')}:00`;
+      setDate(resolvedDate);
+      setStartTime(startStr);
+      setLengthMinutes(60);
+      setEndTime(addMinutesToTime(startStr, 60));
       setTitle('');
+      setEventKind('Meeting');
+      setProjectId('');
       setAgenda('');
       setSelectedInviteeIds([]);
     }
@@ -93,7 +138,21 @@ export function MeetingFormModal({
       .then((res) => setEmployees(res.data))
       .catch(() => setEmployees([]))
       .finally(() => setLoadingEmployees(false));
-  }, [isOpen, mode, initialMeeting]);
+
+    void fetchProjects({ status: 'active', pageSize: 100 })
+      .then((res) => setProjects(res.data || []))
+      .catch(() => setProjects([]));
+  }, [isOpen, mode, initialMeeting, defaultDate]);
+
+  const handleStartTimeChange = (newStart: string) => {
+    setStartTime(newStart);
+    setEndTime(addMinutesToTime(newStart, lengthMinutes));
+  };
+
+  const handleLengthChange = (mins: number) => {
+    setLengthMinutes(mins);
+    setEndTime(addMinutesToTime(startTime, mins));
+  };
 
   const toggleInvitee = (id: string) => {
     if (selectedInviteeIds.includes(id)) {
@@ -148,11 +207,11 @@ export function MeetingFormModal({
 
         const durationMinutes = (endsAt.getTime() - startsAt.getTime()) / (60 * 1000);
         if (durationMinutes > 24 * 60) {
-          errs.endTime = 'A meeting can last at most 24 hours';
+          errs.endTime = 'An event can last at most 24 hours';
         }
 
         if (mode === 'create' && startsAt.getTime() <= Date.now()) {
-          errs.startTime = 'Meeting must start in the future';
+          errs.startTime = 'Event must start in the future';
         }
       }
     }
@@ -168,6 +227,14 @@ export function MeetingFormModal({
     const startsAt = new Date(`${date}T${startTime}:00`).toISOString();
     const endsAt = new Date(`${date}T${endTime}:00`).toISOString();
 
+    const selectedProject = projects.find((p) => p.id === projectId);
+    const contextParts: string[] = [];
+    if (eventKind !== 'Meeting') contextParts.push(eventKind);
+    if (selectedProject) contextParts.push(`${selectedProject.code} ${selectedProject.name}`);
+    const prefix = contextParts.length > 0 ? `[${contextParts.join(' · ')}]` : '';
+    const trimmedAgenda = agenda.trim();
+    const combinedAgenda = [prefix, trimmedAgenda].filter(Boolean).join('\n');
+
     setSubmitting(true);
     setServerError(null);
 
@@ -176,7 +243,7 @@ export function MeetingFormModal({
         if (!onSubmitCreate) return;
         const result = await onSubmitCreate({
           title: title.trim(),
-          agenda: agenda.trim() || undefined,
+          agenda: combinedAgenda || undefined,
           startsAt,
           endsAt,
           inviteeIds: selectedInviteeIds,
@@ -184,7 +251,6 @@ export function MeetingFormModal({
 
         if (result?.overlaps && result.overlaps.length > 0) {
           setOverlapWarnings(result.overlaps);
-          // Don't close immediately if there are overlap warnings, so the user sees the notice
         } else {
           onClose();
         }
@@ -192,7 +258,7 @@ export function MeetingFormModal({
         if (!onSubmitEdit || !initialMeeting) return;
         const result = await onSubmitEdit(initialMeeting.id, {
           title: title.trim(),
-          agenda: agenda.trim() || null,
+          agenda: trimmedAgenda || null,
           startsAt,
           endsAt,
           inviteeIds: selectedInviteeIds,
@@ -206,7 +272,7 @@ export function MeetingFormModal({
         }
       }
     } catch (err: unknown) {
-      setServerError(err instanceof Error ? err.message : 'Failed to save meeting.');
+      setServerError(err instanceof Error ? err.message : 'Failed to save event.');
     } finally {
       setSubmitting(false);
     }
@@ -221,7 +287,10 @@ export function MeetingFormModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === 'create' ? 'Schedule Meeting' : 'Edit Meeting'}
+      title={mode === 'create' ? 'Book time' : 'Edit event'}
+      subtitle={
+        mode === 'create' ? 'A meeting, review, team sync, or milestone deadline.' : undefined
+      }
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4" data-testid="meeting-form">
@@ -243,7 +312,7 @@ export function MeetingFormModal({
               Notice: Scheduled with attendee overlap(s)
             </div>
             <p className="text-xs text-text">
-              The following invited team members have an overlapping meeting during this time:
+              The following invited team members have an overlapping booking during this time:
             </p>
             <ul className="text-xs list-disc list-inside space-y-0.5 text-text-muted">
               {overlapWarnings.map((ov, idx) => (
@@ -261,17 +330,65 @@ export function MeetingFormModal({
         )}
 
         {/* Title */}
-        <FormField label="Meeting Title" required error={errors.title}>
+        <FormField label="Title" required error={errors.title}>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Sprint Planning & Retrospective"
+            placeholder="e.g. Sprint Planning or Client Review"
             maxLength={200}
             data-testid="meeting-title-input"
           />
         </FormField>
 
-        {/* Date and Time Row */}
+        {/* Kind & Project Row */}
+        {mode === 'create' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="event-kind-select"
+                className="block text-xs font-semibold text-text mb-1"
+              >
+                Kind
+              </label>
+              <select
+                id="event-kind-select"
+                value={eventKind}
+                onChange={(e) => setEventKind(e.target.value)}
+                className="w-full min-h-[40px] px-3 py-1.5 text-sm bg-surface border border-border rounded-tile text-text focus:outline-none focus:border-primary-strong"
+              >
+                {EVENT_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="event-project-select"
+                className="block text-xs font-semibold text-text mb-1"
+              >
+                Project
+              </label>
+              <select
+                id="event-project-select"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full min-h-[40px] px-3 py-1.5 text-sm bg-surface border border-border rounded-tile text-text focus:outline-none focus:border-primary-strong"
+              >
+                <option value="">None</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} — {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Date, Start Time, Length & End Time */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FormField label="Date" required error={errors.date}>
             <Input
@@ -282,28 +399,50 @@ export function MeetingFormModal({
             />
           </FormField>
 
-          <FormField label="Start Time" required error={errors.startTime}>
+          <FormField label="Start" required error={errors.startTime}>
             <Input
               type="time"
               value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              onChange={(e) => handleStartTimeChange(e.target.value)}
               data-testid="meeting-start-time-input"
             />
           </FormField>
 
-          <FormField label="End Time" required error={errors.endTime}>
-            <Input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              data-testid="meeting-end-time-input"
-            />
-          </FormField>
+          <div>
+            <label
+              htmlFor="event-length-select"
+              className="block text-xs font-semibold text-text mb-1"
+            >
+              Length
+            </label>
+            <select
+              id="event-length-select"
+              value={lengthMinutes}
+              onChange={(e) => handleLengthChange(Number(e.target.value))}
+              className="w-full min-h-[40px] px-3 py-1.5 text-sm bg-surface border border-border rounded-tile text-text focus:outline-none focus:border-primary-strong"
+            >
+              {DURATION_OPTIONS.map((opt) => (
+                <option key={opt.minutes} value={opt.minutes}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Agenda */}
+        {/* Hidden/editable exact End Time fallback */}
+        <FormField label="End Time" required error={errors.endTime}>
+          <Input
+            type="time"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            data-testid="meeting-end-time-input"
+          />
+        </FormField>
+
+        {/* Agenda / Notes */}
         <FormField
-          label="Agenda"
+          label="Notes / Agenda"
           helperText={`Optional · Up to ${MAX_AGENDA_CHARS} characters`}
           error={errors.agenda}
         >
@@ -311,7 +450,7 @@ export function MeetingFormModal({
             value={agenda}
             onChange={(e) => setAgenda(e.target.value)}
             placeholder="Key discussion points, goals, and links..."
-            rows={3}
+            rows={2}
             maxLength={MAX_AGENDA_CHARS}
             className="w-full px-3 py-2 text-sm text-text bg-surface border border-border rounded-tile focus:outline-none focus:border-primary-strong"
             data-testid="meeting-agenda-input"
@@ -322,7 +461,7 @@ export function MeetingFormModal({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold text-text uppercase tracking-wider">
-              Invite Attendees ({selectedInviteeIds.length} / {MAX_INVITEES})
+              Invite Team ({selectedInviteeIds.length} / {MAX_INVITEES})
             </label>
             {selectedInviteeIds.length > 0 && (
               <button
@@ -337,9 +476,8 @@ export function MeetingFormModal({
 
           {errors.invitees && <p className="text-xs text-danger">{errors.invitees}</p>}
 
-          {/* Selected chips */}
           {selectedInviteeIds.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 p-2 bg-surface-muted rounded-tile border border-border max-h-28 overflow-y-auto">
+            <div className="flex flex-wrap gap-1.5 p-2 bg-surface-muted rounded-tile border border-border max-h-24 overflow-y-auto">
               {selectedInviteeIds.map((id) => (
                 <span
                   key={id}
@@ -359,8 +497,7 @@ export function MeetingFormModal({
             </div>
           )}
 
-          {/* Employee list picker */}
-          <div className="border border-border rounded-tile max-h-40 overflow-y-auto bg-surface divide-y divide-border">
+          <div className="border border-border rounded-tile max-h-36 overflow-y-auto bg-surface divide-y divide-border">
             {loadingEmployees ? (
               <div className="p-3 text-xs text-text-muted text-center">Loading team members...</div>
             ) : employees.length === 0 ? (
@@ -373,7 +510,7 @@ export function MeetingFormModal({
                     key={emp.id}
                     type="button"
                     onClick={() => toggleInvitee(emp.id)}
-                    className={`w-full px-3 py-2 text-left flex items-center justify-between text-xs min-h-[44px] transition-colors ${
+                    className={`w-full px-3 py-2 text-left flex items-center justify-between text-xs min-h-[40px] transition-colors ${
                       isSelected ? 'bg-primary-soft/60 font-medium' : 'hover:bg-surface-muted'
                     }`}
                     data-testid={`invitee-toggle-${emp.id}`}
@@ -410,19 +547,18 @@ export function MeetingFormModal({
             variant="ghost"
             onClick={onClose}
             disabled={submitting}
-            className="min-h-[44px]"
+            className="min-h-[40px]"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             variant="primary"
-            isLoading={submitting}
             disabled={submitting}
-            className="min-h-[44px]"
+            className="min-h-[40px]"
             data-testid="submit-meeting-btn"
           >
-            {mode === 'create' ? 'Schedule Meeting' : 'Save Changes'}
+            {submitting ? 'Saving...' : mode === 'create' ? 'Book it' : 'Save Changes'}
           </Button>
         </div>
       </form>

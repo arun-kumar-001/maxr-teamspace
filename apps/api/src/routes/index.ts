@@ -10,6 +10,8 @@ import {
   createDesignationRouter,
   createEmployeeDirectoryRouter,
 } from '../modules/employees';
+import { IEmployeeDirectoryRepository } from '../modules/employees/directory/directory.repository';
+import { IEmployeeDetailRepository } from '../modules/employees/detail/detail.repository';
 import { PdfExporter, ReportRegistry, createReports } from '../modules/reports';
 import { publicRoute } from '../modules/rbac';
 import { createApprovals } from '../modules/approvals';
@@ -30,8 +32,10 @@ import { createLeaveSetup } from '../modules/leave';
 import { createNotifications, loadNotificationsConfig } from '../modules/notifications';
 import { createProjects } from '../modules/projects';
 import { createTasks } from '../modules/tasks';
+import { createTodos } from '../modules/todos';
 import { createMeetings } from '../modules/meetings';
 import { createExpensesModule } from '../modules/expenses';
+import { createPayslipsRouter } from '../modules/payslips';
 import { createShifts } from '../modules/shifts';
 import { createUsers } from '../modules/users';
 import { Platform } from '../platform';
@@ -48,6 +52,8 @@ export interface ApiRouterOptions {
   reportPdfExporter?: PdfExporter;
   /** Sample module and OpenAPI document are development aids: never exposed in production. */
   exposeDevRoutes: boolean;
+  employeeDirectoryRepository?: IEmployeeDirectoryRepository;
+  employeeDetailRepository?: IEmployeeDetailRepository;
 }
 
 /**
@@ -62,6 +68,8 @@ export function createApiRouter({
   reportRegistry,
   reportPdfExporter,
   exposeDevRoutes,
+  employeeDirectoryRepository,
+  employeeDetailRepository,
 }: ApiRouterOptions): Router {
   const router = Router();
 
@@ -134,6 +142,7 @@ export function createApiRouter({
       projects: projects.reader,
     }).router,
   );
+  router.use('/todos', createTodos({ authenticate: auth.authenticate, getPool }).router);
   const meetings = createMeetings({ platform, authenticate: auth.authenticate });
   router.use('/meetings', meetings.router);
   router.use(
@@ -145,7 +154,11 @@ export function createApiRouter({
       appUrl: loadNotificationsConfig().appUrl,
     }).router,
   );
-  const users = createUsers({ platform, authenticate: auth.authenticate });
+  const users = createUsers({
+    platform,
+    authenticate: auth.authenticate,
+    revokeSessionsForUser: (userId) => auth.sessions.revokeAllForUser(userId),
+  });
   router.use('/users', users.usersRouter);
   router.use('/roles', users.rolesRouter);
   router.use('/permissions', users.permissionsRouter);
@@ -169,6 +182,7 @@ export function createApiRouter({
     '/employees',
     createEmployeeDirectoryRouter({
       authenticate: auth.authenticate,
+      repository: employeeDirectoryRepository,
     }),
   );
   router.use(
@@ -192,7 +206,11 @@ export function createApiRouter({
   );
   router.use(
     '/employees',
-    createEmployeeDetail({ platform, authenticate: auth.authenticate }).router,
+    createEmployeeDetail({
+      platform,
+      authenticate: auth.authenticate,
+      repository: employeeDetailRepository,
+    }).router,
   );
   router.use(
     '/employees',
@@ -235,6 +253,14 @@ export function createApiRouter({
     idempotencyStore,
   });
   router.use('/', expenses.router);
+
+  router.use(
+    '/payslips',
+    createPayslipsRouter({
+      authenticate: auth.authenticate,
+      audit: platform.audit,
+    }),
+  );
 
   if (exposeDevRoutes) {
     router.use('/templates', createTemplateRouter(idempotencyStore, platform, auth.authenticate));

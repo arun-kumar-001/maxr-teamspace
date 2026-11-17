@@ -128,7 +128,7 @@ export const CorrectionsHistoryView: React.FC<CorrectionsHistoryViewProps> = ({
   return (
     <div className="space-y-4" data-testid="corrections-history-view">
       {/* Desktop Table View */}
-      <div className="hidden lg:block bg-surface rounded-card border border-border overflow-hidden shadow-card">
+      <div className="hidden lg:block bg-white rounded-card border border-border/80 overflow-hidden shadow-xs">
         <DataTable
           columns={columns}
           data={corrections}
@@ -145,7 +145,7 @@ export const CorrectionsHistoryView: React.FC<CorrectionsHistoryViewProps> = ({
         {corrections.map((corr) => (
           <div
             key={corr.id}
-            className="p-4 bg-surface rounded-card border border-border shadow-card space-y-3"
+            className="p-4 bg-white rounded-card border border-border/80 shadow-xs space-y-3"
             data-testid={`correction-card-${corr.id}`}
           >
             <div className="flex items-center justify-between">

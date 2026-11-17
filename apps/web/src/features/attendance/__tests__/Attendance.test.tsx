@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { AttendanceCalendarView } from '../components/AttendanceCalendarView';
@@ -327,9 +329,11 @@ describe('Attendance Feature UI Components & Pages', () => {
       );
 
       render(
-        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
-          <AttendancePage />
-        </AuthProvider>,
+        <MemoryRouter>
+          <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+            <AttendancePage />
+          </AuthProvider>
+        </MemoryRouter>,
       );
 
       expect(screen.getByTestId('attendance-page')).toBeDefined();

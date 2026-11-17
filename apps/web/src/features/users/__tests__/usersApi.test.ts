@@ -1,7 +1,15 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as client from '../../../api/client';
-import { getPermissions, getRoles, getUser, getUsers, updateUserRoles } from '../api/usersApi';
+import {
+  createUser,
+  getPermissions,
+  getRoles,
+  getUser,
+  getUsers,
+  updateUserRoles,
+  updateUserStatus,
+} from '../api/usersApi';
 import type { UserAccount } from '../types';
 
 describe('Users API Client (Issue #27)', () => {
@@ -164,6 +172,55 @@ describe('Users API Client (Issue #27)', () => {
       expect(fetchSpy).toHaveBeenCalledWith('/api/v1/permissions');
       expect(result).toHaveLength(1);
       expect(result[0]?.key).toBe('users.list');
+    });
+  });
+
+  describe('createUser', () => {
+    it('calls POST /api/v1/users and returns user plus optional temporaryPassword', async () => {
+      const fetchSpy = vi.spyOn(client, 'apiFetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: mockUser,
+          meta: { temporaryPassword: 'Temp#Password1' },
+        }),
+      } as unknown as Response);
+
+      const result = await createUser({
+        firstName: 'Admin',
+        lastName: 'User',
+        email: 'admin@maxr.internal',
+        roles: ['admin'],
+        isActive: true,
+      });
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        '/api/v1/users',
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      );
+      expect(result.user.id).toBe('u-1');
+      expect(result.temporaryPassword).toBe('Temp#Password1');
+    });
+  });
+
+  describe('updateUserStatus', () => {
+    it('calls PUT /api/v1/users/:id/status with isActive boolean', async () => {
+      const deactivated: UserAccount = { ...mockUser, isActive: false };
+      const fetchSpy = vi.spyOn(client, 'apiFetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: deactivated }),
+      } as unknown as Response);
+
+      const result = await updateUserStatus('u-1', false);
+      expect(fetchSpy).toHaveBeenCalledWith(
+        '/api/v1/users/u-1/status',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ isActive: false }),
+        }),
+      );
+      expect(result.isActive).toBe(false);
     });
   });
 });

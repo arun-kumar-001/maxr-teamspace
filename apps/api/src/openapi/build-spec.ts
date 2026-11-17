@@ -30,6 +30,7 @@ import '../modules/employees/designations/designation.openapi';
 import '../modules/employees/directory/directory.openapi';
 import '../modules/employees/onboarding/onboarding.openapi';
 import '../modules/expenses/expenses.openapi';
+import '../modules/payslips/payslips.openapi';
 import '../platform/storage/files.openapi';
 
 export function buildOpenApiDocument() {

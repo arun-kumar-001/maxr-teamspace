@@ -31,7 +31,7 @@ export function TeamAttendanceGrid({ records }: TeamAttendanceGridProps) {
 
   return (
     <div
-      className="bg-surface border border-border rounded-card shadow-card overflow-hidden"
+      className="bg-white border border-border/80 rounded-card shadow-xs overflow-hidden"
       data-testid="team-attendance-grid"
     >
       {/* Desktop & Tablet Table */}

@@ -7,12 +7,14 @@ export interface UseOrgChartResult {
   statusFilter: EmployeeStatus | undefined;
   setStatusFilter: (status: EmployeeStatus | undefined) => void;
   loadingRoots: boolean;
+  expandingAll: boolean;
   rootError: HierarchyApiError | null;
   childrenMap: Record<string, OrgNode[]>;
   expandedNodeIds: Set<string>;
   loadingNodeIds: Set<string>;
   nodeErrors: Record<string, string>;
   toggleNode: (nodeId: string) => Promise<void>;
+  expandAll: () => Promise<void>;
   collapseAll: () => void;
   reload: () => Promise<void>;
   handleManagerChangeSuccess: (change: ManagerChange) => void;
@@ -22,6 +24,7 @@ export function useOrgChart(): UseOrgChartResult {
   const [roots, setRoots] = useState<OrgNode[]>([]);
   const [statusFilter, setStatusFilter] = useState<EmployeeStatus | undefined>('active');
   const [loadingRoots, setLoadingRoots] = useState(true);
+  const [expandingAll, setExpandingAll] = useState(false);
   const [rootError, setRootError] = useState<HierarchyApiError | null>(null);
 
   const [childrenMap, setChildrenMap] = useState<Record<string, OrgNode[]>>({});
@@ -102,6 +105,57 @@ export function useOrgChart(): UseOrgChartResult {
     [childrenMap, expandedNodeIds, statusFilter],
   );
 
+  const expandAll = useCallback(async () => {
+    if (roots.length === 0) return;
+    setExpandingAll(true);
+    try {
+      const nextMap: Record<string, OrgNode[]> = { ...childrenMap };
+      const nextExpanded = new Set<string>(expandedNodeIds);
+      const visited = new Set<string>();
+      const queue: OrgNode[] = [...roots];
+
+      while (queue.length > 0) {
+        const batch = queue
+          .splice(0, 10)
+          .filter((n) => n.directReportCount > 0 && !visited.has(n.id));
+        if (batch.length === 0) continue;
+
+        for (const n of batch) visited.add(n.id);
+
+        const results = await Promise.all(
+          batch.map(async (node) => {
+            if (nextMap[node.id]) {
+              return { id: node.id, data: nextMap[node.id]! };
+            }
+            const res = await fetchDirectReports(node.id, {
+              status: statusFilter,
+              page: 1,
+              pageSize: 100,
+            });
+            return { id: node.id, data: res.data };
+          }),
+        );
+
+        for (const item of results) {
+          nextMap[item.id] = item.data;
+          nextExpanded.add(item.id);
+          for (const child of item.data) {
+            if (child.directReportCount > 0 && !visited.has(child.id)) {
+              queue.push(child);
+            }
+          }
+        }
+      }
+
+      setChildrenMap(nextMap);
+      setExpandedNodeIds(nextExpanded);
+    } catch {
+      // Individual errors surface on manual expand
+    } finally {
+      setExpandingAll(false);
+    }
+  }, [roots, childrenMap, expandedNodeIds, statusFilter]);
+
   const collapseAll = useCallback(() => {
     setExpandedNodeIds(new Set());
   }, []);
@@ -141,12 +195,14 @@ export function useOrgChart(): UseOrgChartResult {
     statusFilter,
     setStatusFilter,
     loadingRoots,
+    expandingAll,
     rootError,
     childrenMap,
     expandedNodeIds,
     loadingNodeIds,
     nodeErrors,
     toggleNode,
+    expandAll,
     collapseAll,
     reload,
     handleManagerChangeSuccess,

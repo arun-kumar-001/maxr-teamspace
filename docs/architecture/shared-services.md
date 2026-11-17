@@ -83,6 +83,7 @@ Contract for the `notification_outbox` table (with #6/#41): `id uuid pk`, `chann
 | `STORAGE_SIGNING_SECRET` | none | min 32 chars; **required in production**; in development a random per-process secret is used (links stop working after a restart) |
 | `STORAGE_LINK_TTL_SECONDS` | 300 | capped at 900 |
 | `STORAGE_REQUIRE_SCAN` | `false` | `true` in production |
+| `CLAMAV_HOST`, `CLAMAV_PORT` | empty, `3310` | Set `CLAMAV_HOST` in production: the app uses the ClamAV daemon as the virus-scan hook. Without it, production refuses to start while `STORAGE_REQUIRE_SCAN=true` |
 
 ## 6. Threats this design answers
 Email header injection; spam through unlimited recipients; secrets and personal data in logs; losing audit records silently; sending mail for rolled-back actions; double sending by two workers; path traversal through file names; executable disguised as PDF; unscanned uploads; forged, tampered, expired or replayed download links; inline rendering of uploaded HTML/SVG (XSS); guessing which file keys exist; unbounded link lifetime; production running on non-durable fakes.

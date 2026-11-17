@@ -6,4 +6,5 @@ export * from './components/CompanyProfileSection';
 export * from './components/WorkWeekSection';
 export * from './components/IntegrationsSection';
 export * from './components/SecuritySettingsSection';
+export * from './components/AdminProfilePhotoSection';
 export * from './pages/CompanySettingsPage';

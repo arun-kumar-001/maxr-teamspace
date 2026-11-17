@@ -1,9 +1,9 @@
-import { MAX_PAGE_SIZE } from '@maxr/shared';
+import { idParamSchema, MAX_PAGE_SIZE, uuidString } from '@maxr/shared';
 import { z } from 'zod';
 
 const booleanQuery = z.enum(['true', 'false']).transform((value) => value === 'true');
 
-export const approvalIdParamsSchema = z.object({ id: z.string().uuid() }).strict();
+export const approvalIdParamsSchema = idParamSchema;
 
 /** Query for `GET /approvals`. Unknown keys are rejected so a typo cannot silently widen the result. */
 export const approvalQueryObject = z
@@ -29,7 +29,7 @@ export const rejectBodySchema = z.object({ comment }).strict();
 
 const decisionSchema = z.object({
   stage: z.number().int(),
-  decidedByEmployeeId: z.string().uuid(),
+  decidedByEmployeeId: uuidString,
   outcome: z.enum(['approved', 'rejected']),
   comment: z.string().nullable(),
   decidedAt: z.string().datetime(),
@@ -37,10 +37,10 @@ const decisionSchema = z.object({
 
 export const approvalSchema = z
   .object({
-    id: z.string().uuid(),
+    id: uuidString,
     subjectType: z.string(),
-    subjectId: z.string().uuid(),
-    requesterEmployeeId: z.string().uuid(),
+    subjectId: uuidString,
+    requesterEmployeeId: uuidString,
     requesterName: z.string(),
     stages: z.array(z.enum(['manager', 'hr'])),
     currentStage: z.number().int(),

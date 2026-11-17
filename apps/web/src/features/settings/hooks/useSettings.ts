@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSettings, updateSettings, SettingsApiError } from '../api/settingsApi';
+import { setStaffPayslipsEnabled } from '../../../shell/navigation';
 import {
   type CompanySettings,
   type DayName,
@@ -55,6 +56,14 @@ export function useSettings(): UseSettingsResult {
       const data = await getSettings();
       setSettings(data);
       setDraft(initDraft(data));
+      try {
+        localStorage.setItem('maxr_company_settings', JSON.stringify(data));
+      } catch {
+        // Browser storage can be unavailable while API settings remain usable.
+      }
+      if (data.integrations?.payrollExport !== undefined) {
+        setStaffPayslipsEnabled(data.integrations.payrollExport);
+      }
     } catch (err) {
       if (err instanceof SettingsApiError) {
         setError(err.message);
@@ -184,6 +193,14 @@ export function useSettings(): UseSettingsResult {
       const updated = await updateSettings(payload);
       setSettings(updated);
       setDraft(initDraft(updated));
+      try {
+        localStorage.setItem('maxr_company_settings', JSON.stringify(updated));
+      } catch {
+        // Browser storage can be unavailable while API settings remain usable.
+      }
+      if (updated.integrations?.payrollExport !== undefined) {
+        setStaffPayslipsEnabled(updated.integrations.payrollExport);
+      }
       return true;
     } catch (err) {
       if (err instanceof SettingsApiError) {

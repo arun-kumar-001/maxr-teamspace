@@ -17,6 +17,7 @@ import { LocalDiskStorageAdapter } from './storage/adapters/local-disk-storage-a
 import { createSignedLinkService, randomSigningSecret } from './storage/signed-links';
 import { StorageService, createStorageService } from './storage/storage-service';
 import { Scanner, StorageAdapter } from './storage/types';
+import { createClamavScanner } from './storage/adapters/clamav-scanner';
 
 /** What modules receive. They depend on these interfaces only, never on SMTP, SendGrid or Cantobo. */
 export interface PlatformServices {
@@ -99,7 +100,15 @@ export function createPlatform({
     signer,
     logger,
     maxFileBytes: config.storage.maxFileBytes,
-    scanner: overrides.scanner,
+    scanner:
+      overrides.scanner ??
+      (process.env.CLAMAV_HOST
+        ? createClamavScanner({
+            host: process.env.CLAMAV_HOST,
+            port: process.env.CLAMAV_PORT ? Number(process.env.CLAMAV_PORT) : undefined,
+            checkEicarSignature: true,
+          })
+        : undefined),
     requireScan: config.storage.requireScan,
     now: overrides.now,
   });

@@ -10,6 +10,11 @@ export interface AttendanceLocation {
   workMode?: WorkMode;
 }
 
+export interface AttendanceBreak {
+  startTime: string;
+  endTime: string | null;
+}
+
 export interface AttendanceRecord extends Record<string, unknown> {
   id: string;
   employeeId: string;
@@ -18,8 +23,13 @@ export interface AttendanceRecord extends Record<string, unknown> {
   checkInTime: string; // ISO 8601 UTC
   checkOutTime: string | null; // ISO 8601 UTC
   durationMinutes: number | null;
+  breaks?: AttendanceBreak[];
+  breakMinutes?: number;
   status: AttendanceStatus;
   location: AttendanceLocation | null;
+  checkOutLocation?: AttendanceLocation | null;
+  checkInPhoto?: string | null;
+  checkOutPhoto?: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -35,10 +45,13 @@ export interface TodayAttendanceSummary {
 
 export interface CheckInRequest {
   location?: AttendanceLocation;
+  photoDataUrl?: string;
   notes?: string;
 }
 
 export interface CheckOutRequest {
+  location?: AttendanceLocation;
+  photoDataUrl?: string;
   notes?: string;
 }
 
@@ -98,4 +111,52 @@ export interface CorrectionQuery {
 export interface PaginatedCorrectionsResponse {
   data: AttendanceCorrection[];
   meta: AttendancePaginationMeta;
+}
+
+export type CalendarCategory = 'present' | 'absent' | 'late' | 'wfh' | 'on_leave' | 'holiday';
+
+export interface TeamCalendarEmployee {
+  employeeId: string;
+  employeeCode: string;
+  employeeName: string;
+  departmentId: string | null;
+  departmentName: string | null;
+  designation: string | null;
+}
+
+export interface TeamCalendarDepartment {
+  id: string;
+  name: string;
+}
+
+export interface TeamCalendarHoliday {
+  id: string;
+  date: string;
+  name: string;
+}
+
+export interface TeamCalendarEntry {
+  id: string;
+  employeeId: string;
+  employeeCode: string;
+  employeeName: string;
+  departmentId: string | null;
+  departmentName: string | null;
+  designation: string | null;
+  date: string;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  durationMinutes: number | null;
+  workMode: WorkMode | null;
+  category: CalendarCategory;
+  statusLabel: string;
+  leaveTypeName?: string | null;
+  holidayName?: string | null;
+}
+
+export interface TeamCalendarData {
+  employees: TeamCalendarEmployee[];
+  departments: TeamCalendarDepartment[];
+  holidays: TeamCalendarHoliday[];
+  entries: TeamCalendarEntry[];
 }

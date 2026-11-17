@@ -20,6 +20,8 @@ import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
 import { createApiRouter } from './routes';
 import { getPool } from './db/client';
 import { getRedisClient } from './db/redis';
+import { IEmployeeDirectoryRepository } from './modules/employees/directory/directory.repository';
+import { IEmployeeDetailRepository } from './modules/employees/detail/detail.repository';
 
 export interface AppOptions {
   logger?: Logger;
@@ -36,6 +38,8 @@ export interface AppOptions {
   reportRegistry?: ReportRegistry;
   /** Replaces the PDF renderer (tests). */
   reportPdfExporter?: PdfExporter;
+  employeeDirectoryRepository?: IEmployeeDirectoryRepository;
+  employeeDetailRepository?: IEmployeeDetailRepository;
 }
 
 export function createApp(options: AppOptions = {}): Express {
@@ -103,6 +107,8 @@ export function createApp(options: AppOptions = {}): Express {
       reportRegistry: options.reportRegistry,
       reportPdfExporter: options.reportPdfExporter,
       exposeDevRoutes: nodeEnv !== 'production',
+      employeeDirectoryRepository: options.employeeDirectoryRepository,
+      employeeDetailRepository: options.employeeDetailRepository,
     }),
   );
 

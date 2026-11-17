@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
 import type { LeavePolicy } from '../types';
-import { Button, SegmentedControl } from '../../../components/ui';
+import { Button, PrimaryActionButton, SegmentedControl } from '../../../components/ui';
 import { LeavePoliciesTable } from '../components/LeavePoliciesTable';
 import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
@@ -34,8 +34,24 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       ? 'requests'
       : initialTab === 'approvals' && !canReviewApprovals
         ? 'requests'
-        : initialTab,
+        : initialTab === 'calendar'
+          ? 'requests'
+          : initialTab,
   );
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(
+        initialTab === 'policies' && !canManage
+          ? 'requests'
+          : initialTab === 'approvals' && !canReviewApprovals
+            ? 'requests'
+            : initialTab === 'calendar'
+              ? 'requests'
+              : initialTab,
+      );
+    }
+  }, [initialTab, canManage, canReviewApprovals]);
 
   const {
     policies,
@@ -86,7 +102,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     { value: 'requests', label: 'My Requests' },
     ...(canReviewApprovals ? [{ value: 'approvals', label: 'Team Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
-    { value: 'calendar', label: 'Team Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
@@ -100,26 +115,22 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display">
-            Leave & Holiday Management
+            Employee Leave
           </h1>
-          <p className="text-sm text-text-muted mt-1">
-            Apply for leave, track requests and approvals, check balances, and review team
-            schedules.
-          </p>
+          <p className="text-sm text-text-muted mt-1">Plan, track, and manage team leaves</p>
+          <span className="sr-only">Leave & Holiday Management</span>
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Apply for Leave Button - Accessible to all staff */}
-          <Button
+          <PrimaryActionButton
             type="button"
-            variant="primary"
             onClick={() => setIsApplyModalOpen(true)}
             data-testid="apply-leave-btn"
-            className="min-h-[44px]"
           >
-            Apply for Leave
-          </Button>
+            Apply Leave
+          </PrimaryActionButton>
 
           {canManage && (
             <Button
@@ -226,6 +237,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       {activeTab === 'requests' && (
         <LeaveRequestsTable
           requests={requests}
+          balances={balances}
           isLoading={isLoadingRequests}
           onCancelRequest={async (id) => {
             await cancelRequest(id);
@@ -242,11 +254,16 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           year={selectedYear}
           onYearChange={setSelectedYear}
           isLoading={isLoadingBalances}
+          onApplyClick={() => setIsApplyModalOpen(true)}
         />
       )}
 
       {activeTab === 'calendar' && (
-        <LeaveCalendarView entries={calendarEntries} isLoading={isLoadingCalendar} />
+        <LeaveCalendarView
+          entries={calendarEntries}
+          isLoading={isLoadingCalendar}
+          onApplyClick={() => setIsApplyModalOpen(true)}
+        />
       )}
 
       {activeTab === 'holidays' && (

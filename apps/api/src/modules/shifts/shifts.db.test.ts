@@ -107,7 +107,7 @@ describe('shifts and attendance policy against PostgreSQL', () => {
       expect(shift).toMatchObject({
         code: 'GENERAL',
         startTime: '09:00',
-        endTime: '18:00',
+        endTime: '19:00',
         graceMinutes: 15,
         crossesMidnight: false,
         isActive: true,

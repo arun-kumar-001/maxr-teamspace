@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { IntegrationToggles } from '../types';
+import { isPayslipEnabledForStaff, setStaffPayslipsEnabled } from '../../../shell/navigation';
 
 interface IntegrationsSectionProps {
   toggles: IntegrationToggles;
@@ -49,20 +51,78 @@ export function IntegrationsSection({
   onToggle,
   disabled = false,
 }: IntegrationsSectionProps) {
+  const [payslipsEnabled, setPayslipsEnabled] = useState(isPayslipEnabledForStaff);
+
+  const handleTogglePayslips = () => {
+    const next = !payslipsEnabled;
+    setPayslipsEnabled(next);
+    setStaffPayslipsEnabled(next);
+    onToggle('payrollExport', next);
+  };
+
   return (
     <div
       className="p-5 sm:p-6 bg-surface border border-border rounded-card shadow-card space-y-5"
       data-testid="integrations-section"
     >
       <div>
-        <h3 className="text-base font-semibold text-text">Platform Integrations</h3>
+        <h3 className="text-base font-semibold text-text">Platform Integrations & Staff Access</h3>
         <p className="text-xs text-text-muted mt-0.5">
           Enable or disable automated adapters for third-party communication, scheduling, and
-          payroll feeds.
+          payroll feeds, and control feature navigation for staff.
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Dedicated Staff Payslip Navigation Toggle */}
+        <div
+          className={`p-4 rounded-tile border transition-all flex items-start justify-between gap-4 col-span-1 sm:col-span-2 ${
+            payslipsEnabled
+              ? 'bg-surface-raised border-primary-strong/30 shadow-card'
+              : 'bg-surface-muted/50 border-border opacity-75'
+          }`}
+        >
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-text truncate">
+                Staff Payslip Navigation Access
+              </span>
+              <span
+                className={`inline-flex px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full ${
+                  payslipsEnabled
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-surface-muted text-text-subtle border border-border'
+                }`}
+              >
+                {payslipsEnabled ? 'Active' : 'Disabled'}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted leading-relaxed">
+              When enabled, staff members can view and download their monthly payslips from the
+              sidebar menu. When disabled, payslips navigation is hidden for staff.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={payslipsEnabled}
+            disabled={disabled}
+            onClick={handleTogglePayslips}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-strong focus:ring-offset-2 ${
+              payslipsEnabled ? 'bg-primary-deep' : 'bg-border-strong'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            data-testid="toggle-staff-payslips"
+          >
+            <span className="sr-only">Toggle Staff Payslip Navigation</span>
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out ${
+                payslipsEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
         {INTEGRATION_ITEMS.map((item) => {
           const isEnabled = toggles[item.key];
           return (
@@ -98,7 +158,14 @@ export function IntegrationsSection({
                 role="switch"
                 aria-checked={isEnabled}
                 disabled={disabled}
-                onClick={() => onToggle(item.key, !isEnabled)}
+                onClick={() => {
+                  const nextVal = !isEnabled;
+                  onToggle(item.key, nextVal);
+                  if (item.key === 'payrollExport') {
+                    setPayslipsEnabled(nextVal);
+                    setStaffPayslipsEnabled(nextVal);
+                  }
+                }}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-strong focus:ring-offset-2 ${
                   isEnabled ? 'bg-primary-deep' : 'bg-border-strong'
                 } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}

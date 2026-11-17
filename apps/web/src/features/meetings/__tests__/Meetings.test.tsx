@@ -155,7 +155,7 @@ describe('Meetings Feature (Issue #45)', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Meetings & Calendar')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Calendar' })).toBeInTheDocument();
     expect(screen.getByText('Scheduled Meetings')).toBeInTheDocument();
     expect(screen.getByText('Pending Your RSVP')).toBeInTheDocument();
 
