@@ -330,7 +330,7 @@ describe('Tasks Feature (Issue #43)', () => {
     expect(screen.getByText('Create New Task')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByRole('option', { name: /Alice Walker/i })).toBeInTheDocument();
+      expect(screen.getAllByRole('option', { name: /Alice Walker/i })[0]).toBeInTheDocument();
     });
 
     const titleInput = screen.getByPlaceholderText('e.g. Implement user export CSV');
@@ -444,6 +444,80 @@ describe('Tasks Feature (Issue #43)', () => {
       expect(screen.queryByTestId('tab-view-assigned')).not.toBeInTheDocument();
       expect(screen.queryByTestId('tasks-side-todo-panel')).not.toBeInTheDocument();
       expect(screen.queryByTestId('toggle-todo-sidebar-btn')).not.toBeInTheDocument();
+    });
+  });
+
+  it('allows Staff to click Add Task, choose Assigned To and Assigned By, and create a task', async () => {
+    vi.mocked(tasksApi.createTask).mockResolvedValueOnce({
+      id: 'task-created-by-staff',
+      title: 'Prepare Client Presentation Deck',
+      description: 'Slide deck for quarterly review',
+      projectId: null,
+      projectName: null,
+      assigneeEmployeeId: '22222222-2222-2222-2222-222222222222',
+      assigneeName: 'Alice Walker',
+      assignerEmployeeId: '11111111-1111-1111-1111-111111111111',
+      assignerName: 'Sam Staff',
+      status: 'todo',
+      priority: 'high',
+      dueDate: '2026-11-20',
+      isDaily: false,
+      isOverdue: false,
+      completedAt: null,
+      version: 1,
+      createdAt: '2026-11-17T10:00:00Z',
+      updatedAt: '2026-11-17T10:00:00Z',
+    });
+
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <TasksPage initialScope="mine" />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    // Verify button is visible for staff
+    await waitFor(() => {
+      expect(screen.getByTestId('create-task-btn')).toBeInTheDocument();
+      expect(screen.getByText('Add Task')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('create-task-btn'));
+
+    expect(screen.getByText('Create New Task')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('option', { name: /Alice Walker/i })[0]).toBeInTheDocument();
+    });
+
+    // Enter title
+    const titleInput = screen.getByPlaceholderText('e.g. Implement user export CSV');
+    fireEvent.change(titleInput, { target: { value: 'Prepare Client Presentation Deck' } });
+
+    // Choose Assigned To (Assignee)
+    const assigneeSelect = screen.getByLabelText(/Assigned To/i);
+    fireEvent.change(assigneeSelect, {
+      target: { value: '22222222-2222-2222-2222-222222222222' },
+    });
+
+    // Choose Assigned By (Assigner)
+    const assignerSelect = screen.getByLabelText(/Assigned By/i);
+    fireEvent.change(assignerSelect, {
+      target: { value: '22222222-2222-2222-2222-222222222222' },
+    });
+
+    // Submit
+    fireEvent.click(screen.getByTestId('submit-task-btn'));
+
+    await waitFor(() => {
+      expect(tasksApi.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Prepare Client Presentation Deck',
+          assigneeEmployeeId: '22222222-2222-2222-2222-222222222222',
+          assignerEmployeeId: '22222222-2222-2222-2222-222222222222',
+        }),
+      );
     });
   });
 });

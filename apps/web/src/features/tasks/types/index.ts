@@ -90,6 +90,9 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   assigneeEmployeeId: string;
+  assigneeName?: string;
+  assignerEmployeeId?: string;
+  assignerName?: string;
   priority?: TaskPriority;
   dueDate?: string;
   projectId?: string;
@@ -100,6 +103,9 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
   assigneeEmployeeId?: string;
+  assigneeName?: string;
+  assignerEmployeeId?: string;
+  assignerName?: string;
   priority?: TaskPriority;
   dueDate?: string | null;
   projectId?: string | null;

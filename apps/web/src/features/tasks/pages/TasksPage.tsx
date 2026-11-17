@@ -220,18 +220,16 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
             </Button>
           )}
 
-          {canManage && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsCreateOpen(true)}
-              className="min-h-[40px] inline-flex items-center gap-1.5"
-              data-testid="create-task-btn"
-            >
-              <span className="text-base font-bold leading-none">+</span>
-              <span>Create Task</span>
-            </Button>
-          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+            className="min-h-[40px] inline-flex items-center gap-1.5"
+            data-testid="create-task-btn"
+          >
+            <span className="text-base font-bold leading-none">+</span>
+            <span>Add Task</span>
+          </Button>
         </div>
       </div>
 
@@ -292,18 +290,16 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
                   : 'No tasks have been assigned to you yet.'
             }
             actionLabel={
-              canManage &&
               !search &&
               !priority &&
               !status &&
               !overdueOnly &&
               !dueDateFilter &&
               !selectedAssigneeId
-                ? 'Create First Task'
+                ? 'Add First Task'
                 : undefined
             }
             onAction={
-              canManage &&
               !search &&
               !priority &&
               !status &&
@@ -321,7 +317,7 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
             onStatusChange={handleStatusChange}
             onToggleDailyDone={handleToggleDailyDone}
             onQuickCreateClick={() => setIsCreateOpen(true)}
-            canCreate={canManage}
+            canCreate={true}
             currentEmployeeId={user?.employeeId ?? undefined}
             isAdmin={isAdmin}
           />
@@ -354,6 +350,7 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
         onClose={() => setIsCreateOpen(false)}
         mode="create"
         defaultAssigneeId={scope === 'mine' ? (user?.employeeId ?? undefined) : undefined}
+        defaultAssignerId={user?.employeeId ?? undefined}
         onSubmitCreate={handleCreateSubmit}
       />
 
