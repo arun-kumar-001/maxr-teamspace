@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { ROLES } from '@maxr/shared';
 import { useAuth } from '../auth/AuthContext';
 import { NotificationBell } from '../features/notifications';
 
@@ -91,8 +92,25 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
         ) : null}
       </div>
 
-      {/* Right: Notifications & User Profile Menu with Dropdown */}
-      <div className="flex items-center gap-3">
+      {/* Right: Daily Checklist, Notifications & User Profile Menu with Dropdown */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {user && (
+          <button
+            type="button"
+            onClick={() => onNavigate?.(user.role === ROLES.STAFF ? '/staff/checklist' : '/checklist')}
+            data-testid="navbar-checklist-btn"
+            title="Daily Checklist & Routines"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-full border border-border bg-surface text-text hover:bg-surface-raised hover:border-border-strong focus:outline-none focus:ring-2 focus:ring-primary h-10 min-h-[40px] transition-colors shadow-xs cursor-pointer"
+          >
+            <span className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </span>
+            <span className="hidden sm:inline">Daily Checklist</span>
+          </button>
+        )}
+
         {user && <NotificationBell onNavigate={onNavigate} />}
 
         {/* User avatar dropdown trigger */}

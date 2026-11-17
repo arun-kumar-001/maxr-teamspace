@@ -11,7 +11,9 @@ import { isPayslipEnabledForStaff } from '../../../shell/navigation';
 import { fetchMyTasks } from '../../tasks/api/tasksApi';
 import type { Task } from '../../tasks/types';
 import {
+  getSidebarTodos,
   getSidebarTodoStats,
+  isTodoCompletedToday,
   TODOS_UPDATED_EVENT,
 } from '../../tasks/utils/todoStats';
 
@@ -31,6 +33,7 @@ export function ProfilePortalPage() {
 
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
   const [realTasks, setRealTasks] = useState<Task[]>([]);
+  const [liveTodos, setLiveTodos] = useState(() => getSidebarTodos());
   const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
 
@@ -95,6 +98,7 @@ export function ProfilePortalPage() {
   useEffect(() => {
     const handleUpdate = () => {
       setTodoStats(getSidebarTodoStats());
+      setLiveTodos(getSidebarTodos());
     };
     window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
     return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
@@ -708,7 +712,7 @@ export function ProfilePortalPage() {
           </div>
         </div>
 
-        {/* Middle Column: Daily Routine Checklist Summary (No fake calendar or meetings) */}
+        {/* Middle Column: Daily Work Plan & Routine (Live sync with Daily Tasks / Checklist) */}
         <div
           className="lg:col-span-5 rounded-[26px] p-5 shadow-xs hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-out flex flex-col justify-between"
           style={{
@@ -719,7 +723,7 @@ export function ProfilePortalPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary-deep animate-pulse" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
                 <h3
                   className="text-sm sm:text-base font-bold font-display"
                   style={{ color: 'rgb(8, 11, 12)' }}
@@ -729,68 +733,85 @@ export function ProfilePortalPage() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/tasks' : '/tasks')}
-                className="text-xs font-semibold px-3 py-1 rounded-full bg-primary-soft text-primary-deep hover:bg-primary-soft/80 transition-colors"
+                onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/checklist' : '/checklist')}
+                data-testid="daily-work-plan-redirect-btn"
+                className="text-xs font-semibold px-3 py-1 rounded-full bg-primary-soft text-primary-deep hover:bg-primary-soft/80 transition-colors cursor-pointer"
               >
-                Open Matrix →
+                Daily Tasks →
               </button>
             </div>
 
             <p className="text-xs text-text-muted mb-4">
-              Track your daily routine consistency and personal tasks. Complete routine items on your daily matrix.
+              Live daily routine checklist and shift work plan. Track items across your shifts.
             </p>
 
             <div className="space-y-2.5 text-xs">
-              <div className="p-3 rounded-2xl bg-surface-muted border border-border flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold">
-                    1
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text">Morning Attendance Check-in</p>
-                    <p className="text-[10px] text-text-muted">Register daily attendance in Time Tracker</p>
-                  </div>
+              {liveTodos.length === 0 ? (
+                <div className="py-6 text-center text-xs text-text-muted">
+                  No daily tasks added yet. Click Daily Tasks to add routines.
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface text-text border border-border">
-                  Daily
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-surface-muted border border-border flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold">
-                    2
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text">Daily Standup & Work Plan</p>
-                    <p className="text-[10px] text-text-muted">Review today's to-dos and project milestones</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface text-text border border-border">
-                  Routine
-                </span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-surface-muted border border-border flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-semibold text-text">Evening Attendance Check-out</p>
-                    <p className="text-[10px] text-text-muted">Finalize daily log and clock out</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface text-text border border-border">
-                  Routine
-                </span>
-              </div>
+              ) : (
+                liveTodos.slice(0, 3).map((item, idx) => {
+                  const isDone = isTodoCompletedToday(item);
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-2xl bg-surface-muted border border-border flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                            isDone
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-primary-soft text-primary-deep'
+                          }`}
+                        >
+                          {isDone ? '✓' : idx + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className={`font-semibold text-text truncate ${
+                              isDone ? 'line-through opacity-85' : ''
+                            }`}
+                          >
+                            {item.title}
+                          </p>
+                          <p className="text-[10px] text-text-muted truncate">
+                            {isDone
+                              ? 'Completed for today'
+                              : item.frequency === 'daily'
+                                ? 'Daily routine • Due today'
+                                : 'One-time routine'}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                          isDone
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-surface text-text border border-border'
+                        }`}
+                      >
+                        {isDone ? 'Done' : item.frequency === 'daily' ? 'Daily' : 'Routine'}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
           <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-[11px] text-text-muted">
-            <span>Work hours: 09:00 AM – 06:00 PM</span>
-            <span className="font-semibold text-text">Active Shift</span>
+            <span>
+              Work Plan: {liveTodos.filter((t) => isTodoCompletedToday(t)).length} of {liveTodos.length} Done
+            </span>
+            <button
+              type="button"
+              onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/checklist' : '/checklist')}
+              className="font-semibold text-primary-deep hover:underline cursor-pointer"
+            >
+              Full Checklist & Export →
+            </button>
           </div>
         </div>
 

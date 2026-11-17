@@ -21,6 +21,12 @@ export function DailyChecklistPage() {
   const [todos, setTodos] = useState<TodoItemData[]>(() => getSidebarTodos());
   const [stats, setStats] = useState(() => getSidebarTodoStats());
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return d.toISOString().slice(0, 10);
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [filter, setFilter] = useState<'all' | 'daily' | 'once'>('all');
   const [newTitle, setNewTitle] = useState('');
   const [newFrequency, setNewFrequency] = useState<'daily' | 'once'>('daily');
@@ -115,49 +121,87 @@ export function DailyChecklistPage() {
     setSelectedDate(todayStr);
   };
 
-  // Day-wise Report CSV Export
-  const handleDownloadReport = () => {
+  // Date Range CSV Export (Start to End date)
+  const handleExport = (start = startDate, end = endDate) => {
+    const dates: string[] = [];
+    const minDate = start <= end ? new Date(start) : new Date(end);
+    const maxDate = start <= end ? new Date(end) : new Date(start);
+
+    const iter = new Date(minDate);
+    while (iter <= maxDate) {
+      dates.push(iter.toISOString().slice(0, 10));
+      iter.setDate(iter.getDate() + 1);
+    }
+
     const headers = [
-      'Report Date',
+      'Date',
+      'Day of Week',
       'Employee Name',
       'Role',
       'Item ID',
       'Item Title',
       'Frequency',
       'Status',
-      'Completed On Selected Date',
-      'All Completed Dates Count',
+      'Completed Count For Day',
+      'Total Items For Day',
+      'Day Completion Rate',
     ];
 
-    const rows = todos.map((t) => {
-      const isDone = isTodoCompletedToday(t, selectedDate);
-      return [
-        `"${selectedDate}"`,
-        `"${user?.name ?? 'Employee'}"`,
-        `"${user?.role ?? 'Staff'}"`,
-        `"${t.id}"`,
-        `"${t.title.replace(/"/g, '""')}"`,
-        `"${t.frequency}"`,
-        `"${isDone ? 'Completed' : 'Pending'}"`,
-        `"${isDone ? 'YES' : 'NO'}"`,
-        `"${t.completedDates?.length ?? (t.isCompletedOnce ? 1 : 0)}"`,
-      ].join(',');
-    });
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const rows: string[] = [];
 
-    // Summary row
+    let totalChecksPossible = 0;
+    let totalChecksCompleted = 0;
+
+    for (const d of dates) {
+      const parts = d.split('-').map(Number);
+      const dObj = new Date(parts[0] ?? 2026, (parts[1] ?? 1) - 1, parts[2] ?? 1);
+      const dayName = dayNames[dObj.getDay()] ?? 'Day';
+
+      const completedCount = todos.filter((t) => isTodoCompletedToday(t, d)).length;
+      const totalCount = todos.length;
+      const rate = totalCount > 0 ? `${Math.round((completedCount / totalCount) * 100)}%` : '0%';
+
+      totalChecksPossible += totalCount;
+      totalChecksCompleted += completedCount;
+
+      for (const t of todos) {
+        const isDone = isTodoCompletedToday(t, d);
+        rows.push(
+          [
+            `"${d}"`,
+            `"${dayName}"`,
+            `"${user?.name ?? 'Employee'}"`,
+            `"${user?.role ?? 'Staff'}"`,
+            `"${t.id}"`,
+            `"${t.title.replace(/"/g, '""')}"`,
+            `"${t.frequency}"`,
+            `"${isDone ? 'Completed' : 'Incomplete'}"`,
+            `"${completedCount}"`,
+            `"${totalCount}"`,
+            `"${rate}"`,
+          ].join(','),
+        );
+      }
+    }
+
+    // Summary section
     rows.push('');
-    rows.push(`"--- SUMMARY ---",,,,,,,,`);
-    rows.push(`"Total Items","${dateTotalCount}",,,,,,,`);
-    rows.push(`"Completed Items","${dateCompletedCount}",,,,,,,`);
-    rows.push(`"Completion Rate","${datePct}%",,,,,,,`);
-    rows.push(`"Export Timestamp","${new Date().toISOString()}",,,,,,,`);
+    rows.push(`"--- DATE RANGE AUDIT SUMMARY ---",,,,,,,,,,`);
+    rows.push(`"Selected Date Range","${start} to ${end}",,,,,,,,,,`);
+    rows.push(`"Total Days Covered","${dates.length}",,,,,,,,,,`);
+    rows.push(`"Total Checks Completed","${totalChecksCompleted} of ${totalChecksPossible}",,,,,,,,,,`);
+    const overallRate =
+      totalChecksPossible > 0 ? `${Math.round((totalChecksCompleted / totalChecksPossible) * 100)}%` : '0%';
+    rows.push(`"Overall Completion Rate","${overallRate}",,,,,,,,,,`);
+    rows.push(`"Export Timestamp","${new Date().toISOString()}",,,,,,,,,,`);
 
     const csvContent = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `maxr-daily-checklist-report-${selectedDate}.csv`);
+    link.setAttribute('download', `maxr-daily-checklist-report-${start}-to-${end}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -255,22 +299,6 @@ export function DailyChecklistPage() {
             )}
           </div>
 
-          {/* Download Day-wise Report Button */}
-          <button
-            type="button"
-            onClick={handleDownloadReport}
-            data-testid="download-checklist-report-btn"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-white border border-border text-text hover:bg-surface-raised hover:border-border-strong shadow-xs transition-all duration-150 cursor-pointer"
-            title="Download day-wise checklist completion report in CSV"
-          >
-            <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            <span>Download Day Report</span>
-          </button>
-
           {/* Add Routine Item Button */}
           <button
             type="button"
@@ -280,6 +308,103 @@ export function DailyChecklistPage() {
           >
             <span className="text-base font-bold leading-none">+</span>
             <span>Add Routine</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Date Range Export Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 p-4 bg-white border border-border/80 rounded-2xl shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </span>
+          <div>
+            <h2 className="text-xs sm:text-sm font-bold text-text">Export Routine Checklist Report</h2>
+            <p className="text-[11px] text-text-muted">Select Start and End dates to export comprehensive day-wise audit report</p>
+          </div>
+        </div>
+
+        {/* Start to End Date Inputs + Quick Presets + Export Button */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 text-xs">
+            <label className="text-text-muted font-semibold text-[11px]">From:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => e.target.value && setStartDate(e.target.value)}
+              className="px-2 py-1 text-xs rounded-lg border border-border bg-surface text-text font-medium cursor-pointer"
+              aria-label="Start Date"
+              data-testid="export-start-date"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs">
+            <label className="text-text-muted font-semibold text-[11px]">To:</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => e.target.value && setEndDate(e.target.value)}
+              className="px-2 py-1 text-xs rounded-lg border border-border bg-surface text-text font-medium cursor-pointer"
+              aria-label="End Date"
+              data-testid="export-end-date"
+            />
+          </div>
+
+          <div className="hidden lg:flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate(todayStr);
+                setEndDate(todayStr);
+              }}
+              className="px-2 py-1 text-[11px] rounded-md border border-border hover:bg-surface-muted text-text-muted transition-colors cursor-pointer"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date();
+                d.setDate(d.getDate() - 6);
+                setStartDate(d.toISOString().slice(0, 10));
+                setEndDate(todayStr);
+              }}
+              className="px-2 py-1 text-[11px] rounded-md border border-border hover:bg-surface-muted text-text-muted transition-colors cursor-pointer"
+            >
+              7 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date();
+                d.setDate(d.getDate() - 29);
+                setStartDate(d.toISOString().slice(0, 10));
+                setEndDate(todayStr);
+              }}
+              className="px-2 py-1 text-[11px] rounded-md border border-border hover:bg-surface-muted text-text-muted transition-colors cursor-pointer"
+            >
+              30 Days
+            </button>
+          </div>
+
+          {/* Export Button */}
+          <button
+            type="button"
+            onClick={() => handleExport(startDate, endDate)}
+            data-testid="download-checklist-report-btn"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer"
+            title={`Export checklist report from ${startDate} to ${endDate}`}
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Export</span>
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
@@ -47,9 +47,11 @@ describe('ProfilePortalPage', () => {
     fireEvent.click(toggleButton);
     expect(toggleButton.textContent).toContain('Check In');
 
-    expect(screen.getByText('Daily standup & team status check')).toBeTruthy();
-    expect(screen.getByText('0/3')).toBeTruthy();
-    fireEvent.click(screen.getByText('Daily standup & team status check'));
-    expect(screen.getByText('1/3')).toBeTruthy();
+    const widget = screen.getByTestId('personal-checklist-widget');
+    const standupItem = within(widget).getByText('Daily standup & team status check');
+    expect(standupItem).toBeTruthy();
+    expect(within(widget).getByText('0/3')).toBeTruthy();
+    fireEvent.click(standupItem);
+    expect(within(widget).getByText('1/3')).toBeTruthy();
   });
 });
