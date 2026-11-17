@@ -27,7 +27,7 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Dashboard',
     path: '/dashboard',
     iconName: 'home',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
 
   // Admin Routes (AGENTS.md §1)
@@ -232,6 +232,20 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     allowedRoles: [ROLES.STAFF],
   },
   {
+    id: 'daily-checklist',
+    label: 'Daily Checklist',
+    path: '/checklist',
+    iconName: 'check',
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
+  },
+  {
+    id: 'staff-checklist',
+    label: 'Daily Checklist',
+    path: '/staff/checklist',
+    iconName: 'check',
+    allowedRoles: [ROLES.STAFF],
+  },
+  {
     id: 'staff-payslips',
     label: 'Payslips',
     path: '/staff/payslips',
@@ -397,6 +411,16 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.TEAM_LEAD || role === ROLES.ADMIN;
   }
   if (path === '/staff/tasks' || path.startsWith('/staff/tasks')) {
+    return true;
+  }
+
+  // Daily Checklist & Routine Reports routes
+  if (
+    path === '/checklist' ||
+    path.startsWith('/checklist/') ||
+    path === '/staff/checklist' ||
+    path.startsWith('/staff/checklist/')
+  ) {
     return true;
   }
 

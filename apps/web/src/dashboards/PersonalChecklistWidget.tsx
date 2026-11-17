@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../auth/AuthContext';
+import { ROLES } from '@maxr/shared';
 import {
   getSidebarTodos,
   getSidebarTodoStats,
@@ -12,9 +14,12 @@ import {
 
 export interface PersonalChecklistWidgetProps {
   className?: string;
+  onNavigate?: (path: string) => void;
 }
 
-export function PersonalChecklistWidget({ className = '' }: PersonalChecklistWidgetProps) {
+export function PersonalChecklistWidget({ className = '', onNavigate }: PersonalChecklistWidgetProps) {
+  const auth = useContext(AuthContext);
+  const user = auth?.user;
   const [todos, setTodos] = useState<TodoItemData[]>(() => getSidebarTodos());
   const [stats, setStats] = useState(() => getSidebarTodoStats());
   const [filter, setFilter] = useState<'all' | 'daily' | 'once'>('all');
@@ -250,9 +255,9 @@ export function PersonalChecklistWidget({ className = '' }: PersonalChecklistWid
         </div>
       </div>
 
-      {/* 5. Footer Progress */}
-      <div className="pt-2.5 mt-2 border-t border-border/80 text-[11px] text-text-muted flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      {/* 5. Footer Progress & Page Link */}
+      <div className="pt-2.5 mt-2 border-t border-border/80 text-[11px] text-text-muted flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
           <div className="h-1.5 flex-1 bg-surface-muted rounded-full overflow-hidden border border-border/40">
             <div
               className="h-full bg-primary transition-all duration-300 rounded-full"
@@ -260,6 +265,26 @@ export function PersonalChecklistWidget({ className = '' }: PersonalChecklistWid
             />
           </div>
           <span className="font-mono font-bold text-text shrink-0">{pct}%</span>
+        </div>
+
+        <div className="flex items-center justify-between text-[11px]">
+          <span className="text-text-muted">{stats.completed} of {stats.total} completed</span>
+          <button
+            type="button"
+            onClick={() => {
+              const target = user?.role === ROLES.STAFF ? '/staff/checklist' : '/checklist';
+              if (onNavigate) {
+                onNavigate(target);
+              } else if (typeof window !== 'undefined') {
+                window.location.href = target;
+              }
+            }}
+            data-testid="widget-view-checklist-link"
+            className="text-primary-ink hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+          >
+            <span>Full Report &amp; Day View</span>
+            <span>&rarr;</span>
+          </button>
         </div>
       </div>
     </div>

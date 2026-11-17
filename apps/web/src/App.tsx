@@ -39,6 +39,7 @@ import { NotificationsInboxPage } from './features/notifications';
 import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
+import { DailyChecklistPage } from './features/tasks/pages/DailyChecklistPage';
 import { CompanySettingsPage } from './features/settings';
 import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
@@ -598,6 +599,24 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <TasksPage initialScope="team" />
+          </ShellLayout>
+        }
+      />
+
+      {/* Daily Checklist & Day-wise Routine Reports */}
+      <Route
+        path="/checklist"
+        element={
+          <ShellLayout>
+            <DailyChecklistPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/checklist"
+        element={
+          <ShellLayout>
+            <DailyChecklistPage />
           </ShellLayout>
         }
       />
