@@ -39,7 +39,10 @@ export function CreateEmployeePage() {
 
   if (!isAuthorized && userRole !== null) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto" data-testid="create-employee-page">
+      <div
+        className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto"
+        data-testid="create-employee-page"
+      >
         <div data-testid="create-employee-forbidden">
           <ForbiddenState
             title="Access Restricted"
@@ -53,7 +56,10 @@ export function CreateEmployeePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto" data-testid="create-employee-page">
+    <div
+      className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto"
+      data-testid="create-employee-page"
+    >
       {/* Header Banner & Breadcrumb */}
       <div className="space-y-2 border-b border-border pb-4">
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-muted">

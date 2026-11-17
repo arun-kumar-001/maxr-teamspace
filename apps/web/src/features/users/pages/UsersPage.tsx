@@ -552,7 +552,9 @@ export function UsersPage() {
           label="Active Users"
           value={activeUsersCount}
           icon={<IconUserCheck className="w-7 h-7" />}
-          badge={users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'}
+          badge={
+            users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'
+          }
           variant="purple"
           style={{ animationDelay: '60ms' }}
         />
@@ -562,7 +564,9 @@ export function UsersPage() {
           label="Inactive Users"
           value={inactiveUsersCount}
           icon={<IconUserMinus className="w-7 h-7" />}
-          badge={users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'}
+          badge={
+            users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'
+          }
           variant="amber"
           style={{ animationDelay: '120ms' }}
         />

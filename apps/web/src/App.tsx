@@ -292,18 +292,9 @@ function AppRoutes() {
       />
 
       {/* Designations Management Routes Redirect to Departments */}
-      <Route
-        path="/designations"
-        element={<Navigate to="/departments" replace />}
-      />
-      <Route
-        path="/admin/designations"
-        element={<Navigate to="/admin/departments" replace />}
-      />
-      <Route
-        path="/hr/designations"
-        element={<Navigate to="/hr/departments" replace />}
-      />
+      <Route path="/designations" element={<Navigate to="/departments" replace />} />
+      <Route path="/admin/designations" element={<Navigate to="/admin/departments" replace />} />
+      <Route path="/hr/designations" element={<Navigate to="/hr/departments" replace />} />
 
       {/* My Profile Portal & Personal Details Routes */}
       <Route

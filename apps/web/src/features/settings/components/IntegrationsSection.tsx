@@ -98,7 +98,8 @@ export function IntegrationsSection({
               </span>
             </div>
             <p className="text-xs text-text-muted leading-relaxed">
-              When enabled, staff members can view and download their monthly payslips from the sidebar menu. When disabled, payslips navigation is hidden for staff.
+              When enabled, staff members can view and download their monthly payslips from the
+              sidebar menu. When disabled, payslips navigation is hidden for staff.
             </p>
           </div>
 

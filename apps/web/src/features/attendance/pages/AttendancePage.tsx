@@ -244,7 +244,9 @@ function AttendanceOpsWorkspace({
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
-  const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [selectedDate, setSelectedDate] = useState<string>(() =>
+    new Date().toISOString().slice(0, 10),
+  );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
 
@@ -371,10 +373,7 @@ function AttendanceOpsWorkspace({
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {activeTab === 'roster' && canManage && (
-            <PrimaryActionButton
-              type="button"
-              onClick={() => setIsCreateRosterOpen(true)}
-            >
+            <PrimaryActionButton type="button" onClick={() => setIsCreateRosterOpen(true)}>
               Create Roster
             </PrimaryActionButton>
           )}

@@ -587,10 +587,7 @@ export function AdminDashboard() {
           </h1>
         </div>
         <div className="shrink-0">
-          <PrimaryActionButton
-            type="button"
-            onClick={() => navigateTo('/tasks')}
-          >
+          <PrimaryActionButton type="button" onClick={() => navigateTo('/tasks')}>
             Create task
           </PrimaryActionButton>
         </div>

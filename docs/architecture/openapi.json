@@ -988,7 +988,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
           },
           "title": {
             "type": "string"
@@ -1000,7 +1000,7 @@
           "projectId": {
             "type": "string",
             "nullable": true,
-            "format": "uuid"
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
           },
           "projectName": {
             "type": "string",
@@ -1008,14 +1008,14 @@
           },
           "assigneeEmployeeId": {
             "type": "string",
-            "format": "uuid"
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
           },
           "assigneeName": {
             "type": "string"
           },
           "assignerEmployeeId": {
             "type": "string",
-            "format": "uuid"
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
           },
           "assignerName": {
             "type": "string"
@@ -1045,6 +1045,13 @@
           },
           "isOverdue": {
             "type": "boolean"
+          },
+          "isDaily": {
+            "type": "boolean"
+          },
+          "dailyLastDoneDate": {
+            "type": "string",
+            "nullable": true
           },
           "completedAt": {
             "type": "string",
@@ -1077,6 +1084,8 @@
           "priority",
           "dueDate",
           "isOverdue",
+          "isDaily",
+          "dailyLastDoneDate",
           "completedAt",
           "version",
           "createdAt",
@@ -1759,6 +1768,58 @@
           },
           "version": {
             "type": "integer"
+          },
+          "additionalEmails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "additionalPhones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permanentAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "bloodGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "panNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "aadhaarNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountHolder": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankIfscCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankBranch": {
+            "type": "string",
+            "nullable": true
           },
           "account": {
             "type": "object",
@@ -2465,6 +2526,259 @@
           "manager",
           "status",
           "joiningDate",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PayslipRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "employeeCode": {
+            "type": "string"
+          },
+          "employeeName": {
+            "type": "string"
+          },
+          "departmentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "payMonth": {
+            "type": "integer"
+          },
+          "payYear": {
+            "type": "integer"
+          },
+          "periodLabel": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "designation": {
+            "type": "string"
+          },
+          "uan": {
+            "type": "string"
+          },
+          "pan": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "beneficiaryId": {
+            "type": "string"
+          },
+          "workLocation": {
+            "type": "string"
+          },
+          "baseBranch": {
+            "type": "string"
+          },
+          "subLocation": {
+            "type": "string"
+          },
+          "daysPaid": {
+            "type": "number"
+          },
+          "leaveBalances": {
+            "type": "object",
+            "properties": {
+              "sl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "el": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "cl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "fl": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              },
+              "lc": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 365,
+                "default": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "basicSalary": {
+            "type": "number"
+          },
+          "basicArrears": {
+            "type": "number"
+          },
+          "hra": {
+            "type": "number"
+          },
+          "hraArrears": {
+            "type": "number"
+          },
+          "performancePay": {
+            "type": "number"
+          },
+          "performanceArrears": {
+            "type": "number"
+          },
+          "variableAllowance": {
+            "type": "number"
+          },
+          "variableArrears": {
+            "type": "number"
+          },
+          "totalCurrentEarnings": {
+            "type": "number"
+          },
+          "totalArrearsEarnings": {
+            "type": "number"
+          },
+          "totalEarnings": {
+            "type": "number"
+          },
+          "providentFund": {
+            "type": "number"
+          },
+          "incomeTax": {
+            "type": "number"
+          },
+          "professionalTax": {
+            "type": "number"
+          },
+          "otherDeductionDesc": {
+            "type": "string"
+          },
+          "otherDeductionAmount": {
+            "type": "number"
+          },
+          "totalDeductions": {
+            "type": "number"
+          },
+          "netPay": {
+            "type": "number"
+          },
+          "retiralPf": {
+            "type": "number"
+          },
+          "retiralGratuity": {
+            "type": "number"
+          },
+          "annualIncome": {
+            "type": "number"
+          },
+          "taxDeductions": {
+            "type": "number"
+          },
+          "netTaxIncome": {
+            "type": "number"
+          },
+          "totalTaxPayable": {
+            "type": "number"
+          },
+          "taxDeductedTillNow": {
+            "type": "number"
+          },
+          "balanceTax": {
+            "type": "number"
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "publishedBy": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "employeeId",
+          "employeeCode",
+          "employeeName",
+          "departmentName",
+          "payMonth",
+          "payYear",
+          "periodLabel",
+          "status",
+          "designation",
+          "uan",
+          "pan",
+          "bankName",
+          "accountNumber",
+          "beneficiaryId",
+          "workLocation",
+          "baseBranch",
+          "subLocation",
+          "daysPaid",
+          "leaveBalances",
+          "basicSalary",
+          "basicArrears",
+          "hra",
+          "hraArrears",
+          "performancePay",
+          "performanceArrears",
+          "variableAllowance",
+          "variableArrears",
+          "totalCurrentEarnings",
+          "totalArrearsEarnings",
+          "totalEarnings",
+          "providentFund",
+          "incomeTax",
+          "professionalTax",
+          "otherDeductionDesc",
+          "otherDeductionAmount",
+          "totalDeductions",
+          "netPay",
+          "retiralPf",
+          "retiralGratuity",
+          "annualIncome",
+          "taxDeductions",
+          "netTaxIncome",
+          "totalTaxPayable",
+          "taxDeductedTillNow",
+          "balanceTax",
+          "publishedAt",
+          "publishedBy",
           "createdAt",
           "updatedAt"
         ]
@@ -3807,6 +4121,11 @@
                     },
                     "additionalProperties": false
                   },
+                  "photoDataUrl": {
+                    "type": "string",
+                    "maxLength": 600000,
+                    "pattern": "^data:image\\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$"
+                  },
                   "notes": {
                     "type": "string",
                     "maxLength": 500
@@ -3923,6 +4242,38 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number",
+                        "minimum": -90,
+                        "maximum": 90
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "address": {
+                        "type": "string",
+                        "maxLength": 255
+                      },
+                      "workMode": {
+                        "type": "string",
+                        "enum": [
+                          "office",
+                          "remote"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "photoDataUrl": {
+                    "type": "string",
+                    "maxLength": 600000,
+                    "pattern": "^data:image\\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$"
+                  },
                   "notes": {
                     "type": "string",
                     "maxLength": 500
@@ -8419,7 +8770,7 @@
                   },
                   "assigneeEmployeeId": {
                     "type": "string",
-                    "format": "uuid"
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
                   },
                   "priority": {
                     "type": "string",
@@ -8437,7 +8788,10 @@
                   },
                   "projectId": {
                     "type": "string",
-                    "format": "uuid"
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
+                  },
+                  "isDaily": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -8600,7 +8954,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
             },
             "required": false,
             "name": "projectId",
@@ -8639,7 +8993,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
             },
             "required": false,
             "name": "assigneeEmployeeId",
@@ -8806,7 +9160,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
             },
             "required": false,
             "name": "projectId",
@@ -8953,7 +9307,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
             },
             "required": true,
             "name": "id",
@@ -9051,7 +9405,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
             },
             "required": true,
             "name": "id",
@@ -9078,7 +9432,7 @@
                   },
                   "assigneeEmployeeId": {
                     "type": "string",
-                    "format": "uuid"
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
                   },
                   "priority": {
                     "type": "string",
@@ -9097,7 +9451,10 @@
                   "projectId": {
                     "type": "string",
                     "nullable": true,
-                    "format": "uuid"
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
+                  },
+                  "isDaily": {
+                    "type": "boolean"
                   },
                   "version": {
                     "type": "integer",
@@ -9225,7 +9582,7 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i"
             },
             "required": true,
             "name": "id",
@@ -12012,6 +12369,67 @@
                       "staff"
                     ],
                     "default": "staff"
+                  },
+                  "additionalEmails": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 255,
+                      "format": "email"
+                    },
+                    "maxItems": 5
+                  },
+                  "additionalPhones": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[0-9+()\\-\\s]{6,50}$"
+                    },
+                    "maxItems": 5
+                  },
+                  "permanentAddress": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "currentAddress": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "bloodGroup": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10
+                  },
+                  "panNumber": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{5}[0-9]{4}[A-Z]$"
+                  },
+                  "aadhaarNumber": {
+                    "type": "string",
+                    "pattern": "^\\d{12}$"
+                  },
+                  "bankAccountHolder": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
+                  },
+                  "bankName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
+                  },
+                  "bankAccountNumber": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9]{6,30}$"
+                  },
+                  "bankIfscCode": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
+                  },
+                  "bankBranch": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
                   }
                 },
                 "required": [
@@ -21095,6 +21513,1369 @@
           },
           "404": {
             "description": "Not found (or outside your scope)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/me": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "List own published payslips",
+        "description": "Required permission: `payslips.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+            },
+            "required": false,
+            "name": "sortBy",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "required": false,
+            "name": "sortOrder",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": false,
+            "name": "employeeId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "required": false,
+            "name": "payMonth",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            },
+            "required": false,
+            "name": "payYear",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated own published payslips",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PayslipRecord"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "total",
+                        "totalPages"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "List all employee payslips for HR/Admin management",
+        "description": "Required permission: `payslips.read_all`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+            },
+            "required": false,
+            "name": "sortBy",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            },
+            "required": false,
+            "name": "sortOrder",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": false,
+            "name": "employeeId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "required": false,
+            "name": "payMonth",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            },
+            "required": false,
+            "name": "payYear",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated employee payslips",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PayslipRecord"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "total",
+                        "totalPages"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Create an employee monthly payslip",
+        "description": "Required permission: `payslips.manage`",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "employeeId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                  },
+                  "payMonth": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "payYear": {
+                    "type": "integer",
+                    "minimum": 2000,
+                    "maximum": 2100
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published"
+                    ]
+                  },
+                  "designation": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "uan": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "pan": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "bankName": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "accountNumber": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "beneficiaryId": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "workLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "baseBranch": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "subLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "daysPaid": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 31
+                  },
+                  "leaveBalances": {
+                    "type": "object",
+                    "properties": {
+                      "sl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "el": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "cl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "fl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "lc": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "basicSalary": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "basicArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hra": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hraArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performancePay": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performanceArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableAllowance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "providentFund": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "incomeTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "professionalTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "otherDeductionDesc": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "otherDeductionAmount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralPf": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralGratuity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "annualIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductions": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "netTaxIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "totalTaxPayable": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductedTillNow": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "balanceTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  }
+                },
+                "required": [
+                  "employeeId",
+                  "payMonth",
+                  "payYear",
+                  "basicSalary"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payslip created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Employee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Payslip already exists for this employee and month/year",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/{id}": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Get a payslip record (own published, or any for HR/Admin)",
+        "description": "Required permission: `payslips.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payslip detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Update an employee payslip record",
+        "description": "Required permission: `payslips.manage`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published"
+                    ]
+                  },
+                  "designation": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "uan": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "pan": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "bankName": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "accountNumber": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "beneficiaryId": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "workLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "baseBranch": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "subLocation": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "daysPaid": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 31
+                  },
+                  "leaveBalances": {
+                    "type": "object",
+                    "properties": {
+                      "sl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "el": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "cl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "fl": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      },
+                      "lc": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 365,
+                        "default": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "basicSalary": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "basicArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hra": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "hraArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performancePay": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "performanceArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableAllowance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "variableArrears": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "providentFund": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "incomeTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "professionalTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "otherDeductionDesc": {
+                    "type": "string",
+                    "maxLength": 150
+                  },
+                  "otherDeductionAmount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralPf": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "retiralGratuity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "annualIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductions": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "netTaxIncome": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "totalTaxPayable": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "taxDeductedTillNow": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  },
+                  "balanceTax": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100000000
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated payslip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Download rendered A4 PDF for a payslip",
+        "description": "Required permission: `payslips.read_own`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application PDF binary stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payslips/{id}/publish": {
+      "post": {
+        "tags": [
+          "Payslips"
+        ],
+        "summary": "Publish an employee payslip so the employee can view and download it",
+        "description": "Required permission: `payslips.manage`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published payslip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PayslipRecord"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payslip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict or duplicate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
             "content": {
               "application/json": {
                 "schema": {

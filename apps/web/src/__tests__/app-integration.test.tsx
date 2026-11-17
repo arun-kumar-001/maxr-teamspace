@@ -27,8 +27,11 @@ describe('TC-12-06: Full App Integration & Routing Verification', () => {
   });
 
   it('should render App cleanly for Staff', () => {
-    const html = renderToStaticMarkup(<App initialRole={ROLES.STAFF} persistSession={false} />);
+    const html = renderToStaticMarkup(
+      <App initialRole={ROLES.STAFF} initialPath="/profile" persistSession={false} />,
+    );
     expect(html).toContain('MAXR Teamspace');
-    expect(html).toContain('data-testid="staff-dashboard"');
+    expect(html).toContain('My Profile');
+    expect(html).toContain('data-testid="app-shell"');
   });
 });

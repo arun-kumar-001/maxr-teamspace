@@ -265,7 +265,8 @@ export function OnDutyTab({
         shiftHours: `${defaultShift.startTime} - ${defaultShift.endTime}`,
         checkInTime: rec ? formatTimeDisplay(rec.checkInTime) : 'None',
         checkOutTime: rec ? formatTimeDisplay(rec.checkOutTime) : 'None',
-        hoursWorked: rec && rec.durationMinutes ? formatDurationDisplay(rec.durationMinutes) : 'None',
+        hoursWorked:
+          rec && rec.durationMinutes ? formatDurationDisplay(rec.durationMinutes) : 'None',
         status,
         notes: rec?.notes,
         rawRecord: rec,
@@ -529,16 +530,28 @@ export function OnDutyTab({
                     <th scope="col" className="px-4 py-3 whitespace-nowrap min-w-[180px]">
                       Employee
                     </th>
-                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[85px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 whitespace-nowrap text-center min-w-[85px]"
+                    >
                       Check-in
                     </th>
-                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[85px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 whitespace-nowrap text-center min-w-[85px]"
+                    >
                       Check-out
                     </th>
-                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[70px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 whitespace-nowrap text-center min-w-[70px]"
+                    >
                       Hours
                     </th>
-                    <th scope="col" className="px-3 py-3 whitespace-nowrap text-center min-w-[90px]">
+                    <th
+                      scope="col"
+                      className="px-3 py-3 whitespace-nowrap text-center min-w-[90px]"
+                    >
                       Status
                     </th>
                     <th scope="col" className="px-4 py-3 whitespace-nowrap text-right min-w-[70px]">
@@ -555,7 +568,8 @@ export function OnDutyTab({
                     </tr>
                   ) : (
                     paginatedRows.map((row) => {
-                      const initials = `${row.firstName?.[0] || row.name[0] || ''}${row.lastName?.[0] || ''}`.toUpperCase();
+                      const initials =
+                        `${row.firstName?.[0] || row.name[0] || ''}${row.lastName?.[0] || ''}`.toUpperCase();
 
                       return (
                         <tr

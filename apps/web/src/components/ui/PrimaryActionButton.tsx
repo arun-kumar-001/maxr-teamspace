@@ -7,7 +7,11 @@ export interface PrimaryActionButtonProps extends React.ButtonHTMLAttributes<HTM
   className?: string;
 }
 
-function DefaultPlusIcon({ className = 'w-4 h-4 shrink-0 transition-transform duration-200 group-hover:rotate-90' }: { className?: string }) {
+function DefaultPlusIcon({
+  className = 'w-4 h-4 shrink-0 transition-transform duration-200 group-hover:rotate-90',
+}: {
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"

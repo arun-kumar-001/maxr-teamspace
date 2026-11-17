@@ -1,6 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Button, ErrorState, ForbiddenState, Skeleton, KpiCard, PrimaryActionButton } from '../../../components/ui';
+import {
+  Badge,
+  Button,
+  ErrorState,
+  ForbiddenState,
+  Skeleton,
+  KpiCard,
+  PrimaryActionButton,
+} from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
@@ -144,7 +152,6 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
     </svg>
   );
 }
-
 
 function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -847,7 +854,8 @@ export function EmployeeDirectoryPage() {
             const initials = `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
             const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
             const percentages = [100, 82, 66, 100, 33, 48, 75, 90];
-            const progressPercent = emp.status === 'active' ? percentages[hash % percentages.length] ?? 82 : 33;
+            const progressPercent =
+              emp.status === 'active' ? (percentages[hash % percentages.length] ?? 82) : 33;
             const activeSegments = progressPercent >= 100 ? 3 : progressPercent >= 66 ? 2 : 1;
             const isSelf = emp.id === user?.employeeId;
             const isDeactivated = emp.status === 'deactivated';

@@ -42,7 +42,6 @@ function IconChevronRight({ className = 'w-4 h-4 shrink-0' }: { className?: stri
   );
 }
 
-
 function IconCalendar({ className = 'w-4 h-4 shrink-0' }: { className?: string }) {
   return (
     <svg
@@ -268,7 +267,6 @@ export function RosterTab({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [monthOffset, setMonthOffset] = useState<number>(0);
-
 
   // Create Roster Bulk Modal state
   const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
@@ -622,7 +620,6 @@ export function RosterTab({
     viewMode,
   ]);
 
-
   // Helper for Shift styling & categorization (compact, executive, MaxR Flow tokens)
   const getShiftCellConfig = (shift: Shift | null, isLeave: boolean, isWeekend: boolean) => {
     if (isWeekend) {
@@ -651,8 +648,7 @@ export function RosterTab({
     const end = effective.endTime.slice(0, 5);
     const timing = `${start} – ${end}`;
     const isStandard =
-      (start === '09:00' && end === '19:00') ||
-      effective.code.toUpperCase() === 'STANDARD';
+      (start === '09:00' && end === '19:00') || effective.code.toUpperCase() === 'STANDARD';
 
     if (isStandard) {
       return {
@@ -670,8 +666,7 @@ export function RosterTab({
       isOff: false,
       isLeave: false,
       isCustom: true,
-      className:
-        'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100/80',
+      className: 'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100/80',
       badge: effective.name || timing,
       timing,
     };
@@ -1092,11 +1087,7 @@ export function RosterTab({
                           const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
-                          const cellConfig = getShiftCellConfig(
-                            shift,
-                            !!leave,
-                            wd.isWeekend,
-                          );
+                          const cellConfig = getShiftCellConfig(shift, !!leave, wd.isWeekend);
                           const punch = resolveEmployeePunch(emp, wd, record, shift);
 
                           return (
@@ -1250,17 +1241,11 @@ export function RosterTab({
                           const leave = leaveByEmpDate.get(`${emp.id}__${d.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${d.dateStr}`);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
-                          const cellConfig = getShiftCellConfig(
-                            shift,
-                            !!leave,
-                            d.isWeekend,
-                          );
+                          const cellConfig = getShiftCellConfig(shift, !!leave, d.isWeekend);
                           const punch = resolveEmployeePunch(emp, d, record, shift);
 
                           if (!d.isWeekend && !leave) {
-                            const h = shift
-                              ? parseShiftHours(shift.startTime, shift.endTime)
-                              : 8;
+                            const h = shift ? parseShiftHours(shift.startTime, shift.endTime) : 8;
                             monthlyHours += h;
                           }
 
@@ -1268,9 +1253,7 @@ export function RosterTab({
                             <td
                               key={d.dateStr}
                               className={`px-1 py-1.5 text-center align-middle border-r border-border/30 w-[68px] min-w-[68px] max-w-[68px] ${
-                                d.isToday
-                                  ? 'bg-emerald-50/25 border-x border-emerald-200/40'
-                                  : ''
+                                d.isToday ? 'bg-emerald-50/25 border-x border-emerald-200/40' : ''
                               }`}
                             >
                               {cellConfig.isOff ? (

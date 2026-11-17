@@ -187,11 +187,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     // 2. In DEV mode with explicit VITE_DEV_MOCK_AUTH flag: fallback demo matching
     if (isDevMockAuth) {
       let matchedRole: Role = ROLES.ADMIN;
-      if (
-        cleanEmail === 'hr' ||
-        cleanEmail.startsWith('hr@') ||
-        cleanEmail.includes('shajitha')
-      ) {
+      if (cleanEmail === 'hr' || cleanEmail.startsWith('hr@') || cleanEmail.includes('shajitha')) {
         matchedRole = ROLES.HR_MANAGER;
       } else if (
         cleanEmail === 'lead' ||
@@ -200,10 +196,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
         cleanEmail.includes('marcus')
       ) {
         matchedRole = ROLES.TEAM_LEAD;
-      } else if (
-        cleanEmail === 'staff' ||
-        cleanEmail.startsWith('staff@')
-      ) {
+      } else if (cleanEmail === 'staff' || cleanEmail.startsWith('staff@')) {
         matchedRole = ROLES.STAFF;
       } else {
         matchedRole = ROLES.ADMIN;
