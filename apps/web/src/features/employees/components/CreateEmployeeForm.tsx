@@ -217,13 +217,13 @@ export function CreateEmployeeForm({
   // Department options formatted for Select
   const departmentOptions = departments.map((d) => ({
     value: d.id,
-    label: d.code ? `${d.name} (${d.code})` : d.name,
+    label: d.name,
   }));
 
   // Designation options formatted for Select
   const designationOptions = designations.map((d) => ({
     value: d.id,
-    label: d.code ? `${d.title} (${d.code})` : d.title,
+    label: d.title,
   }));
 
   // Manager options formatted for Select

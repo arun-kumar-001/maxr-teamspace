@@ -30,7 +30,6 @@ export interface DesignationSummary {
   id: string;
   code: string;
   title: string;
-  level: number;
   departmentId?: string;
   isActive: boolean;
 }

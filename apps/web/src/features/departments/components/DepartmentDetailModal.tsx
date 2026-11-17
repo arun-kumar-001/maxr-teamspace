@@ -13,6 +13,7 @@ export interface DepartmentDetailModalProps {
   members?: EmployeeDirectoryItem[];
   designations?: Designation[];
   onNavigateEmployee?: (employeeId: string) => void;
+  onAddDesignation?: () => void;
 }
 
 export function DepartmentDetailModal({
@@ -22,171 +23,171 @@ export function DepartmentDetailModal({
   members = [],
   designations = [],
   onNavigateEmployee,
+  onAddDesignation,
 }: DepartmentDetailModalProps) {
   if (!department) return null;
 
-  const formatDate = (iso?: string) =>
-    iso
-      ? new Date(iso).toLocaleString(undefined, {
-          year: 'numeric',
-          month: 'short',
+  const activeCount = members.filter((member) => member.status === 'active').length;
+  const onboardingCount = members.filter((member) => member.status === 'pending').length;
+  const formatDate = (value?: string) =>
+    value
+      ? new Date(value).toLocaleDateString(undefined, {
           day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+          month: 'short',
+          year: 'numeric',
         })
       : '—';
 
-  const activeCount = members.filter((m) => m.status === 'active').length;
-  const onboardingCount = members.filter((m) => m.status === 'pending').length;
-
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Department Details"
-      subtitle={`${department.name} (${department.code})`}
-      position="drawer"
-      maxWidth="md"
-      footer={
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          className="min-h-[44px]"
-          data-testid="department-detail-close"
-        >
-          Close
-        </Button>
-      }
+    <div
+      data-testid="department-detail-panel"
+      className="[&_[tabindex]]:rounded-none [&_[tabindex]]:h-dvh [&_[tabindex]]:mt-0 [&_[tabindex]>div:first-child]:hidden [&_[role=dialog]]:backdrop-blur-none"
     >
-      <div className="space-y-5 text-xs sm:text-sm" data-testid="department-detail-content">
-        <div className="flex items-center justify-between pb-3 border-b border-border">
-          <span className="text-text-muted font-medium">Status</span>
-          <Badge variant={department.isActive ? 'success' : 'neutral'}>
-            {department.isActive ? 'Active' : 'Inactive'}
-          </Badge>
-        </div>
-
-        {/* Summary KPI tiles */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-tile bg-surface-muted/70 p-3">
-            <div className="text-lg font-bold text-text">{activeCount}</div>
-            <div className="text-[11px] text-text-muted">Active Staff</div>
-          </div>
-          <div className="rounded-tile bg-surface-muted/70 p-3">
-            <div className="text-lg font-bold text-text">{onboardingCount}</div>
-            <div className="text-[11px] text-text-muted">Onboarding</div>
-          </div>
-          <div className="rounded-tile bg-surface-muted/70 p-3">
-            <div className="text-lg font-bold text-text">{designations.length}</div>
-            <div className="text-[11px] text-text-muted">Designations</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-border">
-          <div>
-            <span className="text-text-muted font-medium block">Department Name</span>
-            <span className="text-text font-semibold text-sm">{department.name}</span>
-          </div>
-          <div>
-            <span className="text-text-muted font-medium block">Department Code</span>
-            <span className="font-mono text-text font-semibold text-sm">{department.code}</span>
-          </div>
-        </div>
-
-        {/* Designations in this Division */}
-        <div className="space-y-2 pb-3 border-b border-border">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle block">
-            Aligned Designations ({designations.length})
-          </span>
-          {designations.length === 0 ? (
-            <p className="text-xs text-text-muted">No designations assigned to this department.</p>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {designations
-                .slice()
-                .sort((a, b) => b.level - a.level)
-                .map((desig) => (
-                  <span
-                    key={desig.id}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-muted border border-border text-xs font-medium text-text"
-                  >
-                    <span>{desig.title}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-primary-soft text-primary-deep font-semibold">
-                      L{desig.level}
-                    </span>
-                  </span>
-                ))}
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Department Details"
+        position="drawer"
+        maxWidth="md"
+      >
+        <div className="space-y-5 text-sm" data-testid="department-detail-content">
+          <section className="border-b border-border pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="mt-1 text-lg font-semibold text-text break-words">
+                  {department.name}
+                </h3>
+              </div>
+              <Badge variant={department.isActive ? 'success' : 'neutral'}>
+                {department.isActive ? 'Active' : 'Inactive'}
+              </Badge>
             </div>
-          )}
-        </div>
+            <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+              {[
+                { label: 'Active staff', value: activeCount },
+                { label: 'Onboarding', value: onboardingCount },
+                { label: 'Designations', value: designations.length },
+              ].map((stat) => (
+                <div key={stat.label} className="min-w-0">
+                  <dd className="text-sm font-semibold tabular-nums text-text">{stat.value}</dd>
+                  <dt className="text-xs text-text-muted break-words">{stat.label}</dt>
+                </div>
+              ))}
+            </dl>
+          </section>
 
-        {/* Division Members Roster */}
-        <div className="space-y-2 pb-3 border-b border-border">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle block">
-            Team Members ({members.length})
-          </span>
-          {members.length === 0 ? (
-            <p className="text-xs text-text-muted">No employees currently in this division.</p>
-          ) : (
-            <div className="divide-y divide-border/70 border border-border rounded-tile bg-surface max-h-60 overflow-y-auto">
-              {members.map((emp) => {
-                const fullName = `${emp.firstName} ${emp.lastName}`;
-                return (
-                  <a
-                    key={emp.id}
-                    href={`/employees/${emp.id}`}
-                    onClick={(e) => {
-                      if (onNavigateEmployee) {
-                        e.preventDefault();
-                        onNavigateEmployee(emp.id);
-                      }
-                    }}
-                    className="w-full p-2.5 flex items-center justify-between gap-2 text-left hover:bg-surface-muted/70 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 ${getAvatarTone(
-                          fullName,
-                        )}`}
-                      >
-                        {getInitials(emp.firstName, emp.lastName)}
-                      </div>
+          <section
+            className="border-b border-border pb-4"
+            aria-labelledby="department-designations-title"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h3 id="department-designations-title" className="text-sm font-semibold text-text">
+                Designations{' '}
+                <span className="text-text-muted text-sm">({designations.length})</span>
+              </h3>
+              {onAddDesignation && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shadow-none"
+                  onClick={onAddDesignation}
+                >
+                  Add Designation
+                </Button>
+              )}
+            </div>
+            {designations.length === 0 ? (
+              <div className="py-3">
+                <p className="text-sm text-text-muted">No designations yet</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {designations
+                  .slice()
+                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .map((designation) => (
+                    <li
+                      key={designation.id}
+                      className="flex items-center justify-between gap-3 py-3"
+                    >
                       <div className="min-w-0">
-                        <div className="text-xs font-semibold text-text truncate">{fullName}</div>
-                        <div className="text-[11px] text-text-muted truncate">
-                          {emp.designation?.title ?? emp.employeeCode}
-                        </div>
+                        <p className="font-semibold text-sm text-text break-words">
+                          {designation.title}
+                        </p>
                       </div>
-                    </div>
-                    <Badge variant={emp.status === 'active' ? 'success' : 'neutral'}>
-                      {emp.status === 'pending' ? 'Onboarding' : emp.status}
-                    </Badge>
-                  </a>
-                );
-              })}
+                      <Badge variant={designation.isActive ? 'success' : 'neutral'}>
+                        {designation.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </section>
+
+          <section
+            className="border-b border-border pb-4"
+            aria-labelledby="department-members-title"
+          >
+            <h3 id="department-members-title" className="mb-2 text-sm font-semibold text-text">
+              Team members <span className="text-text-muted text-sm">({members.length})</span>
+            </h3>
+            {members.length === 0 ? (
+              <div className="py-3">
+                <p className="text-sm text-text-muted">No team members yet</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {members.map((employee) => {
+                  const name = `${employee.firstName} ${employee.lastName}`.trim();
+                  return (
+                    <li key={employee.id}>
+                      <a
+                        href={`/employees/${employee.id}`}
+                        onClick={(event) => {
+                          if (onNavigateEmployee) {
+                            event.preventDefault();
+                            onNavigateEmployee(employee.id);
+                          }
+                        }}
+                        className="flex min-h-[44px] items-center justify-between gap-3 py-3 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-strong"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarTone(name)}`}
+                            aria-hidden="true"
+                          >
+                            {getInitials(employee.firstName, employee.lastName)}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm text-text break-words">{name}</p>
+                            <p className="text-xs text-text-muted break-words">
+                              {employee.designation?.title ?? employee.employeeCode}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={employee.status === 'active' ? 'success' : 'neutral'}>
+                          {employee.status === 'pending' ? 'Onboarding' : employee.status}
+                        </Badge>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          <dl className="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <dt className="text-text-subtle">Created</dt>
+              <dd className="mt-1 text-text-muted">{formatDate(department.createdAt)}</dd>
             </div>
-          )}
+            <div>
+              <dt className="text-text-subtle">Last updated</dt>
+              <dd className="mt-1 text-text-muted">{formatDate(department.updatedAt)}</dd>
+            </div>
+          </dl>
         </div>
-
-        <div className="space-y-1 pb-3 border-b border-border">
-          <span className="text-text-muted font-medium block text-xs">Department ID</span>
-          <span className="font-mono text-[11px] text-text-subtle select-all break-all">
-            {department.id}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-text-muted text-xs">
-          <div>
-            <span className="block font-medium">Created At</span>
-            <span className="text-text">{formatDate(department.createdAt)}</span>
-          </div>
-          <div>
-            <span className="block font-medium">Last Updated</span>
-            <span className="text-text">{formatDate(department.updatedAt)}</span>
-          </div>
-        </div>
-      </div>
-    </Modal>
+      </Modal>
+    </div>
   );
 }

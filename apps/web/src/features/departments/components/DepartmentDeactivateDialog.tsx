@@ -67,8 +67,7 @@ export function DepartmentDeactivateDialog({
 
         <p className="text-xs sm:text-sm text-text leading-relaxed">
           Are you sure you want to delete{' '}
-          <strong className="text-text font-semibold">{department.name}</strong> (
-          <span className="font-mono">{department.code}</span>)?
+          <strong className="text-text font-semibold">{department.name}</strong>?
         </p>
 
         <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-card">

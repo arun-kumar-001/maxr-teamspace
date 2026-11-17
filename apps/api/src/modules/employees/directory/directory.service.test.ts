@@ -24,7 +24,6 @@ const makeEmployee = (overrides: Partial<EmployeeDirectoryItem> = {}): EmployeeD
       id: '22222222-2222-2222-2222-222222222222',
       title: 'Software Engineer',
       code: 'SWE',
-      level: 2,
     },
     manager: overrides.manager ?? null,
     status: overrides.status ?? 'active',
@@ -67,8 +66,8 @@ describe('EmployeeDirectoryService (Unit Tests)', () => {
 
     const deptA = { id: randomUUID(), name: 'Dept A', code: 'DA' };
     const deptB = { id: randomUUID(), name: 'Dept B', code: 'DB' };
-    const desig1 = { id: randomUUID(), title: 'Desig 1', code: 'D1', level: 1 };
-    const desig2 = { id: randomUUID(), title: 'Desig 2', code: 'D2', level: 2 };
+    const desig1 = { id: randomUUID(), title: 'Desig 1', code: 'D1' };
+    const desig2 = { id: randomUUID(), title: 'Desig 2', code: 'D2' };
 
     const e1 = makeEmployee({ department: deptA, designation: desig1, status: 'active' });
     const e2 = makeEmployee({ department: deptA, designation: desig2, status: 'active' });

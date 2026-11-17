@@ -2375,9 +2375,6 @@
             "minLength": 1,
             "maxLength": 50
           },
-          "level": {
-            "type": "integer"
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -2395,7 +2392,6 @@
           "departmentId",
           "title",
           "code",
-          "level",
           "isActive",
           "createdAt",
           "updatedAt"
@@ -2457,16 +2453,12 @@
               },
               "code": {
                 "type": "string"
-              },
-              "level": {
-                "type": "integer"
               }
             },
             "required": [
               "id",
               "title",
-              "code",
-              "level"
+              "code"
             ]
           },
           "manager": {
@@ -17551,11 +17543,6 @@
                     "minLength": 1,
                     "maxLength": 50,
                     "pattern": "^[A-Za-z0-9_-]+$"
-                  },
-                  "level": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "default": 1
                   }
                 },
                 "required": [
@@ -17797,10 +17784,6 @@
                     "minLength": 1,
                     "maxLength": 50,
                     "pattern": "^[A-Za-z0-9_-]+$"
-                  },
-                  "level": {
-                    "type": "integer",
-                    "minimum": 1
                   }
                 },
                 "additionalProperties": false

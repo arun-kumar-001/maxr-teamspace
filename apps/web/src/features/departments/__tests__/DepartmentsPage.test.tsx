@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { DepartmentsPage } from '../pages/DepartmentsPage';
+import * as designationsApi from '../../designations/api/designationsApi';
 import * as departmentsApi from '../api/departmentsApi';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
@@ -29,6 +31,10 @@ const sampleDepartments: Department[] = [
 describe('DepartmentsPage Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(designationsApi, 'fetchDesignations').mockResolvedValue({
+      data: [],
+      meta: { page: 1, pageSize: 100, total: 0, totalPages: 1 },
+    });
     vi.spyOn(departmentsApi, 'fetchDepartments').mockResolvedValue({
       data: sampleDepartments,
       meta: { page: 1, pageSize: 20, total: 2, totalPages: 1 },
@@ -79,6 +85,9 @@ describe('DepartmentsPage Component', () => {
       expect(screen.getAllByText('Engineering').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Marketing').length).toBeGreaterThan(0);
     });
+
+    expect(screen.queryByText('ENG', { exact: true })).toBeNull();
+    expect(screen.queryByText('MKT', { exact: true })).toBeNull();
 
     // Check header
     expect(screen.getByText('Departments')).toBeDefined();
@@ -165,6 +174,79 @@ describe('DepartmentsPage Component', () => {
       expect(screen.getByRole('heading', { name: /department details/i })).toBeDefined();
       expect(screen.getByTestId('department-detail-content')).toBeDefined();
     });
+  });
+
+  it.each([ROLES.ADMIN, ROLES.HR_MANAGER])(
+    'lets %s add a designation to the viewed department',
+    async (role) => {
+      const created = {
+        id: 'designation-new',
+        departmentId: 'dept-1',
+        title: 'Lead Engineer',
+        code: 'LEAD-ENG',
+        isActive: true,
+        createdAt: '2025-01-01',
+        updatedAt: '2025-01-01',
+      };
+      const create = vi.spyOn(designationsApi, 'createDesignation').mockResolvedValue(created);
+      render(
+        <AuthProvider initialRole={role} persistSession={false}>
+          <DepartmentsPage />
+        </AuthProvider>,
+      );
+      fireEvent.click(await screen.findByTestId('card-view-dept-dept-1'));
+      fireEvent.click(screen.getByRole('button', { name: 'Add Designation' }));
+      expect(screen.getByTestId('designation-department-input')).toHaveValue('dept-1');
+      fireEvent.change(screen.getByTestId('designation-title-input'), {
+        target: { value: 'Lead Engineer' },
+      });
+      fireEvent.change(screen.getByTestId('designation-code-input'), {
+        target: { value: 'LEAD-ENG' },
+      });
+      fireEvent.click(screen.getByTestId('designation-modal-submit'));
+      await waitFor(() =>
+        expect(create).toHaveBeenCalledWith({
+          departmentId: 'dept-1',
+          title: 'Lead Engineer',
+          code: 'LEAD-ENG',
+        }),
+      );
+      expect(await screen.findByRole('heading', { name: 'Department Details' })).toBeDefined();
+      expect(screen.getByTestId('department-detail-content')).toHaveTextContent('Lead Engineer');
+      expect(screen.getByTestId('department-detail-content')).not.toHaveTextContent('LEAD-ENG');
+    },
+  );
+
+  it('keeps the designation form open with its values after a rejected save', async () => {
+    vi.spyOn(designationsApi, 'createDesignation').mockRejectedValue(
+      new Error('Designation code already exists'),
+    );
+    render(
+      <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+        <DepartmentsPage />
+      </AuthProvider>,
+    );
+    fireEvent.click(await screen.findByTestId('card-view-dept-dept-1'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add Designation' }));
+    fireEvent.change(screen.getByTestId('designation-title-input'), {
+      target: { value: 'Engineer' },
+    });
+    fireEvent.change(screen.getByTestId('designation-code-input'), { target: { value: 'ENG' } });
+    fireEvent.click(screen.getByTestId('designation-modal-submit'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Designation code already exists');
+    expect(screen.getByTestId('designation-title-input')).toHaveValue('Engineer');
+    fireEvent.click(screen.getByTestId('designation-modal-cancel'));
+    expect(await screen.findByRole('heading', { name: 'Department Details' })).toBeDefined();
+  });
+
+  it('hides designation creation for a team lead', async () => {
+    render(
+      <AuthProvider initialRole={ROLES.TEAM_LEAD} persistSession={false}>
+        <DepartmentsPage />
+      </AuthProvider>,
+    );
+    fireEvent.click(await screen.findByTestId('card-view-dept-dept-1'));
+    expect(screen.queryByRole('button', { name: 'Add Designation' })).toBeNull();
   });
 
   it('renders empty state when no departments are returned', async () => {
