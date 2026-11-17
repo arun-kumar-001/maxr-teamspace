@@ -13,16 +13,44 @@ const pool = getPool();
 const repo = new PgAuthRepository(() => pool);
 const ORIGIN = 'http://localhost:3000';
 const DEV_PASSWORD = 'Password123!';
+const TEST_DOMAIN = `auth-${Date.now()}@maxr.test`;
 const SEEDED = [
   ['admin@maxr.internal', 'admin'],
-  ['hr@maxr.internal', 'hr_manager'],
-  ['teamlead@maxr.internal', 'team_lead'],
-  ['staff@maxr.internal', 'staff'],
+  [`hr-${TEST_DOMAIN}`, 'hr_manager'],
+  [`lead-${TEST_DOMAIN}`, 'team_lead'],
+  [`staff-${TEST_DOMAIN}`, 'staff'],
 ] as const;
 
 const unique = () => `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@maxr.test`;
 
+beforeAll(async () => {
+  const admin = await repo.findUserByEmail('admin@maxr.internal');
+  for (const [email, role] of SEEDED.slice(1)) {
+    const employee = await pool.query<{ id: string }>(
+      "INSERT INTO employees (employee_code, first_name, last_name, email, status) VALUES ($1, 'Auth', 'Fixture', $2, 'active') RETURNING id",
+      [`AUTH-${role}-${Date.now()}`, email],
+    );
+    const user = await pool.query<{ id: string }>(
+      'INSERT INTO users (employee_id, email, password_hash, is_active) VALUES ($1, $2, $3, true) RETURNING id',
+      [employee.rows[0]!.id, email, admin!.passwordHash],
+    );
+    await pool.query(
+      'INSERT INTO user_roles (user_id, role_id) SELECT $1, id FROM roles WHERE key = $2',
+      [user.rows[0]!.id, role],
+    );
+  }
+});
+
 afterAll(async () => {
+  for (const [email] of SEEDED.slice(1)) {
+    await pool.query(
+      'DELETE FROM user_roles WHERE user_id IN (SELECT id FROM users WHERE email = $1)',
+      [email],
+    );
+    await pool.query('DELETE FROM users WHERE email = $1', [email]);
+    await pool.query('DELETE FROM employees WHERE email = $1', [email]);
+    await pool.query('DELETE FROM login_attempts WHERE identifier = $1', [email]);
+  }
   await pool.query("DELETE FROM login_attempts WHERE identifier LIKE 'test-%@maxr.test'");
   await closeRedis();
   await closePool();
@@ -144,15 +172,15 @@ describe('full sign-in against PostgreSQL and Redis with the seeded development 
     const login = await request(app)
       .post('/api/v1/auth/login')
       .set('Origin', ORIGIN)
-      .send({ email: 'hr@maxr.internal', password: DEV_PASSWORD });
+      .send({ email: SEEDED[1][0], password: DEV_PASSWORD });
     const cookie = (login.headers['set-cookie'] as unknown as string[])[0]?.split(';')[0] ?? '';
     expect((await request(app).get('/api/v1/auth/me').set('Cookie', cookie)).status).toBe(200);
 
-    await pool.query("UPDATE users SET is_active = false WHERE email = 'hr@maxr.internal'");
+    await pool.query('UPDATE users SET is_active = false WHERE email = $1', [SEEDED[1][0]]);
     try {
       expect((await request(app).get('/api/v1/auth/me').set('Cookie', cookie)).status).toBe(401);
     } finally {
-      await pool.query("UPDATE users SET is_active = true WHERE email = 'hr@maxr.internal'");
+      await pool.query('UPDATE users SET is_active = true WHERE email = $1', [SEEDED[1][0]]);
     }
   });
 });

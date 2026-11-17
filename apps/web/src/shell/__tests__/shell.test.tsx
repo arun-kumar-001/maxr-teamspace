@@ -47,7 +47,7 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
 
       // User card
       expect(html).toContain('Arunkumar');
-      expect(html).toContain('AI Intern');
+      expect(html).toContain('arunkumar@maxr.internal');
       expect(html).toContain('AK');
 
       // Content
