@@ -11,6 +11,7 @@ import { TaskKanbanBoard } from '../components/TaskKanbanBoard';
 import { TaskTableView } from '../components/TaskTableView';
 import { TaskTodoListSidebar } from '../components/TaskTodoListSidebar';
 import { useTasks } from '../hooks/useTasks';
+import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../utils/todoStats';
 import type { CreateTaskInput, Task, TaskStatus, UpdateTaskInput } from '../types';
 
 export interface TasksPageProps {
@@ -35,6 +36,36 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
+  const [isTodoCollapsed, setIsTodoCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return false;
+    try {
+      return localStorage.getItem('maxr_tasks_todo_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setTodoStats(getSidebarTodoStats());
+    };
+    window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
+    return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
+  }, []);
+
+  const toggleTodoCollapse = () => {
+    setIsTodoCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('maxr_tasks_todo_collapsed', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   const {
     tasks,
@@ -189,6 +220,30 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant={isTodoCollapsed ? 'outline' : 'secondary'}
+            size="sm"
+            onClick={toggleTodoCollapse}
+            className="min-h-[40px] flex items-center gap-1.5"
+            data-testid="toggle-todo-sidebar-btn"
+            title={isTodoCollapsed ? 'Open To-Do List' : 'Hide To-Do List'}
+          >
+            <svg
+              className="w-4 h-4 shrink-0"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="14" height="14" rx="3" />
+              <path d="M13 3v14" />
+              <path d={isTodoCollapsed ? 'm7 8-2 2 2 2' : 'm9 8 2 2-2 2'} />
+            </svg>
+            <span>{isTodoCollapsed ? `To-Do (${todoStats.total})` : 'Hide To-Do'}</span>
+          </Button>
+
           {visibleTasks.length > 0 && (
             <Button
               variant="outline"
@@ -303,10 +358,55 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
           )}
         </div>
 
-        {/* Right Column: To-Do List Sidebar Panel */}
-        <div className="w-full lg:w-80 xl:w-96 shrink-0 lg:sticky lg:top-6">
-          <TaskTodoListSidebar />
-        </div>
+        {/* Right Column: Collapsible To-Do List Sidebar Panel */}
+        {isTodoCollapsed ? (
+          <div className="shrink-0 lg:sticky lg:top-6">
+            {/* Desktop Collapsed Rail Tab */}
+            <button
+              type="button"
+              onClick={toggleTodoCollapse}
+              data-testid="expand-todo-rail-btn"
+              className="hidden lg:flex flex-col items-center gap-2.5 p-2.5 w-12 bg-surface border border-border hover:border-primary-strong/50 rounded-2xl shadow-card hover:shadow-raised transition-all duration-200 cursor-pointer group text-text hover:text-primary-deep"
+              title="Open To-Do List"
+            >
+              <div className="w-7 h-7 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold tracking-widest uppercase [writing-mode:vertical-lr] rotate-180 py-2 font-display text-text-muted group-hover:text-primary-deep select-none">
+                To-Do List
+              </span>
+              {todoStats.total > 0 && (
+                <span className="w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded-full bg-primary-soft text-primary-deep">
+                  {todoStats.pending > 0 ? todoStats.pending : todoStats.total}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Collapsed Toggle Card */}
+            <button
+              type="button"
+              onClick={toggleTodoCollapse}
+              data-testid="expand-todo-mobile-btn"
+              className="lg:hidden w-full flex items-center justify-between p-3.5 rounded-xl border border-border bg-surface shadow-xs text-xs font-semibold text-text hover:bg-surface-muted transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-md bg-primary-soft text-primary-deep flex items-center justify-center font-bold text-xs">
+                  ✓
+                </span>
+                <span>To-Do List &amp; Daily Checklist</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-primary-soft text-primary-deep text-[11px] font-bold">
+                {todoStats.total} tasks
+              </span>
+            </button>
+          </div>
+        ) : (
+          <div className="w-full lg:w-80 xl:w-84 shrink-0 lg:sticky lg:top-6 transition-all duration-300">
+            <TaskTodoListSidebar onToggleCollapse={toggleTodoCollapse} />
+          </div>
+        )}
       </div>
 
       {/* Task Slide-Over Detail Drawer */}

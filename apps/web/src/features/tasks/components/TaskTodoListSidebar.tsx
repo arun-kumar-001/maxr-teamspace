@@ -17,7 +17,11 @@ export interface TodoItem {
 const STORAGE_KEY = TODOS_STORAGE_KEY;
 const INITIAL_TODOS: TodoItem[] = DEFAULT_INITIAL_TODOS;
 
-export function TaskTodoListSidebar() {
+export interface TaskTodoListSidebarProps {
+  onToggleCollapse?: () => void;
+}
+
+export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarProps = {}) {
   const [todos, setTodos] = useState<TodoItem[]>(() => {
     if (typeof window === 'undefined' || !window.localStorage) return INITIAL_TODOS;
     try {
@@ -222,18 +226,37 @@ export function TaskTodoListSidebar() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setIsAdding(true);
-            setEditingId(null);
-          }}
-          className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-primary-deep text-white hover:bg-primary-ink shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
-          data-testid="add-todo-btn"
-        >
-          <span className="text-base leading-none font-bold">+</span>
-          <span>Add</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setIsAdding(true);
+              setEditingId(null);
+            }}
+            className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-primary-deep text-white hover:bg-primary-ink shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+            data-testid="add-todo-btn"
+          >
+            <span className="text-base leading-none font-bold">+</span>
+            <span>Add</span>
+          </button>
+
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              data-testid="collapse-todo-btn"
+              className="w-8 h-8 rounded-lg border border-border bg-surface text-text-muted hover:text-text hover:bg-surface-muted flex items-center justify-center transition-colors cursor-pointer"
+              title="Collapse To-Do List"
+              aria-label="Collapse To-Do List"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="3" width="14" height="14" rx="3" />
+                <path d="M13 3v14" />
+                <path d="m9 8 2 2-2 2" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter Tabs */}

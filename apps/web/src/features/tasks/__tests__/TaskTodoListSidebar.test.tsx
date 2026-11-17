@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { TaskTodoListSidebar } from '../components/TaskTodoListSidebar';
 
@@ -144,5 +144,15 @@ describe('TaskTodoListSidebar (My Tasks Right-Side To-Do Panel)', () => {
     // Clicking the swiped card closes it
     fireEvent.click(swipeCard);
     expect(swipeCard.className).toContain('translate-x-0');
+  });
+
+  it('calls onToggleCollapse when collapse button is clicked', () => {
+    const handleCollapse = vi.fn();
+    render(<TaskTodoListSidebar onToggleCollapse={handleCollapse} />);
+
+    const collapseBtn = screen.getByTestId('collapse-todo-btn');
+    expect(collapseBtn).toBeInTheDocument();
+    fireEvent.click(collapseBtn);
+    expect(handleCollapse).toHaveBeenCalledTimes(1);
   });
 });
