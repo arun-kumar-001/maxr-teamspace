@@ -27,7 +27,7 @@ beforeAll(async () => {
   const admin = await repo.findUserByEmail('admin@maxr.internal');
   for (const [email, role] of SEEDED.slice(1)) {
     const employee = await pool.query<{ id: string }>(
-      "INSERT INTO employees (employee_code, first_name, last_name, email, status) VALUES ($1, 'Auth', 'Fixture', $2, 'active') RETURNING id",
+      "INSERT INTO employees (employee_code, first_name, last_name, email, status, department_id, designation_id) SELECT $1, 'Auth', 'Fixture', $2, 'active', department_id, designation_id FROM employees WHERE email = 'admin@maxr.internal' RETURNING id",
       [`AUTH-${role}-${Date.now()}`, email],
     );
     const user = await pool.query<{ id: string }>(
