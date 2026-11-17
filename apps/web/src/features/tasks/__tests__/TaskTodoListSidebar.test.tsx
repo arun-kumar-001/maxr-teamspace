@@ -112,19 +112,37 @@ describe('TaskTodoListSidebar (My Tasks Right-Side To-Do Panel)', () => {
     fireEvent.touchMove(todoRow, { touches: [{ clientX: 40 }] });
     fireEvent.touchEnd(todoRow);
 
-    // Should have swipe class -translate-x-28
+    // Should have swipe class -translate-x-[155px]
     const swipeCard = screen.getByTestId('swipe-card-todo-1');
-    expect(swipeCard.className).toContain('-translate-x-28');
+    expect(swipeCard.className).toContain('-translate-x-[155px]');
 
     // Action buttons are clickable
     expect(screen.getByTestId('mobile-edit-btn-todo-1')).toBeInTheDocument();
     expect(screen.getByTestId('mobile-delete-btn-todo-1')).toBeInTheDocument();
 
-    // Swipe right to close: start at 40, end at 120 (diff = 80 > 40)
+    // Swipe right to close: start at 40, end at 120 (diff = 80 > 25)
     fireEvent.touchStart(todoRow, { touches: [{ clientX: 40 }] });
     fireEvent.touchMove(todoRow, { touches: [{ clientX: 120 }] });
     fireEvent.touchEnd(todoRow);
 
+    expect(swipeCard.className).toContain('translate-x-0');
+  });
+
+  it('supports mouse/pointer drag gesture simulation for mobile preview tools', () => {
+    render(<TaskTodoListSidebar />);
+
+    const todoRow = screen.getByTestId('todo-item-todo-1');
+
+    // Simulate mouse drag left in responsive simulator
+    fireEvent.pointerDown(todoRow, { clientX: 200, clientY: 50 });
+    fireEvent.pointerMove(todoRow, { clientX: 100, clientY: 50 });
+    fireEvent.pointerUp(todoRow);
+
+    const swipeCard = screen.getByTestId('swipe-card-todo-1');
+    expect(swipeCard.className).toContain('-translate-x-[155px]');
+
+    // Clicking the swiped card closes it
+    fireEvent.click(swipeCard);
     expect(swipeCard.className).toContain('translate-x-0');
   });
 });

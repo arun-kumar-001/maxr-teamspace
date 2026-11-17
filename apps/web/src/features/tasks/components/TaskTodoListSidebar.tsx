@@ -61,14 +61,15 @@ export function TaskTodoListSidebar() {
   const [editTitle, setEditTitle] = useState('');
   const [editFrequency, setEditFrequency] = useState<'daily' | 'once'>('daily');
 
-  // Active 3-dots menu
+  // Active 3-dots in-row actions
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Mobile swipe gesture state
   const [swipedId, setSwipedId] = useState<string | null>(null);
-  const touchStartX = useRef<number>(0);
-  const currentTouchX = useRef<number>(0);
+  const gestureStartX = useRef<number>(0);
+  const gestureStartY = useRef<number>(0);
+  const isGestureActive = useRef<boolean>(false);
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -83,7 +84,7 @@ export function TaskTodoListSidebar() {
     }
   }, [todos]);
 
-  // Click outside to close 3-dots menu
+  // Click outside to close in-row actions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -177,25 +178,32 @@ export function TaskTodoListSidebar() {
     setSwipedId(null);
   };
 
-  // Mobile Touch handlers for swipe-to-reveal Edit & Delete
-  const handleTouchStart = (e: React.TouchEvent, id: string) => {
-    touchStartX.current = e.touches[0].clientX;
-    currentTouchX.current = e.touches[0].clientX;
+  // Gesture handlers supporting both real touch and pointer/mouse drag
+  const handleGestureStart = (clientX: number, clientY = 0) => {
+    gestureStartX.current = clientX;
+    gestureStartY.current = clientY ?? 0;
+    isGestureActive.current = true;
   };
 
-  const handleTouchMove = (e: React.TouchEvent, id: string) => {
-    currentTouchX.current = e.touches[0].clientX;
-  };
+  const handleGestureMove = (clientX: number, clientY = 0, id: string) => {
+    if (!isGestureActive.current) return;
+    const diffX = clientX - gestureStartX.current;
+    const diffY = (clientY ?? 0) - gestureStartY.current;
 
-  const handleTouchEnd = (id: string) => {
-    const diff = currentTouchX.current - touchStartX.current;
-    if (diff < -40) {
-      // Swiped left: reveal actions
-      setSwipedId(id);
-    } else if (diff > 40) {
-      // Swiped right: hide actions
-      if (swipedId === id) setSwipedId(null);
+    // Horizontal movement must dominate vertical scrolling
+    if (Math.abs(diffX) >= Math.abs(diffY)) {
+      if (diffX < -25) {
+        // Swiped left: reveal actions
+        setSwipedId(id);
+      } else if (diffX > 25) {
+        // Swiped right: hide actions
+        setSwipedId((prev) => (prev === id ? null : prev));
+      }
     }
+  };
+
+  const handleGestureEnd = () => {
+    isGestureActive.current = false;
   };
 
   // Filtered todos
@@ -414,37 +422,64 @@ export function TaskTodoListSidebar() {
                 key={item.id}
                 data-testid={`todo-item-${item.id}`}
                 className="relative overflow-hidden group select-none transition-colors"
-                onTouchStart={(e) => handleTouchStart(e, item.id)}
-                onTouchMove={(e) => handleTouchMove(e, item.id)}
-                onTouchEnd={() => handleTouchEnd(item.id)}
+                onTouchStart={(e) => handleGestureStart(e.touches[0].clientX, e.touches[0].clientY)}
+                onTouchMove={(e) => handleGestureMove(e.touches[0].clientX, e.touches[0].clientY, item.id)}
+                onTouchEnd={handleGestureEnd}
+                onPointerDown={(e) => handleGestureStart(e.clientX, e.clientY)}
+                onPointerMove={(e) => handleGestureMove(e.clientX, e.clientY, item.id)}
+                onPointerUp={handleGestureEnd}
               >
-                {/* Background Action Buttons (Revealed on Mobile Swipe Left) */}
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1 z-0 bg-surface-muted">
+                {/* Background Action Buttons (Revealed on Swipe Left) */}
+                <div
+                  className={`absolute inset-y-0 right-0 flex items-center pr-2.5 gap-1.5 z-0 transition-opacity duration-200 ${
+                    isSwiped ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                  }`}
+                >
                   <button
                     type="button"
-                    onClick={() => startEditing(item)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditing(item);
+                    }}
                     data-testid={`mobile-edit-btn-${item.id}`}
-                    className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors cursor-pointer flex items-center gap-1"
+                    className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
                     title="Edit item"
                   >
-                    Edit
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    <span>Edit</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(item.id);
+                    }}
                     data-testid={`mobile-delete-btn-${item.id}`}
-                    className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors cursor-pointer flex items-center gap-1"
+                    className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
                     title="Delete item"
                   >
-                    Delete
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                    <span>Delete</span>
                   </button>
                 </div>
 
                 {/* Foreground Card Layer */}
                 <div
                   data-testid={`swipe-card-${item.id}`}
-                  className={`relative z-10 flex items-center justify-between p-3.5 bg-surface hover:bg-surface-raised transition-transform duration-200 ${
-                    isSwiped ? '-translate-x-28 sm:translate-x-0' : 'translate-x-0'
+                  style={{ touchAction: 'pan-y' }}
+                  onClick={() => {
+                    if (isSwiped) setSwipedId(null);
+                  }}
+                  className={`relative z-10 flex items-center justify-between p-3.5 bg-surface hover:bg-surface-raised transition-transform duration-200 ease-out cursor-pointer ${
+                    isSwiped ? '-translate-x-[155px]' : 'translate-x-0'
                   }`}
                 >
                   <div className="flex items-start gap-3 min-w-0 pr-2">
@@ -488,45 +523,77 @@ export function TaskTodoListSidebar() {
                     </div>
                   </div>
 
-                  {/* Desktop 3-Dots Menu (...) */}
+                  {/* Desktop / In-Row Actions: 3-Dots or Edit/Delete Logos */}
                   <div className="relative shrink-0 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveMenuId((prev) => (prev === item.id ? null : item.id))
-                      }
-                      data-testid={`menu-btn-${item.id}`}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text hover:bg-surface-muted transition-colors cursor-pointer text-sm font-bold tracking-widest"
-                      title="Item actions"
-                      aria-label="Item actions"
-                    >
-                      •••
-                    </button>
-
-                    {/* Popover Menu for Desktop */}
-                    {activeMenuId === item.id && (
+                    {activeMenuId === item.id ? (
                       <div
                         ref={menuRef}
                         data-testid={`desktop-menu-${item.id}`}
-                        className="absolute right-0 top-8 z-30 w-28 bg-surface rounded-xl border border-border shadow-raised py-1 animate-crm-fade-up text-xs"
+                        className="flex items-center gap-1.5 animate-crm-fade-up shrink-0 bg-surface pl-1"
                       >
                         <button
                           type="button"
-                          onClick={() => startEditing(item)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(item);
+                          }}
                           data-testid={`desktop-edit-btn-${item.id}`}
-                          className="w-full text-left px-3 py-1.5 text-text hover:bg-surface-muted transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
+                          className="h-7 px-2 flex items-center gap-1 rounded-lg bg-primary-soft text-primary-deep hover:bg-primary-soft/80 transition-colors cursor-pointer text-xs font-semibold"
+                          title="Edit item"
+                          aria-label="Edit item"
                         >
-                          <span>✏️</span> Edit
+                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                          <span>Edit</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(item.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(item.id);
+                          }}
                           data-testid={`desktop-delete-btn-${item.id}`}
-                          className="w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
+                          className="h-7 px-2 flex items-center gap-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer text-xs font-semibold"
+                          title="Delete item"
+                          aria-label="Delete item"
                         >
-                          <span>🗑️</span> Delete
+                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                          <span>Delete</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuId(null);
+                          }}
+                          className="w-6 h-7 flex items-center justify-center text-text-muted hover:text-text text-xs cursor-pointer font-bold"
+                          title="Close"
+                          aria-label="Close"
+                        >
+                          ✕
                         </button>
                       </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(item.id);
+                        }}
+                        data-testid={`menu-btn-${item.id}`}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-text-muted hover:text-text hover:bg-surface-muted transition-colors cursor-pointer text-sm font-bold tracking-widest shrink-0"
+                        title="Task options"
+                        aria-label="Task options"
+                      >
+                        •••
+                      </button>
                     )}
                   </div>
                 </div>
