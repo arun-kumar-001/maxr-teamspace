@@ -26,7 +26,7 @@ export class DesignationService {
   async list(query: DesignationListQuery): Promise<PaginatedResponse<DesignationEntity>> {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
-    const sort = resolveSort(query, DESIGNATION_SORTABLE_FIELDS, { column: 'level', order: 'asc' });
+    const sort = resolveSort(query, DESIGNATION_SORTABLE_FIELDS, { column: 'title', order: 'asc' });
     const { items, total } = await this.repository.findMany({
       ...toOffsetLimit({ page, pageSize }),
       sort,

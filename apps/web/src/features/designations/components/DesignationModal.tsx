@@ -37,12 +37,10 @@ export function DesignationModal({
   const [title, setTitle] = useState('');
   const [code, setCode] = useState('');
   const [departmentId, setDepartmentId] = useState('');
-  const [level, setLevel] = useState<number>(1);
   const [errors, setErrors] = useState<{
     title?: string;
     code?: string;
     departmentId?: string;
-    level?: string;
   }>({});
 
   useEffect(() => {
@@ -50,14 +48,12 @@ export function DesignationModal({
       setTitle(designation.title);
       setCode(designation.code);
       setDepartmentId(designation.departmentId);
-      setLevel(designation.level);
     } else {
       setTitle('');
       setCode('');
       // Default to first active department if available
       const firstActive = departments.find((d) => d.isActive);
       setDepartmentId(firstActive ? firstActive.id : '');
-      setLevel(1);
     }
     setErrors({});
   }, [designation, departments, isOpen]);
@@ -67,7 +63,6 @@ export function DesignationModal({
       title?: string;
       code?: string;
       departmentId?: string;
-      level?: string;
     } = {};
 
     const trimmedTitle = title.trim();
@@ -91,10 +86,6 @@ export function DesignationModal({
       nextErrors.departmentId = 'Department is required';
     }
 
-    if (!level || level < 1 || !Number.isInteger(Number(level))) {
-      nextErrors.level = 'Hierarchy level must be a positive whole integer (at least 1)';
-    }
-
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -107,7 +98,6 @@ export function DesignationModal({
       title: title.trim(),
       code: code.trim().toUpperCase(),
       departmentId: departmentId.trim(),
-      level: Number(level),
     });
   };
 
@@ -118,7 +108,7 @@ export function DesignationModal({
       .filter((d) => d.isActive || (isEdit && d.id === designation?.departmentId))
       .map((d) => ({
         value: d.id,
-        label: `${d.name} (${d.code})${!d.isActive ? ' - Inactive' : ''}`,
+        label: `${d.name}${!d.isActive ? ' - Inactive' : ''}`,
       })),
   ];
 
@@ -236,31 +226,6 @@ export function DesignationModal({
             disabled={isSubmitting}
             className="min-h-[44px]"
             data-testid="designation-department-input"
-          />
-        </FormField>
-
-        <FormField
-          label="Hierarchy Level"
-          htmlFor="designation-level-input"
-          required
-          error={errors.level}
-          helperText="Seniority grade or level (whole number >= 1, e.g. 1, 2, 3)"
-        >
-          <Input
-            id="designation-level-input"
-            name="level"
-            type="number"
-            min={1}
-            step={1}
-            value={String(level)}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              setLevel(isNaN(val) ? 1 : val);
-              if (errors.level) setErrors((prev) => ({ ...prev, level: undefined }));
-            }}
-            disabled={isSubmitting}
-            className="min-h-[44px] font-mono"
-            data-testid="designation-level-input"
           />
         </FormField>
       </form>

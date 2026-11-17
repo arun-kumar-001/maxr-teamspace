@@ -95,6 +95,19 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
     expect(screen.getByTestId('select-designation')).toBeInTheDocument();
   });
 
+  it('shows department and designation names without their codes', async () => {
+    renderWithRole(ROLES.ADMIN);
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: 'Engineering' })).toBeDefined(),
+    );
+    fireEvent.change(screen.getByTestId('select-department'), { target: { value: 'dept-eng' } });
+    expect(
+      await screen.findByRole('option', { name: 'Software Engineer' }),
+    ).toBeDefined();
+    expect(screen.queryByRole('option', { name: 'Engineering (ENG)' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'Software Engineer (SWE)' })).toBeNull();
+  });
+
   it('shows step titles without descriptions and uses text navigation labels', () => {
     renderWithRole(ROLES.ADMIN);
 
@@ -163,7 +176,7 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
 
     const deptSelect = screen.getByTestId('select-department');
     await waitFor(() => {
-      expect(screen.getByText('Engineering (ENG)')).toBeInTheDocument();
+      expect(screen.getByText('Engineering')).toBeInTheDocument();
     });
 
     const desigSelect = screen.getByTestId('select-designation') as HTMLSelectElement;
@@ -175,7 +188,7 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
 
     await waitFor(() => {
       expect(desigSelect).not.toBeDisabled();
-      expect(screen.getByText('Software Engineer (SWE)')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
     });
 
     // Select Software Engineer designation
@@ -291,12 +304,12 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Engineering (ENG)')).toBeInTheDocument();
+      expect(screen.getByText('Engineering')).toBeInTheDocument();
     });
     fireEvent.change(screen.getByTestId('select-department'), { target: { value: 'dept-eng' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Software Engineer (SWE)')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
     });
     fireEvent.change(screen.getByTestId('select-designation'), {
       target: { value: 'desig-swe' },
@@ -374,12 +387,12 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Engineering (ENG)')).toBeInTheDocument();
+      expect(screen.getByText('Engineering')).toBeInTheDocument();
     });
     fireEvent.change(screen.getByTestId('select-department'), { target: { value: 'dept-eng' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Software Engineer (SWE)')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
     });
     fireEvent.change(screen.getByTestId('select-designation'), {
       target: { value: 'desig-swe' },

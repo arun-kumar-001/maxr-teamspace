@@ -4,7 +4,6 @@ import { Badge } from '../../../components/ui/StatusPill';
 import { getAvatarTone, getInitials } from '../../employees/components/hiringUtils';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import type { DepartmentOption, Designation } from '../types';
-import { CAREER_LEVEL_BANDS, getLevelTierMeta } from './levelMeta';
 
 export interface DesignationDetailModalProps {
   isOpen: boolean;
@@ -24,8 +23,7 @@ export function DesignationDetailModal({
   if (!designation) return null;
 
   const dept = departmentMap.get(designation.departmentId);
-  const departmentName = dept ? `${dept.name} (${dept.code})` : designation.departmentId;
-  const tier = getLevelTierMeta(designation.level);
+  const departmentName = dept?.name ?? 'Unknown department';
 
   const formatDate = (iso?: string) =>
     iso
@@ -43,7 +41,7 @@ export function DesignationDetailModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Designation Details"
-      subtitle={`${designation.title} · ${designation.code}`}
+      subtitle={designation.title}
       position="drawer"
       maxWidth="md"
       footer={
@@ -71,47 +69,12 @@ export function DesignationDetailModal({
             <span className="text-text-muted font-medium block">Designation Title</span>
             <span className="text-text font-semibold text-sm">{designation.title}</span>
           </div>
-          <div>
-            <span className="text-text-muted font-medium block">Designation Code</span>
-            <span className="font-mono text-text font-semibold text-sm">{designation.code}</span>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-border">
           <div>
             <span className="text-text-muted font-medium block">Department</span>
             <span className="text-text font-semibold">{departmentName}</span>
-          </div>
-          <div>
-            <span className="text-text-muted font-medium block">Hierarchy Level</span>
-            <span className="text-primary-ink font-semibold font-mono">
-              Level {designation.level}
-            </span>
-          </div>
-        </div>
-
-        {/* Career Progression Ladder */}
-        <div className="space-y-2 pb-3 border-b border-border">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle block">
-            Career Hierarchy Band ({tier.shortLabel})
-          </span>
-          <div className="grid grid-cols-4 gap-1.5">
-            {CAREER_LEVEL_BANDS.map((band) => {
-              const isCurrent = Math.min(4, Math.max(1, designation.level)) === band.level;
-              return (
-                <div
-                  key={band.level}
-                  className={`p-2 rounded-tile border text-center transition-all ${
-                    isCurrent
-                      ? `${band.pillClass} shadow-sm scale-[1.02]`
-                      : 'bg-surface-muted/50 border-border text-text-subtle'
-                  }`}
-                >
-                  <div className="text-xs font-mono font-bold">L{band.level}</div>
-                  <div className="text-[10px] truncate">{band.shortLabel}</div>
-                </div>
-              );
-            })}
           </div>
         </div>
 

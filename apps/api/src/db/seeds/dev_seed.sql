@@ -36,13 +36,12 @@ ON CONFLICT (LOWER(code)) DO UPDATE SET
 
 
 -- 6. Designations
-INSERT INTO designations (id, department_id, title, code, level, is_active) VALUES
-  ('40000000-0000-0000-0000-000000000001', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'System Administrator', 'SYS-ADMIN', 4, true),
-  ('40000000-0000-0000-0000-000000000002', (SELECT id FROM departments WHERE LOWER(code) = 'ai'), 'AI Intern', 'AI-INTERN', 1, true),
-  ('40000000-0000-0000-0000-000000000003', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'HR Manager', 'HR-MGR', 3, true)
+INSERT INTO designations (id, department_id, title, code, is_active) VALUES
+  ('40000000-0000-0000-0000-000000000001', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'System Administrator', 'SYS-ADMIN', true),
+  ('40000000-0000-0000-0000-000000000002', (SELECT id FROM departments WHERE LOWER(code) = 'ai'), 'AI Intern', 'AI-INTERN', true),
+  ('40000000-0000-0000-0000-000000000003', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'HR Manager', 'HR-MGR', true)
 ON CONFLICT (LOWER(code)) DO UPDATE SET
   title = EXCLUDED.title,
-  level = EXCLUDED.level,
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
 

@@ -14,7 +14,7 @@ const mockSampleItem: EmployeeDirectoryItem = {
   email: 'david@maxr.com',
   phone: '+1 555-0199',
   department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-  designation: { id: 'desig-1', title: 'Tech Lead', code: 'TL', level: 4 },
+  designation: { id: 'desig-1', title: 'Tech Lead', code: 'TL' },
   manager: { id: 'mgr-1', firstName: 'Sarah', lastName: 'Connor', employeeCode: 'MGR01' },
   status: 'active',
   joiningDate: '2024-03-01',
@@ -29,7 +29,7 @@ describe('useEmployeeDirectory Hook', () => {
       { id: 'dept-1', name: 'Engineering', code: 'ENG' },
     ]);
     vi.spyOn(directoryApi, 'fetchDesignations').mockResolvedValue([
-      { id: 'desig-1', title: 'Tech Lead', code: 'TL', level: 4 },
+      { id: 'desig-1', title: 'Tech Lead', code: 'TL' },
     ]);
     vi.spyOn(directoryApi, 'fetchManagerOptions').mockResolvedValue([
       { id: 'mgr-1', name: 'Sarah Connor', employeeCode: 'MGR01' },

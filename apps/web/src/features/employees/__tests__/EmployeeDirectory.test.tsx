@@ -24,7 +24,6 @@ const MOCK_EMPLOYEE: EmployeeDirectoryItem = {
     id: 'desig-01',
     title: 'Lead Software Engineer',
     code: 'SWE-III',
-    level: 3,
   },
   manager: {
     id: 'emp-100',
@@ -77,7 +76,7 @@ describe('Employee Directory Feature Suite (Issue #19)', () => {
       { id: 'dept-02', name: 'Product', code: 'PROD' },
     ]);
     vi.spyOn(employeesApi, 'fetchDesignations').mockResolvedValue([
-      { id: 'desig-01', title: 'Lead Software Engineer', code: 'SWE-III', level: 3 },
+      { id: 'desig-01', title: 'Lead Software Engineer', code: 'SWE-III' },
     ]);
   });
 
@@ -90,7 +89,7 @@ describe('Employee Directory Feature Suite (Issue #19)', () => {
           departmentId=""
           designationId=""
           departments={[{ id: 'dept-01', name: 'Engineering', code: 'ENG' }]}
-          designations={[{ id: 'desig-01', title: 'Engineer', code: 'ENG', level: 1 }]}
+          designations={[{ id: 'desig-01', title: 'Engineer', code: 'ENG' }]}
           onSearchChange={() => {}}
           onStatusChange={() => {}}
           onDepartmentChange={() => {}}

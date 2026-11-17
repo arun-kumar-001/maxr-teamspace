@@ -18,7 +18,6 @@ const sampleDesignations: Designation[] = [
     departmentId: 'dept-1',
     title: 'Staff Engineer',
     code: 'STAFF_ENG',
-    level: 4,
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z',
@@ -28,7 +27,6 @@ const sampleDesignations: Designation[] = [
     departmentId: 'dept-2',
     title: 'Associate PM',
     code: 'APM',
-    level: 2,
     isActive: false,
     createdAt: '2025-01-02T00:00:00Z',
     updatedAt: '2025-01-02T00:00:00Z',
@@ -78,7 +76,7 @@ describe('DesignationsPage Component', () => {
     });
   });
 
-  it('renders designations list with table and cards, showing resolved department names and levels', async () => {
+  it('renders designations list with table and cards, showing resolved department names without hierarchy levels', async () => {
     render(
       <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
         <DesignationsPage />
@@ -89,15 +87,11 @@ describe('DesignationsPage Component', () => {
       expect(screen.getAllByText('Staff Engineer').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Associate PM').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Engineering').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Level 4').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Level 4')).toBeNull();
     });
 
     expect(screen.getByText('Designations')).toBeDefined();
-    expect(
-      screen.getByText(
-        'Manage organizational job titles, seniority levels, and department alignments',
-      ),
-    ).toBeDefined();
+    expect(screen.getByText('Manage job titles and department assignments')).toBeDefined();
   });
 
   it('enforces RBAC: Admin can see Deactivate button, but HR Manager cannot', async () => {
