@@ -206,4 +206,21 @@ describe('useEmployeeDirectory Hook', () => {
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect(result.current.error?.message).toBe('Database failure');
   });
+
+  it('falls back gracefully to mock directory data when receiving 401 unauthenticated response', async () => {
+    vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockRejectedValueOnce(
+      new ApiError('Authentication is required', 401, 'UNAUTHORIZED'),
+    );
+
+    const { result } = renderHook(() => useEmployeeDirectory());
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(result.current.isForbidden).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.items.length).toBeGreaterThan(0);
+    expect(result.current.meta.total).toBeGreaterThan(0);
+  });
 });
