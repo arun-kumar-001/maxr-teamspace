@@ -1,68 +1,19 @@
-import { useContext, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useContext, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_DISPLAY_NAMES, ROLES } from '@maxr/shared';
 import { AuthContext, useAuth } from '../../../auth/AuthContext';
 import { DonutChart, type DonutChartSegment } from '../../../components/ui';
+import { PersonalChecklistWidget } from '../../../dashboards/PersonalChecklistWidget';
 import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
 import type { PayslipRecord } from '../../payslips/types';
 import { isPayslipEnabledForStaff } from '../../../shell/navigation';
+import { fetchMyTasks } from '../../tasks/api/tasksApi';
+import type { Task } from '../../tasks/types';
 import {
-  getSidebarTodos,
   getSidebarTodoStats,
-  isTodoCompletedToday,
-  toggleSidebarTodo,
-  type TodoItemData,
   TODOS_UPDATED_EVENT,
 } from '../../tasks/utils/todoStats';
-
-function getTaskIcon(frequency: 'daily' | 'once', index: number) {
-  if (frequency === 'daily') {
-    return (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      </svg>
-    );
-  }
-  if (index % 2 === 0) {
-    return (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-    );
-  }
-  return (
-    <svg
-      className="w-4 h-4"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      strokeWidth="1.8"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-    </svg>
-  );
-}
 
 const WEEKLY_PROGRESS_BARS = [
   { day: 'S', height: 0, active: false },
@@ -79,7 +30,7 @@ export function ProfilePortalPage() {
   const navigate = useNavigate();
 
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
-  const [todosList, setTodosList] = useState<TodoItemData[]>(() => getSidebarTodos());
+  const [realTasks, setRealTasks] = useState<Task[]>([]);
   const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
 
@@ -94,6 +45,17 @@ export function ProfilePortalPage() {
       .catch(() => {
         // Offline/test fallback preserves static preview cards
       });
+
+    void fetchMyTasks({ pageSize: 50 })
+      .then((res) => {
+        if (active && res.data) {
+          setRealTasks(res.data);
+        }
+      })
+      .catch(() => {
+        // Offline fallback
+      });
+
     return () => {
       active = false;
     };
@@ -133,23 +95,27 @@ export function ProfilePortalPage() {
   useEffect(() => {
     const handleUpdate = () => {
       setTodoStats(getSidebarTodoStats());
-      setTodosList(getSidebarTodos());
     };
     window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
     return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
   }, []);
 
-  const toggleTask = (id: string) => {
-    toggleSidebarTodo(id);
-    setTodosList(getSidebarTodos());
-    setTodoStats(getSidebarTodoStats());
-  };
+  const hasRealTasks = realTasks.length > 0;
+  const realCompleted = realTasks.filter((t) => t.status === 'completed').length;
+  const realInProgress = realTasks.filter(
+    (t) => t.status === 'in_progress' || t.status === 'in_review',
+  ).length;
+  const realOverdue = realTasks.filter(
+    (t) => t.status !== 'completed' && Boolean(t.isOverdue),
+  ).length;
+  const realTotal = realTasks.length;
 
-  const totalCompleted = todoStats.completed;
-  const totalPending = todoStats.pending;
-  const totalOverdue = 0;
-  const combinedTotal = todoStats.total;
-  const combinedPct = combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
+  const totalCompleted = hasRealTasks ? realCompleted : todoStats.completed;
+  const totalPending = hasRealTasks ? realInProgress : todoStats.pending;
+  const totalOverdue = hasRealTasks ? realOverdue : 0;
+  const combinedTotal = hasRealTasks ? realTotal : todoStats.total;
+  const combinedPct =
+    combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
   const activeTasksCount = totalPending;
 
   const taskChartData: DonutChartSegment[] = [
@@ -828,111 +794,8 @@ export function ProfilePortalPage() {
           </div>
         </div>
 
-        {/* Right Column: Dark Tasks Checklist */}
-        <div
-          className="lg:col-span-3 rounded-[26px] p-5 shadow-md hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 ease-out flex flex-col justify-between"
-          style={{
-            backgroundColor: 'rgb(8, 11, 12)',
-            color: 'rgb(255, 255, 255)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 12px 30px rgba(8, 11, 12, 0.25)',
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-white">My Tasks</span>
-            <span className="text-xl font-light font-display text-white">
-              {todoStats.completed}/{todoStats.total}
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {todosList.length === 0 ? (
-              <div className="py-8 text-center text-white/50 text-xs">
-                <p>No tasks yet.</p>
-                <p className="text-[11px] mt-1 text-white/40">
-                  Add tasks in My Tasks to track your progress here.
-                </p>
-              </div>
-            ) : (
-              todosList.map((task, index) => {
-                const isCompleted = isTodoCompletedToday(task);
-                const subtitle =
-                  task.frequency === 'daily'
-                    ? 'Daily routine'
-                    : 'One-time task';
-
-                return (
-                  <button
-                    key={task.id}
-                    type="button"
-                    onClick={() => toggleTask(task.id)}
-                    className="w-full flex items-center justify-between gap-2 text-xs text-left select-none group transition-transform active:scale-95 duration-150"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                          color: 'rgb(85, 205, 179)',
-                        }}
-                      >
-                        {getTaskIcon(task.frequency, index)}
-                      </div>
-                      <div className="min-w-0">
-                        <p
-                          className={`text-xs font-medium truncate transition-colors ${
-                            isCompleted ? 'text-white' : 'text-stone-300 group-hover:text-white'
-                          }`}
-                        >
-                          {task.title}
-                        </p>
-                        <p className="text-[10px] text-white/50">{subtitle}</p>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0">
-                      {isCompleted ? (
-                        <div
-                          className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
-                          style={{
-                            backgroundColor: 'rgb(85, 205, 179)',
-                            color: 'rgb(8, 11, 12)',
-                          }}
-                        >
-                          ✓
-                        </div>
-                      ) : (
-                        <div
-                          className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
-                          style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
-                        />
-                      )}
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-
-          <div
-            className="pt-3 mt-3 border-t text-[10px] flex items-center justify-between"
-            style={{
-              borderColor: 'rgba(255, 255, 255, 0.1)',
-              color: 'rgba(255, 255, 255, 0.5)',
-            }}
-          >
-            <span>
-              Completed {todoStats.completed} of {todoStats.total} tasks
-            </span>
-            <button
-              type="button"
-              onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/tasks' : '/tasks')}
-              className="text-primary hover:underline font-semibold"
-            >
-              Open Tasks →
-            </button>
-          </div>
-        </div>
+        {/* Right Column: Personal Checklist Widget (Live Daily/Once Routines) */}
+        <PersonalChecklistWidget className="lg:col-span-3 rounded-[26px] h-full" />
       </div>
     </div>
   );

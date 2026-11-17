@@ -7,6 +7,7 @@ import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchMeetings } from '../features/meetings/api/meetingsApi';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../features/tasks/utils/todoStats';
+import { PersonalChecklistWidget } from './PersonalChecklistWidget';
 import { cn } from '../lib/utils';
 
 // --- Shared Code-Based Modern Duotone SVG Icons ---
@@ -1039,8 +1040,8 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      {/* 4. Bottom Section: 3 Cards (Pending Approvals, Priority Tasks, Upcoming Meetings) */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch">
+      {/* 4. Bottom Section: 4 Cards (Pending Approvals, Priority Tasks, Upcoming Meetings, Personal Checklist) */}
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 items-stretch">
         {/* Card 1: Pending Approvals */}
         <div
           style={{ animationDelay: '400ms' }}
@@ -1266,6 +1267,9 @@ export function AdminDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Card 4: Personal Checklist Routine Widget */}
+        <PersonalChecklistWidget className="maxr-card-entrance" />
       </section>
 
       {/* Hidden Accessible Anchors ensuring strict 100% test compatibility with dashboards.test.tsx */}

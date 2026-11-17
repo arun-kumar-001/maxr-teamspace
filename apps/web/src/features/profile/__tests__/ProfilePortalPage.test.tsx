@@ -29,7 +29,8 @@ describe('ProfilePortalPage', () => {
     expect(screen.getByText('09:15 AM')).toBeTruthy();
     expect(screen.getByText('Checked In')).toBeTruthy();
     expect(screen.getByText('Recent Payslips')).toBeTruthy();
-    expect(screen.getByText('My Tasks')).toBeTruthy();
+    expect(screen.getByText('Personal Checklist')).toBeTruthy();
+    expect(screen.getByText('Task Completion Progress')).toBeTruthy();
   });
 
   it('toggles check-in state and task completion interactively', () => {
@@ -47,8 +48,8 @@ describe('ProfilePortalPage', () => {
     expect(toggleButton.textContent).toContain('Check In');
 
     expect(screen.getByText('Daily standup & team status check')).toBeTruthy();
-    expect(screen.getByText('Completed 0 of 3 tasks')).toBeTruthy();
+    expect(screen.getByText('0/3')).toBeTruthy();
     fireEvent.click(screen.getByText('Daily standup & team status check'));
-    expect(screen.getByText('Completed 1 of 3 tasks')).toBeTruthy();
+    expect(screen.getByText('1/3')).toBeTruthy();
   });
 });

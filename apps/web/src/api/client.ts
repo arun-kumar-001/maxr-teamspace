@@ -1,9 +1,13 @@
 const CSRF_STORAGE_KEY = 'maxr_csrf_token';
 
 let inMemoryCsrfToken: string | null = (() => {
-  if (typeof window !== 'undefined' && window.sessionStorage) {
+  if (typeof window !== 'undefined') {
     try {
-      return sessionStorage.getItem(CSRF_STORAGE_KEY);
+      return (
+        window.sessionStorage?.getItem(CSRF_STORAGE_KEY) ||
+        window.localStorage?.getItem(CSRF_STORAGE_KEY) ||
+        null
+      );
     } catch {
       return null;
     }
@@ -13,12 +17,14 @@ let inMemoryCsrfToken: string | null = (() => {
 
 export function setCsrfToken(token: string | null): void {
   inMemoryCsrfToken = token;
-  if (typeof window !== 'undefined' && window.sessionStorage) {
+  if (typeof window !== 'undefined') {
     try {
       if (token) {
-        sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+        window.sessionStorage?.setItem(CSRF_STORAGE_KEY, token);
+        window.localStorage?.setItem(CSRF_STORAGE_KEY, token);
       } else {
-        sessionStorage.removeItem(CSRF_STORAGE_KEY);
+        window.sessionStorage?.removeItem(CSRF_STORAGE_KEY);
+        window.localStorage?.removeItem(CSRF_STORAGE_KEY);
       }
     } catch {
       // ignore
@@ -32,31 +38,33 @@ export function getCsrfToken(): string | null {
 
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-let isFetchingCsrf = false;
+let csrfPromise: Promise<string | null> | null = null;
 
-async function refreshCsrfToken(): Promise<string | null> {
-  if (isFetchingCsrf) return inMemoryCsrfToken;
-  isFetchingCsrf = true;
-  try {
-    const res = await fetch('/api/v1/auth/me', {
-      method: 'GET',
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    });
-    if (res.ok) {
-      const json = await res.json();
-      const token = json?.data?.csrfToken;
-      if (typeof token === 'string' && token.length > 0) {
-        setCsrfToken(token);
-        return token;
+export async function refreshCsrfToken(): Promise<string | null> {
+  if (csrfPromise) return csrfPromise;
+  csrfPromise = (async () => {
+    try {
+      const res = await fetch('/api/v1/auth/me', {
+        method: 'GET',
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const token = json?.data?.csrfToken;
+        if (typeof token === 'string' && token.length > 0) {
+          setCsrfToken(token);
+          return token;
+        }
       }
+    } catch {
+      // ignore
+    } finally {
+      csrfPromise = null;
     }
-  } catch {
-    // ignore
-  } finally {
-    isFetchingCsrf = false;
-  }
-  return inMemoryCsrfToken;
+    return inMemoryCsrfToken;
+  })();
+  return csrfPromise;
 }
 
 /**
@@ -83,11 +91,12 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
   const isAuthMe = urlStr.includes('/auth/me');
 
   if (STATE_CHANGING_METHODS.has(method)) {
-    if (!inMemoryCsrfToken && !isAuthMe && typeof window !== 'undefined') {
-      await refreshCsrfToken();
+    let token = inMemoryCsrfToken;
+    if (!token && !isAuthMe && typeof window !== 'undefined') {
+      token = await refreshCsrfToken();
     }
-    if (inMemoryCsrfToken) {
-      headers.set('X-CSRF-Token', inMemoryCsrfToken);
+    if (token) {
+      headers.set('X-CSRF-Token', token);
     }
   }
 
@@ -103,7 +112,10 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
     try {
       const clone = response.clone();
       const json = await clone.json().catch(() => null);
-      if (json?.error?.message?.toLowerCase().includes('csrf')) {
+      const isCsrfError =
+        json?.error?.message?.toLowerCase().includes('csrf') ||
+        json?.error?.code?.toLowerCase().includes('csrf');
+      if (isCsrfError) {
         const fresh = await refreshCsrfToken();
         if (fresh) {
           headers.set('X-CSRF-Token', fresh);
