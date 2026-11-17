@@ -335,26 +335,12 @@ export function EmployeeDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
             <div className="space-y-1">
               <span className="text-xs text-text-subtle font-medium block">Department</span>
-              <p className="font-semibold text-text">
-                {employee.department.name}{' '}
-                {employee.department.code && (
-                  <span className="text-xs font-mono font-normal text-text-muted">
-                    ({employee.department.code})
-                  </span>
-                )}
-              </p>
+              <p className="font-semibold text-text">{employee.department.name} </p>
             </div>
 
             <div className="space-y-1">
               <span className="text-xs text-text-subtle font-medium block">Designation</span>
-              <p className="font-semibold text-text">
-                {employee.designation.title}{' '}
-                {employee.designation.code && (
-                  <span className="text-xs font-mono font-normal text-text-muted">
-                    ({employee.designation.code})
-                  </span>
-                )}
-              </p>
+              <p className="font-semibold text-text">{employee.designation.title} </p>
             </div>
 
             <div className="space-y-1">

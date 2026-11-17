@@ -46,8 +46,8 @@ export function useDesignations(initialQuery: DesignationQuery = {}) {
   );
   const [page, setPage] = useState<number>(initialQuery.page ?? 1);
   const [pageSize, setPageSize] = useState<number>(initialQuery.pageSize ?? 20);
-  const [sortBy, setSortBy] = useState<'title' | 'code' | 'level' | 'createdAt'>(
-    initialQuery.sortBy ?? 'level',
+  const [sortBy, setSortBy] = useState<'title' | 'code' | 'createdAt'>(
+    initialQuery.sortBy ?? 'title',
   );
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialQuery.sortOrder ?? 'asc');
 
@@ -284,13 +284,10 @@ export function useDesignations(initialQuery: DesignationQuery = {}) {
     setPage(1);
   }, []);
 
-  const setSort = useCallback(
-    (key: 'title' | 'code' | 'level' | 'createdAt', direction: 'asc' | 'desc') => {
-      setSortBy(key);
-      setSortOrder(direction);
-    },
-    [],
-  );
+  const setSort = useCallback((key: 'title' | 'code' | 'createdAt', direction: 'asc' | 'desc') => {
+    setSortBy(key);
+    setSortOrder(direction);
+  }, []);
 
   return {
     designations,

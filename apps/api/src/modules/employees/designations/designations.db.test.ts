@@ -33,13 +33,20 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     await closePool();
   });
 
+  it('removes the hierarchy level column from the migrated schema', async () => {
+    const result = await pool.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'designations' AND column_name = $1",
+      ['level'],
+    );
+    expect(result.rows).toEqual([]);
+  });
+
   it('creates and finds a designation by id and code', async () => {
     const code = `DSG_${randomUUID().slice(0, 8).toUpperCase()}`;
     const created = await desigRepo.create({
       departmentId: deptId,
       title: 'Principal Engineer',
       code,
-      level: 5,
     });
     createdDesigIds.push(created.id);
 
@@ -47,7 +54,7 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     expect(created.departmentId).toBe(deptId);
     expect(created.title).toBe('Principal Engineer');
     expect(created.code).toBe(code);
-    expect(created.level).toBe(5);
+    expect(created).not.toHaveProperty('level');
     expect(created.isActive).toBe(true);
 
     const byId = await desigRepo.findById(created.id);
@@ -65,7 +72,6 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
       departmentId: deptId,
       title: 'First Title',
       code,
-      level: 2,
     });
     createdDesigIds.push(created.id);
 
@@ -74,7 +80,6 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
         departmentId: deptId,
         title: 'Duplicate Code Title',
         code: code.toLowerCase(),
-        level: 3,
       }),
     ).rejects.toThrow();
   });
@@ -86,7 +91,6 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
         departmentId: fakeDeptId,
         title: 'Orphan Desig',
         code: `ORPH_${randomUUID().slice(0, 6)}`,
-        level: 1,
       }),
     ).rejects.toThrow();
   });
@@ -97,20 +101,18 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
       departmentId: deptId,
       title: `${prefix} Specialist`,
       code: `${prefix}_1`,
-      level: 1,
     });
     const d2 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Generalist`,
       code: `${prefix}_2`,
-      level: 2,
     });
     createdDesigIds.push(d1.id, d2.id);
 
     const res = await desigRepo.findMany({
       offset: 0,
       limit: 10,
-      sort: { column: 'level', order: 'asc' },
+      sort: { column: 'title', order: 'asc' },
       departmentId: deptId,
       search: prefix,
     });
@@ -124,7 +126,6 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
       departmentId: deptId,
       title: 'To Be Soft Deleted',
       code: `DEL_${randomUUID().slice(0, 8)}`,
-      level: 1,
     });
     createdDesigIds.push(desig.id);
 
@@ -160,38 +161,35 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     expect(await desigRepo.isDepartmentActive(randomUUID())).toBe(false);
   });
 
-  it('guarantees deterministic pagination across pages when sorting by duplicate level or title', async () => {
+  it('guarantees deterministic pagination across pages when sorting by duplicate titles', async () => {
     const prefix = `STABLE_DSG_${randomUUID().slice(0, 6)}`;
     const d1 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Common Title`,
       code: `${prefix}_1`,
-      level: 3,
     });
     const d2 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Common Title`,
       code: `${prefix}_2`,
-      level: 3,
     });
     const d3 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Common Title`,
       code: `${prefix}_3`,
-      level: 3,
     });
     createdDesigIds.push(d1.id, d2.id, d3.id);
 
     const page1 = await desigRepo.findMany({
       offset: 0,
       limit: 2,
-      sort: { column: 'level', order: 'asc' },
+      sort: { column: 'title', order: 'asc' },
       search: prefix,
     });
     const page2 = await desigRepo.findMany({
       offset: 2,
       limit: 2,
-      sort: { column: 'level', order: 'asc' },
+      sort: { column: 'title', order: 'asc' },
       search: prefix,
     });
 
@@ -212,25 +210,21 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
       departmentId: deptId,
       title: `${prefix} 50% Effort`,
       code: `${prefix}_PCT`,
-      level: 1,
     });
     const d2 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} 500 Effort`,
       code: `${prefix}_NUM`,
-      level: 1,
     });
     const d3 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix}_UnderscoreTitle`,
       code: `${prefix}_US`,
-      level: 1,
     });
     const d4 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix}XUnderscoreTitle`,
       code: `${prefix}_XUS`,
-      level: 1,
     });
     createdDesigIds.push(d1.id, d2.id, d3.id, d4.id);
 

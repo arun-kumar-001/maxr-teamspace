@@ -95,9 +95,6 @@ export function EmploymentInformation({ profile }: EmploymentInformationProps) {
           </span>
           <div className="p-2.5 bg-surface-muted border border-border rounded-input text-sm font-medium text-text">
             <span>{profile.department.name}</span>
-            <span className="ml-2 text-xs font-mono text-text-subtle">
-              ({profile.department.code})
-            </span>
           </div>
         </div>
 
@@ -108,9 +105,6 @@ export function EmploymentInformation({ profile }: EmploymentInformationProps) {
           </span>
           <div className="p-2.5 bg-surface-muted border border-border rounded-input text-sm font-medium text-text">
             <span>{profile.designation.title}</span>
-            <span className="ml-2 text-xs font-mono text-text-subtle">
-              ({profile.designation.code})
-            </span>
           </div>
         </div>
 

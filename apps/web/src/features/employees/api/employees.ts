@@ -116,7 +116,6 @@ export async function fetchDesignations(signal?: AbortSignal): Promise<Designati
         id: d.id,
         title: d.title,
         code: d.code ?? '',
-        level: d.level ?? 1,
       }));
   } catch {
     return [];

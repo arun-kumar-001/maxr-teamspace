@@ -1,5 +1,23 @@
 # Project status
 
+## Department and designation name display — 2026-11-17
+
+Department/designation codes are entered in their create/edit forms. Cards, details, tables, filters and employee/profile displays show names. Employee codes continue to identify individual employees.
+
+
+## Designation hierarchy level removed — 2026-11-17
+
+Migration `20261117000001_remove_designation_level.sql` removes `designations.level`. Designation and employee directory contracts, CRUD SQL, forms, displays, sorting and development seeds now omit the field. Existing department/designation UUID relationships and manager-based reporting hierarchy continue to drive employee creation and onboarding.
+
+Verified with targeted PostgreSQL tests including employee-to-onboarding linkage, a clean migration of all 50 SQL files, and two seed runs on an isolated database. The local database has been migrated. Deployment requires the new migration before running the updated API.
+
+
+## Department details and designation creation — 2026-11-17
+
+The department details use a compact, full-height sidebar with square corners, a plain summary, and flat designation and team-member lists. Admin and HR Manager can create a designation for the selected active department using the existing designation API and form. Saved titles immediately appear in the drawer and are available through Add Employee's department-filtered designation lookup.
+
+Verified 33 targeted department and employee tests, web TypeScript, changed-file lint, and overflow checks at all nine reference viewport sizes. Changes are local on `codex/department-designations`.
+
 ## Local development resumed — 2026-11-16
 
 Docker's stalled WSL backend was restarted. MAXR Redis now uses host port `6380` in the ignored local `.env`, because another project's Redis occupies `6379`. The frontend runs on `3000` and the API on `4000`.

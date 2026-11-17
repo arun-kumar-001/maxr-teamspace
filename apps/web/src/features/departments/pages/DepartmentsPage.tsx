@@ -8,8 +8,13 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import { EmptyState, ErrorState, ForbiddenState } from '../../../components/ui/StateCards';
 import { Badge } from '../../../components/ui/StatusPill';
 import { Toast } from '../../../components/ui/Toast';
-import { fetchDesignations } from '../../designations/api/designationsApi';
-import type { Designation } from '../../designations/types';
+import { createDesignation, fetchDesignations } from '../../designations/api/designationsApi';
+import type {
+  Designation,
+  CreateDesignationPayload,
+  UpdateDesignationPayload,
+} from '../../designations/types';
+import { DesignationModal } from '../../designations/components/DesignationModal';
 import { fetchEmployeeDirectory } from '../../employees/api/employees';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import { DepartmentCard } from '../components/DepartmentCard';
@@ -32,6 +37,34 @@ export function DepartmentsPage() {
   const [viewMode, setViewMode] = useState<DeptViewMode>('cards');
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
+  const [designationDepartment, setDesignationDepartment] = useState<Department | null>(null);
+  const [isSavingDesignation, setIsSavingDesignation] = useState(false);
+  const [designationSaveError, setDesignationSaveError] = useState<string | null>(null);
+  const designationDepartments = useMemo(
+    () => (designationDepartment ? [designationDepartment] : []),
+    [designationDepartment],
+  );
+
+  const saveDesignation = async (payload: CreateDesignationPayload | UpdateDesignationPayload) => {
+    if (!designationDepartment || isSavingDesignation || !canCreate) return;
+    setIsSavingDesignation(true);
+    setDesignationSaveError(null);
+    try {
+      const created = await createDesignation({
+        departmentId: designationDepartment.id,
+        title: payload.title!,
+        code: payload.code!,
+      });
+      setDesignations((current) => [...current.filter((item) => item.id !== created.id), created]);
+      setDesignationDepartment(null);
+    } catch (error) {
+      setDesignationSaveError(
+        error instanceof Error ? error.message : 'Could not create designation. Please try again.',
+      );
+    } finally {
+      setIsSavingDesignation(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -158,17 +191,6 @@ export function DepartmentsPage() {
         <div>
           <span className="font-semibold text-text block text-sm">{row.name}</span>
         </div>
-      ),
-    },
-    {
-      key: 'code',
-      header: 'Code',
-      sortable: true,
-      priority: 'high',
-      render: (row) => (
-        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-muted border border-border text-text">
-          {row.code}
-        </span>
       ),
     },
     {
@@ -540,11 +562,31 @@ export function DepartmentsPage() {
 
       {/* Slide-Over Details Drawer */}
       <DepartmentDetailModal
-        isOpen={isDetailOpen}
+        isOpen={isDetailOpen && !designationDepartment}
         department={detailDepartment}
         onClose={closeDetail}
+        onAddDesignation={
+          canCreate && detailDepartment?.isActive
+            ? () => {
+                setDesignationSaveError(null);
+                setDesignationDepartment(detailDepartment);
+              }
+            : undefined
+        }
         members={detailDepartment ? (membersByDept.get(detailDepartment.id) ?? []) : []}
         designations={detailDepartment ? (designationsByDept.get(detailDepartment.id) ?? []) : []}
+      />
+
+      <DesignationModal
+        isOpen={Boolean(designationDepartment)}
+        designation={null}
+        departments={designationDepartments}
+        isSubmitting={isSavingDesignation}
+        serverError={designationSaveError}
+        onClose={() => {
+          if (!isSavingDesignation) setDesignationDepartment(null);
+        }}
+        onSubmit={saveDesignation}
       />
 
       {/* Deactivate Dialog */}
