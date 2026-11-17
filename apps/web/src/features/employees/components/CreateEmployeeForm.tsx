@@ -41,6 +41,10 @@ export function CreateEmployeeForm({
   const [salaryCurrency, setSalaryCurrency] = useState('INR');
   const [salaryFrequency, setSalaryFrequency] = useState('Annual');
 
+  // Local state for currently working / relieving date
+  const [isCurrentlyWorking, setIsCurrentlyWorking] = useState(true);
+  const [relievingDate, setRelievingDate] = useState('');
+
   // Local state for declaration checklist
   const [appointmentLetterSigned, setAppointmentLetterSigned] = useState(true);
   const [ndaSigned, setNdaSigned] = useState(true);
@@ -844,6 +848,63 @@ export function CreateEmployeeForm({
               data-testid="select-manager"
             />
           </FormField>
+
+          {/* Employment Service Status: Currently Working or Relieving Date */}
+          <div className="md:col-span-2 pt-2 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border bg-surface-muted/40">
+              <label className="flex items-start sm:items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isCurrentlyWorking}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsCurrentlyWorking(checked);
+                    if (checked) setRelievingDate('');
+                  }}
+                  disabled={isSubmitting}
+                  data-testid="checkbox-currently-working"
+                  className="mt-0.5 sm:mt-0 rounded border-border text-primary-deep focus:ring-primary h-4 w-4"
+                />
+                <div>
+                  <span className="font-semibold text-text text-sm block">
+                    Currently working in this company
+                  </span>
+                  <span className="text-xs text-text-muted mt-0.5 block">
+                    Check if employee is active; uncheck if contract ended or relieving date applies
+                  </span>
+                </div>
+              </label>
+
+              <span
+                className={`px-3 py-1 text-xs font-semibold rounded-full border self-start sm:self-auto ${
+                  isCurrentlyWorking
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}
+              >
+                {isCurrentlyWorking ? 'Active Employee' : 'Leaving / Resigned'}
+              </span>
+            </div>
+
+            {!isCurrentlyWorking && (
+              <div className="animate-crm-fade-up max-w-sm">
+                <FormField
+                  label="Relieving / Exit Date"
+                  htmlFor="create-emp-relieving-date"
+                  required
+                >
+                  <Input
+                    id="create-emp-relieving-date"
+                    type="date"
+                    value={relievingDate}
+                    onChange={(e) => setRelievingDate(e.target.value)}
+                    disabled={isSubmitting}
+                    data-testid="input-relieving-date"
+                  />
+                </FormField>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Salary Details Subsection (per user requirement) */}

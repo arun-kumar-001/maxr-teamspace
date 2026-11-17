@@ -9,6 +9,7 @@ import { TaskFilters, type AssigneeOption } from '../components/TaskFilters';
 import { TaskFormModal } from '../components/TaskFormModal';
 import { TaskKanbanBoard } from '../components/TaskKanbanBoard';
 import { TaskTableView } from '../components/TaskTableView';
+import { TaskTodoListSidebar } from '../components/TaskTodoListSidebar';
 import { useTasks } from '../hooks/useTasks';
 import type { CreateTaskInput, Task, TaskStatus, UpdateTaskInput } from '../types';
 
@@ -34,21 +35,6 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  // Redirect legacy query parameters to their dedicated standalone routes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const tab = searchParams.get('tab');
-      if (tab === 'checklist') {
-        const isStaff = window.location.pathname.startsWith('/staff');
-        window.location.replace(isStaff ? '/staff/checklist' : '/checklist');
-      } else if (tab === 'todo' || tab === 'todos') {
-        const isStaff = window.location.pathname.startsWith('/staff');
-        window.location.replace(isStaff ? '/staff/todos' : '/todos');
-      }
-    }
-  }, []);
 
   const {
     tasks,
@@ -185,7 +171,7 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
 
   return (
     <div
-      className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl mx-auto w-full"
+      className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl xl:max-w-[1600px] mx-auto w-full"
       data-testid="tasks-page"
     >
       {/* Page Header */}
@@ -246,72 +232,82 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
         onCreateClick={() => setIsCreateOpen(true)}
       />
 
-      {/* Main Content Area */}
-      {loading ? (
-        <div className="flex gap-4 overflow-hidden py-4">
-          {[1, 2, 3, 4, 5].map((col) => (
-            <div
-              key={col}
-              className="flex-1 min-w-[240px] h-96 bg-surface-muted border border-border rounded-card animate-pulse p-4"
+      {/* Main Content Area: Left Tasks (Board/List/Assigned) + Right To-Do Sidebar */}
+      <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
+        {/* Left Column: Tasks Views */}
+        <div className="flex-1 min-w-0 w-full">
+          {loading ? (
+            <div className="flex gap-4 overflow-hidden py-4">
+              {[1, 2, 3, 4, 5].map((col) => (
+                <div
+                  key={col}
+                  className="flex-1 min-w-[240px] h-96 bg-surface-muted border border-border rounded-card animate-pulse p-4"
+                />
+              ))}
+            </div>
+          ) : error ? (
+            <ErrorState title="Could not load tasks" message={error} onRetry={() => void refetch()} />
+          ) : visibleTasks.length === 0 && viewMode !== 'assigned' ? (
+            <EmptyState
+              title={
+                search || priority || status || overdueOnly || selectedAssigneeId
+                  ? 'No matching tasks found'
+                  : 'No tasks yet'
+              }
+              description={
+                search || priority || status || overdueOnly || selectedAssigneeId
+                  ? 'Try clearing or modifying your filters to see more tasks.'
+                  : canManage
+                    ? 'Delegate work to team members or create a personal task to get started.'
+                    : 'No tasks have been assigned to you yet.'
+              }
+              actionLabel={
+                canManage && !search && !priority && !status && !overdueOnly && !selectedAssigneeId
+                  ? 'Create First Task'
+                  : undefined
+              }
+              onAction={
+                canManage && !search && !priority && !status && !overdueOnly && !selectedAssigneeId
+                  ? () => setIsCreateOpen(true)
+                  : undefined
+              }
             />
-          ))}
+          ) : viewMode === 'assigned' ? (
+            <AssignedToMeView
+              tasks={allTasks}
+              onSelectTask={handleSelectTask}
+              onStatusChange={handleStatusChange}
+              onToggleDailyDone={handleToggleDailyDone}
+              currentEmployeeId={user?.employeeId ?? undefined}
+              isAdmin={isAdmin}
+            />
+          ) : viewMode === 'board' ? (
+            <TaskKanbanBoard
+              columns={visibleBoardColumns}
+              onSelectTask={handleSelectTask}
+              onStatusChange={handleStatusChange}
+              onToggleDailyDone={handleToggleDailyDone}
+              onQuickCreateClick={() => setIsCreateOpen(true)}
+              canCreate={canManage}
+              currentEmployeeId={user?.employeeId ?? undefined}
+              isAdmin={isAdmin}
+            />
+          ) : (
+            <TaskTableView
+              tasks={visibleTasks}
+              onSelectTask={handleSelectTask}
+              onStatusChange={handleStatusChange}
+              currentEmployeeId={user?.employeeId ?? undefined}
+              isAdmin={isAdmin}
+            />
+          )}
         </div>
-      ) : error ? (
-        <ErrorState title="Could not load tasks" message={error} onRetry={() => void refetch()} />
-      ) : visibleTasks.length === 0 && viewMode !== 'assigned' ? (
-        <EmptyState
-          title={
-            search || priority || status || overdueOnly || selectedAssigneeId
-              ? 'No matching tasks found'
-              : 'No tasks yet'
-          }
-          description={
-            search || priority || status || overdueOnly || selectedAssigneeId
-              ? 'Try clearing or modifying your filters to see more tasks.'
-              : canManage
-                ? 'Delegate work to team members or create a personal task to get started.'
-                : 'No tasks have been assigned to you yet.'
-          }
-          actionLabel={
-            canManage && !search && !priority && !status && !overdueOnly && !selectedAssigneeId
-              ? 'Create First Task'
-              : undefined
-          }
-          onAction={
-            canManage && !search && !priority && !status && !overdueOnly && !selectedAssigneeId
-              ? () => setIsCreateOpen(true)
-              : undefined
-          }
-        />
-      ) : viewMode === 'assigned' ? (
-        <AssignedToMeView
-          tasks={allTasks}
-          onSelectTask={handleSelectTask}
-          onStatusChange={handleStatusChange}
-          onToggleDailyDone={handleToggleDailyDone}
-          currentEmployeeId={user?.employeeId ?? undefined}
-          isAdmin={isAdmin}
-        />
-      ) : viewMode === 'board' ? (
-        <TaskKanbanBoard
-          columns={visibleBoardColumns}
-          onSelectTask={handleSelectTask}
-          onStatusChange={handleStatusChange}
-          onToggleDailyDone={handleToggleDailyDone}
-          onQuickCreateClick={() => setIsCreateOpen(true)}
-          canCreate={canManage}
-          currentEmployeeId={user?.employeeId ?? undefined}
-          isAdmin={isAdmin}
-        />
-      ) : (
-        <TaskTableView
-          tasks={visibleTasks}
-          onSelectTask={handleSelectTask}
-          onStatusChange={handleStatusChange}
-          currentEmployeeId={user?.employeeId ?? undefined}
-          isAdmin={isAdmin}
-        />
-      )}
+
+        {/* Right Column: To-Do List Sidebar Panel */}
+        <div className="w-full lg:w-80 xl:w-96 shrink-0 lg:sticky lg:top-6">
+          <TaskTodoListSidebar />
+        </div>
+      </div>
 
       {/* Task Slide-Over Detail Drawer */}
       <TaskDetailModal
