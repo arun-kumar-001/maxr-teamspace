@@ -84,3 +84,34 @@ export function notifyTodosUpdated(): void {
     window.dispatchEvent(new Event(TODOS_UPDATED_EVENT));
   }
 }
+
+export function toggleSidebarTodo(id: string): TodoItemData[] {
+  const todos = getSidebarTodos();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const updated = todos.map((item) => {
+    if (item.id !== id) return item;
+    if (item.frequency === 'daily') {
+      const isDone = Array.isArray(item.completedDates) && item.completedDates.includes(todayStr);
+      return {
+        ...item,
+        completedDates: isDone
+          ? item.completedDates.filter((d) => d !== todayStr)
+          : [...(item.completedDates || []), todayStr],
+      };
+    } else {
+      return {
+        ...item,
+        isCompletedOnce: !item.isCompletedOnce,
+      };
+    }
+  });
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    notifyTodosUpdated();
+  }
+  return updated;
+}

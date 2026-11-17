@@ -46,8 +46,9 @@ describe('ProfilePortalPage', () => {
     fireEvent.click(toggleButton);
     expect(toggleButton.textContent).toContain('Check In');
 
-    expect(screen.getByText('Completed 2 of 8 tasks')).toBeTruthy();
-    fireEvent.click(screen.getByText('Update sprint tasks'));
-    expect(screen.getByText('Completed 3 of 8 tasks')).toBeTruthy();
+    expect(screen.getByText('Daily standup & team status check')).toBeTruthy();
+    expect(screen.getByText('Completed 0 of 3 tasks')).toBeTruthy();
+    fireEvent.click(screen.getByText('Daily standup & team status check'));
+    expect(screen.getByText('Completed 1 of 3 tasks')).toBeTruthy();
   });
 });

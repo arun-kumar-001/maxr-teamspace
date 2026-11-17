@@ -7,82 +7,18 @@ import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
 import type { PayslipRecord } from '../../payslips/types';
 import { isPayslipEnabledForStaff } from '../../../shell/navigation';
-import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../../tasks/utils/todoStats';
+import {
+  getSidebarTodos,
+  getSidebarTodoStats,
+  isTodoCompletedToday,
+  toggleSidebarTodo,
+  type TodoItemData,
+  TODOS_UPDATED_EVENT,
+} from '../../tasks/utils/todoStats';
 
-interface OnboardingChecklistItem {
-  id: number;
-  title: string;
-  date: string;
-  completed: boolean;
-  icon: ReactNode;
-}
-
-const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
-  {
-    id: 1,
-    title: 'Complete profile checklist',
-    date: 'Sep 13, 08:30',
-    completed: true,
-    icon: (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 2,
-    title: 'Review project documents',
-    date: 'Sep 13, 10:30',
-    completed: true,
-    icon: (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 3,
-    title: 'Update sprint tasks',
-    date: 'Sep 13, 13:00',
-    completed: false,
-    icon: (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-  },
-  {
-    id: 4,
-    title: 'Submit weekly report',
-    date: 'Sep 13, 14:45',
-    completed: false,
-    icon: (
+function getTaskIcon(frequency: 'daily' | 'once', index: number) {
+  if (frequency === 'daily') {
+    return (
       <svg
         className="w-4 h-4"
         fill="none"
@@ -96,14 +32,10 @@ const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
         />
       </svg>
-    ),
-  },
-  {
-    id: 5,
-    title: 'Team policy review',
-    date: 'Sep 13, 16:30',
-    completed: false,
-    icon: (
+    );
+  }
+  if (index % 2 === 0) {
+    return (
       <svg
         className="w-4 h-4"
         fill="none"
@@ -114,12 +46,23 @@ const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
         />
       </svg>
-    ),
-  },
-];
+    );
+  }
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth="1.8"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  );
+}
 
 const WEEKLY_PROGRESS_BARS = [
   { day: 'S', height: 0, active: false },
@@ -136,8 +79,9 @@ export function ProfilePortalPage() {
   const navigate = useNavigate();
 
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
-  const [onboardingTasks, setOnboardingTasks] =
-    useState<OnboardingChecklistItem[]>(INITIAL_ONBOARDING_TASKS);
+  const [todosList, setTodosList] = useState<TodoItemData[]>(() => getSidebarTodos());
+  const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
+  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -186,30 +130,25 @@ export function ProfilePortalPage() {
     e.target.value = '';
   };
 
-  const toggleTask = (id: number) => {
-    setOnboardingTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
-  };
-
-  const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
-  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
-
   useEffect(() => {
     const handleUpdate = () => {
       setTodoStats(getSidebarTodoStats());
+      setTodosList(getSidebarTodos());
     };
     window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
     return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
   }, []);
 
-  const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
-  const totalTasksCount = onboardingTasks.length;
+  const toggleTask = (id: string) => {
+    toggleSidebarTodo(id);
+    setTodosList(getSidebarTodos());
+    setTodoStats(getSidebarTodoStats());
+  };
 
-  const totalCompleted = completedTasksCount + todoStats.completed;
-  const totalPending = totalTasksCount - completedTasksCount + todoStats.pending;
+  const totalCompleted = todoStats.completed;
+  const totalPending = todoStats.pending;
   const totalOverdue = 0;
-  const combinedTotal = totalCompleted + totalPending + totalOverdue;
+  const combinedTotal = todoStats.total;
   const combinedPct = combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
   const activeTasksCount = totalPending;
 
@@ -902,60 +841,77 @@ export function ProfilePortalPage() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-white">My Tasks</span>
             <span className="text-xl font-light font-display text-white">
-              {completedTasksCount}/8
+              {todoStats.completed}/{todoStats.total}
             </span>
           </div>
 
           <div className="space-y-3">
-            {onboardingTasks.map((task) => (
-              <button
-                key={task.id}
-                type="button"
-                onClick={() => toggleTask(task.id)}
-                className="w-full flex items-center justify-between gap-2 text-xs text-left select-none group transition-transform active:scale-95 duration-150"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      color: 'rgb(85, 205, 179)',
-                    }}
-                  >
-                    {task.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={`text-xs font-medium truncate transition-colors ${
-                        task.completed ? 'text-white' : 'text-stone-300 group-hover:text-white'
-                      }`}
-                    >
-                      {task.title}
-                    </p>
-                    <p className="text-[10px] text-white/50">{task.date}</p>
-                  </div>
-                </div>
+            {todosList.length === 0 ? (
+              <div className="py-8 text-center text-white/50 text-xs">
+                <p>No tasks yet.</p>
+                <p className="text-[11px] mt-1 text-white/40">
+                  Add tasks in My Tasks to track your progress here.
+                </p>
+              </div>
+            ) : (
+              todosList.map((task, index) => {
+                const isCompleted = isTodoCompletedToday(task);
+                const subtitle =
+                  task.frequency === 'daily'
+                    ? 'Daily routine'
+                    : 'One-time task';
 
-                <div className="shrink-0">
-                  {task.completed ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
-                      style={{
-                        backgroundColor: 'rgb(85, 205, 179)',
-                        color: 'rgb(8, 11, 12)',
-                      }}
-                    >
-                      ✓
+                return (
+                  <button
+                    key={task.id}
+                    type="button"
+                    onClick={() => toggleTask(task.id)}
+                    className="w-full flex items-center justify-between gap-2 text-xs text-left select-none group transition-transform active:scale-95 duration-150"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          color: 'rgb(85, 205, 179)',
+                        }}
+                      >
+                        {getTaskIcon(task.frequency, index)}
+                      </div>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-xs font-medium truncate transition-colors ${
+                            isCompleted ? 'text-white' : 'text-stone-300 group-hover:text-white'
+                          }`}
+                        >
+                          {task.title}
+                        </p>
+                        <p className="text-[10px] text-white/50">{subtitle}</p>
+                      </div>
                     </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
-                      style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
-                    />
-                  )}
-                </div>
-              </button>
-            ))}
+
+                    <div className="shrink-0">
+                      {isCompleted ? (
+                        <div
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
+                          style={{
+                            backgroundColor: 'rgb(85, 205, 179)',
+                            color: 'rgb(8, 11, 12)',
+                          }}
+                        >
+                          ✓
+                        </div>
+                      ) : (
+                        <div
+                          className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
+                          style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
+                        />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
 
           <div
@@ -965,7 +921,9 @@ export function ProfilePortalPage() {
               color: 'rgba(255, 255, 255, 0.5)',
             }}
           >
-            <span>Completed {completedTasksCount} of 8 tasks</span>
+            <span>
+              Completed {todoStats.completed} of {todoStats.total} tasks
+            </span>
             <button
               type="button"
               onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/tasks' : '/tasks')}
