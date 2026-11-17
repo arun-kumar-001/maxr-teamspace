@@ -53,7 +53,7 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'To Do',
   in_progress: 'In Progress',
   in_review: 'In Review',
-  blocked: 'Hold',
+  blocked: 'On Hold',
   completed: 'Completed',
 };
 

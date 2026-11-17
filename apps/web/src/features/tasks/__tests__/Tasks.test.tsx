@@ -412,4 +412,70 @@ describe('Tasks Feature (Issue #43)', () => {
     expect(within(modalContent).getByText('Data Export Suite')).toBeInTheDocument();
     expect(within(modalContent).getByText('Bob Lead')).toBeInTheDocument();
   });
+
+  it('renders four compact KPI summary cards and applies filters on click', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <TasksPage initialScope="mine" />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tasks-kpi-summary')).toBeInTheDocument();
+      expect(screen.getByTestId('kpi-card-total')).toBeInTheDocument();
+      expect(screen.getByTestId('kpi-card-in-progress')).toBeInTheDocument();
+      expect(screen.getByTestId('kpi-card-due-today')).toBeInTheDocument();
+      expect(screen.getByTestId('kpi-card-overdue')).toBeInTheDocument();
+    });
+
+    // KPI total card should show count 3 (from mockTasks)
+    expect(within(screen.getByTestId('kpi-card-total')).getByText('3')).toBeInTheDocument();
+
+    // Clicking In Progress KPI card triggers status filter
+    fireEvent.click(screen.getByTestId('kpi-card-in-progress'));
+    await waitFor(() => {
+      expect(tasksApi.fetchMyTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'in_progress' }),
+        expect.any(AbortSignal),
+      );
+    });
+
+    // Clicking Overdue KPI card triggers overdue filter
+    fireEvent.click(screen.getByTestId('kpi-card-overdue'));
+    await waitFor(() => {
+      expect(tasksApi.fetchMyTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ overdue: true }),
+        expect.any(AbortSignal),
+      );
+    });
+
+    // Clicking Total Tasks KPI card resets filters
+    fireEvent.click(screen.getByTestId('kpi-card-total'));
+    await waitFor(() => {
+      expect(tasksApi.fetchMyTasks).toHaveBeenCalledWith(
+        expect.not.objectContaining({ status: 'in_progress', overdue: true }),
+        expect.any(AbortSignal),
+      );
+    });
+  });
+
+  it('provides exactly two primary tabs: Kanban Board and List View without duplicate assigned tab', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <TasksPage initialScope="mine" />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('tab-view-board')).toBeInTheDocument();
+      expect(screen.getByTestId('tab-view-list')).toBeInTheDocument();
+      expect(screen.queryByTestId('tab-view-assigned')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('tasks-side-todo-panel')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('toggle-todo-sidebar-btn')).not.toBeInTheDocument();
+    });
+  });
 });
