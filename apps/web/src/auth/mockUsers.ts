@@ -15,10 +15,10 @@ export const MOCK_USERS: Record<Role, MockUser> = {
     roles: [ROLES.ADMIN],
     permissions: [],
     email: 'admin@maxr.internal',
-    name: 'Admin',
+    name: 'Shagul Hamithu',
     title: 'System Administrator',
-    department: 'HR Department',
-    avatarInitials: 'AD',
+    department: 'Administration',
+    avatarInitials: 'SH',
   },
   [ROLES.HR_MANAGER]: {
     id: 'usr-hr-002',
