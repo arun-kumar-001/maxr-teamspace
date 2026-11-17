@@ -90,14 +90,8 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
     typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
   const isAuthMe = urlStr.includes('/auth/me');
 
-  if (STATE_CHANGING_METHODS.has(method)) {
-    let token = inMemoryCsrfToken;
-    if (!token && !isAuthMe && typeof window !== 'undefined') {
-      token = await refreshCsrfToken();
-    }
-    if (token) {
-      headers.set('X-CSRF-Token', token);
-    }
+  if (STATE_CHANGING_METHODS.has(method) && inMemoryCsrfToken) {
+    headers.set('X-CSRF-Token', inMemoryCsrfToken);
   }
 
   let response = await fetch(input, {
