@@ -1,4 +1,4 @@
-import { Button } from '../../../components/ui/Button';
+import { PrimaryActionButton } from '../../../components/ui';
 import { Input } from '../../../components/ui/Input';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { Select } from '../../../components/ui/Select';
@@ -136,14 +136,13 @@ export function TaskFilters({
           )}
 
           {canCreate && onCreateClick && (
-            <Button
-              variant="primary"
+            <PrimaryActionButton
+              type="button"
               onClick={onCreateClick}
-              className="min-h-[40px]"
               data-testid="create-task-btn"
             >
-              + New Task
-            </Button>
+              New Task
+            </PrimaryActionButton>
           )}
         </div>
       </div>

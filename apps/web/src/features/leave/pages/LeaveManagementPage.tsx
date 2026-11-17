@@ -3,7 +3,7 @@ import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
 import type { LeavePolicy } from '../types';
-import { Button, SegmentedControl } from '../../../components/ui';
+import { Button, PrimaryActionButton, SegmentedControl } from '../../../components/ui';
 import { LeavePoliciesTable } from '../components/LeavePoliciesTable';
 import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
@@ -124,15 +124,13 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Apply for Leave Button - Accessible to all staff */}
-          <Button
+          <PrimaryActionButton
             type="button"
-            variant="primary"
             onClick={() => setIsApplyModalOpen(true)}
             data-testid="apply-leave-btn"
-            className="min-h-[44px] rounded-full px-5 py-2.5 font-bold shadow-sm"
           >
-            + Apply Leave
-          </Button>
+            Apply Leave
+          </PrimaryActionButton>
 
           {canManage && (
             <Button

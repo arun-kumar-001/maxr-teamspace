@@ -95,9 +95,9 @@ export function loadAndValidateConfig(): EnvironmentConfig {
   const sessionMaxAgeMs = parseInt(process.env.SESSION_MAX_AGE_MS || '86400000', 10);
   const logLevel = getEnvVar('LOG_LEVEL', 'info');
 
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
   const redisHost = process.env.REDIS_HOST || 'localhost';
   const redisPort = parsePort(process.env.REDIS_PORT, 6379);
+  const redisUrl = process.env.REDIS_URL || `redis://${redisHost}:${redisPort}`;
 
   const storageDriver = (process.env.STORAGE_DRIVER || 'local') as 's3' | 'local';
   const s3Endpoint = process.env.S3_ENDPOINT || 'http://localhost:9090';

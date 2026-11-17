@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { CreateEmployeePage } from '../pages/CreateEmployeePage';
@@ -61,6 +62,7 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
   });
 
   afterEach(() => {
+    cleanup();
     globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
   });

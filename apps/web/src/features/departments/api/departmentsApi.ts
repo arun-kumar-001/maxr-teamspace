@@ -126,3 +126,19 @@ export async function deactivateDepartment(id: string): Promise<{ id: string; is
   const body = await handleResponse<{ data: { id: string; isActive: boolean } }>(res);
   return body.data;
 }
+
+/**
+ * Delete a department.
+ */
+export async function deleteDepartment(
+  id: string,
+): Promise<{ id: string; deleted?: boolean; isActive?: boolean }> {
+  const res = await apiFetch(`/api/v1/departments/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  const body = await handleResponse<{ data: { id: string; deleted?: boolean; isActive?: boolean } }>(
+    res,
+  );
+  return body.data;
+}
+

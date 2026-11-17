@@ -1,9 +1,9 @@
-import { MAX_PAGE_SIZE, ROLES, type Role } from '@maxr/shared';
+import { idParamSchema, MAX_PAGE_SIZE, ROLES, type Role, uuidString } from '@maxr/shared';
 import { z } from 'zod';
 
 const roleKey = z.enum(Object.values(ROLES) as [Role, ...Role[]]);
 
-export const userIdParamsSchema = z.object({ id: z.string().uuid() }).strict();
+export const userIdParamsSchema = idParamSchema;
 
 const booleanQuery = z.enum(['true', 'false']).transform((value) => value === 'true');
 
@@ -44,8 +44,8 @@ export const createUserSchema = z
       .refine((roles) => new Set(roles).size === roles.length, 'Each role may be listed once'),
     password: z.string().min(12, 'Password must be at least 12 characters').max(128).optional(),
     isActive: z.boolean().default(true),
-    departmentId: z.string().uuid().optional(),
-    designationId: z.string().uuid().optional(),
+    departmentId: uuidString.optional(),
+    designationId: uuidString.optional(),
   })
   .strict();
 
@@ -58,8 +58,8 @@ export const updateUserStatusSchema = z
 
 export const userAccountSchema = z
   .object({
-    id: z.string().uuid(),
-    employeeId: z.string().uuid(),
+    id: uuidString,
+    employeeId: uuidString,
     employeeCode: z.string(),
     name: z.string(),
     email: z.string().email(),
@@ -72,7 +72,7 @@ export const userAccountSchema = z
 
 export const roleSummarySchema = z
   .object({
-    id: z.string().uuid(),
+    id: uuidString,
     key: roleKey,
     name: z.string(),
     description: z.string().nullable(),

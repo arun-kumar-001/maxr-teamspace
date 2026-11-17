@@ -16,25 +16,35 @@ const mockEmployees: EmployeeDirectoryItem[] = [
     employeeCode: 'EMP001',
     firstName: 'Arun',
     lastName: 'Kumar',
-    workEmail: 'arun@example.com',
-    status: 'ACTIVE',
-    department: { id: 'dept-1', name: 'Engineering' },
-    designation: { id: 'des-1', title: 'Engineering Director' },
+    email: 'arun@example.com',
+    phone: null,
+    manager: null,
+    joiningDate: '2026-01-01',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    status: 'active',
+    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+    designation: { id: 'des-1', title: 'Engineering Director', code: 'ENG-DIR', level: 1 },
   },
   {
     id: 'emp-2',
     employeeCode: 'EMP002',
     firstName: 'Rajesh',
     lastName: 'Patel',
-    workEmail: 'rajesh@example.com',
-    status: 'ACTIVE',
-    department: { id: 'dept-1', name: 'Engineering' },
-    designation: { id: 'des-2', title: 'Staff Engineer' },
+    email: 'rajesh@example.com',
+    phone: null,
+    manager: null,
+    joiningDate: '2026-01-01',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    status: 'active',
+    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+    designation: { id: 'des-2', title: 'Staff Engineer', code: 'STAFF-ENG', level: 2 },
   },
 ];
 
 const mockDepartments: DepartmentItem[] = [
-  { id: 'dept-1', name: 'Engineering', code: 'ENG', employeeCount: 2 },
+  { id: 'dept-1', name: 'Engineering', code: 'ENG' },
 ];
 
 const mockRecords: AttendanceRecord[] = [
@@ -43,11 +53,16 @@ const mockRecords: AttendanceRecord[] = [
     employeeId: 'emp-1',
     employeeName: 'Arun Kumar',
     date: '2026-11-13',
+    workDate: '2026-11-13',
     checkInTime: '2026-11-13T09:05:00.000Z',
     checkOutTime: '2026-11-13T18:15:00.000Z',
     durationMinutes: 550,
     status: 'present',
     source: 'web',
+    location: { workMode: 'office' },
+    notes: null,
+    createdAt: '2026-11-13T09:05:00.000Z',
+    updatedAt: '2026-11-13T18:15:00.000Z',
   },
   // emp-2 has no punch (absent / not checked in)
 ];
@@ -113,7 +128,7 @@ describe('OnDutyTab Component & Attendance Status Chart', () => {
 
     // Click Absent bar
     const absentBars = screen.getAllByTitle(/Click to filter Absent/i);
-    fireEvent.click(absentBars[0]);
+    fireEvent.click(absentBars[0]!);
 
     // Filter pill appears
     expect(screen.getByText(/Filter: Absent/i)).toBeInTheDocument();

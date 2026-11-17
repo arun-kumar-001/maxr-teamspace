@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../../components/ui';
+import { Button, KpiCard } from '../../../components/ui';
 import type { AttendanceRecord } from '../types';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 import type { Shift } from '../../shifts/types';
@@ -102,6 +102,21 @@ function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
       <circle cx="12" cy="19" r="1" />
     </svg>
   );
+}
+
+function getAvatarBg(name: string): string {
+  const colors = [
+    'bg-purple-100 text-purple-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-blue-100 text-blue-700',
+    'bg-amber-100 text-amber-700',
+    'bg-rose-100 text-rose-700',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length]!;
 }
 
 function formatTimeDisplay(isoString?: string | null): string {
@@ -365,71 +380,43 @@ export function OnDutyTab({
 
   return (
     <div className="space-y-6">
-      {/* 1. Four Top KPI Cards (Solid Vibrant Pastels from Reference Image) */}
+      {/* 1. Four Top KPI Cards (Universal KpiCard) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* On Duty */}
-        <div className="p-5 bg-[#faebe6] border border-[#f2d4cb] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
-          <div className="space-y-1 min-w-0">
-            <span className="text-xs font-semibold text-slate-700 block">On Duty</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
-              {onDutyCount}
-            </span>
-            <span className="text-xs text-slate-600 font-medium block truncate">
-              {onDutyPercent}% of total employees
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white/80 text-rose-700 flex items-center justify-center shrink-0 shadow-xs">
-            <IconUsers className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="On Duty"
+          value={onDutyCount}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge={`${onDutyPercent}% of total`}
+          variant="emerald"
+        />
 
         {/* Late Today */}
-        <div className="p-5 bg-[#e4f5ed] border border-[#c6eadb] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
-          <div className="space-y-1 min-w-0">
-            <span className="text-xs font-semibold text-slate-700 block">Late Today</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
-              {lateCount}
-            </span>
-            <span className="text-xs text-slate-600 font-medium block truncate">
-              &gt; 15 min after shift start
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white/80 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
-            <IconClock className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="Late Today"
+          value={lateCount}
+          icon={<IconClock className="w-7 h-7" />}
+          badge="> 15 min after shift"
+          variant="amber"
+        />
 
         {/* Absent Today */}
-        <div className="p-5 bg-[#e5effb] border border-[#ccdef4] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
-          <div className="space-y-1 min-w-0">
-            <span className="text-xs font-semibold text-slate-700 block">Absent Today</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
-              {absentCount}
-            </span>
-            <span className="text-xs text-slate-600 font-medium block truncate">
-              Not checked in yet
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white/80 text-sky-700 flex items-center justify-center shrink-0 shadow-xs">
-            <IconUserX className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="Absent Today"
+          value={absentCount}
+          icon={<IconUserX className="w-7 h-7" />}
+          badge="Not checked in"
+          variant="rose"
+        />
 
         {/* On Leave */}
-        <div className="p-5 bg-[#fef4d8] border border-[#fae6b4] rounded-3xl shadow-xs flex items-center justify-between hover:-translate-y-0.5 transition-all">
-          <div className="space-y-1 min-w-0">
-            <span className="text-xs font-semibold text-slate-700 block">On Leave</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-display tabular-nums tracking-tight block">
-              {onLeaveCount}
-            </span>
-            <span className="text-xs text-slate-600 font-medium block truncate">
-              Approved leave today
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white/80 text-amber-700 flex items-center justify-center shrink-0 shadow-xs">
-            <IconCalendar className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="On Leave"
+          value={onLeaveCount}
+          icon={<IconCalendar className="w-7 h-7" />}
+          badge="Approved leave"
+          variant="purple"
+        />
       </div>
 
       {/* 2. Main Two-Column Layout (70% Left Table, 30% Right Panels) */}
@@ -855,7 +842,7 @@ export function OnDutyTab({
                 </p>
               ) : (
                 onLeaveEmployees.map((emp) => {
-                  const avatarBg = getAvatarColors(emp.name);
+                  const avatarBg = getAvatarBg(emp.name);
                   const initials = emp.name
                     .split(' ')
                     .map((n) => n[0] || '')

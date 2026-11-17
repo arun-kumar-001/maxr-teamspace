@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { Button } from '../../../components/ui/Button';
+import { Button, PrimaryActionButton } from '../../../components/ui';
 import { DataTable, type Column, type SortDirection } from '../../../components/ui/DataTable';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -332,15 +332,13 @@ export function DesignationsPage() {
           </div>
 
           {canCreate && (
-            <Button
+            <PrimaryActionButton
               type="button"
-              variant="primary"
               onClick={openCreate}
-              className="min-h-[44px] text-xs sm:text-sm font-semibold shrink-0"
               data-testid="add-designation-btn"
             >
               Add Designation
-            </Button>
+            </PrimaryActionButton>
           )}
         </div>
       </div>

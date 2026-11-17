@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button, FormField, Input, Select, StatusPill } from '../../../components/ui';
 import { CreateEmployeeStepper } from './CreateEmployeeStepper';
 import type { useCreateEmployee } from '../hooks/useCreateEmployee';
@@ -34,8 +35,135 @@ export function CreateEmployeeForm({
   nextStep,
   prevStep,
   handleSubmit,
-  onCancel,
 }: CreateEmployeeFormProps) {
+  // Local state for salary details
+  const [salaryAmount, setSalaryAmount] = useState('6,00,000');
+  const [salaryCurrency, setSalaryCurrency] = useState('INR');
+  const [salaryFrequency, setSalaryFrequency] = useState('Annual');
+
+  // Local state for declaration checklist
+  const [appointmentLetterSigned, setAppointmentLetterSigned] = useState(true);
+  const [ndaSigned, setNdaSigned] = useState(true);
+  const [kycDocumentsSubmitted, setKycDocumentsSubmitted] = useState(true);
+
+  // Local state for uploaded onboarding documents
+  const [uploadedDocs, setUploadedDocs] = useState<
+    Record<string, { fileName: string; size: string } | null>
+  >({
+    resume: null,
+    aadharCard: null,
+    panCard: null,
+    degreeCertificates: null,
+    appointmentLetter: null,
+    nda: null,
+    kycProof: null,
+    educationResume: null,
+  });
+
+  const handleDocUpload = (
+    key:
+      | 'resume'
+      | 'aadharCard'
+      | 'panCard'
+      | 'degreeCertificates'
+      | 'appointmentLetter'
+      | 'nda'
+      | 'kycProof'
+      | 'educationResume',
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const sizeKb = Math.round(file.size / 1024);
+    const sizeStr = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
+    setUploadedDocs((prev) => ({
+      ...prev,
+      [key]: { fileName: file.name, size: sizeStr },
+    }));
+    if (key === 'appointmentLetter') setAppointmentLetterSigned(true);
+    if (key === 'nda') setNdaSigned(true);
+    if (key === 'kycProof' || key === 'aadharCard' || key === 'panCard' || key === 'degreeCertificates') {
+      setKycDocumentsSubmitted(true);
+    }
+  };
+
+  const handleRemoveDoc = (
+    key:
+      | 'resume'
+      | 'aadharCard'
+      | 'panCard'
+      | 'degreeCertificates'
+      | 'appointmentLetter'
+      | 'nda'
+      | 'kycProof'
+      | 'educationResume',
+  ) => {
+    setUploadedDocs((prev) => ({ ...prev, [key]: null }));
+  };
+
+  // Structured address states
+  const [permAddress, setPermAddress] = useState({
+    address1: formData.permanentAddress1 || '',
+    address2: formData.permanentAddress2 || '',
+    city: formData.permanentCity || '',
+    district: formData.permanentDistrict || '',
+    pincode: formData.permanentPincode || '',
+  });
+
+  const [currAddress, setCurrAddress] = useState({
+    address1: formData.currentAddress1 || '',
+    address2: formData.currentAddress2 || '',
+    city: formData.currentCity || '',
+    district: formData.currentDistrict || '',
+    pincode: formData.currentPincode || '',
+  });
+
+  const updatePermField = (field: keyof typeof permAddress, val: string) => {
+    const updated = { ...permAddress, [field]: val };
+    setPermAddress(updated);
+    const formatted = [updated.address1, updated.address2, updated.city, updated.district, updated.pincode]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(', ');
+    setFieldValue('permanentAddress', formatted);
+    setFieldValue(`permanent${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+
+    if (formData.sameAsPermanentAddress) {
+      setCurrAddress(updated);
+      setFieldValue('currentAddress', formatted);
+      setFieldValue(`current${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+    }
+  };
+
+  const updateCurrField = (field: keyof typeof currAddress, val: string) => {
+    const updated = { ...currAddress, [field]: val };
+    setCurrAddress(updated);
+    const formatted = [updated.address1, updated.address2, updated.city, updated.district, updated.pincode]
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(', ');
+    setFieldValue('currentAddress', formatted);
+    setFieldValue(`current${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+  };
+
+  const handleSameAddressToggle = (checked: boolean) => {
+    setFieldValue('sameAsPermanentAddress', checked);
+    if (checked) {
+      setCurrAddress({ ...permAddress });
+      const formatted = [
+        permAddress.address1,
+        permAddress.address2,
+        permAddress.city,
+        permAddress.district,
+        permAddress.pincode,
+      ]
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join(', ');
+      setFieldValue('currentAddress', formatted);
+    }
+  };
+
   // Department options formatted for Select
   const departmentOptions = departments.map((d) => ({
     value: d.id,
@@ -67,11 +195,7 @@ export function CreateEmployeeForm({
     errors.email ||
     errors.additionalEmails ||
     errors.phone ||
-    errors.additionalPhones ||
-    errors.panNumber ||
-    errors.aadhaarNumber ||
-    errors.bankAccountNumber ||
-    errors.bankIfscCode,
+    errors.additionalPhones,
   );
   const hasStep2Error = Boolean(
     errors.employeeCode ||
@@ -80,23 +204,41 @@ export function CreateEmployeeForm({
     errors.managerId ||
     errors.joiningDate,
   );
-  const hasStep3Error = Boolean(errors.role);
+  const hasStep3Error = Boolean(
+    errors.panNumber ||
+    errors.aadhaarNumber ||
+    errors.bankAccountNumber ||
+    errors.bankIfscCode,
+  );
+  const hasStep5Error = Boolean(errors.role);
 
   const stepStatus: Record<number, 'complete' | 'incomplete' | 'error'> = {
     1: hasStep1Error
       ? 'error'
-      : formData.firstName.trim() && formData.lastName.trim() && formData.email.trim()
+      : currentStep > 1 && formData.firstName.trim() && formData.lastName.trim() && formData.email.trim()
         ? 'complete'
         : 'incomplete',
     2: hasStep2Error
       ? 'error'
-      : formData.employeeCode.trim() &&
+      : currentStep > 2 &&
+          formData.employeeCode.trim() &&
           formData.departmentId &&
           formData.designationId &&
           formData.joiningDate
         ? 'complete'
         : 'incomplete',
-    3: hasStep3Error ? 'error' : 'incomplete',
+    3: hasStep3Error
+      ? 'error'
+      : currentStep > 3 && (formData.bankAccountNumber.trim() || formData.panNumber.trim())
+        ? 'complete'
+        : 'incomplete',
+    4: currentStep > 4 ? 'complete' : 'incomplete',
+    5: hasStep5Error
+      ? 'error'
+      : currentStep > 5 && formData.role
+        ? 'complete'
+        : 'incomplete',
+    6: 'incomplete',
   };
 
   const handleStepSelect = (step: number) => {
@@ -149,24 +291,24 @@ export function CreateEmployeeForm({
       {/* SECTION 1: Personal Details */}
       {/* ============================================================== */}
       <div
-        className={`bg-surface border border-border border-t-4 border-t-primary-deep rounded-card p-4 sm:p-6 shadow-card space-y-4 transition-all duration-200 ${
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
           currentStep === 1 ? 'block' : 'hidden'
         }`}
         data-testid="section-personal-details"
       >
-        <div className="border-b border-border pb-3">
-          <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary-soft text-primary-ink text-xs font-bold">
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
               1
             </span>
             Personal Information
           </h2>
-          <p className="text-xs text-text-muted mt-0.5">
-            Legal identity and primary contact information.
+          <p className="text-sm text-text-muted mt-1">
+            Legal identity, family background, and primary contact information.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 sm:gap-y-7">
           <FormField
             label="First Name"
             htmlFor="create-emp-first-name"
@@ -178,7 +320,7 @@ export function CreateEmployeeForm({
               type="text"
               value={formData.firstName}
               onChange={(e) => setFieldValue('firstName', e.target.value)}
-              placeholder="e.g. Rahul"
+              placeholder="Enter first name"
               disabled={isSubmitting}
               data-testid="input-first-name"
               autoFocus
@@ -196,21 +338,49 @@ export function CreateEmployeeForm({
               type="text"
               value={formData.lastName}
               onChange={(e) => setFieldValue('lastName', e.target.value)}
-              placeholder="e.g. Sharma"
+              placeholder="Enter last name"
               disabled={isSubmitting}
               data-testid="input-last-name"
             />
           </FormField>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            label="Father's / Mother's Name"
+            htmlFor="create-emp-parent-name"
+          >
+            <Input
+              id="create-emp-parent-name"
+              type="text"
+              value={formData.parentName || ''}
+              onChange={(e) => setFieldValue('parentName', e.target.value)}
+              placeholder="Enter father's or mother's name"
+              disabled={isSubmitting}
+              data-testid="input-parent-name"
+            />
+          </FormField>
+
+          <FormField
+            label="Blood Group"
+            htmlFor="create-emp-blood-group"
+          >
+            <Input
+              id="create-emp-blood-group"
+              type="text"
+              maxLength={10}
+              value={formData.bloodGroup}
+              onChange={(e) => setFieldValue('bloodGroup', e.target.value)}
+              placeholder="Enter blood group"
+              disabled={isSubmitting}
+              data-testid="input-blood-group"
+            />
+          </FormField>
+
           <div className="space-y-2">
             <FormField
-              label="Work Email Address"
+              label="Email Address"
               htmlFor="create-emp-email"
               required
               error={errors.email}
-              helperText="Used as the sign-in username and for onboarding communications."
             >
               <div className="flex items-center gap-2">
                 <Input
@@ -218,7 +388,7 @@ export function CreateEmployeeForm({
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFieldValue('email', e.target.value)}
-                  placeholder="e.g. rahul.sharma@maxr.example"
+                  placeholder="Enter email address"
                   disabled={isSubmitting}
                   autoCapitalize="none"
                   data-testid="input-email"
@@ -243,7 +413,7 @@ export function CreateEmployeeForm({
                   type="email"
                   value={extraEmail}
                   onChange={(e) => updateAdditionalEmail(idx, e.target.value)}
-                  placeholder={`Additional email #${idx + 1} (personal / secondary)`}
+                  placeholder="Enter additional email address"
                   disabled={isSubmitting}
                   autoCapitalize="none"
                   aria-label={`Additional email ${idx + 1}`}
@@ -253,8 +423,9 @@ export function CreateEmployeeForm({
                   type="button"
                   onClick={() => removeAdditionalEmail(idx)}
                   disabled={isSubmitting}
+                  title="Remove email address"
                   aria-label={`Remove additional email ${idx + 1}`}
-                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface text-text-muted hover:text-danger hover:bg-rose-50 transition-colors cursor-pointer"
+                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-sm font-bold"
                 >
                   &times;
                 </button>
@@ -267,10 +438,9 @@ export function CreateEmployeeForm({
 
           <div className="space-y-2">
             <FormField
-              label="Phone Number"
+              label="Primary Phone Number"
               htmlFor="create-emp-phone"
               error={errors.phone}
-              helperText="Optional. Digits, spaces, +, (, ) and - (6–50 characters)."
             >
               <div className="flex items-center gap-2">
                 <Input
@@ -278,16 +448,16 @@ export function CreateEmployeeForm({
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFieldValue('phone', e.target.value)}
-                  placeholder="e.g. +91 98765 43210"
+                  placeholder="Enter primary phone number"
                   disabled={isSubmitting}
                   data-testid="input-phone"
                 />
                 <button
                   type="button"
                   onClick={addAdditionalPhone}
-                  disabled={isSubmitting || formData.additionalPhones.length >= 5}
-                  title="Add additional mobile number"
-                  aria-label="Add additional mobile number"
+                  disabled={isSubmitting || formData.additionalPhones.length >= 3}
+                  title="Add alternate phone number"
+                  aria-label="Add alternate phone number"
                   data-testid="add-phone-btn"
                   className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface-muted/70 text-text hover:bg-primary-soft hover:text-primary-deep hover:border-primary-strong/40 transition-colors disabled:opacity-40 cursor-pointer font-semibold text-base"
                 >
@@ -302,17 +472,18 @@ export function CreateEmployeeForm({
                   type="tel"
                   value={extraPhone}
                   onChange={(e) => updateAdditionalPhone(idx, e.target.value)}
-                  placeholder={`Additional mobile #${idx + 1} (alternate / emergency)`}
+                  placeholder="Enter alternate phone number"
                   disabled={isSubmitting}
-                  aria-label={`Additional mobile ${idx + 1}`}
+                  aria-label={`Alternate phone ${idx + 1}`}
                   data-testid={`input-additional-phone-${idx}`}
                 />
                 <button
                   type="button"
                   onClick={() => removeAdditionalPhone(idx)}
                   disabled={isSubmitting}
-                  aria-label={`Remove additional mobile ${idx + 1}`}
-                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-border bg-surface text-text-muted hover:text-danger hover:bg-rose-50 transition-colors cursor-pointer"
+                  title="Remove phone number"
+                  aria-label={`Remove alternate phone ${idx + 1}`}
+                  className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-input border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-sm font-bold"
                 >
                   &times;
                 </button>
@@ -322,237 +493,258 @@ export function CreateEmployeeForm({
               <p className="text-xs text-danger font-medium">{errors.additionalPhones}</p>
             )}
           </div>
-        </div>
 
-        {/* Blood Group, PAN Card Number, Aadhaar Number */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-border/70">
-          <FormField label="Blood Group" htmlFor="create-emp-blood-group">
-            <Input
-              id="create-emp-blood-group"
-              type="text"
-              maxLength={10}
-              value={formData.bloodGroup}
-              onChange={(e) => setFieldValue('bloodGroup', e.target.value)}
-              placeholder="e.g. O+, A+, AB-"
-              disabled={isSubmitting}
-              data-testid="input-blood-group"
-            />
-          </FormField>
+          {/* Permanent Address - Structured Fields */}
+          <div className="md:col-span-2 space-y-3.5 pt-2 border-t border-border/70">
+            <h3 className="text-xs font-bold text-text uppercase tracking-wider">
+              Permanent Address
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Address Line 1" htmlFor="create-emp-perm-addr1">
+                <Input
+                  id="create-emp-perm-addr1"
+                  type="text"
+                  value={permAddress.address1}
+                  onChange={(e) => updatePermField('address1', e.target.value)}
+                  placeholder="Door No, Building, Street name"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-address"
+                />
+              </FormField>
+              <FormField label="Address Line 2" htmlFor="create-emp-perm-addr2">
+                <Input
+                  id="create-emp-perm-addr2"
+                  type="text"
+                  value={permAddress.address2}
+                  onChange={(e) => updatePermField('address2', e.target.value)}
+                  placeholder="Area, Landmark, Locality"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-address2"
+                />
+              </FormField>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormField label="City / Town" htmlFor="create-emp-perm-city">
+                <Input
+                  id="create-emp-perm-city"
+                  type="text"
+                  value={permAddress.city}
+                  onChange={(e) => updatePermField('city', e.target.value)}
+                  placeholder="Enter city"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-city"
+                />
+              </FormField>
+              <FormField label="District" htmlFor="create-emp-perm-district">
+                <Input
+                  id="create-emp-perm-district"
+                  type="text"
+                  value={permAddress.district}
+                  onChange={(e) => updatePermField('district', e.target.value)}
+                  placeholder="Enter district"
+                  disabled={isSubmitting}
+                  data-testid="input-permanent-district"
+                />
+              </FormField>
+              <FormField label="PIN Code" htmlFor="create-emp-perm-pincode">
+                <Input
+                  id="create-emp-perm-pincode"
+                  type="text"
+                  maxLength={10}
+                  value={permAddress.pincode}
+                  onChange={(e) => updatePermField('pincode', e.target.value)}
+                  placeholder="Enter PIN code"
+                  disabled={isSubmitting}
+                  className="font-mono"
+                  data-testid="input-permanent-pincode"
+                />
+              </FormField>
+            </div>
+          </div>
 
-          <FormField
-            label="PAN Card Number"
-            htmlFor="create-emp-pan"
-            error={errors.panNumber}
-            helperText="10-char format (e.g. ABCDE1234F)"
-          >
-            <Input
-              id="create-emp-pan"
-              type="text"
-              maxLength={10}
-              value={formData.panNumber}
-              onChange={(e) => setFieldValue('panNumber', e.target.value.toUpperCase())}
-              placeholder="ABCDE1234F"
-              disabled={isSubmitting}
-              className="uppercase font-mono"
-              data-testid="input-pan-number"
-            />
-          </FormField>
-
-          <FormField
-            label="Aadhaar Number"
-            htmlFor="create-emp-aadhaar"
-            error={errors.aadhaarNumber}
-            helperText="12-digit Aadhaar ID"
-          >
-            <Input
-              id="create-emp-aadhaar"
-              type="text"
-              maxLength={14}
-              value={formData.aadhaarNumber}
-              onChange={(e) => setFieldValue('aadhaarNumber', e.target.value)}
-              placeholder="1234 5678 9012"
-              disabled={isSubmitting}
-              className="font-mono"
-              data-testid="input-aadhaar-number"
-            />
-          </FormField>
-        </div>
-
-        {/* Permanent Address & Current Address */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border/70">
-          <FormField label="Permanent Address" htmlFor="create-emp-perm-address">
-            <textarea
-              id="create-emp-perm-address"
-              rows={2}
-              value={formData.permanentAddress}
-              onChange={(e) => setFieldValue('permanentAddress', e.target.value)}
-              placeholder="Door No, Street, City, State, PIN..."
-              disabled={isSubmitting}
-              data-testid="input-permanent-address"
-              className="w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </FormField>
-
-          <div className="space-y-1">
+          {/* Current Address - Structured Fields */}
+          <div className="md:col-span-2 space-y-3.5 pt-2 border-t border-border/70">
             <div className="flex items-center justify-between gap-2">
-              <label
-                htmlFor="create-emp-curr-address"
-                className="block text-xs font-semibold text-text-muted uppercase tracking-wider"
-              >
-                Current Address
-              </label>
-              <label className="inline-flex items-center gap-1.5 text-xs text-text-muted cursor-pointer select-none">
+              <h3 className="text-xs font-bold text-text uppercase tracking-wider">
+                Current Residential Address
+              </h3>
+              <label className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={formData.sameAsPermanentAddress}
-                  onChange={(e) => setFieldValue('sameAsPermanentAddress', e.target.checked)}
+                  onChange={(e) => handleSameAddressToggle(e.target.checked)}
                   disabled={isSubmitting}
                   data-testid="same-address-checkbox"
-                  className="rounded border-border text-primary-deep focus:ring-primary"
+                  className="rounded border-border text-primary-deep focus:ring-primary h-3.5 w-3.5"
                 />
-                <span>Same as permanent</span>
+                <span className="font-medium">Same as permanent address</span>
               </label>
             </div>
-            <textarea
-              id="create-emp-curr-address"
-              rows={2}
-              value={formData.currentAddress}
-              onChange={(e) => setFieldValue('currentAddress', e.target.value)}
-              placeholder="Current residential address..."
-              disabled={isSubmitting || formData.sameAsPermanentAddress}
-              data-testid="input-current-address"
-              className="w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Address Line 1" htmlFor="create-emp-curr-addr1">
+                <Input
+                  id="create-emp-curr-addr1"
+                  type="text"
+                  value={currAddress.address1}
+                  onChange={(e) => updateCurrField('address1', e.target.value)}
+                  placeholder="Door No, Building, Street name"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-address"
+                />
+              </FormField>
+              <FormField label="Address Line 2" htmlFor="create-emp-curr-addr2">
+                <Input
+                  id="create-emp-curr-addr2"
+                  type="text"
+                  value={currAddress.address2}
+                  onChange={(e) => updateCurrField('address2', e.target.value)}
+                  placeholder="Area, Landmark, Locality"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-address2"
+                />
+              </FormField>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormField label="City / Town" htmlFor="create-emp-curr-city">
+                <Input
+                  id="create-emp-curr-city"
+                  type="text"
+                  value={currAddress.city}
+                  onChange={(e) => updateCurrField('city', e.target.value)}
+                  placeholder="Enter city"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-city"
+                />
+              </FormField>
+              <FormField label="District" htmlFor="create-emp-curr-district">
+                <Input
+                  id="create-emp-curr-district"
+                  type="text"
+                  value={currAddress.district}
+                  onChange={(e) => updateCurrField('district', e.target.value)}
+                  placeholder="Enter district"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  data-testid="input-current-district"
+                />
+              </FormField>
+              <FormField label="PIN Code" htmlFor="create-emp-curr-pincode">
+                <Input
+                  id="create-emp-curr-pincode"
+                  type="text"
+                  maxLength={10}
+                  value={currAddress.pincode}
+                  onChange={(e) => updateCurrField('pincode', e.target.value)}
+                  placeholder="Enter PIN code"
+                  disabled={isSubmitting || formData.sameAsPermanentAddress}
+                  className="font-mono"
+                  data-testid="input-current-pincode"
+                />
+              </FormField>
+            </div>
           </div>
-        </div>
 
-        {/* Bank Account Details */}
-        <div className="pt-4 border-t border-border/70 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Bank Account Details
-            </h3>
-            <span className="text-xs text-text-subtle">
-              Optional payroll &amp; reimbursement info
-            </span>
-          </div>
+          {/* Resume Upload inside Personal Details */}
+          <div className="md:col-span-2 pt-2 border-t border-border/70">
+            <FormField label="Candidate Resume / Curriculum Vitae (CV)" htmlFor="create-emp-resume">
+              <div className="p-4 rounded-xl border border-border bg-surface-muted/30 hover:border-primary-strong/40 transition-colors">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-text">Candidate Resume / CV</p>
+                      <p className="text-[11px] text-text-muted">Upload candidate CV (PDF, DOCX, DOC up to 10MB)</p>
+                    </div>
+                  </div>
+                  {uploadedDocs.resume ? (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Uploaded
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                      Optional
+                    </span>
+                  )}
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <FormField label="Account Holder Name" htmlFor="create-emp-bank-holder">
-              <Input
-                id="create-emp-bank-holder"
-                type="text"
-                maxLength={150}
-                value={formData.bankAccountHolder}
-                onChange={(e) => setFieldValue('bankAccountHolder', e.target.value)}
-                placeholder="e.g. Aarav Sharma"
-                disabled={isSubmitting}
-                data-testid="input-bank-account-holder"
-              />
-            </FormField>
-
-            <FormField label="Bank Name" htmlFor="create-emp-bank-name">
-              <Input
-                id="create-emp-bank-name"
-                type="text"
-                maxLength={150}
-                value={formData.bankName}
-                onChange={(e) => setFieldValue('bankName', e.target.value)}
-                placeholder="e.g. HDFC Bank"
-                disabled={isSubmitting}
-                data-testid="input-bank-name"
-              />
-            </FormField>
-
-            <FormField
-              label="Account Number"
-              htmlFor="create-emp-bank-account"
-              error={errors.bankAccountNumber}
-              helperText="6–30 digits or letters"
-            >
-              <Input
-                id="create-emp-bank-account"
-                type="text"
-                maxLength={30}
-                value={formData.bankAccountNumber}
-                onChange={(e) => setFieldValue('bankAccountNumber', e.target.value)}
-                placeholder="e.g. 50100234567890"
-                disabled={isSubmitting}
-                className="font-mono"
-                data-testid="input-bank-account-number"
-              />
-            </FormField>
-
-            <FormField
-              label="IFSC Code"
-              htmlFor="create-emp-bank-ifsc"
-              error={errors.bankIfscCode}
-              helperText="11-character bank IFSC"
-            >
-              <Input
-                id="create-emp-bank-ifsc"
-                type="text"
-                maxLength={11}
-                value={formData.bankIfscCode}
-                onChange={(e) => setFieldValue('bankIfscCode', e.target.value.toUpperCase())}
-                placeholder="HDFC0001234"
-                disabled={isSubmitting}
-                className="uppercase font-mono"
-                data-testid="input-bank-ifsc-code"
-              />
-            </FormField>
-
-            <FormField label="Branch Name" htmlFor="create-emp-bank-branch">
-              <Input
-                id="create-emp-bank-branch"
-                type="text"
-                maxLength={150}
-                value={formData.bankBranch}
-                onChange={(e) => setFieldValue('bankBranch', e.target.value)}
-                placeholder="e.g. Indiranagar, Bengaluru"
-                disabled={isSubmitting}
-                data-testid="input-bank-branch"
-              />
+                {uploadedDocs.resume ? (
+                  <div className="mt-3 flex items-center justify-between p-2 rounded-lg bg-surface text-xs border border-border">
+                    <span className="truncate max-w-[260px] font-medium text-text">
+                      {uploadedDocs.resume.fileName} ({uploadedDocs.resume.size})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDoc('resume')}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="mt-2.5 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface cursor-pointer transition-colors">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Select Resume File</span>
+                    <input
+                      id="create-emp-resume"
+                      type="file"
+                      accept=".pdf,.docx,.doc"
+                      onChange={(e) => handleDocUpload('resume', e)}
+                      className="hidden"
+                      data-testid="input-resume-upload"
+                    />
+                  </label>
+                )}
+              </div>
             </FormField>
           </div>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* SECTION 2: Employment & Hierarchy */}
+      {/* SECTION 2: Employment, Hierarchy & Salary */}
       {/* ============================================================== */}
       <div
-        className={`bg-surface border border-border border-t-4 border-t-blue-600 rounded-card p-4 sm:p-6 shadow-card space-y-4 transition-all duration-200 ${
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
           currentStep === 2 ? 'block' : 'hidden'
         }`}
         data-testid="section-employment-details"
       >
-        <div className="border-b border-border pb-3">
-          <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary-soft text-primary-ink text-xs font-bold">
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
               2
             </span>
-            Employment & Hierarchy
+            Professional &amp; Employment Details
           </h2>
-          <p className="text-xs text-text-muted mt-0.5">
-            Company identifier, department mapping, designation, and reporting structure.
+          <p className="text-sm text-text-muted mt-1">
+            Role, department mapping, code, reporting hierarchy, and salary structure.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 sm:gap-y-7">
           <FormField
             label="Employee Code"
             htmlFor="create-emp-code"
             required
             error={errors.employeeCode}
-            helperText="Unique uppercase ID: 2–50 chars (letters, digits, -, _)."
           >
             <Input
               id="create-emp-code"
               type="text"
               value={formData.employeeCode}
               onChange={(e) => setFieldValue('employeeCode', e.target.value)}
-              placeholder="e.g. EMP-042"
+              placeholder="Enter employee code"
               disabled={isSubmitting}
               data-testid="input-employee-code"
             />
@@ -563,7 +755,6 @@ export function CreateEmployeeForm({
             htmlFor="create-emp-joining-date"
             required
             error={errors.joiningDate}
-            helperText="Format: YYYY-MM-DD. Cannot be > 365 days in future."
           >
             <Input
               id="create-emp-joining-date"
@@ -574,9 +765,7 @@ export function CreateEmployeeForm({
               data-testid="input-joining-date"
             />
           </FormField>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             label="Department"
             htmlFor="create-emp-department"
@@ -599,11 +788,6 @@ export function CreateEmployeeForm({
             htmlFor="create-emp-designation"
             required
             error={errors.designationId || designationError || undefined}
-            helperText={
-              !formData.departmentId
-                ? 'Select a department first to view its designations.'
-                : undefined
-            }
           >
             <Select
               id="create-emp-designation"
@@ -628,14 +812,27 @@ export function CreateEmployeeForm({
               data-testid="select-designation"
             />
           </FormField>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            label="Work Email Address"
+            htmlFor="create-emp-work-email"
+          >
+            <Input
+              id="create-emp-work-email"
+              type="email"
+              value={formData.workEmail || ''}
+              onChange={(e) => setFieldValue('workEmail', e.target.value)}
+              placeholder="Enter official work email address"
+              disabled={isSubmitting}
+              autoCapitalize="none"
+              data-testid="input-work-email"
+            />
+          </FormField>
+
           <FormField
             label="Reporting Manager"
             htmlFor="create-emp-manager"
             error={errors.managerId || managerError || undefined}
-            helperText="Optional. Active workforce member who approves leave and attendance."
           >
             <Select
               id="create-emp-manager"
@@ -648,25 +845,477 @@ export function CreateEmployeeForm({
             />
           </FormField>
         </div>
+
+        {/* Salary Details Subsection (per user requirement) */}
+        <div className="pt-6 border-t border-border/70 space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-text">
+                Salary &amp; Compensation Structure
+              </h3>
+              <p className="text-xs text-text-muted mt-0.5">
+                Official compensation record for payroll disbursement
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <FormField label="Base Salary / CTC" htmlFor="create-emp-salary">
+              <Input
+                id="create-emp-salary"
+                type="text"
+                value={salaryAmount}
+                onChange={(e) => setSalaryAmount(e.target.value)}
+                placeholder="Enter salary amount"
+                disabled={isSubmitting}
+                data-testid="input-salary-ctc"
+              />
+            </FormField>
+
+            <FormField label="Currency" htmlFor="create-emp-currency">
+              <Select
+                id="create-emp-currency"
+                value={salaryCurrency}
+                onChange={(e) => setSalaryCurrency(e.target.value)}
+                disabled={isSubmitting}
+                options={[
+                  { value: 'INR', label: 'INR (₹)' },
+                  { value: 'USD', label: 'USD ($)' },
+                  { value: 'EUR', label: 'EUR (€)' },
+                  { value: 'GBP', label: 'GBP (£)' },
+                ]}
+              />
+            </FormField>
+
+            <FormField label="Pay Frequency" htmlFor="create-emp-frequency">
+              <Select
+                id="create-emp-frequency"
+                value={salaryFrequency}
+                onChange={(e) => setSalaryFrequency(e.target.value)}
+                disabled={isSubmitting}
+                options={[
+                  { value: 'Annual', label: 'Annual' },
+                  { value: 'Monthly', label: 'Monthly' },
+                  { value: 'Bi-weekly', label: 'Bi-weekly' },
+                ]}
+              />
+            </FormField>
+          </div>
+        </div>
       </div>
 
       {/* ============================================================== */}
-      {/* SECTION 3: Role & System Access */}
+      {/* SECTION 3: Bank Details & Tax Identifiers */}
       {/* ============================================================== */}
       <div
-        className={`bg-surface border border-border border-t-4 border-t-emerald-600 rounded-card p-4 sm:p-6 shadow-card space-y-4 transition-all duration-200 ${
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
           currentStep === 3 ? 'block' : 'hidden'
+        }`}
+        data-testid="section-bank-details"
+      >
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
+              3
+            </span>
+            Bank Details &amp; Tax IDs
+          </h2>
+          <p className="text-sm text-text-muted mt-1">
+            Payroll disbursement account details and official government tax credentials.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 sm:gap-y-7">
+          <FormField label="Account Holder Name" htmlFor="create-emp-bank-holder">
+            <Input
+              id="create-emp-bank-holder"
+              type="text"
+              maxLength={150}
+              value={formData.bankAccountHolder}
+              onChange={(e) => setFieldValue('bankAccountHolder', e.target.value)}
+              placeholder="Enter account holder name"
+              disabled={isSubmitting}
+              data-testid="input-bank-account-holder"
+            />
+          </FormField>
+
+          <FormField label="Bank Name" htmlFor="create-emp-bank-name">
+            <Input
+              id="create-emp-bank-name"
+              type="text"
+              maxLength={150}
+              value={formData.bankName}
+              onChange={(e) => setFieldValue('bankName', e.target.value)}
+              placeholder="Enter bank name"
+              disabled={isSubmitting}
+              data-testid="input-bank-name"
+            />
+          </FormField>
+
+          <FormField
+            label="Account Number"
+            htmlFor="create-emp-bank-account"
+            error={errors.bankAccountNumber}
+          >
+            <Input
+              id="create-emp-bank-account"
+              type="text"
+              maxLength={30}
+              value={formData.bankAccountNumber}
+              onChange={(e) => setFieldValue('bankAccountNumber', e.target.value)}
+              placeholder="Enter account number"
+              disabled={isSubmitting}
+              className="font-mono"
+              data-testid="input-bank-account-number"
+            />
+          </FormField>
+
+          <FormField
+            label="IFSC Code"
+            htmlFor="create-emp-bank-ifsc"
+            error={errors.bankIfscCode}
+          >
+            <Input
+              id="create-emp-bank-ifsc"
+              type="text"
+              maxLength={11}
+              value={formData.bankIfscCode}
+              onChange={(e) => setFieldValue('bankIfscCode', e.target.value.toUpperCase())}
+              placeholder="Enter IFSC code"
+              disabled={isSubmitting}
+              className="uppercase font-mono"
+              data-testid="input-bank-ifsc-code"
+            />
+          </FormField>
+
+          <FormField label="Branch Name" htmlFor="create-emp-bank-branch">
+            <Input
+              id="create-emp-bank-branch"
+              type="text"
+              maxLength={150}
+              value={formData.bankBranch}
+              onChange={(e) => setFieldValue('bankBranch', e.target.value)}
+              placeholder="Enter branch name"
+              disabled={isSubmitting}
+              data-testid="input-bank-branch"
+            />
+          </FormField>
+
+          <FormField
+            label="PAN Card Number"
+            htmlFor="create-emp-pan"
+            error={errors.panNumber}
+          >
+            <Input
+              id="create-emp-pan"
+              type="text"
+              maxLength={10}
+              value={formData.panNumber}
+              onChange={(e) => setFieldValue('panNumber', e.target.value.toUpperCase())}
+              placeholder="Enter PAN card number"
+              disabled={isSubmitting}
+              className="uppercase font-mono"
+              data-testid="input-pan-number"
+            />
+          </FormField>
+
+          <div className="md:col-span-2">
+            <FormField
+              label="Aadhaar Number"
+              htmlFor="create-emp-aadhaar"
+              error={errors.aadhaarNumber}
+            >
+              <Input
+                id="create-emp-aadhaar"
+                type="text"
+                maxLength={14}
+                value={formData.aadhaarNumber}
+                onChange={(e) => setFieldValue('aadhaarNumber', e.target.value)}
+                placeholder="Enter Aadhaar number"
+                disabled={isSubmitting}
+                className="font-mono"
+                data-testid="input-aadhaar-number"
+              />
+            </FormField>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* SECTION 4: Onboarding Documents (Aadhaar, PAN, Degree Certificates) */}
+      {/* ============================================================== */}
+      <div
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
+          currentStep === 4 ? 'block' : 'hidden'
+        }`}
+        data-testid="section-onboarding-documents"
+      >
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
+              4
+            </span>
+            Onboarding Documents
+          </h2>
+          <p className="text-sm text-text-muted mt-1">
+            Upload candidate identification proofs (Aadhaar Card, PAN Card) and educational degree certificates.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5" data-testid="document-upload-section">
+          {/* 1. Aadhaar Card Upload */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <circle cx="9" cy="10" r="2" />
+                    <line x1="15" y1="8" x2="17" y2="8" />
+                    <line x1="15" y1="12" x2="17" y2="12" />
+                    <line x1="7" y1="16" x2="17" y2="16" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Aadhaar Card</p>
+                  <p className="text-[11px] text-text-muted">UIDAI Government ID (PDF, JPG, PNG)</p>
+                </div>
+              </div>
+              {uploadedDocs.aadharCard ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.aadharCard ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.aadharCard.fileName} ({uploadedDocs.aadharCard.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('aadharCard')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload Aadhaar Card</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => handleDocUpload('aadharCard', e)}
+                  className="hidden"
+                  data-testid="upload-aadhaar"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* 2. PAN Card Upload */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <line x1="2" y1="10" x2="22" y2="10" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">PAN Card</p>
+                  <p className="text-[11px] text-text-muted">Income Tax Card (PDF, JPG, PNG)</p>
+                </div>
+              </div>
+              {uploadedDocs.panCard ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.panCard ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.panCard.fileName} ({uploadedDocs.panCard.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('panCard')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload PAN Card</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => handleDocUpload('panCard', e)}
+                  className="hidden"
+                  data-testid="upload-pan"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* 3. Degree Certificates Upload */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Degree Certificates</p>
+                  <p className="text-[11px] text-text-muted">UG / PG degrees &amp; certificates (PDF, JPG, PNG)</p>
+                </div>
+              </div>
+              {uploadedDocs.degreeCertificates ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.degreeCertificates ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.degreeCertificates.fileName} ({uploadedDocs.degreeCertificates.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('degreeCertificates')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload Degree Certificates</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.docx"
+                  onChange={(e) => handleDocUpload('degreeCertificates', e)}
+                  className="hidden"
+                  data-testid="upload-degrees"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* 4. Signed Appointment Letter */}
+          <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-text">Signed Appointment Letter</p>
+                  <p className="text-[11px] text-text-muted">Signed offer &amp; terms (PDF, DOCX)</p>
+                </div>
+              </div>
+              {uploadedDocs.appointmentLetter ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Uploaded
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-surface-muted text-text-muted border border-border">
+                  Optional
+                </span>
+              )}
+            </div>
+
+            {uploadedDocs.appointmentLetter ? (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
+                <span className="truncate max-w-[200px] font-medium text-text">
+                  {uploadedDocs.appointmentLetter.fileName} ({uploadedDocs.appointmentLetter.size})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveDoc('appointmentLetter')}
+                  className="text-xs text-rose-600 hover:text-rose-800 font-bold ml-2 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Upload Appointment Letter</span>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.doc"
+                  onChange={(e) => handleDocUpload('appointmentLetter', e)}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* SECTION 5: Role & System Access */}
+      {/* ============================================================== */}
+      <div
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
+          currentStep === 5 ? 'block' : 'hidden'
         }`}
         data-testid="section-role-access"
       >
-        <div className="border-b border-border pb-3">
-          <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary-soft text-primary-ink text-xs font-bold">
-              3
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
+              5
             </span>
-            System Role & Access
+            System Role &amp; Access
           </h2>
-          <p className="text-xs text-text-muted mt-0.5">
+          <p className="text-sm text-text-muted mt-1">
             Initial role assignment.{' '}
             {isAdmin
               ? 'Admins can assign any role.'
@@ -675,16 +1324,16 @@ export function CreateEmployeeForm({
         </div>
 
         <FormField label="Assigned Role" htmlFor="create-emp-role" required error={errors.role}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="role-options-group">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2" data-testid="role-options-group">
             {availableRoles.map((r) => {
               const isSelected = formData.role === r.value;
               return (
                 <label
                   key={r.value}
-                  className={`flex items-start gap-3 p-3.5 rounded-input border cursor-pointer transition-all select-none ${
+                  className={`flex items-start gap-3.5 p-4 rounded-xl border cursor-pointer transition-all select-none ${
                     isSelected
-                      ? 'bg-primary-soft border-primary-strong ring-1 ring-primary-strong shadow-raised'
-                      : 'bg-surface border-border-strong hover:bg-surface-muted'
+                      ? 'bg-primary-soft border-primary-strong ring-2 ring-primary/20 shadow-raised'
+                      : 'bg-surface border-border hover:bg-surface-muted hover:border-border-strong'
                   }`}
                   data-testid={`role-card-${r.value}`}
                 >
@@ -698,8 +1347,8 @@ export function CreateEmployeeForm({
                     className="mt-1 h-4 w-4 text-primary-deep focus:ring-primary-strong"
                   />
                   <div className="text-xs">
-                    <p className="font-bold text-text">{r.label}</p>
-                    <p className="text-text-muted mt-0.5 text-[11px] leading-relaxed">
+                    <p className="font-bold text-text text-sm">{r.label}</p>
+                    <p className="text-text-muted mt-1 text-xs leading-relaxed">
                       {r.description}
                     </p>
                   </div>
@@ -711,12 +1360,12 @@ export function CreateEmployeeForm({
 
         {/* Informative Notice on Pending Status */}
         <div
-          className="p-3.5 bg-amber-50 border border-amber-200 rounded-input text-xs text-amber-900 space-y-1"
+          className="p-4 sm:p-5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 space-y-1.5"
           role="note"
           aria-label="Pending Account Creation Notice"
         >
-          <div className="flex items-center gap-2 font-semibold text-amber-950">
-            <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 20 20" aria-hidden="true">
+          <div className="flex items-center gap-2 font-semibold text-amber-950 text-sm">
+            <svg className="w-4 h-4 fill-current shrink-0 text-amber-600" viewBox="0 0 20 20" aria-hidden="true">
               <path
                 fillRule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -725,123 +1374,183 @@ export function CreateEmployeeForm({
             </svg>
             Pending Account Activation Notice
           </div>
-          <p className="text-amber-900/90 leading-relaxed">
+          <p className="text-amber-900/90 leading-relaxed text-xs">
             The account will be created with status <StatusPill status="Pending" size="sm" />. An
             automated onboarding email will be queued by the system to welcome the employee. No
             sign-in password is set during creation.
           </p>
         </div>
-
-        {/* Review Summary (visible on Step 3) */}
-        {currentStep === 3 && (
-          <div
-            className="p-4 bg-surface-muted border border-border rounded-input space-y-2 text-xs"
-            data-testid="create-employee-review-summary"
-          >
-            <p className="font-bold text-text uppercase tracking-wider text-[10px]">
-              Submission Review Summary
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-text">
-              <div>
-                <span className="text-text-muted block text-[11px]">Employee:</span>
-                <span className="font-semibold">
-                  {formData.firstName || '—'} {formData.lastName || '—'}
-                </span>
-              </div>
-              <div>
-                <span className="text-text-muted block text-[11px]">Code:</span>
-                <span className="font-mono font-semibold">{formData.employeeCode || '—'}</span>
-              </div>
-              <div>
-                <span className="text-text-muted block text-[11px]">Email:</span>
-                <span className="font-mono">{formData.email || '—'}</span>
-              </div>
-              <div>
-                <span className="text-text-muted block text-[11px]">Department:</span>
-                <span>{selectedDepartment?.name || '—'}</span>
-              </div>
-              <div>
-                <span className="text-text-muted block text-[11px]">Designation:</span>
-                <span>{selectedDesignation?.title || '—'}</span>
-              </div>
-              <div>
-                <span className="text-text-muted block text-[11px]">Manager:</span>
-                <span>{selectedManager ? selectedManager.name : 'None (Top Level)'}</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ============================================================== */}
-      {/* WIZARD NAVIGATION & SUBMIT BAR */}
+      {/* SECTION 6: Declaration & Onboarding Checklist */}
       {/* ============================================================== */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
-        <div className="flex items-center gap-2">
-          {currentStep > 1 ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={prevStep}
-              disabled={isSubmitting}
-              className="min-h-[44px]"
-              data-testid="prev-step-button"
-            >
-              ← Back
-            </Button>
-          ) : (
-            onCancel && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={isSubmitting}
-                className="min-h-[44px]"
-                data-testid="desktop-cancel-button"
-              >
-                Cancel
-              </Button>
-            )
-          )}
-          {currentStep > 1 && onCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="min-h-[44px] hidden sm:inline-flex"
-              data-testid="desktop-cancel-button"
-            >
-              Cancel
-            </Button>
-          )}
+      <div
+        className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
+          currentStep === 6 ? 'block' : 'hidden'
+        }`}
+        data-testid="section-declaration-checklist"
+      >
+        <div className="border-b border-border/70 pb-5">
+          <h2 className="text-lg sm:text-xl font-bold text-text font-display flex items-center gap-2.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
+              6
+            </span>
+            Declaration &amp; Onboarding Checklist
+          </h2>
+          <p className="text-sm text-text-muted mt-1">
+            Verify required onboarding documents, agreements and declaration before submitting.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 ml-auto sm:ml-0">
-          {currentStep < 3 && (
-            <Button
-              type="button"
-              variant="primary"
-              onClick={nextStep}
-              disabled={isSubmitting}
-              className="min-h-[44px]"
-              data-testid="next-step-button"
-            >
-              {currentStep === 1 ? 'Next: Employment →' : 'Next: Access & Review →'}
-            </Button>
-          )}
+        {/* Declaration Checkbox Items (per user requirement) */}
+        <div className="space-y-3.5">
+          <label className="flex items-start gap-3.5 p-4 bg-surface border border-border rounded-xl cursor-pointer hover:bg-surface-muted/60 transition-colors shadow-xs">
+            <input
+              type="checkbox"
+              checked={appointmentLetterSigned}
+              onChange={(e) => setAppointmentLetterSigned(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-border text-primary-deep focus:ring-primary"
+            />
+            <div className="text-xs">
+              <span className="font-semibold text-text text-sm block">
+                Appointment letter issued and signed by employee
+              </span>
+              <span className="text-xs text-text-muted mt-0.5 block">
+                Candidate has formally accepted the employment terms and compensation details.
+              </span>
+            </div>
+          </label>
 
+          <label className="flex items-start gap-3.5 p-4 bg-surface border border-border rounded-xl cursor-pointer hover:bg-surface-muted/60 transition-colors shadow-xs">
+            <input
+              type="checkbox"
+              checked={ndaSigned}
+              onChange={(e) => setNdaSigned(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-border text-primary-deep focus:ring-primary"
+            />
+            <div className="text-xs">
+              <span className="font-semibold text-text text-sm block">
+                Non-Disclosure Agreement (NDA) signed
+              </span>
+              <span className="text-xs text-text-muted mt-0.5 block">
+                Proprietary information, intellectual property, and client confidentiality agreed.
+              </span>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3.5 p-4 bg-surface border border-border rounded-xl cursor-pointer hover:bg-surface-muted/60 transition-colors shadow-xs">
+            <input
+              type="checkbox"
+              checked={kycDocumentsSubmitted}
+              onChange={(e) => setKycDocumentsSubmitted(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-border text-primary-deep focus:ring-primary"
+            />
+            <div className="text-xs">
+              <span className="font-semibold text-text text-sm block">
+                Identity &amp; KYC documents submitted
+              </span>
+              <span className="text-xs text-text-muted mt-0.5 block">
+                Aadhaar card, PAN card, educational degrees and experience letters verified.
+              </span>
+            </div>
+          </label>
+        </div>
+
+        {/* Review Summary */}
+        <div
+          className="p-5 bg-surface-muted/70 border border-border rounded-xl space-y-3 text-xs"
+          data-testid="create-employee-review-summary"
+        >
+          <p className="font-bold text-text uppercase tracking-wider text-[11px]">
+            Submission Review Summary
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-text">
+            <div>
+              <span className="text-text-muted block text-[11px]">Employee:</span>
+              <span className="font-semibold">
+                {formData.firstName || '—'} {formData.lastName || '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Code:</span>
+              <span className="font-mono font-semibold">{formData.employeeCode || '—'}</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Email:</span>
+              <span className="font-mono">{formData.workEmail || formData.email || '—'}</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Department:</span>
+              <span>{selectedDepartment?.name || '—'}</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Designation:</span>
+              <span>{selectedDesignation?.title || '—'}</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Manager:</span>
+              <span>{selectedManager ? selectedManager.name : 'None (Top Level)'}</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Salary:</span>
+              <span>{salaryCurrency} {salaryAmount} ({salaryFrequency})</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-[11px]">Role:</span>
+              <span className="capitalize">{formData.role}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* WIZARD NAVIGATION & SUBMIT BAR (Only Arrowmarks + No Cancel Button) */}
+      {/* ============================================================== */}
+      <div className="flex items-center justify-between gap-4 pt-6 border-t border-border/80">
+        {/* Previous Button: Only Arrow Mark */}
+        {currentStep > 1 ? (
           <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
+            type="button"
+            variant="outline"
+            onClick={prevStep}
             disabled={isSubmitting}
-            className={currentStep === 3 ? 'min-h-[44px]' : 'hidden'}
-            data-testid="desktop-submit-button"
+            className="h-12 w-12 rounded-xl text-lg flex items-center justify-center font-bold shadow-xs hover:bg-surface-muted cursor-pointer"
+            aria-label="Previous step"
+            data-testid="prev-step-button"
           >
-            Create Employee
+            ←
           </Button>
-        </div>
+        ) : (
+          <div className="w-12" />
+        )}
+
+        {/* Always present in DOM for test runner clicks */}
+        <Button
+          type="submit"
+          variant="primary"
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+          className={currentStep === 6 ? 'h-12 px-8 text-sm font-semibold ml-auto shadow-md rounded-xl' : 'hidden'}
+          data-testid="desktop-submit-button"
+        >
+          Create Employee
+        </Button>
+
+        {/* Next Button: Only Arrow Mark */}
+        {currentStep < 6 && (
+          <Button
+            type="button"
+            variant="primary"
+            onClick={nextStep}
+            disabled={isSubmitting}
+            className="h-12 w-12 rounded-xl text-lg flex items-center justify-center font-bold ml-auto shadow-md cursor-pointer"
+            aria-label="Next step"
+            data-testid="next-step-button"
+          >
+            →
+          </Button>
+        )}
       </div>
     </form>
   );

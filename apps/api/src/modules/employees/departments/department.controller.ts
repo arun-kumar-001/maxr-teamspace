@@ -49,4 +49,10 @@ export class DepartmentController {
     await this.service.deactivate(params.id, this.context(req));
     res.status(200).json({ data: { id: params.id, isActive: false } });
   };
+
+  delete = async (req: Request, res: Response): Promise<void> => {
+    const { params } = validated(req, { params: idParamSchema });
+    await this.service.delete(params.id, this.context(req));
+    res.status(200).json({ data: { id: params.id, deleted: true } });
+  };
 }

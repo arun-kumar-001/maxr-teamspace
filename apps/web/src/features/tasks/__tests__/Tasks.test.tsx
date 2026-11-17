@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
@@ -154,6 +155,10 @@ describe('Tasks Feature (Issue #43)', () => {
       ],
       meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('renders Kanban board with columns, task cards, and overdue indicators', async () => {
