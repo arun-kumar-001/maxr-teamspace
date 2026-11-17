@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
@@ -33,6 +34,7 @@ export function TaskFormModal({
   onSubmitCreate,
   onSubmitEdit,
 }: TaskFormModalProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
@@ -47,6 +49,90 @@ export function TaskFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Derive leads, managers, and the selected assignee's direct reporting manager
+  const assignerOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [
+      { value: '', label: 'Select Assigner (Lead / Manager / Self)' },
+    ];
+
+    const addedIds = new Set<string>();
+
+    // 1. Direct Reporting Manager of the selected assignee
+    const selectedAssignee = employees.find((e) => e.id === assigneeId);
+    if (selectedAssignee?.manager?.id) {
+      options.push({
+        value: selectedAssignee.manager.id,
+        label: `⭐ ${selectedAssignee.manager.firstName} ${selectedAssignee.manager.lastName} (${selectedAssignee.manager.employeeCode}) — Reporting Manager`,
+      });
+      addedIds.add(selectedAssignee.manager.id);
+    }
+
+    // 2. Current Logged-in User (Lead / Manager / Admin / Self)
+    if (user?.employeeId && !addedIds.has(user.employeeId)) {
+      options.push({
+        value: user.employeeId,
+        label: `👤 ${user.name} — Current User (${user.title || user.role})`,
+      });
+      addedIds.add(user.employeeId);
+    } else if (defaultAssignerId && !addedIds.has(defaultAssignerId)) {
+      options.push({
+        value: defaultAssignerId,
+        label: `👤 Self / Current Assigner`,
+      });
+      addedIds.add(defaultAssignerId);
+    }
+
+    // 3. Organization Leads and Managers (designation contains Lead / Manager / Head / Director)
+    const leadManagers = employees.filter((emp) => {
+      const title = (emp.designation?.title || '').toLowerCase();
+      return (
+        title.includes('lead') ||
+        title.includes('manager') ||
+        title.includes('head') ||
+        title.includes('director') ||
+        title.includes('supervisor') ||
+        title.includes('admin')
+      );
+    });
+
+    for (const lead of leadManagers) {
+      if (!addedIds.has(lead.id)) {
+        options.push({
+          value: lead.id,
+          label: `${lead.firstName} ${lead.lastName} (${lead.employeeCode}) — ${lead.designation?.title || 'Team Lead / Manager'}`,
+        });
+        addedIds.add(lead.id);
+      }
+    }
+
+    // 4. Other active employees
+    for (const emp of employees) {
+      if (!addedIds.has(emp.id)) {
+        options.push({
+          value: emp.id,
+          label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})${
+            emp.designation?.title ? ` — ${emp.designation.title}` : ''
+          }`,
+        });
+        addedIds.add(emp.id);
+      }
+    }
+
+    return options;
+  }, [employees, assigneeId, defaultAssignerId, user]);
+
+  const handleAssigneeChange = (newAssigneeId: string) => {
+    setAssigneeId(newAssigneeId);
+    if (!assignerId || assignerId === defaultAssigneeId) {
+      const emp = employees.find((e) => e.id === newAssigneeId);
+      if (emp?.manager?.id) {
+        setAssignerId(emp.manager.id);
+      } else if (user?.employeeId) {
+        setAssignerId(user.employeeId);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -242,7 +328,7 @@ export function TaskFormModal({
             <Select
               id="task-assignee"
               value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
+              onChange={(e) => handleAssigneeChange(e.target.value)}
               disabled={submitting}
               options={[
                 { value: '', label: 'Select Team Member' },
@@ -260,23 +346,14 @@ export function TaskFormModal({
           <FormField
             label="Assigned By"
             htmlFor="task-assigner"
-            helperText="Who delegated or assigned this task"
+            helperText="Who delegated or assigned this task (Reporting Manager / Lead / Self)"
           >
             <Select
               id="task-assigner"
               value={assignerId}
               onChange={(e) => setAssignerId(e.target.value)}
               disabled={submitting}
-              options={[
-                { value: '', label: 'Select Assigner (Self / Lead / Manager)' },
-                ...(defaultAssignerId && !employees.some((e) => e.id === defaultAssignerId)
-                  ? [{ value: defaultAssignerId, label: 'Self / Current User' }]
-                  : []),
-                ...employees.map((emp) => ({
-                  value: emp.id,
-                  label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})`,
-                })),
-              ]}
+              options={assignerOptions}
             />
           </FormField>
         </div>

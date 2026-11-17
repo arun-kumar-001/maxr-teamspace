@@ -70,6 +70,7 @@ export function useCreateEmployee({
 
   const [formData, setFormData] = useState<CreateEmployeeFormState>({
     employeeCode: initialPrefill?.employeeCode ?? '',
+    avatarUrl: initialPrefill?.avatarUrl ?? '',
     firstName: initialPrefill?.firstName ?? '',
     lastName: initialPrefill?.lastName ?? '',
     parentName: initialPrefill?.parentName ?? '',
@@ -656,6 +657,15 @@ export function useCreateEmployee({
 
     try {
       const result = await createEmployee(payload, idempotencyKeyRef.current);
+      if (formData.avatarUrl && typeof window !== 'undefined' && window.localStorage) {
+        try {
+          if (result.id) localStorage.setItem(`maxr_avatar_${result.id}`, formData.avatarUrl);
+          if (result.userId) localStorage.setItem(`maxr_avatar_${result.userId}`, formData.avatarUrl);
+          if (result.email) localStorage.setItem(`maxr_avatar_${result.email.toLowerCase()}`, formData.avatarUrl);
+        } catch {
+          // ignore localStorage error
+        }
+      }
       setCreatedEmployee(result);
       onSuccess?.(result);
     } catch (err: unknown) {
@@ -697,6 +707,7 @@ export function useCreateEmployee({
     idempotencyKeyRef.current = generateIdempotencyKey();
     setFormData({
       employeeCode: '',
+      avatarUrl: '',
       firstName: '',
       lastName: '',
       parentName: '',

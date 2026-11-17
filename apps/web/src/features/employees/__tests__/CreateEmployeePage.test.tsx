@@ -394,4 +394,52 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
       ).toBeGreaterThanOrEqual(1);
     });
   });
+
+  it('renders employee profile photo upload option in Personal Information and allows uploading and removing photo', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <CreateEmployeePage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('section-personal-details')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-photo-upload-section')).toBeInTheDocument();
+      expect(screen.getByTestId('btn-upload-employee-photo')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-avatar-placeholder')).toBeInTheDocument();
+    });
+
+    const fileInput = screen.getByTestId('input-employee-photo');
+    const file = new File(['fake-image-bytes'], 'employee-avatar.png', { type: 'image/png' });
+
+    // Mock FileReader
+    const readAsDataURLSpy = vi
+      .spyOn(FileReader.prototype, 'readAsDataURL')
+      .mockImplementation(function (this: FileReader) {
+        Object.defineProperty(this, 'result', {
+          value: 'data:image/png;base64,fakeimagebase64',
+          configurable: true,
+        });
+        this.onload?.({} as ProgressEvent<FileReader>);
+      });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('employee-avatar-preview')).toBeInTheDocument();
+      expect(screen.getByTestId('btn-remove-employee-photo')).toBeInTheDocument();
+    });
+
+    // Remove photo
+    fireEvent.click(screen.getByTestId('btn-remove-employee-photo'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('employee-avatar-preview')).not.toBeInTheDocument();
+      expect(screen.getByTestId('employee-avatar-placeholder')).toBeInTheDocument();
+    });
+
+    readAsDataURLSpy.mockRestore();
+  });
 });

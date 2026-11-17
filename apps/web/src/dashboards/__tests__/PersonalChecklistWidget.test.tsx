@@ -61,4 +61,17 @@ describe('PersonalChecklistWidget', () => {
     expect(screen.getByText('Complete security audit')).toBeTruthy();
     expect(screen.getByText('0/4')).toBeTruthy();
   });
+
+  it('allows editing an existing checklist item in the widget', () => {
+    render(<PersonalChecklistWidget />);
+
+    const editBtn = screen.getByTestId('widget-edit-btn-todo-1');
+    fireEvent.click(editBtn);
+
+    const input = screen.getByTestId('widget-edit-input-todo-1');
+    fireEvent.change(input, { target: { value: 'Updated Morning Standup' } });
+    fireEvent.click(screen.getByTestId('widget-save-edit-btn-todo-1'));
+
+    expect(screen.getByText('Updated Morning Standup')).toBeTruthy();
+  });
 });

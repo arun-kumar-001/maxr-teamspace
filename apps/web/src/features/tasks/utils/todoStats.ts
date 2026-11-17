@@ -138,6 +138,30 @@ export function addSidebarTodo(title: string, frequency: 'daily' | 'once' = 'dai
   return updated;
 }
 
+export function updateSidebarTodo(
+  id: string,
+  updates: { title?: string; frequency?: 'daily' | 'once' },
+): TodoItemData[] {
+  const todos = getSidebarTodos();
+  const updated = todos.map((item) => {
+    if (item.id !== id) return item;
+    return {
+      ...item,
+      title: updates.title !== undefined ? updates.title.trim() : item.title,
+      frequency: updates.frequency ?? item.frequency,
+    };
+  });
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    notifyTodosUpdated();
+  }
+  return updated;
+}
+
 export function deleteSidebarTodo(id: string): TodoItemData[] {
   const todos = getSidebarTodos();
   const updated = todos.filter((item) => item.id !== id);

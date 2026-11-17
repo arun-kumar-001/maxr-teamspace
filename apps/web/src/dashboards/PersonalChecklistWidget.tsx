@@ -7,6 +7,7 @@ import {
   isTodoCompletedToday,
   toggleSidebarTodo,
   addSidebarTodo,
+  updateSidebarTodo,
   deleteSidebarTodo,
   type TodoItemData,
   TODOS_UPDATED_EVENT,
@@ -26,6 +27,9 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newFrequency, setNewFrequency] = useState<'daily' | 'once'>('daily');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editFrequency, setEditFrequency] = useState<'daily' | 'once'>('daily');
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -65,6 +69,30 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
     deleteSidebarTodo(id);
     setTodos(getSidebarTodos());
     setStats(getSidebarTodoStats());
+  };
+
+  const handleStartEdit = (item: TodoItemData, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditFrequency(item.frequency);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleSaveEdit = (id: string, e: React.MouseEvent | React.FormEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!editTitle.trim()) return;
+    updateSidebarTodo(id, { title: editTitle.trim(), frequency: editFrequency });
+    setTodos(getSidebarTodos());
+    setStats(getSidebarTodoStats());
+    setEditingId(null);
+    setEditTitle('');
   };
 
   const pct = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
@@ -212,6 +240,76 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
           ) : (
             filteredTodos.map((item) => {
               const completed = isTodoCompletedToday(item, todayStr);
+              const isEditing = editingId === item.id;
+
+              if (isEditing) {
+                return (
+                  <div
+                    key={item.id}
+                    data-testid={`widget-todo-item-${item.id}`}
+                    className="p-2 rounded-xl bg-surface border border-primary-strong/50 space-y-1.5 text-xs"
+                  >
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Checklist title..."
+                      data-testid={`widget-edit-input-${item.id}`}
+                      autoFocus
+                      className="w-full px-2 py-1 text-xs bg-white border border-border rounded text-text focus:outline-none focus:ring-1 focus:ring-primary-strong"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit(item.id, e);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                    />
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditFrequency('daily')}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-semibold cursor-pointer ${
+                            editFrequency === 'daily'
+                              ? 'bg-primary-deep text-white'
+                              : 'text-text-muted hover:text-text bg-surface-muted'
+                          }`}
+                        >
+                          Daily
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditFrequency('once')}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-semibold cursor-pointer ${
+                            editFrequency === 'once'
+                              ? 'bg-primary-deep text-white'
+                              : 'text-text-muted hover:text-text bg-surface-muted'
+                          }`}
+                        >
+                          Once
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="px-2 py-0.5 text-[10px] rounded border border-border text-text-muted hover:bg-surface-muted cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleSaveEdit(item.id, e)}
+                          disabled={!editTitle.trim()}
+                          data-testid={`widget-save-edit-btn-${item.id}`}
+                          className="px-2 py-0.5 text-[10px] font-semibold rounded bg-primary-deep text-white hover:bg-primary-ink disabled:opacity-50 cursor-pointer"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={item.id}
@@ -247,20 +345,36 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => handleDelete(item.id, e)}
-                    data-testid={`widget-delete-btn-${item.id}`}
-                    aria-label={`Delete ${item.title}`}
-                    className="opacity-0 group-hover:opacity-100 hover:text-danger text-text-muted p-1 transition-opacity shrink-0 cursor-pointer"
-                    title="Delete item"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => handleStartEdit(item, e)}
+                      data-testid={`widget-edit-btn-${item.id}`}
+                      aria-label={`Edit ${item.title}`}
+                      className="opacity-0 group-hover:opacity-100 hover:text-primary-deep text-text-muted p-1 transition-opacity shrink-0 cursor-pointer"
+                      title="Edit item"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleDelete(item.id, e)}
+                      data-testid={`widget-delete-btn-${item.id}`}
+                      aria-label={`Delete ${item.title}`}
+                      className="opacity-0 group-hover:opacity-100 hover:text-danger text-text-muted p-1 transition-opacity shrink-0 cursor-pointer"
+                      title="Delete item"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               );
             })

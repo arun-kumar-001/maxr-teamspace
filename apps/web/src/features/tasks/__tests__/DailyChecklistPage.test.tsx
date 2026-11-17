@@ -93,4 +93,24 @@ describe('DailyChecklistPage', () => {
     expect(createObjectURLMock).toHaveBeenCalled();
     expect(revokeObjectURLMock).toHaveBeenCalled();
   });
+
+  it('allows editing an existing checklist item title and saving changes', () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <DailyChecklistPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const editBtn = screen.getByTestId('page-edit-btn-todo-1');
+    fireEvent.click(editBtn);
+
+    const editInput = screen.getByTestId('page-edit-input-todo-1');
+    fireEvent.change(editInput, { target: { value: 'Updated daily standup & team status check' } });
+
+    fireEvent.click(screen.getByTestId('page-save-edit-btn-todo-1'));
+
+    expect(screen.getByText('Updated daily standup & team status check')).toBeTruthy();
+  });
 });

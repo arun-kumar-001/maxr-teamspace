@@ -8,6 +8,7 @@ import {
   isTodoCompletedToday,
   toggleSidebarTodo,
   addSidebarTodo,
+  updateSidebarTodo,
   deleteSidebarTodo,
   type TodoItemData,
   TODOS_UPDATED_EVENT,
@@ -31,6 +32,9 @@ export function DailyChecklistPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newFrequency, setNewFrequency] = useState<'daily' | 'once'>('daily');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editFrequency, setEditFrequency] = useState<'daily' | 'once'>('daily');
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -102,6 +106,30 @@ export function DailyChecklistPage() {
     deleteSidebarTodo(id);
     setTodos(getSidebarTodos());
     setStats(getSidebarTodoStats());
+  };
+
+  const handleStartEdit = (item: TodoItemData, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditFrequency(item.frequency);
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleSaveEdit = (id: string, e: React.MouseEvent | React.FormEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!editTitle.trim()) return;
+    updateSidebarTodo(id, { title: editTitle.trim(), frequency: editFrequency });
+    setTodos(getSidebarTodos());
+    setStats(getSidebarTodoStats());
+    setEditingId(null);
+    setEditTitle('');
   };
 
   // Day navigation helpers
@@ -551,6 +579,80 @@ export function DailyChecklistPage() {
         ) : (
           filteredTodos.map((item) => {
             const completed = isTodoCompletedToday(item, selectedDate);
+            const isEditing = editingId === item.id;
+
+            if (isEditing) {
+              return (
+                <div
+                  key={item.id}
+                  data-testid={`page-todo-item-${item.id}`}
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white border-2 border-primary-strong/60 shadow-xs space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-primary-deep uppercase tracking-wider">
+                      Edit Checklist Item
+                    </span>
+                    <div className="flex items-center gap-1 bg-surface border border-border rounded-lg p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setEditFrequency('daily')}
+                        className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                          editFrequency === 'daily'
+                            ? 'bg-primary-deep text-white'
+                            : 'text-text-muted hover:text-text'
+                        }`}
+                      >
+                        Daily
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditFrequency('once')}
+                        className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                          editFrequency === 'once'
+                            ? 'bg-primary-deep text-white'
+                            : 'text-text-muted hover:text-text'
+                        }`}
+                      >
+                        Once
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Enter checklist item title..."
+                      data-testid={`page-edit-input-${item.id}`}
+                      autoFocus
+                      className="flex-1 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary-strong"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit(item.id, e);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="px-3 py-2 text-xs rounded-xl border border-border text-text-muted hover:bg-surface-muted transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleSaveEdit(item.id, e)}
+                      disabled={!editTitle.trim()}
+                      data-testid={`page-save-edit-btn-${item.id}`}
+                      className="px-4 py-2 text-xs font-semibold rounded-xl bg-primary-deep text-white hover:bg-primary-ink disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={item.id}
@@ -594,7 +696,21 @@ export function DailyChecklistPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => handleStartEdit(item, e)}
+                    data-testid={`page-edit-btn-${item.id}`}
+                    aria-label={`Edit ${item.title}`}
+                    className="opacity-0 group-hover:opacity-100 hover:text-primary-deep text-text-muted p-1.5 rounded-lg hover:bg-surface-muted transition-all shrink-0 cursor-pointer"
+                    title="Edit routine"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+
                   <button
                     type="button"
                     onClick={(e) => handleDelete(item.id, e)}
