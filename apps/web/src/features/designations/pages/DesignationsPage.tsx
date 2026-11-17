@@ -15,7 +15,6 @@ import { DesignationDeactivateDialog } from '../components/DesignationDeactivate
 import { DesignationDetailModal } from '../components/DesignationDetailModal';
 import { DesignationFilters } from '../components/DesignationFilters';
 import { DesignationModal } from '../components/DesignationModal';
-import { CAREER_LEVEL_BANDS } from '../components/levelMeta';
 import { useDesignations } from '../hooks/useDesignations';
 import type { Designation } from '../types';
 
@@ -29,7 +28,6 @@ export function DesignationsPage() {
   const canDeactivate = role === ROLES.ADMIN;
 
   const [viewMode, setViewMode] = useState<DesigViewMode>('all');
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState<number | null>(null);
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
 
   useEffect(() => {
@@ -104,20 +102,6 @@ export function DesignationsPage() {
     return map;
   }, [employees]);
 
-  const levelCounts = useMemo(() => {
-    const counts = new Map<number, number>();
-    for (const d of designations) {
-      const clamped = Math.min(4, Math.max(1, d.level));
-      counts.set(clamped, (counts.get(clamped) ?? 0) + 1);
-    }
-    return counts;
-  }, [designations]);
-
-  const visibleDesignations = useMemo(() => {
-    if (selectedLevelFilter === null) return designations;
-    return designations.filter((d) => Math.min(4, Math.max(1, d.level)) === selectedLevelFilter);
-  }, [designations, selectedLevelFilter]);
-
   if (isForbidden) {
     return (
       <PageContainer maxWidth="dashboard">
@@ -132,7 +116,7 @@ export function DesignationsPage() {
   }
 
   const handleSortChange = (key: string, direction: SortDirection) => {
-    if (key === 'title' || key === 'code' || key === 'level' || key === 'createdAt') {
+    if (key === 'title' || key === 'code' || key === 'createdAt') {
       setSort(key, direction);
     }
   };
@@ -150,17 +134,6 @@ export function DesignationsPage() {
       ),
     },
     {
-      key: 'code',
-      header: 'Code',
-      sortable: true,
-      priority: 'high',
-      render: (row) => (
-        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-surface-muted border border-border text-text">
-          {row.code}
-        </span>
-      ),
-    },
-    {
       key: 'department',
       header: 'Department',
       priority: 'high',
@@ -172,17 +145,6 @@ export function DesignationsPage() {
           </span>
         );
       },
-    },
-    {
-      key: 'level',
-      header: 'Level',
-      sortable: true,
-      priority: 'medium',
-      render: (row) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded bg-primary-soft text-primary-ink text-xs font-mono font-semibold">
-          Level {row.level}
-        </span>
-      ),
     },
     {
       key: 'holders',
@@ -298,7 +260,7 @@ export function DesignationsPage() {
             )}
           </div>
           <p className="text-xs sm:text-sm text-text-muted">
-            Manage organizational job titles, seniority levels, and department alignments
+            Manage job titles and department assignments
           </p>
         </div>
 
@@ -343,59 +305,6 @@ export function DesignationsPage() {
         </div>
       </div>
 
-      {/* Interactive Career Band Filter Strip */}
-      {!isLoading && !error && designations.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
-          <button
-            type="button"
-            onClick={() => setSelectedLevelFilter(null)}
-            className={`animate-crm-fade-up p-3 rounded-card border text-left transition-all duration-300 cursor-pointer ${
-              selectedLevelFilter === null
-                ? 'bg-primary-deep text-surface border-primary-deep shadow-raised'
-                : 'bg-surface border-border text-text hover:border-primary-strong/40 hover:-translate-y-0.5'
-            }`}
-          >
-            <div
-              className={`text-[11px] font-semibold uppercase tracking-wider ${
-                selectedLevelFilter === null ? 'text-surface/80' : 'text-text-subtle'
-              }`}
-            >
-              All Career Bands
-            </div>
-            <div className="mt-1 text-xl font-bold">{designations.length}</div>
-          </button>
-
-          {CAREER_LEVEL_BANDS.map((band, idx) => {
-            const count = levelCounts.get(band.level) ?? 0;
-            const isSelected = selectedLevelFilter === band.level;
-            return (
-              <button
-                key={band.level}
-                type="button"
-                onClick={() => setSelectedLevelFilter(isSelected ? null : band.level)}
-                style={{ animationDelay: `${(idx + 1) * 45}ms` }}
-                className={`animate-crm-fade-up p-3 rounded-card border text-left transition-all duration-300 cursor-pointer ${
-                  isSelected
-                    ? 'bg-primary-soft/60 border-primary-strong shadow-raised ring-2 ring-primary/20'
-                    : 'bg-surface border-border hover:border-primary-strong/40 hover:-translate-y-0.5'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold text-text-muted truncate">
-                    {band.label}
-                  </span>
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${band.barClass}`} />
-                </div>
-                <div className="mt-1 flex items-baseline justify-between">
-                  <span className="text-xl font-bold text-text">{count}</span>
-                  <span className="text-[11px] text-text-subtle">roles</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* Filter Controls */}
       <DesignationFilters
         search={search}
@@ -406,7 +315,6 @@ export function DesignationsPage() {
         onDepartmentChange={setDepartmentFilter}
         onStatusChange={setStatusFilter}
         onReset={() => {
-          setSelectedLevelFilter(null);
           resetFilters();
         }}
       />
@@ -439,25 +347,24 @@ export function DesignationsPage() {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && visibleDesignations.length === 0 && (
+      {!isLoading && !error && designations.length === 0 && (
         <EmptyState
           title="No designations found"
           description={
-            search || departmentFilter || statusFilter || selectedLevelFilter !== null
+            search || departmentFilter || statusFilter
               ? 'No designations match your filter criteria. Try clearing filters.'
               : 'There are no designation records yet. Click "Add Designation" to create one.'
           }
           actionLabel={
-            search || departmentFilter || statusFilter || selectedLevelFilter !== null
+            search || departmentFilter || statusFilter
               ? 'Clear Filters'
               : canCreate
                 ? 'Add Designation'
                 : undefined
           }
           onAction={
-            search || departmentFilter || statusFilter || selectedLevelFilter !== null
+            search || departmentFilter || statusFilter
               ? () => {
-                  setSelectedLevelFilter(null);
                   resetFilters();
                 }
               : canCreate
@@ -468,7 +375,7 @@ export function DesignationsPage() {
       )}
 
       {/* Interactive Designation Cards Grid */}
-      {!isLoading && !error && visibleDesignations.length > 0 && (
+      {!isLoading && !error && designations.length > 0 && (
         <div
           className={
             viewMode === 'table'
@@ -477,7 +384,7 @@ export function DesignationsPage() {
           }
           data-testid="designation-mobile-cards"
         >
-          {visibleDesignations.map((desig, idx) => (
+          {designations.map((desig, idx) => (
             <DesignationCard
               key={desig.id}
               designation={desig}
@@ -523,10 +430,10 @@ export function DesignationsPage() {
       )}
 
       {/* Desktop / Tablet Data Table (>=640px) */}
-      {!isLoading && !error && visibleDesignations.length > 0 && viewMode !== 'cards' && (
+      {!isLoading && !error && designations.length > 0 && viewMode !== 'cards' && (
         <div className="hidden sm:block animate-crm-fade-up">
           <DataTable
-            data={visibleDesignations as unknown as Record<string, unknown>[]}
+            data={designations as unknown as Record<string, unknown>[]}
             columns={columns as unknown as Column<Record<string, unknown>>[]}
             keyExtractor={(row) => (row as unknown as Designation).id}
             isLoading={isLoading}

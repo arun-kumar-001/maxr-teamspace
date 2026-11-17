@@ -71,7 +71,7 @@ describe('Employee Directory API: Query Builder & Fetch Functions', () => {
           email: 'alice@example.com',
           phone: '+1234567890',
           department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-          designation: { id: 'desig-1', title: 'Senior Engineer', code: 'SR_ENG', level: 3 },
+          designation: { id: 'desig-1', title: 'Senior Engineer', code: 'SR_ENG' },
           manager: null,
           status: 'active' as const,
           joiningDate: '2025-01-15',
@@ -164,7 +164,7 @@ describe('Employee Directory API: Query Builder & Fetch Functions', () => {
         ok: true,
         status: 200,
         json: async () => ({
-          data: [{ id: 'desig-1', title: 'Software Engineer', code: 'SWE', level: 2 }],
+          data: [{ id: 'desig-1', title: 'Software Engineer', code: 'SWE' }],
         }),
       } as unknown as Response);
 

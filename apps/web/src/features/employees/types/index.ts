@@ -16,7 +16,6 @@ export interface EmployeeDesignationRef {
   id: string;
   title: string;
   code: string;
-  level: number;
 }
 
 export interface EmployeeManagerRef {
@@ -76,7 +75,6 @@ export interface DesignationItem {
   id: string;
   title: string;
   code: string;
-  level: number;
 }
 
 export interface ManagerOption {
