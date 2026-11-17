@@ -322,20 +322,38 @@ function IconGrid({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconAward({ className = 'w-4 h-4' }: { className?: string }) {
+function IconSearch({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <circle cx="12" cy="8" r="7" />
-      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function IconX({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
@@ -521,9 +539,6 @@ export function EmployeeDirectoryPage() {
 
   const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(
     null,
-  );
-  const [activeTab, setActiveTab] = useState<'all' | 'department' | 'designation' | 'hierarchy'>(
-    'all',
   );
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -761,64 +776,31 @@ export function EmployeeDirectoryPage() {
         />
       </div>
 
-      {/* 3. Directory Navigation Tabs with View Mode Switcher (Image 2) */}
+      {/* 3. Search Bar and View Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 dir-fade-in">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('all');
-              setDepartmentId(undefined);
-              setDesignationId(undefined);
-            }}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'all'
-                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-            }`}
-          >
-            <IconUsers className="w-4 h-4" />
-            All Employees
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('department')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'department'
-                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-            }`}
-          >
-            <IconBuilding className="w-4 h-4" />
-            By Department
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('designation')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'designation'
-                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-            }`}
-          >
-            <IconAward className="w-4 h-4" />
-            By Designation
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/employees/org-chart')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'hierarchy'
-                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-            }`}
-          >
-            <IconNetwork className="w-4 h-4" />
-            Reporting Hierarchy
-          </button>
+        {/* Search Employee by Name or ID */}
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
+            <IconSearch className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            aria-label="Search employee by name or ID"
+            value={query.search || ''}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search employee by name, ID..."
+            className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-xl text-sm text-text placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary shadow-xs transition-colors"
+          />
+          {query.search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer"
+            >
+              <IconX className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* View Switcher Toggle (matching Image 2) */}
@@ -849,69 +831,6 @@ export function EmployeeDirectoryPage() {
           </button>
         </div>
       </div>
-
-      {/* Quick Filter Bar for Department or Designation tabs */}
-      {activeTab === 'department' && (
-        <div className="flex items-center gap-2 overflow-x-auto p-2 bg-surface/80 border border-border/70 rounded-xl dir-fade-in">
-          <span className="text-xs font-bold text-text-muted px-2">Departments:</span>
-          <button
-            type="button"
-            onClick={() => setDepartmentId(undefined)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-              !query.departmentId
-                ? 'bg-primary-deep text-white'
-                : 'bg-surface text-text-muted hover:bg-surface-muted'
-            }`}
-          >
-            All
-          </button>
-          {departments.map((dept) => (
-            <button
-              key={dept.id}
-              type="button"
-              onClick={() => setDepartmentId(dept.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-                query.departmentId === dept.id
-                  ? 'bg-primary-deep text-white'
-                  : 'bg-surface text-text-muted hover:bg-surface-muted border border-border/60'
-              }`}
-            >
-              {dept.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'designation' && (
-        <div className="flex items-center gap-2 overflow-x-auto p-2 bg-surface/80 border border-border/70 rounded-xl dir-fade-in">
-          <span className="text-xs font-bold text-text-muted px-2">Designations:</span>
-          <button
-            type="button"
-            onClick={() => setDesignationId(undefined)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-              !query.designationId
-                ? 'bg-primary-deep text-white'
-                : 'bg-surface text-text-muted hover:bg-surface-muted'
-            }`}
-          >
-            All
-          </button>
-          {designations.map((desig) => (
-            <button
-              key={desig.id}
-              type="button"
-              onClick={() => setDesignationId(desig.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-                query.designationId === desig.id
-                  ? 'bg-primary-deep text-white'
-                  : 'bg-surface text-text-muted hover:bg-surface-muted border border-border/60'
-              }`}
-            >
-              {desig.title}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* 4. Filter Controls (Hidden from visual UI per user request, preserved for test contracts) */}
       <div data-testid="employee-directory-filters" className="hidden" aria-hidden="true">
