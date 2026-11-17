@@ -74,8 +74,8 @@ describe('approvals against PostgreSQL', () => {
     );
     ids.dept = dept.rows[0]?.id ?? '';
     const desig = await pool.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Approver', $2) RETURNING id`,
-      [ids.dept, `AP-${run}`],
+      `INSERT INTO designations (department_id, title) VALUES ($1, 'Approver') RETURNING id`,
+      [ids.dept],
     );
     ids.desig = desig.rows[0]?.id ?? '';
     const add = async (name: string, managerId?: string) => {

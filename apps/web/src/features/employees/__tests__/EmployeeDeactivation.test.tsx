@@ -19,7 +19,7 @@ const MOCK_TARGET_EMPLOYEE = {
   firstName: 'Sarah',
   lastName: 'Connor',
   department: { name: 'Operations', id: 'dept-ops', code: 'OPS' },
-  designation: { title: 'Operations Manager', id: 'desig-mgr', code: 'MGR' },
+  designation: { title: 'Operations Manager', id: 'desig-mgr' },
 };
 
 const MOCK_DEACTIVATION_RESULT: DeactivationResult = {
@@ -44,7 +44,7 @@ const MOCK_EMPLOYEE_LIST: EmployeeDirectoryItem[] = [
     email: 'admin@maxr.internal',
     phone: '+919999999999',
     department: { id: 'dept-1', name: 'Executive', code: 'EXEC' },
-    designation: { id: 'des-1', title: 'Director', code: 'DIR' },
+    designation: { id: 'des-1', title: 'Director' },
     manager: null,
     status: 'active',
     joiningDate: '2024-01-01',
@@ -59,7 +59,7 @@ const MOCK_EMPLOYEE_LIST: EmployeeDirectoryItem[] = [
     email: 'sarah@maxr.internal',
     phone: '+919876543210',
     department: { id: 'dept-ops', name: 'Operations', code: 'OPS' },
-    designation: { id: 'desig-mgr', title: 'Operations Manager', code: 'MGR' },
+    designation: { id: 'desig-mgr', title: 'Operations Manager' },
     manager: null,
     status: 'active',
     joiningDate: '2024-02-01',
@@ -74,7 +74,7 @@ const MOCK_EMPLOYEE_LIST: EmployeeDirectoryItem[] = [
     email: 'inactive@maxr.internal',
     phone: null,
     department: { id: 'dept-ops', name: 'Operations', code: 'OPS' },
-    designation: { id: 'desig-mgr', title: 'Operations Lead', code: 'LEAD' },
+    designation: { id: 'desig-mgr', title: 'Operations Lead' },
     manager: null,
     status: 'deactivated',
     joiningDate: '2023-01-01',

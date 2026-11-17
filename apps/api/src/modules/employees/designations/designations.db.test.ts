@@ -33,55 +33,40 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     await closePool();
   });
 
-  it('removes the hierarchy level column from the migrated schema', async () => {
+  it('removes hierarchy level and business code from the migrated schema', async () => {
     const result = await pool.query(
-      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'designations' AND column_name = $1",
-      ['level'],
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'designations' AND column_name = ANY($1)",
+      [['level', 'code']],
     );
     expect(result.rows).toEqual([]);
   });
 
-  it('creates and finds a designation by id and code', async () => {
-    const code = `DSG_${randomUUID().slice(0, 8).toUpperCase()}`;
+  it('creates and finds a designation using its UUID', async () => {
     const created = await desigRepo.create({
       departmentId: deptId,
       title: 'Principal Engineer',
-      code,
     });
     createdDesigIds.push(created.id);
 
     expect(created.id).toBeDefined();
     expect(created.departmentId).toBe(deptId);
     expect(created.title).toBe('Principal Engineer');
-    expect(created.code).toBe(code);
+    expect(created).not.toHaveProperty('code');
     expect(created).not.toHaveProperty('level');
     expect(created.isActive).toBe(true);
 
     const byId = await desigRepo.findById(created.id);
     expect(byId).not.toBeNull();
     expect(byId?.id).toBe(created.id);
-
-    const byCodeCaseInsensitive = await desigRepo.findByCode(code.toLowerCase());
-    expect(byCodeCaseInsensitive).not.toBeNull();
-    expect(byCodeCaseInsensitive?.id).toBe(created.id);
   });
 
-  it('enforces case-insensitive unique code constraint', async () => {
-    const code = `DSG_${randomUUID().slice(0, 8).toUpperCase()}`;
-    const created = await desigRepo.create({
-      departmentId: deptId,
-      title: 'First Title',
-      code,
-    });
-    createdDesigIds.push(created.id);
-
-    await expect(
-      desigRepo.create({
-        departmentId: deptId,
-        title: 'Duplicate Code Title',
-        code: code.toLowerCase(),
-      }),
-    ).rejects.toThrow();
+  it('supports existing titles with distinct UUIDs', async () => {
+    const first = await desigRepo.create({ departmentId: deptId, title: 'Engineer' });
+    const second = await desigRepo.create({ departmentId: deptId, title: 'Engineer' });
+    createdDesigIds.push(first.id, second.id);
+    expect(first.id).not.toBe(second.id);
+    expect((await desigRepo.findById(first.id))?.title).toBe('Engineer');
+    expect((await desigRepo.findById(second.id))?.title).toBe('Engineer');
   });
 
   it('enforces foreign key constraint on department_id', async () => {
@@ -90,7 +75,6 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
       desigRepo.create({
         departmentId: fakeDeptId,
         title: 'Orphan Desig',
-        code: `ORPH_${randomUUID().slice(0, 6)}`,
       }),
     ).rejects.toThrow();
   });
@@ -100,12 +84,10 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     const d1 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Specialist`,
-      code: `${prefix}_1`,
     });
     const d2 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Generalist`,
-      code: `${prefix}_2`,
     });
     createdDesigIds.push(d1.id, d2.id);
 
@@ -125,7 +107,6 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     const desig = await desigRepo.create({
       departmentId: deptId,
       title: 'To Be Soft Deleted',
-      code: `DEL_${randomUUID().slice(0, 8)}`,
     });
     createdDesigIds.push(desig.id);
 
@@ -166,17 +147,14 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     const d1 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Common Title`,
-      code: `${prefix}_1`,
     });
     const d2 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Common Title`,
-      code: `${prefix}_2`,
     });
     const d3 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} Common Title`,
-      code: `${prefix}_3`,
     });
     createdDesigIds.push(d1.id, d2.id, d3.id);
 
@@ -209,22 +187,18 @@ describe('PgDesignationRepository (PostgreSQL Integration)', () => {
     const d1 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} 50% Effort`,
-      code: `${prefix}_PCT`,
     });
     const d2 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix} 500 Effort`,
-      code: `${prefix}_NUM`,
     });
     const d3 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix}_UnderscoreTitle`,
-      code: `${prefix}_US`,
     });
     const d4 = await desigRepo.create({
       departmentId: deptId,
       title: `${prefix}XUnderscoreTitle`,
-      code: `${prefix}_XUS`,
     });
     createdDesigIds.push(d1.id, d2.id, d3.id, d4.id);
 

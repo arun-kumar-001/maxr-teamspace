@@ -1,5 +1,10 @@
 # Project status
 
+## Designation code removed — 2026-11-17
+
+Designation forms now collect title and department. The API, shared contracts, employee/profile projections and seeds no longer include designation code. Migration `20261117000002_remove_designation_code.sql` drops the column while UUID relationships support employee assignment and onboarding. Existing department and employee code fields continue to serve their business identifiers.
+
+
 ## Department and designation name display — 2026-11-17
 
 Department/designation codes are entered in their create/edit forms. Cards, details, tables, filters and employee/profile displays show names. Employee codes continue to identify individual employees.

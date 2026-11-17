@@ -2,7 +2,6 @@ export interface Designation {
   id: string;
   departmentId: string;
   title: string;
-  code: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -11,19 +10,17 @@ export interface Designation {
 export interface CreateDesignationPayload {
   departmentId: string;
   title: string;
-  code: string;
 }
 
 export interface UpdateDesignationPayload {
   departmentId?: string;
   title?: string;
-  code?: string;
 }
 
 export interface DesignationQuery {
   page?: number;
   pageSize?: number;
-  sortBy?: 'title' | 'code' | 'createdAt';
+  sortBy?: 'title' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
   search?: string;
   departmentId?: string;

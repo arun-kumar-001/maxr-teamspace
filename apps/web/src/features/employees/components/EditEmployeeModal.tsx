@@ -120,7 +120,6 @@ export function EditEmployeeModal({
           {
             id: employee.designation.id,
             title: employee.designation.title,
-            code: employee.designation.code,
             departmentId: employee.department.id,
           },
           ...desigs,

@@ -74,8 +74,8 @@ describe('reporting hierarchy against PostgreSQL', () => {
     ids.desig =
       (
         await outer.query<{ id: string }>(
-          `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Node', $2) RETURNING id`,
-          [ids.dept, `HT-${run}`],
+          `INSERT INTO designations (department_id, title) VALUES ($1, 'Node') RETURNING id`,
+          [ids.dept],
         )
       ).rows[0]?.id ?? '';
     // top <- mid <- low <- leaf, plus a separate branch other <- kid, a leaver and a loner.
@@ -372,8 +372,8 @@ describe('reporting hierarchy: two moves at once', () => {
     ).rows[0]?.id as string;
     ids.desig = (
       await pool.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Racer', $2) RETURNING id`,
-        [ids.dept, `HR-${run}`],
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Racer') RETURNING id`,
+        [ids.dept],
       )
     ).rows[0]?.id as string;
     const add = async (name: 'p' | 'q' | 'r' | 's', manager: string | null) => {

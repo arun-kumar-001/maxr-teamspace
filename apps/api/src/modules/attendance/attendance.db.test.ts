@@ -24,8 +24,8 @@ describe('PgAttendanceRepository (PostgreSQL Integration - Issue #34)', () => {
     deptId = deptRes.rows[0]!.id;
 
     const desigRes = await pool.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Attendance Tester', $2) RETURNING id`,
-      [deptId, `ATT_DSG_${randomUUID().slice(0, 6)}`],
+      `INSERT INTO designations (department_id, title) VALUES ($1, 'Attendance Tester') RETURNING id`,
+      [deptId],
     );
     desigId = desigRes.rows[0]!.id;
 

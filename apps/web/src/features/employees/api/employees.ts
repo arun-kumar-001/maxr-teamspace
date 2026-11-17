@@ -115,7 +115,6 @@ export async function fetchDesignations(signal?: AbortSignal): Promise<Designati
       .map((d) => ({
         id: d.id,
         title: d.title,
-        code: d.code ?? '',
       }));
   } catch {
     return [];

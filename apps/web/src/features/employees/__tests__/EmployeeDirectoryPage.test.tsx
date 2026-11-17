@@ -21,7 +21,7 @@ const sampleEmployees: EmployeeDirectoryItem[] = [
     email: 'eleanor@maxr.com',
     phone: '+1 555-0101',
     department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'desig-1', title: 'Principal Architect', code: 'PR_ARCH' },
+    designation: { id: 'desig-1', title: 'Principal Architect' },
     manager: null,
     status: 'active',
     joiningDate: '2023-01-10',
@@ -36,7 +36,7 @@ const sampleEmployees: EmployeeDirectoryItem[] = [
     email: 'marcus@maxr.com',
     phone: '+1 555-0102',
     department: { id: 'dept-2', name: 'Product', code: 'PROD' },
-    designation: { id: 'desig-2', title: 'Product Manager', code: 'PM' },
+    designation: { id: 'desig-2', title: 'Product Manager' },
     manager: {
       id: 'emp-1',
       firstName: 'Eleanor',
@@ -58,8 +58,8 @@ describe('EmployeeDirectoryPage Component', () => {
       { id: 'dept-2', name: 'Product', code: 'PROD' },
     ]);
     vi.spyOn(directoryApi, 'fetchDesignations').mockResolvedValue([
-      { id: 'desig-1', title: 'Principal Architect', code: 'PR_ARCH' },
-      { id: 'desig-2', title: 'Product Manager', code: 'PM' },
+      { id: 'desig-1', title: 'Principal Architect' },
+      { id: 'desig-2', title: 'Product Manager' },
     ]);
     vi.spyOn(directoryApi, 'fetchManagerOptions').mockResolvedValue([
       { id: 'emp-1', name: 'Eleanor Vance', employeeCode: 'MAX001' },

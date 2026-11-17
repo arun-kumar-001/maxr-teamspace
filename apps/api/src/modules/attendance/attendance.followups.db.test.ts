@@ -25,8 +25,8 @@ describe('attendance records: the time checks and the stored status', () => {
     ).rows[0]?.id as string;
     ids.desig = (
       await outer.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Clerk', $2) RETURNING id`,
-        [ids.dept, `AT-${run}`],
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Clerk') RETURNING id`,
+        [ids.dept],
       )
     ).rows[0]?.id as string;
     ids.emp = (
