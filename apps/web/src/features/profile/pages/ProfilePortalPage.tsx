@@ -2,10 +2,12 @@ import { useContext, useEffect, useRef, useState, type ChangeEvent, type ReactNo
 import { useNavigate } from 'react-router-dom';
 import { ROLE_DISPLAY_NAMES, ROLES } from '@maxr/shared';
 import { AuthContext, useAuth } from '../../../auth/AuthContext';
+import { DonutChart, type DonutChartSegment } from '../../../components/ui';
 import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
 import type { PayslipRecord } from '../../payslips/types';
 import { isPayslipEnabledForStaff } from '../../../shell/navigation';
+import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../../tasks/utils/todoStats';
 
 interface OnboardingChecklistItem {
   id: number;
@@ -190,11 +192,54 @@ export function ProfilePortalPage() {
     );
   };
 
+  const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
+  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setTodoStats(getSidebarTodoStats());
+    };
+    window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
+    return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
+  }, []);
+
   const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
   const totalTasksCount = onboardingTasks.length;
-  const taskCompletionPct =
-    totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
-  const activeTasksCount = totalTasksCount - completedTasksCount;
+
+  const totalCompleted = completedTasksCount + todoStats.completed;
+  const totalPending = totalTasksCount - completedTasksCount + todoStats.pending;
+  const totalOverdue = 0;
+  const combinedTotal = totalCompleted + totalPending + totalOverdue;
+  const combinedPct = combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
+  const activeTasksCount = totalPending;
+
+  const taskChartData: DonutChartSegment[] = [
+    {
+      label: 'Completed',
+      value: totalCompleted,
+      color: 'var(--primary-strong)',
+      inkColor: 'var(--primary-ink)',
+      pct: combinedPct,
+      pillClass: 'bg-primary-soft text-primary-deep',
+    },
+    {
+      label: 'In Progress',
+      value: totalPending,
+      color: 'var(--chart-5)',
+      inkColor: 'var(--chart-ink-5)',
+      pct: combinedTotal > 0 ? Math.round((totalPending / combinedTotal) * 100) : 0,
+      pillClass: 'bg-amber-50 text-amber-800',
+    },
+    {
+      label: 'Overdue',
+      value: totalOverdue,
+      color: 'var(--chart-7)',
+      inkColor: 'var(--chart-ink-7)',
+      pct: 0,
+      pillClass: 'bg-rose-50 text-rose-800',
+    },
+  ];
+  const activeTask = taskChartData.find((s) => s.label === hoveredTask);
 
   return (
     <div
@@ -515,42 +560,119 @@ export function ProfilePortalPage() {
           className="h-64 sm:h-72"
         />
 
-        {/* Card 4: Task Completion Process Card */}
+        {/* Card 4: Task Completion Progress (Matching Admin Dashboard Task Overview Card) */}
         <div
-          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72"
-          style={{
-            backgroundColor: 'rgb(255, 255, 255)',
-            border: '1px solid rgba(8, 11, 12, 0.08)',
-          }}
+          onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/tasks' : '/tasks')}
+          className="rounded-[26px] p-5 bg-white border border-border/80 shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-64 sm:h-72 min-w-0 transition-all duration-200 cursor-pointer group active:scale-[0.99]"
+          data-testid="task-overview-card"
         >
-          <div className="flex items-start justify-between">
-            <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-              Task Completion Process
-            </span>
-            <span className="text-3xl font-light font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              {taskCompletionPct}%
-            </span>
+          {/* Header */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+                <svg
+                  className="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 11 12 14 22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+              </span>
+              <h2 className="text-sm font-bold text-text truncate">Task Completion Progress</h2>
+            </div>
+            <svg
+              className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </div>
 
-          <div className="my-auto space-y-3">
-            <div
-              className="flex items-center justify-between text-xs font-medium"
-              style={{ color: 'rgba(8, 11, 12, 0.65)' }}
-            >
-              <span>{completedTasksCount} of {totalTasksCount} tasks done</span>
-              <span className="font-semibold text-text">{taskCompletionPct}%</span>
-            </div>
+          {/* Interactive Segmented Donut Chart & Matched Legend */}
+          <div className="flex items-center justify-between gap-3 my-auto py-1 min-w-0">
+            <DonutChart
+              data={taskChartData}
+              size={112}
+              strokeWidth={8}
+              segmentGap={4}
+              showInnerRing={true}
+              animationDuration={0.8}
+              highlightOnHover={true}
+              hoveredLabel={hoveredTask}
+              onSegmentHover={(seg) => setHoveredTask(seg?.label ?? null)}
+              centerContent={
+                <div className="flex flex-col items-center justify-center text-center leading-none">
+                  <span className="font-display text-lg sm:text-xl font-extrabold text-text tracking-tight">
+                    {activeTask ? `${activeTask.pct}%` : `${taskChartData[0]?.pct ?? 0}%`}
+                  </span>
+                  <span
+                    className="text-[10px] mt-1 font-bold truncate max-w-[68px]"
+                    style={{ color: activeTask ? activeTask.inkColor : 'var(--primary-ink)' }}
+                  >
+                    {activeTask ? activeTask.label : 'Completed'}
+                  </span>
+                </div>
+              }
+              aria-label="Task completion breakdown"
+              className="shrink-0"
+            />
 
-            <div className="w-full bg-surface-muted rounded-full h-3 overflow-hidden border border-border">
+            {/* Matched Legend Stats */}
+            <div className="flex-1 min-w-0 space-y-1 text-xs">
+              {taskChartData.map((segment) => {
+                const isHovered = hoveredTask === segment.label;
+                return (
+                  <div
+                    key={segment.label}
+                    onMouseEnter={() => setHoveredTask(segment.label)}
+                    onMouseLeave={() => setHoveredTask(null)}
+                    className={`flex items-center justify-between gap-1 px-2 py-0.5 rounded-lg transition-all min-w-0 ${
+                      isHovered ? segment.pillClass : 'hover:bg-surface-muted'
+                    }`}
+                  >
+                    <span
+                      className="flex items-center gap-1.5 font-semibold truncate text-[11px] transition-colors"
+                      style={{ color: segment.inkColor }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: segment.color }}
+                      />
+                      {segment.label}
+                    </span>
+                    <span
+                      className="font-bold font-mono text-[11px] whitespace-nowrap shrink-0"
+                      style={{ color: isHovered ? segment.inkColor : 'var(--text)' }}
+                    >
+                      {segment.value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom Progress Bar */}
+          <div className="pt-2 border-t border-border/80 flex items-center justify-between gap-2 text-xs">
+            <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
               <div
-                className="h-full bg-primary transition-all duration-500 rounded-full"
-                style={{ width: `${taskCompletionPct}%` }}
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${taskChartData[0]?.pct ?? 0}%` }}
               />
             </div>
-          </div>
-
-          <div className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.5)' }}>
-            <span>Live onboarding checklist progress</span>
+            <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px]">
+              {totalCompleted} / {combinedTotal} Tasks
+            </span>
           </div>
         </div>
       </div>
@@ -849,7 +971,7 @@ export function ProfilePortalPage() {
               onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/tasks' : '/tasks')}
               className="text-primary hover:underline font-semibold"
             >
-              Open Daily Matrix →
+              Open Tasks →
             </button>
           </div>
         </div>

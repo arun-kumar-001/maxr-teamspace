@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import {
+  TODOS_STORAGE_KEY,
+  notifyTodosUpdated,
+  DEFAULT_INITIAL_TODOS,
+} from '../utils/todoStats';
 
 export interface TodoItem {
   id: string;
@@ -9,32 +14,8 @@ export interface TodoItem {
   isCompletedOnce?: boolean; // for one-time tasks
 }
 
-const STORAGE_KEY = 'maxr_sidebar_todos_v2';
-
-const INITIAL_TODOS: TodoItem[] = [
-  {
-    id: 'todo-1',
-    title: 'Daily standup & team status check',
-    frequency: 'daily',
-    createdAt: new Date().toISOString(),
-    completedDates: [],
-  },
-  {
-    id: 'todo-2',
-    title: 'Review submitted pull requests',
-    frequency: 'daily',
-    createdAt: new Date().toISOString(),
-    completedDates: [],
-  },
-  {
-    id: 'todo-3',
-    title: 'Verify onboarding checklist documents',
-    frequency: 'once',
-    createdAt: new Date().toISOString(),
-    completedDates: [],
-    isCompletedOnce: false,
-  },
-];
+const STORAGE_KEY = TODOS_STORAGE_KEY;
+const INITIAL_TODOS: TodoItem[] = DEFAULT_INITIAL_TODOS;
 
 export function TaskTodoListSidebar() {
   const [todos, setTodos] = useState<TodoItem[]>(() => {
@@ -78,6 +59,7 @@ export function TaskTodoListSidebar() {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+        notifyTodosUpdated();
       } catch {
         // Storage full or private mode
       }
