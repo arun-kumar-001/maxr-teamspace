@@ -55,7 +55,7 @@ export function OnboardingPage() {
     );
   }
 
-  if (error && !isLoading && checklists.length === 0) {
+  if (error && !isLoading && checklists.length === 0 && activeTab === 'onboarding') {
     return (
       <div className="p-4 sm:p-6 space-y-6" data-testid="onboarding-page">
         <ErrorState title="Failed to Load Onboarding" message={error} onRetry={refetch} />

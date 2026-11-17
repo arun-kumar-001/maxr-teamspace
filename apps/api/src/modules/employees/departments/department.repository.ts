@@ -18,6 +18,7 @@ export interface IDepartmentRepository {
   create(dto: CreateDepartmentDto): Promise<DepartmentEntity>;
   update(id: string, dto: UpdateDepartmentDto): Promise<DepartmentEntity | null>;
   softDelete(id: string): Promise<boolean>;
+  delete(id: string): Promise<boolean>;
   hasActiveDesignations(id: string): Promise<boolean>;
   hasActiveEmployees(id: string): Promise<boolean>;
 }
@@ -185,6 +186,21 @@ export class PgDepartmentRepository implements IDepartmentRepository {
     return (res.rowCount ?? 0) > 0;
   }
 
+  async delete(id: string): Promise<boolean> {
+    const res = await this.getPool().query(
+      `DELETE FROM departments
+        WHERE id = $1
+          AND NOT EXISTS (
+            SELECT 1 FROM designations WHERE department_id = $1
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM employees WHERE department_id = $1
+          )`,
+      [id],
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
+
   async hasActiveDesignations(id: string): Promise<boolean> {
     const res = await this.getPool().query(
       `SELECT 1 FROM designations
@@ -318,6 +334,17 @@ export class MemoryDepartmentRepository implements IDepartmentRepository {
     }
     this.items.set(id, { ...existing, isActive: false, updatedAt: new Date().toISOString() });
     return true;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const existing = this.items.get(id);
+    if (!existing) {
+      return false;
+    }
+    if (this.activeDesignationCheck(id) || this.activeEmployeeCheck(id)) {
+      return false;
+    }
+    return this.items.delete(id);
   }
 
   async hasActiveDesignations(id: string): Promise<boolean> {

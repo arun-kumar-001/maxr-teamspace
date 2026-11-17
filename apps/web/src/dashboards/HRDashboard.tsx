@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, StatusPill, SegmentedControl } from '../components/ui';
+import { Button, StatusPill, SegmentedControl, KpiCard } from '../components/ui';
 
 // Outline SVG icons matching DESIGN.md style (zero external dependencies)
 function UsersIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -263,116 +263,42 @@ export function HRDashboard() {
       </div>
 
       {/* 4 Core HR Operational KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Total Headcount */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Total Headcount
-            </span>
-            <span className="w-9 h-9 rounded-tile bg-primary-soft text-primary-strong flex items-center justify-center">
-              <UsersIcon className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-bold text-text font-display tabular-nums">
-                124
-              </span>
-              <span className="text-xs font-medium text-text-muted">active employees</span>
-            </div>
-            <div className="mt-2.5 flex items-center justify-between text-xs pt-2.5 border-t border-border">
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full font-semibold bg-positive-soft text-positive-ink">
-                <ArrowUpIcon />
-                +4 new
-              </span>
-              <span className="text-text-muted">118 Full-time &middot; 6 Contract</span>
-            </div>
-          </div>
-        </div>
+        <KpiCard
+          label="Total Headcount"
+          value="124"
+          icon={<UsersIcon className="w-7 h-7" />}
+          badge="+4 new this month"
+          variant="teal"
+        />
 
         {/* Card 2: Today's Turnout / Attendance */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Today&apos;s Attendance
-            </span>
-            <span className="w-9 h-9 rounded-tile bg-positive-soft text-positive-ink flex items-center justify-center">
-              <ClockCheckIcon className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-bold text-text font-display tabular-nums">
-                114
-              </span>
-              <span className="text-xs font-semibold text-positive-ink bg-positive-soft px-2 py-0.5 rounded-full">
-                91.9% Present
-              </span>
-            </div>
-            <div className="mt-2.5 flex items-center justify-between text-xs pt-2.5 border-t border-border text-text-muted">
-              <span>6 On Leave</span>
-              <span>&middot;</span>
-              <span className="text-warning font-medium">3 Late arrivals</span>
-              <span>&middot;</span>
-              <span>4 Unmarked</span>
-            </div>
-          </div>
-        </div>
+        <KpiCard
+          label="Today's Attendance"
+          value="114"
+          icon={<ClockCheckIcon className="w-7 h-7" />}
+          badge="91.9% Present"
+          variant="emerald"
+        />
 
         {/* Card 3: Onboarding Pipeline */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Onboarding Pipeline
-            </span>
-            <span className="w-9 h-9 rounded-tile bg-tile-yellow text-warning flex items-center justify-center">
-              <UserPlusIcon className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-bold text-warning font-display tabular-nums">
-                3
-              </span>
-              <span className="text-xs font-medium text-text-muted">candidates in review</span>
-            </div>
-            <div className="mt-2.5 flex items-center justify-between text-xs pt-2.5 border-t border-border">
-              <span className="text-text-muted">Pending 4-step checklist</span>
-              <span className="font-semibold text-primary-ink">2 Join next week</span>
-            </div>
-          </div>
-        </div>
+        <KpiCard
+          label="Onboarding Pipeline"
+          value="3"
+          icon={<UserPlusIcon className="w-7 h-7" />}
+          badge="3 in review"
+          variant="amber"
+        />
 
         {/* Card 4: Pending HR Approvals (Action Center) */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card flex flex-col justify-between hover:border-border-strong transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Pending Actions
-            </span>
-            <span className="w-9 h-9 rounded-tile bg-tile-peach text-negative-ink flex items-center justify-center">
-              <AlertCircleIcon className="w-5 h-5" />
-            </span>
-          </div>
-          <div className="mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-bold text-negative-ink font-display tabular-nums">
-                7
-              </span>
-              <span className="text-xs font-medium text-text-muted">require HR review</span>
-            </div>
-            <div className="mt-2.5 flex items-center justify-between text-xs pt-2.5 border-t border-border">
-              <span className="font-semibold text-text">4 Leave &middot; 3 Correction</span>
-              <button
-                type="button"
-                onClick={() => navigateTo('/hr/policies')}
-                className="text-primary-ink font-semibold hover:underline"
-              >
-                Review &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
+        <KpiCard
+          label="Pending Actions"
+          value="7"
+          icon={<AlertCircleIcon className="w-7 h-7" />}
+          badge="7 require review"
+          variant="rose"
+        />
       </div>
 
       {/* Interactive HR Analytics & Trends Chart Section */}

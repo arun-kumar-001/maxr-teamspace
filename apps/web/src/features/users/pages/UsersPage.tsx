@@ -9,6 +9,7 @@ import {
   Modal,
   Skeleton,
   Toast,
+  KpiCard,
 } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { useUsers } from '../hooks/useUsers';
@@ -536,90 +537,49 @@ export function UsersPage() {
       </section>
 
       {/* B. Top 4 KPI Metric Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Total Users */}
-        <div className="maxr-fade-in p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-xs">
-              <IconUsers className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Total Users
-              </span>
-              <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight block">
-                {totalUsersCount}
-              </span>
-            </div>
-          </div>
-          <span className="text-xs font-medium text-text-muted shrink-0">Accounts</span>
-        </div>
+        <KpiCard
+          label="Total Users"
+          value={totalUsersCount}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge="Accounts"
+          variant="emerald"
+        />
 
         {/* Card 2: Active Users */}
-        <div
+        <KpiCard
+          label="Active Users"
+          value={activeUsersCount}
+          icon={<IconUserCheck className="w-7 h-7" />}
+          badge={
+            users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'
+          }
+          variant="purple"
           style={{ animationDelay: '60ms' }}
-          className="maxr-fade-in p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-xs">
-              <IconUserCheck className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Active Users
-              </span>
-              <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight block">
-                {activeUsersCount}
-              </span>
-            </div>
-          </div>
-          <span className="text-xs font-semibold text-emerald-600 shrink-0">
-            {users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'}
-          </span>
-        </div>
+        />
 
         {/* Card 3: Inactive Users */}
-        <div
+        <KpiCard
+          label="Inactive Users"
+          value={inactiveUsersCount}
+          icon={<IconUserMinus className="w-7 h-7" />}
+          badge={
+            users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'
+          }
+          variant="amber"
           style={{ animationDelay: '120ms' }}
-          className="maxr-fade-in p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-xs">
-              <IconUserMinus className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Inactive Users
-              </span>
-              <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight block">
-                {inactiveUsersCount}
-              </span>
-            </div>
-          </div>
-          <span className="text-xs font-medium text-text-muted shrink-0">
-            {users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'}
-          </span>
-        </div>
+        />
 
         {/* Card 4: Total Roles */}
-        <div
+        <KpiCard
+          label="Roles"
+          value={totalRolesCount}
+          icon={<IconShield className="w-7 h-7" />}
+          badge="Configured"
+          variant="blue"
           style={{ animationDelay: '180ms' }}
-          className="maxr-fade-in p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex items-center justify-between gap-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg group"
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-xs">
-              <IconShield className="w-6 h-6" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Roles
-              </span>
-              <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight leading-tight block">
-                {totalRolesCount}
-              </span>
-            </div>
-          </div>
-        </div>
+        />
       </section>
 
       {/* C. Navigation Tabs & Action Bar */}

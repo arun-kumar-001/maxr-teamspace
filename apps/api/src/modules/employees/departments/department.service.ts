@@ -185,4 +185,67 @@ export class DepartmentService {
       throw err;
     }
   }
+
+  async delete(id: string, ctx: RequestContext): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw notFound('Department not found');
+    }
+
+    const current = await this.repository.findById(id);
+    if (!current) {
+      throw notFound('Department not found');
+    }
+
+    const hasDesignations = await this.repository.hasActiveDesignations(id);
+    if (hasDesignations) {
+      throw conflict('Cannot delete department with active designations');
+    }
+
+    const hasEmployees = await this.repository.hasActiveEmployees(id);
+    if (hasEmployees) {
+      throw conflict('Cannot delete department with active employees');
+    }
+
+    const audit = this.platform.audit.withContext(ctx);
+    const events = new EventCollector();
+
+    try {
+      let ok = false;
+      try {
+        ok = await this.repository.delete(id);
+      } catch {
+        // Fallback to softDelete if FK references exist
+      }
+      if (!ok) {
+        ok = await this.repository.softDelete(id);
+      }
+      if (!ok) {
+        throw conflict('Cannot delete department with associated records');
+      }
+
+      await audit.record({
+        action: 'department.delete',
+        outcome: 'success',
+        entityType: 'department',
+        entityId: id,
+      });
+
+      events.add({
+        type: 'department.deleted',
+        payload: { id },
+        actorId: ctx.actorId,
+        requestId: ctx.requestId,
+      });
+      await events.flush(this.platform.events);
+    } catch (err) {
+      events.discard();
+      await audit.tryRecord({
+        action: 'department.delete',
+        outcome: 'failure',
+        entityType: 'department',
+        entityId: id,
+      });
+      throw err;
+    }
+  }
 }

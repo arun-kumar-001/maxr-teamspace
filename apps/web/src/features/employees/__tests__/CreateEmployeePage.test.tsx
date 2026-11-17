@@ -95,6 +95,36 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
     expect(screen.getByTestId('select-designation')).toBeInTheDocument();
   });
 
+  it('shows step titles without descriptions and uses text navigation labels', () => {
+    renderWithRole(ROLES.ADMIN);
+
+    expect(screen.getAllByText('Personal', { exact: true }).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Personal details')).not.toBeInTheDocument();
+    expect(screen.getByTestId('input-first-name')).toHaveAttribute(
+      'placeholder',
+      'Enter first name',
+    );
+    expect(screen.getByTestId('input-parent-name')).toHaveAttribute(
+      'placeholder',
+      'Enter parent or guardian name',
+    );
+    for (const testId of [
+      'input-bank-account-holder',
+      'input-bank-account-number',
+      'input-bank-ifsc-code',
+      'input-pan-number',
+      'input-aadhaar-number',
+    ]) {
+      expect(screen.getByTestId(testId)).not.toHaveClass('font-mono');
+    }
+    expect(screen.getByTestId('next-step-button')).toHaveTextContent('Next');
+    expect(screen.getByTestId('next-step-button')).not.toHaveTextContent('→');
+
+    fireEvent.click(screen.getByTestId('next-step-button'));
+    expect(screen.getByTestId('prev-step-button')).toHaveTextContent('Previous');
+    expect(screen.getByTestId('prev-step-button')).not.toHaveTextContent('←');
+  });
+
   it('renders all four roles for Admin, but restricts roles to Staff and Team Lead for HR Manager', async () => {
     // 1. Admin: all 4 roles
     const { unmount } = renderWithRole(ROLES.ADMIN);

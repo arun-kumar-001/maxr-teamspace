@@ -53,13 +53,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     allowedRoles: [ROLES.ADMIN],
   },
   {
-    id: 'admin-designations',
-    label: 'Designations',
-    path: '/admin/designations',
-    iconName: 'file-text',
-    allowedRoles: [ROLES.ADMIN],
-  },
-  {
     id: 'admin-audit',
     label: 'Audit Logs',
     path: '/admin/audit',
@@ -101,13 +94,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Departments',
     path: '/hr/departments',
     iconName: 'briefcase',
-    allowedRoles: [ROLES.HR_MANAGER],
-  },
-  {
-    id: 'hr-designations',
-    label: 'Designations',
-    path: '/hr/designations',
-    iconName: 'file-text',
     allowedRoles: [ROLES.HR_MANAGER],
   },
   {
@@ -186,14 +172,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'briefcase',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
   },
-  // Shared Meetings Route (Issue #45 - Available to all authenticated roles)
-  {
-    id: 'meetings',
-    label: 'Meetings',
-    path: '/meetings',
-    iconName: 'calendar',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
-  },
   // Shared Expenses Route (Issue #29 - Available to all authenticated roles)
   {
     id: 'expenses',
@@ -228,20 +206,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     id: 'staff-tasks',
     label: 'My Tasks',
     path: '/staff/tasks',
-    iconName: 'check',
-    allowedRoles: [ROLES.STAFF],
-  },
-  {
-    id: 'daily-checklist',
-    label: 'Daily Checklist',
-    path: '/checklist',
-    iconName: 'check',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
-  },
-  {
-    id: 'staff-checklist',
-    label: 'Daily Checklist',
-    path: '/staff/checklist',
     iconName: 'check',
     allowedRoles: [ROLES.STAFF],
   },
@@ -294,6 +258,19 @@ export function getNavItemsForRole(role: Role): NavItem[] {
  * Checks whether a given path is authorized for the given role.
  */
 export function isPathAuthorizedForRole(path: string, role: Role): boolean {
+  if (
+    path === '/checklist' ||
+    path.startsWith('/checklist/') ||
+    path === '/staff/checklist' ||
+    path.startsWith('/staff/checklist/') ||
+    path === '/todos' ||
+    path.startsWith('/todos/') ||
+    path === '/staff/todos' ||
+    path.startsWith('/staff/todos/')
+  ) {
+    return false;
+  }
+
   // Common paths allowed for all authenticated users
   if (
     path === '/' ||
@@ -336,20 +313,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   }
   if (path === '/hr/payslips' || path === '/admin/payslips') {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
-  }
-
-  // Meetings routes (Issue #45) - accessible to all authenticated roles
-  if (
-    path === '/meetings' ||
-    path.startsWith('/meetings/') ||
-    path === '/staff/meetings' ||
-    path.startsWith('/staff/meetings/') ||
-    path === '/lead/meetings' ||
-    path.startsWith('/lead/meetings/') ||
-    path === '/admin/meetings' ||
-    path.startsWith('/admin/meetings/')
-  ) {
-    return true;
   }
 
   // Expenses routes (Issue #29) - accessible to all authenticated roles
@@ -423,7 +386,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   ) {
     return true;
   }
-
   // Onboarding routes authorization
   if (
     path.startsWith('/hr/onboarding') ||
@@ -495,6 +457,17 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path.startsWith('/staff/profile/')
   ) {
     return true;
+  }
+
+  // Role prefix protections
+  if (path.startsWith('/admin/') && role !== ROLES.ADMIN) {
+    return false;
+  }
+  if (path.startsWith('/hr/') && role !== ROLES.HR_MANAGER && role !== ROLES.ADMIN) {
+    return false;
+  }
+  if (path.startsWith('/lead/') && role !== ROLES.TEAM_LEAD && role !== ROLES.ADMIN) {
+    return false;
   }
 
   const matchingItem = NAVIGATION_REGISTRY.find((item) => item.path === path);
@@ -668,12 +641,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           ],
         },
         {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
           id: '/expenses',
           label: 'Expenses & Claims',
           href: '/expenses',
@@ -710,12 +677,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Departments',
           href: '/admin/departments',
           icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/admin/designations',
-          label: 'Designations',
-          href: '/admin/designations',
-          icon: <NavSvgIcon name="file-text" />,
         },
         {
           id: '/admin/org-chart',
@@ -820,12 +781,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           ],
         },
         {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
           id: '/expenses',
           label: 'Expenses',
           href: '/expenses',
@@ -861,12 +816,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Departments',
           href: '/hr/departments',
           icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/hr/designations',
-          label: 'Designations',
-          href: '/hr/designations',
-          icon: <NavSvgIcon name="file-text" />,
         },
         {
           id: '/hr/org-chart',
@@ -933,18 +882,13 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Team Tasks',
           href: '/lead/tasks',
           icon: <NavSvgIcon name="check" />,
+          children: [{ id: '/lead/tasks', label: 'Team Tasks', href: '/lead/tasks' }],
         },
         {
           id: '/projects',
           label: 'Projects',
           href: '/projects',
           icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/meetings',
-          label: 'Calendar & Meetings',
-          href: '/meetings',
-          icon: <NavSvgIcon name="clock" />,
         },
         {
           id: '/expenses',

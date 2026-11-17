@@ -86,7 +86,12 @@ export function CreateEmployeeForm({
     }));
     if (key === 'appointmentLetter') setAppointmentLetterSigned(true);
     if (key === 'nda') setNdaSigned(true);
-    if (key === 'kycProof' || key === 'aadharCard' || key === 'panCard' || key === 'degreeCertificates') {
+    if (
+      key === 'kycProof' ||
+      key === 'aadharCard' ||
+      key === 'panCard' ||
+      key === 'degreeCertificates'
+    ) {
       setKycDocumentsSubmitted(true);
     }
   };
@@ -125,29 +130,74 @@ export function CreateEmployeeForm({
   const updatePermField = (field: keyof typeof permAddress, val: string) => {
     const updated = { ...permAddress, [field]: val };
     setPermAddress(updated);
-    const formatted = [updated.address1, updated.address2, updated.city, updated.district, updated.pincode]
+    const formatted = [
+      updated.address1,
+      updated.address2,
+      updated.city,
+      updated.district,
+      updated.pincode,
+    ]
       .map((s) => s.trim())
       .filter(Boolean)
       .join(', ');
     setFieldValue('permanentAddress', formatted);
-    setFieldValue(`permanent${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+    setFieldValue(
+      (
+        {
+          address1: 'permanentAddress1',
+          address2: 'permanentAddress2',
+          city: 'permanentCity',
+          district: 'permanentDistrict',
+          pincode: 'permanentPincode',
+        } as const
+      )[field],
+      val,
+    );
 
     if (formData.sameAsPermanentAddress) {
       setCurrAddress(updated);
       setFieldValue('currentAddress', formatted);
-      setFieldValue(`current${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+      setFieldValue(
+        (
+          {
+            address1: 'currentAddress1',
+            address2: 'currentAddress2',
+            city: 'currentCity',
+            district: 'currentDistrict',
+            pincode: 'currentPincode',
+          } as const
+        )[field],
+        val,
+      );
     }
   };
 
   const updateCurrField = (field: keyof typeof currAddress, val: string) => {
     const updated = { ...currAddress, [field]: val };
     setCurrAddress(updated);
-    const formatted = [updated.address1, updated.address2, updated.city, updated.district, updated.pincode]
+    const formatted = [
+      updated.address1,
+      updated.address2,
+      updated.city,
+      updated.district,
+      updated.pincode,
+    ]
       .map((s) => s.trim())
       .filter(Boolean)
       .join(', ');
     setFieldValue('currentAddress', formatted);
-    setFieldValue(`current${field.charAt(0).toUpperCase() + field.slice(1)}` as any, val);
+    setFieldValue(
+      (
+        {
+          address1: 'currentAddress1',
+          address2: 'currentAddress2',
+          city: 'currentCity',
+          district: 'currentDistrict',
+          pincode: 'currentPincode',
+        } as const
+      )[field],
+      val,
+    );
   };
 
   const handleSameAddressToggle = (checked: boolean) => {
@@ -209,17 +259,17 @@ export function CreateEmployeeForm({
     errors.joiningDate,
   );
   const hasStep3Error = Boolean(
-    errors.panNumber ||
-    errors.aadhaarNumber ||
-    errors.bankAccountNumber ||
-    errors.bankIfscCode,
+    errors.panNumber || errors.aadhaarNumber || errors.bankAccountNumber || errors.bankIfscCode,
   );
   const hasStep5Error = Boolean(errors.role);
 
   const stepStatus: Record<number, 'complete' | 'incomplete' | 'error'> = {
     1: hasStep1Error
       ? 'error'
-      : currentStep > 1 && formData.firstName.trim() && formData.lastName.trim() && formData.email.trim()
+      : currentStep > 1 &&
+          formData.firstName.trim() &&
+          formData.lastName.trim() &&
+          formData.email.trim()
         ? 'complete'
         : 'incomplete',
     2: hasStep2Error
@@ -237,11 +287,7 @@ export function CreateEmployeeForm({
         ? 'complete'
         : 'incomplete',
     4: currentStep > 4 ? 'complete' : 'incomplete',
-    5: hasStep5Error
-      ? 'error'
-      : currentStep > 5 && formData.role
-        ? 'complete'
-        : 'incomplete',
+    5: hasStep5Error ? 'error' : currentStep > 5 && formData.role ? 'complete' : 'incomplete',
     6: 'incomplete',
   };
 
@@ -308,7 +354,7 @@ export function CreateEmployeeForm({
             Personal Information
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Legal identity, family background, and primary contact information.
+            Enter the employee’s personal details and contact information.
           </p>
         </div>
 
@@ -348,25 +394,19 @@ export function CreateEmployeeForm({
             />
           </FormField>
 
-          <FormField
-            label="Father's / Mother's Name"
-            htmlFor="create-emp-parent-name"
-          >
+          <FormField label="Father's / Mother's Name" htmlFor="create-emp-parent-name">
             <Input
               id="create-emp-parent-name"
               type="text"
               value={formData.parentName || ''}
               onChange={(e) => setFieldValue('parentName', e.target.value)}
-              placeholder="Enter father's or mother's name"
+              placeholder="Enter parent or guardian name"
               disabled={isSubmitting}
               data-testid="input-parent-name"
             />
           </FormField>
 
-          <FormField
-            label="Blood Group"
-            htmlFor="create-emp-blood-group"
-          >
+          <FormField label="Blood Group" htmlFor="create-emp-blood-group">
             <Input
               id="create-emp-blood-group"
               type="text"
@@ -441,11 +481,7 @@ export function CreateEmployeeForm({
           </div>
 
           <div className="space-y-2">
-            <FormField
-              label="Primary Phone Number"
-              htmlFor="create-emp-phone"
-              error={errors.phone}
-            >
+            <FormField label="Primary Phone Number" htmlFor="create-emp-phone" error={errors.phone}>
               <div className="flex items-center gap-2">
                 <Input
                   id="create-emp-phone"
@@ -510,7 +546,7 @@ export function CreateEmployeeForm({
                   type="text"
                   value={permAddress.address1}
                   onChange={(e) => updatePermField('address1', e.target.value)}
-                  placeholder="Door No, Building, Street name"
+                  placeholder="Enter door number, building, and street"
                   disabled={isSubmitting}
                   data-testid="input-permanent-address"
                 />
@@ -521,7 +557,7 @@ export function CreateEmployeeForm({
                   type="text"
                   value={permAddress.address2}
                   onChange={(e) => updatePermField('address2', e.target.value)}
-                  placeholder="Area, Landmark, Locality"
+                  placeholder="Enter area, landmark, or locality"
                   disabled={isSubmitting}
                   data-testid="input-permanent-address2"
                 />
@@ -591,7 +627,7 @@ export function CreateEmployeeForm({
                   type="text"
                   value={currAddress.address1}
                   onChange={(e) => updateCurrField('address1', e.target.value)}
-                  placeholder="Door No, Building, Street name"
+                  placeholder="Enter door number, building, and street"
                   disabled={isSubmitting || formData.sameAsPermanentAddress}
                   data-testid="input-current-address"
                 />
@@ -602,7 +638,7 @@ export function CreateEmployeeForm({
                   type="text"
                   value={currAddress.address2}
                   onChange={(e) => updateCurrField('address2', e.target.value)}
-                  placeholder="Area, Landmark, Locality"
+                  placeholder="Enter area, landmark, or locality"
                   disabled={isSubmitting || formData.sameAsPermanentAddress}
                   data-testid="input-current-address2"
                 />
@@ -654,7 +690,13 @@ export function CreateEmployeeForm({
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                         <polyline points="14 2 14 8 20 8" />
                         <line x1="16" y1="13" x2="8" y2="13" />
@@ -663,8 +705,10 @@ export function CreateEmployeeForm({
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-text">Candidate Resume / CV</p>
-                      <p className="text-[11px] text-text-muted">Upload candidate CV (PDF, DOCX, DOC up to 10MB)</p>
+                      <p className="text-xs font-bold text-text">Employee resume</p>
+                      <p className="text-[11px] text-text-muted">
+                        Upload the employee’s resume (PDF, DOCX, or DOC, up to 10 MB).
+                      </p>
                     </div>
                   </div>
                   {uploadedDocs.resume ? (
@@ -693,12 +737,18 @@ export function CreateEmployeeForm({
                   </div>
                 ) : (
                   <label className="mt-2.5 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface cursor-pointer transition-colors">
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <span>Select Resume File</span>
+                    <span>Select file</span>
                     <input
                       id="create-emp-resume"
                       type="file"
@@ -732,7 +782,7 @@ export function CreateEmployeeForm({
             Professional &amp; Employment Details
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Role, department mapping, code, reporting hierarchy, and salary structure.
+            Enter the employee’s role, department, reporting manager, and salary details.
           </p>
         </div>
 
@@ -817,16 +867,13 @@ export function CreateEmployeeForm({
             />
           </FormField>
 
-          <FormField
-            label="Work Email Address"
-            htmlFor="create-emp-work-email"
-          >
+          <FormField label="Work Email Address" htmlFor="create-emp-work-email">
             <Input
               id="create-emp-work-email"
               type="email"
               value={formData.workEmail || ''}
               onChange={(e) => setFieldValue('workEmail', e.target.value)}
-              placeholder="Enter official work email address"
+              placeholder="Enter work email address"
               disabled={isSubmitting}
               autoCapitalize="none"
               data-testid="input-work-email"
@@ -911,11 +958,9 @@ export function CreateEmployeeForm({
         <div className="pt-6 border-t border-border/70 space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-text">
-                Salary &amp; Compensation Structure
-              </h3>
+              <h3 className="text-sm font-bold text-text">Salary &amp; Compensation Structure</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Official compensation record for payroll disbursement
+                Enter the employee’s salary and payment details.
               </p>
             </div>
           </div>
@@ -979,10 +1024,10 @@ export function CreateEmployeeForm({
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-xs font-bold">
               3
             </span>
-            Bank Details &amp; Tax IDs
+            Bank and tax details
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Payroll disbursement account details and official government tax credentials.
+            Enter the employee’s bank account and tax identification details.
           </p>
         </div>
 
@@ -1026,16 +1071,11 @@ export function CreateEmployeeForm({
               onChange={(e) => setFieldValue('bankAccountNumber', e.target.value)}
               placeholder="Enter account number"
               disabled={isSubmitting}
-              className="font-mono"
               data-testid="input-bank-account-number"
             />
           </FormField>
 
-          <FormField
-            label="IFSC Code"
-            htmlFor="create-emp-bank-ifsc"
-            error={errors.bankIfscCode}
-          >
+          <FormField label="IFSC Code" htmlFor="create-emp-bank-ifsc" error={errors.bankIfscCode}>
             <Input
               id="create-emp-bank-ifsc"
               type="text"
@@ -1044,7 +1084,6 @@ export function CreateEmployeeForm({
               onChange={(e) => setFieldValue('bankIfscCode', e.target.value.toUpperCase())}
               placeholder="Enter IFSC code"
               disabled={isSubmitting}
-              className="uppercase font-mono"
               data-testid="input-bank-ifsc-code"
             />
           </FormField>
@@ -1062,11 +1101,7 @@ export function CreateEmployeeForm({
             />
           </FormField>
 
-          <FormField
-            label="PAN Card Number"
-            htmlFor="create-emp-pan"
-            error={errors.panNumber}
-          >
+          <FormField label="PAN Card Number" htmlFor="create-emp-pan" error={errors.panNumber}>
             <Input
               id="create-emp-pan"
               type="text"
@@ -1075,7 +1110,6 @@ export function CreateEmployeeForm({
               onChange={(e) => setFieldValue('panNumber', e.target.value.toUpperCase())}
               placeholder="Enter PAN card number"
               disabled={isSubmitting}
-              className="uppercase font-mono"
               data-testid="input-pan-number"
             />
           </FormField>
@@ -1094,7 +1128,6 @@ export function CreateEmployeeForm({
                 onChange={(e) => setFieldValue('aadhaarNumber', e.target.value)}
                 placeholder="Enter Aadhaar number"
                 disabled={isSubmitting}
-                className="font-mono"
                 data-testid="input-aadhaar-number"
               />
             </FormField>
@@ -1119,17 +1152,26 @@ export function CreateEmployeeForm({
             Onboarding Documents
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Upload candidate identification proofs (Aadhaar Card, PAN Card) and educational degree certificates.
+            Upload the employee’s identity and education documents.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5" data-testid="document-upload-section">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-5"
+          data-testid="document-upload-section"
+        >
           {/* 1. Aadhaar Card Upload */}
           <div className="p-5 rounded-2xl border border-border bg-surface hover:border-primary-strong/40 transition-all shadow-xs space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <rect x="3" y="4" width="18" height="16" rx="2" />
                     <circle cx="9" cy="10" r="2" />
                     <line x1="15" y1="8" x2="17" y2="8" />
@@ -1139,7 +1181,9 @@ export function CreateEmployeeForm({
                 </div>
                 <div>
                   <p className="text-xs font-bold text-text">Aadhaar Card</p>
-                  <p className="text-[11px] text-text-muted">UIDAI Government ID (PDF, JPG, PNG)</p>
+                  <p className="text-[11px] text-text-muted">
+                    Government identity document (PDF, JPG, or PNG).
+                  </p>
                 </div>
               </div>
               {uploadedDocs.aadharCard ? (
@@ -1168,12 +1212,18 @@ export function CreateEmployeeForm({
               </div>
             ) : (
               <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <span>Upload Aadhaar Card</span>
+                <span>Upload Aadhaar card</span>
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
@@ -1190,14 +1240,22 @@ export function CreateEmployeeForm({
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <rect x="2" y="5" width="20" height="14" rx="2" />
                     <line x1="2" y1="10" x2="22" y2="10" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-text">PAN Card</p>
-                  <p className="text-[11px] text-text-muted">Income Tax Card (PDF, JPG, PNG)</p>
+                  <p className="text-[11px] text-text-muted">
+                    Income tax document (PDF, JPG, or PNG).
+                  </p>
                 </div>
               </div>
               {uploadedDocs.panCard ? (
@@ -1226,12 +1284,18 @@ export function CreateEmployeeForm({
               </div>
             ) : (
               <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <span>Upload PAN Card</span>
+                <span>Upload PAN card</span>
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
@@ -1248,14 +1312,22 @@ export function CreateEmployeeForm({
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                     <path d="M6 12v5c3 3 9 3 12 0v-5" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-text">Degree Certificates</p>
-                  <p className="text-[11px] text-text-muted">UG / PG degrees &amp; certificates (PDF, JPG, PNG)</p>
+                  <p className="text-[11px] text-text-muted">
+                    Degree certificates (PDF, JPG, or PNG).
+                  </p>
                 </div>
               </div>
               {uploadedDocs.degreeCertificates ? (
@@ -1272,7 +1344,8 @@ export function CreateEmployeeForm({
             {uploadedDocs.degreeCertificates ? (
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-muted text-xs border border-border">
                 <span className="truncate max-w-[200px] font-medium text-text">
-                  {uploadedDocs.degreeCertificates.fileName} ({uploadedDocs.degreeCertificates.size})
+                  {uploadedDocs.degreeCertificates.fileName} ({uploadedDocs.degreeCertificates.size}
+                  )
                 </span>
                 <button
                   type="button"
@@ -1284,12 +1357,18 @@ export function CreateEmployeeForm({
               </div>
             ) : (
               <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <span>Upload Degree Certificates</span>
+                <span>Upload degree certificates</span>
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.docx"
@@ -1306,14 +1385,22 @@ export function CreateEmployeeForm({
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold shrink-0">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-text">Signed Appointment Letter</p>
-                  <p className="text-[11px] text-text-muted">Signed offer &amp; terms (PDF, DOCX)</p>
+                  <p className="text-[11px] text-text-muted">
+                    Signed offer and terms (PDF or DOCX).
+                  </p>
                 </div>
               </div>
               {uploadedDocs.appointmentLetter ? (
@@ -1342,12 +1429,18 @@ export function CreateEmployeeForm({
               </div>
             ) : (
               <label className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-dashed border-border-strong hover:border-primary text-xs font-semibold text-text-muted hover:text-primary-ink bg-surface-muted/40 cursor-pointer transition-colors">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <span>Upload Appointment Letter</span>
+                <span>Upload appointment letter</span>
                 <input
                   type="file"
                   accept=".pdf,.docx,.doc"
@@ -1377,7 +1470,7 @@ export function CreateEmployeeForm({
             System Role &amp; Access
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Initial role assignment.{' '}
+            Choose the employee’s initial role.{' '}
             {isAdmin
               ? 'Admins can assign any role.'
               : 'HR Managers can assign Staff or Team Lead roles.'}
@@ -1385,7 +1478,10 @@ export function CreateEmployeeForm({
         </div>
 
         <FormField label="Assigned Role" htmlFor="create-emp-role" required error={errors.role}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2" data-testid="role-options-group">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2"
+            data-testid="role-options-group"
+          >
             {availableRoles.map((r) => {
               const isSelected = formData.role === r.value;
               return (
@@ -1409,9 +1505,7 @@ export function CreateEmployeeForm({
                   />
                   <div className="text-xs">
                     <p className="font-bold text-text text-sm">{r.label}</p>
-                    <p className="text-text-muted mt-1 text-xs leading-relaxed">
-                      {r.description}
-                    </p>
+                    <p className="text-text-muted mt-1 text-xs leading-relaxed">{r.description}</p>
                   </div>
                 </label>
               );
@@ -1426,7 +1520,11 @@ export function CreateEmployeeForm({
           aria-label="Pending Account Creation Notice"
         >
           <div className="flex items-center gap-2 font-semibold text-amber-950 text-sm">
-            <svg className="w-4 h-4 fill-current shrink-0 text-amber-600" viewBox="0 0 20 20" aria-hidden="true">
+            <svg
+              className="w-4 h-4 fill-current shrink-0 text-amber-600"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
               <path
                 fillRule="evenodd"
                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -1460,7 +1558,7 @@ export function CreateEmployeeForm({
             Declaration &amp; Onboarding Checklist
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Verify required onboarding documents, agreements and declaration before submitting.
+            Review the employee’s details and confirm the onboarding checklist before submitting.
           </p>
         </div>
 
@@ -1555,7 +1653,9 @@ export function CreateEmployeeForm({
             </div>
             <div>
               <span className="text-text-muted block text-[11px]">Salary:</span>
-              <span>{salaryCurrency} {salaryAmount} ({salaryFrequency})</span>
+              <span>
+                {salaryCurrency} {salaryAmount} ({salaryFrequency})
+              </span>
             </div>
             <div>
               <span className="text-text-muted block text-[11px]">Role:</span>
@@ -1566,21 +1666,20 @@ export function CreateEmployeeForm({
       </div>
 
       {/* ============================================================== */}
-      {/* WIZARD NAVIGATION & SUBMIT BAR (Only Arrowmarks + No Cancel Button) */}
+      {/* WIZARD NAVIGATION AND SUBMIT BAR */}
       {/* ============================================================== */}
       <div className="flex items-center justify-between gap-4 pt-6 border-t border-border/80">
-        {/* Previous Button: Only Arrow Mark */}
+        {/* Previous step */}
         {currentStep > 1 ? (
           <Button
             type="button"
             variant="outline"
             onClick={prevStep}
             disabled={isSubmitting}
-            className="h-12 w-12 rounded-xl text-lg flex items-center justify-center font-bold shadow-xs hover:bg-surface-muted cursor-pointer"
-            aria-label="Previous step"
+            className="h-12 px-5 rounded-xl text-sm flex items-center justify-center font-semibold shadow-xs hover:bg-surface-muted cursor-pointer"
             data-testid="prev-step-button"
           >
-            ←
+            Previous
           </Button>
         ) : (
           <div className="w-12" />
@@ -1592,24 +1691,27 @@ export function CreateEmployeeForm({
           variant="primary"
           isLoading={isSubmitting}
           disabled={isSubmitting}
-          className={currentStep === 6 ? 'h-12 px-8 text-sm font-semibold ml-auto shadow-md rounded-xl' : 'hidden'}
+          className={
+            currentStep === 6
+              ? 'h-12 px-8 text-sm font-semibold ml-auto shadow-md rounded-xl'
+              : 'hidden'
+          }
           data-testid="desktop-submit-button"
         >
           Create Employee
         </Button>
 
-        {/* Next Button: Only Arrow Mark */}
+        {/* Next step */}
         {currentStep < 6 && (
           <Button
             type="button"
             variant="primary"
             onClick={nextStep}
             disabled={isSubmitting}
-            className="h-12 w-12 rounded-xl text-lg flex items-center justify-center font-bold ml-auto shadow-md cursor-pointer"
-            aria-label="Next step"
+            className="h-12 px-6 rounded-xl text-sm flex items-center justify-center font-semibold ml-auto shadow-md cursor-pointer"
             data-testid="next-step-button"
           >
-            →
+            Next
           </Button>
         )}
       </div>

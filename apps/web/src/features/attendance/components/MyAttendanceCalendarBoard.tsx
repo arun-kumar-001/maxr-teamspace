@@ -110,15 +110,6 @@ const CATEGORY_STYLES: Record<
   },
 };
 
-const LEGEND_ITEMS: Array<{ label: string; dotColor: string }> = [
-  { label: 'Present (P)', dotColor: 'rgb(22, 163, 74)' },
-  { label: 'Absent (A)', dotColor: 'rgb(220, 38, 38)' },
-  { label: 'Late Check-in (L)', dotColor: 'rgb(217, 119, 6)' },
-  { label: 'Half Day (HD)', dotColor: 'rgb(37, 99, 235)' },
-  { label: 'Approved Leave (L)', dotColor: 'rgb(147, 51, 234)' },
-  { label: 'Holiday (H) / Weekly Off (WO)', dotColor: 'rgb(107, 114, 128)' },
-];
-
 function toDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -285,7 +276,6 @@ export function MyAttendanceCalendarBoard({
   const [selectedDateKey, setSelectedDateKey] = useState<string>(() => toDateKey(new Date()));
   const [calendarView, setCalendarView] = useState<CalendarViewMode>('week');
   const [popoverDateKey, setPopoverDateKey] = useState<string | null>(null);
-  const [categoriesOpen, setCategoriesOpen] = useState<boolean>(true);
 
   useEffect(() => {
     if (!popoverDateKey) return;
@@ -469,7 +459,6 @@ export function MyAttendanceCalendarBoard({
     }
   };
 
-  const miniMonthTitle = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const mainMonthTitle = `${viewDate.toLocaleDateString('en-US', { month: 'long' })}, ${viewDate.getFullYear()}`;
 
   const kpiCards = [

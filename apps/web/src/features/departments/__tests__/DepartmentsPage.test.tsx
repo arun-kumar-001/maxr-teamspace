@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { DepartmentsPage } from '../pages/DepartmentsPage';
 import * as departmentsApi from '../api/departmentsApi';
 import { AuthProvider } from '../../../auth/AuthContext';
@@ -36,6 +36,7 @@ describe('DepartmentsPage Component', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -156,7 +157,7 @@ describe('DepartmentsPage Component', () => {
       expect(screen.getAllByText('Engineering').length).toBeGreaterThan(0);
     });
 
-    const viewBtns = screen.getAllByTestId('table-view-dept-dept-1');
+    const viewBtns = screen.getAllByTestId(/view-dept-dept-1/);
     fireEvent.click(viewBtns[0]!);
 
     await waitFor(() => {

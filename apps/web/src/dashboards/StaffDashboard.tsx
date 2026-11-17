@@ -1,6 +1,5 @@
 import { Button, Badge, StatusPill } from '../components/ui';
 import { AttendanceWidget } from '../features/attendance';
-import { PersonalTodoList } from '../features/todos';
 
 export function StaffDashboard() {
   return (
@@ -30,9 +29,6 @@ export function StaffDashboard() {
 
       {/* Live Attendance & Shift Widget */}
       <AttendanceWidget />
-
-      {/* Personal To-Do List */}
-      <PersonalTodoList />
 
       {/* Leave Balances Grid */}
       <div>

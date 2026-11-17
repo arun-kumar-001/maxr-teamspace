@@ -55,8 +55,8 @@ INSERT INTO employees (
   (
     '50000000-0000-0000-0000-000000000001',
     'EMP-0001',
-    'Admin',
-    '',
+    'Shagul',
+    'Hamithu',
     'admin@maxr.internal',
     NULL,
     (SELECT id FROM departments WHERE LOWER(code) = 'hr'),

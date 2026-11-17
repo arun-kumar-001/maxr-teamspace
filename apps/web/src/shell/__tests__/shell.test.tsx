@@ -15,7 +15,7 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       );
 
       expect(html).toContain('Users &amp; Roles Administration');
-      expect(html).toContain('AD'); // Admin initials
+      expect(html).toContain('SH'); // Admin fixture initials
       expect(html).toContain('Sign Out');
       expect(html).toContain('data-testid="mobile-menu-toggle"');
     });
@@ -47,7 +47,7 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
 
       // User card
       expect(html).toContain('Arunkumar');
-      expect(html).toContain('Staff');
+      expect(html).toContain('arunkumar@maxr.internal');
       expect(html).toContain('AK');
 
       // Content

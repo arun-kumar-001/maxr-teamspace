@@ -22,10 +22,11 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(adminPaths).toContain('/admin/users');
     expect(adminPaths).toContain('/admin/employees');
     expect(adminPaths).toContain('/admin/departments');
-    expect(adminPaths).toContain('/admin/designations');
     expect(adminPaths).toContain('/admin/audit');
     expect(adminPaths).toContain('/admin/settings');
     expect(adminPaths).toContain('/profile');
+    expect(adminPaths).not.toContain('/checklist');
+    expect(adminPaths).not.toContain('/todos');
 
     // Must NOT contain HR, Lead, or Staff specific paths
     expect(adminPaths).not.toContain('/hr/employees');
@@ -43,11 +44,12 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(hrPaths).toContain('/dashboard');
     expect(hrPaths).toContain('/hr/employees');
     expect(hrPaths).toContain('/hr/departments');
-    expect(hrPaths).toContain('/hr/designations');
     expect(hrPaths).toContain('/hr/lifecycle');
     expect(hrPaths).toContain('/hr/policies');
     expect(hrPaths).toContain('/hr/reports');
     expect(hrPaths).toContain('/profile');
+    expect(hrPaths).not.toContain('/checklist');
+    expect(hrPaths).not.toContain('/todos');
 
     // Must NOT contain Admin or Staff specific paths
     expect(hrPaths).not.toContain('/admin/users');
@@ -68,6 +70,8 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(leadPaths).toContain('/lead/tasks');
     expect(leadPaths).toContain('/lead/reports');
     expect(leadPaths).toContain('/profile');
+    expect(leadPaths).not.toContain('/checklist');
+    expect(leadPaths).not.toContain('/todos');
 
     // Must NOT contain Admin or HR specific paths
     expect(leadPaths).not.toContain('/admin/users');
@@ -89,6 +93,8 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(staffPaths).toContain('/staff/leave');
     expect(staffPaths).toContain('/staff/tasks');
     expect(staffPaths).toContain('/staff/payslips');
+    expect(staffPaths).not.toContain('/staff/checklist');
+    expect(staffPaths).not.toContain('/staff/todos');
 
     // Staff must never see Admin or HR management tools
     expect(staffPaths).not.toContain('/admin/users');
@@ -104,6 +110,15 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
   });
 
   describe('isPathAuthorizedForRole checks', () => {
+    it('does not authorize removed checklist or to-do routes', () => {
+      for (const role of Object.values(ROLES)) {
+        expect(isPathAuthorizedForRole('/checklist', role)).toBe(false);
+        expect(isPathAuthorizedForRole('/todos', role)).toBe(false);
+        expect(isPathAuthorizedForRole('/staff/checklist', role)).toBe(false);
+        expect(isPathAuthorizedForRole('/staff/todos', role)).toBe(false);
+      }
+    });
+
     it('should allow common routes for any role', () => {
       Object.values(ROLES).forEach((r: Role) => {
         expect(isPathAuthorizedForRole('/', r)).toBe(true);
@@ -166,10 +181,8 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.ADMIN)).toBe(true);
-      expect(isPathAuthorizedForRole('/admin/designations', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/employees', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/departments', ROLES.HR_MANAGER)).toBe(true);
-      expect(isPathAuthorizedForRole('/hr/designations', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/lead/team', ROLES.TEAM_LEAD)).toBe(true);
       expect(isPathAuthorizedForRole('/lead/approvals', ROLES.TEAM_LEAD)).toBe(true);
       expect(isPathAuthorizedForRole('/staff/payslips', ROLES.STAFF)).toBe(true);
@@ -178,8 +191,6 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/employees', ROLES.TEAM_LEAD)).toBe(true);
       expect(isPathAuthorizedForRole('/departments', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/departments', ROLES.HR_MANAGER)).toBe(true);
-      expect(isPathAuthorizedForRole('/designations', ROLES.ADMIN)).toBe(true);
-      expect(isPathAuthorizedForRole('/designations', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/staff/documents', ROLES.STAFF)).toBe(true);

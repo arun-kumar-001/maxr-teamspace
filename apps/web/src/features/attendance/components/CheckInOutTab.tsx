@@ -368,9 +368,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
         {/* Recent Attendance Table */}
         <div className="p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold font-display text-text">
-              Recent Attendance
-            </h3>
+            <h3 className="text-base font-bold font-display text-text">Recent Attendance</h3>
             {onViewAllHistory && (
               <button
                 type="button"
@@ -427,9 +425,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
         {/* Monthly Attendance Summary */}
         <div className="p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-base font-bold font-display text-text">
-              Monthly Attendance
-            </h3>
+            <h3 className="text-base font-bold font-display text-text">Monthly Attendance</h3>
             <select
               aria-label="Select month"
               value={selectedMonth}
@@ -480,9 +476,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               </span>
               <div>
                 <p className="text-[11px] text-text-muted">Present</p>
-                <p className="text-base font-bold tabular-nums text-text">
-                  {monthlyStats.present}
-                </p>
+                <p className="text-base font-bold tabular-nums text-text">{monthlyStats.present}</p>
               </div>
             </div>
 
@@ -500,9 +494,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               </span>
               <div>
                 <p className="text-[11px] text-text-muted">Absent</p>
-                <p className="text-base font-bold tabular-nums text-text">
-                  {monthlyStats.absent}
-                </p>
+                <p className="text-base font-bold tabular-nums text-text">{monthlyStats.absent}</p>
               </div>
             </div>
 
@@ -521,9 +513,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               </span>
               <div>
                 <p className="text-[11px] text-text-muted">Late Arrivals</p>
-                <p className="text-base font-bold tabular-nums text-text">
-                  {monthlyStats.late}
-                </p>
+                <p className="text-base font-bold tabular-nums text-text">{monthlyStats.late}</p>
               </div>
             </div>
 
@@ -542,9 +532,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               </span>
               <div>
                 <p className="text-[11px] text-text-muted">Leave Days</p>
-                <p className="text-base font-bold tabular-nums text-text">
-                  {monthlyStats.leave}
-                </p>
+                <p className="text-base font-bold tabular-nums text-text">{monthlyStats.leave}</p>
               </div>
             </div>
 

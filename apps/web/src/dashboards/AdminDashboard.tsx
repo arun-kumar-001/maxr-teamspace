@@ -1,33 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
-import { DonutChart, type DonutChartSegment } from '../components/ui';
+import { DonutChart, type DonutChartSegment, KpiCard, PrimaryActionButton } from '../components/ui';
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
-import { fetchMeetings } from '../features/meetings/api/meetingsApi';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../features/tasks/utils/todoStats';
 import { PersonalChecklistWidget } from './PersonalChecklistWidget';
 import { cn } from '../lib/utils';
 
 // --- Shared Code-Based Modern Duotone SVG Icons ---
-
-function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
 
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
@@ -224,36 +206,6 @@ function IconEye({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   );
 }
 
-function IconVideo({ className = 'w-3.5 h-3.5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <rect
-        x="2.5"
-        y="6.25"
-        width="13.5"
-        height="11.5"
-        rx="3"
-        fill="currentColor"
-        fillOpacity="0.16"
-      />
-      <path
-        d="m16 10.2 5.2-3a.6.6 0 0 1 .9.52v8.56a.6.6 0 0 1-.9.52l-5.2-3v-3.6Z"
-        fill="currentColor"
-        fillOpacity="0.22"
-      />
-    </svg>
-  );
-}
-
 interface ApprovalItem {
   id: string;
   name: string;
@@ -277,7 +229,7 @@ export function AdminDashboard() {
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  // State: Metrics (starts with realistic zero baseline; populated from live API)
+  // State: Metrics (Real dynamic values)
   const [metrics, setMetrics] = useState({
     teamMembers: 0,
     presentToday: 0,
@@ -287,21 +239,13 @@ export function AdminDashboard() {
     pendingApprovalsTotal: 0,
   });
 
-  // State: Priority Tasks & Upcoming Meetings
+  // State: Priority Tasks
   const [priorityTasks, setPriorityTasks] = useState<
     Array<{
       title: string;
       owner: string;
       badge: string;
       badgeClass: string;
-    }>
-  >([]);
-
-  const [upcomingMeetings, setUpcomingMeetings] = useState<
-    Array<{
-      time: string;
-      title: string;
-      desc: string;
     }>
   >([]);
 
@@ -348,18 +292,12 @@ export function AdminDashboard() {
     async function loadData() {
       const now = new Date();
       const todayIso = now.toISOString().slice(0, 10);
-      const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const [meRes, empRes, approvalsRes, tasksRes, meetingsRes, teamAttRes, leaveReqRes] =
+      const [meRes, empRes, approvalsRes, tasksRes, teamAttRes, leaveReqRes] =
         await Promise.allSettled([
           apiFetch('/api/v1/auth/me').then((r) => (r.ok ? r.json() : null)),
           apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
           fetchApprovals({ status: 'pending', pageSize: 3 }),
           fetchTeamTasks({ pageSize: 100 }),
-          fetchMeetings({
-            from: now.toISOString(),
-            to: weekLater.toISOString(),
-            pageSize: 3,
-          }),
           fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
           apiFetch('/api/v1/leave-requests?status=pending&pageSize=1').then((r) =>
             r.ok ? r.json() : null,
@@ -497,22 +435,6 @@ export function AdminDashboard() {
           })),
         );
       }
-
-      if (meetingsRes.status === 'fulfilled') {
-        const list = meetingsRes.value.data ?? [];
-        setUpcomingMeetings(
-          list.slice(0, 3).map((m) => {
-            const dt = new Date(m.startsAt);
-            const hh = String(dt.getHours()).padStart(2, '0');
-            const mm = String(dt.getMinutes()).padStart(2, '0');
-            return {
-              time: Number.isNaN(dt.getTime()) ? '10:00' : `${hh}:${mm}`,
-              title: m.title,
-              desc: `${m.organizerName || 'Organizer'} • ${m.attendeeCount || 0} attendees`,
-            };
-          }),
-        );
-      }
     }
 
     loadData().catch(() => {});
@@ -535,12 +457,17 @@ export function AdminDashboard() {
     }
   };
 
-  const attendanceSum =
+  const rawTotalAttendance =
     attendanceCounts.present +
     attendanceCounts.late +
     attendanceCounts.onLeave +
     attendanceCounts.absent;
-  const totalAttendanceCount = attendanceSum > 0 ? attendanceSum : 1;
+
+  const totalAttendanceCount = Math.max(1, rawTotalAttendance);
+  const presentPctStr =
+    rawTotalAttendance > 0
+      ? `${((attendanceCounts.present / rawTotalAttendance) * 100).toFixed(1)}%`
+      : '0%';
 
   const attendanceChartData: Array<
     DonutChartSegment & { pctLabel: string; inkColor: string; pillClass: string }
@@ -551,9 +478,9 @@ export function AdminDashboard() {
       color: 'var(--primary)',
       inkColor: 'var(--primary-ink)',
       pctLabel:
-        attendanceSum > 0
+        rawTotalAttendance > 0
           ? `${((attendanceCounts.present / totalAttendanceCount) * 100).toFixed(1)}%`
-          : '0.0%',
+          : '0%',
       pillClass: 'bg-primary-soft',
     },
     {
@@ -562,9 +489,9 @@ export function AdminDashboard() {
       color: 'var(--chart-5)',
       inkColor: 'var(--chart-ink-5)',
       pctLabel:
-        attendanceSum > 0
+        rawTotalAttendance > 0
           ? `${((attendanceCounts.late / totalAttendanceCount) * 100).toFixed(1)}%`
-          : '0.0%',
+          : '0%',
       pillClass: 'bg-amber-50',
     },
     {
@@ -573,9 +500,9 @@ export function AdminDashboard() {
       color: 'var(--chart-4)',
       inkColor: 'var(--chart-ink-4)',
       pctLabel:
-        attendanceSum > 0
+        rawTotalAttendance > 0
           ? `${((attendanceCounts.onLeave / totalAttendanceCount) * 100).toFixed(1)}%`
-          : '0.0%',
+          : '0%',
       pillClass: 'bg-purple-50',
     },
     {
@@ -584,16 +511,18 @@ export function AdminDashboard() {
       color: 'var(--chart-7)',
       inkColor: 'var(--chart-ink-7)',
       pctLabel:
-        attendanceSum > 0
+        rawTotalAttendance > 0
           ? `${((attendanceCounts.absent / totalAttendanceCount) * 100).toFixed(1)}%`
-          : '0.0%',
+          : '0%',
       pillClass: 'bg-rose-50',
     },
   ];
   const activeAttendance = attendanceChartData.find((s) => s.label === hoveredAttendance);
 
-  const taskSum = taskCounts.completed + taskCounts.pending + taskCounts.overdue;
-  const totalTaskCount = taskSum > 0 ? taskSum : 1;
+  const rawTotalTasks = taskCounts.completed + taskCounts.pending + taskCounts.overdue;
+  const totalTaskCount = Math.max(1, rawTotalTasks);
+  const completedPct =
+    rawTotalTasks > 0 ? Math.round((taskCounts.completed / rawTotalTasks) * 100) : 0;
 
   const taskChartData: Array<
     DonutChartSegment & { pct: number; inkColor: string; pillClass: string }
@@ -603,7 +532,7 @@ export function AdminDashboard() {
       value: taskCounts.completed,
       color: 'var(--primary)',
       inkColor: 'var(--primary-ink)',
-      pct: taskSum > 0 ? Math.round((taskCounts.completed / totalTaskCount) * 100) : 0,
+      pct: completedPct,
       pillClass: 'bg-primary-soft',
     },
     {
@@ -611,7 +540,7 @@ export function AdminDashboard() {
       value: taskCounts.pending,
       color: 'var(--chart-4)',
       inkColor: 'var(--chart-ink-4)',
-      pct: taskSum > 0 ? Math.round((taskCounts.pending / totalTaskCount) * 100) : 0,
+      pct: rawTotalTasks > 0 ? Math.round((taskCounts.pending / totalTaskCount) * 100) : 0,
       pillClass: 'bg-purple-50',
     },
     {
@@ -619,7 +548,7 @@ export function AdminDashboard() {
       value: taskCounts.overdue,
       color: 'var(--chart-7)',
       inkColor: 'var(--chart-ink-7)',
-      pct: taskSum > 0 ? Math.round((taskCounts.overdue / totalTaskCount) * 100) : 0,
+      pct: rawTotalTasks > 0 ? Math.round((taskCounts.overdue / totalTaskCount) * 100) : 0,
       pillClass: 'bg-rose-50',
     },
   ];
@@ -652,6 +581,14 @@ export function AdminDashboard() {
             opacity: 1;
           }
         }
+        @keyframes maxrProgressTrack {
+          from {
+            width: 0%;
+          }
+          to {
+            width: 76%;
+          }
+        }
         .maxr-card-entrance {
           animation: maxrFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
@@ -660,7 +597,7 @@ export function AdminDashboard() {
           animation: maxrBarGrow 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         .maxr-progress-fill {
-          transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: maxrProgressTrack 1s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
         @media (prefers-reduced-motion: reduce) {
           .maxr-card-entrance,
@@ -685,122 +622,57 @@ export function AdminDashboard() {
           </h1>
         </div>
         <div className="shrink-0">
-          <button
-            type="button"
-            onClick={() => navigateTo('/tasks')}
-            className="inline-flex items-center gap-1.5 whitespace-nowrap px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-primary hover:bg-primary-deep text-sidebar font-semibold text-xs sm:text-sm shadow-xs transition-all duration-200 hover:scale-102 hover:shadow-md active:scale-95 shrink-0 cursor-pointer focus:outline-hidden"
-          >
-            <IconPlus className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:rotate-90" />
-            <span className="whitespace-nowrap font-semibold">Create task</span>
-          </button>
+          <PrimaryActionButton type="button" onClick={() => navigateTo('/tasks')}>
+            Create task
+          </PrimaryActionButton>
         </div>
       </section>
 
       {/* 2. Top Section: 4 KPI Cards - Responsive & Fitted */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Team Members */}
-        <div
-          onClick={() => navigateTo('/employees')}
+        <KpiCard
+          label="Team Members"
+          value={metrics.teamMembers}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge={metrics.teamMembers > 0 ? '100% active' : '0 active'}
+          variant="emerald"
           style={{ animationDelay: '50ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-emerald-600 flex items-center justify-center shrink-0">
-              <IconUsers className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Team Members
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.teamMembers}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              100% active accounts
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
 
         {/* Card 2: Present Today */}
-        <div
-          onClick={() => navigateTo('/attendance')}
+        <KpiCard
+          label="Present Today"
+          value={metrics.presentToday}
+          icon={<IconClock className="w-7 h-7" />}
+          badge={`${Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in`}
+          variant="purple"
           style={{ animationDelay: '100ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-purple-600 flex items-center justify-center shrink-0">
-              <IconClock className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Present Today
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.presentToday}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
 
         {/* Card 3: Leave Requests */}
-        <div
-          onClick={() => navigateTo('/approvals')}
+        <KpiCard
+          label="Leave Requests"
+          value={metrics.leaveRequests}
+          icon={<IconCalendar className="w-7 h-7" />}
+          badge={`${metrics.leaveRequests} pending review`}
+          variant="teal"
           style={{ animationDelay: '150ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-teal-600 flex items-center justify-center shrink-0">
-              <IconCalendar className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Leave Requests
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.leaveRequests < 10 ? `0${metrics.leaveRequests}` : metrics.leaveRequests}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {metrics.leaveRequests} pending review
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
 
         {/* Card 4: Open Tasks */}
-        <div
-          onClick={() => navigateTo('/tasks')}
+        <KpiCard
+          label="Open Tasks"
+          value={metrics.openTasks}
+          icon={<IconCheckSquare className="w-7 h-7" />}
+          badge={`${taskCounts.overdue} overdue`}
+          variant="rose"
           style={{ animationDelay: '200ms' }}
-          className="maxr-card-entrance p-4 sm:p-4.5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-between gap-3 min-w-0 cursor-pointer"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="text-rose-600 flex items-center justify-center shrink-0">
-              <IconCheckSquare className="w-7 h-7" />
-            </div>
-            <div className="min-w-0">
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-                Open Tasks
-              </span>
-              <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-                {metrics.openTasks}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <span className="text-[11px] sm:text-xs text-text-subtle font-medium block whitespace-nowrap">
-              {taskCounts.overdue} overdue
-            </span>
-          </div>
-        </div>
+          className="maxr-card-entrance"
+        />
       </section>
 
       {/* 3. Middle Section: 3 Cards (My Watch, Attendance Overview, Task Overview) - Perfectly Sized */}
@@ -915,9 +787,7 @@ export function AdminDashboard() {
           <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px] text-text-muted">
             <span className="truncate">Target: {metrics.teamMembers} staff</span>
             <span className="font-semibold text-primary-strong whitespace-nowrap shrink-0">
-              {metrics.teamMembers > 0
-                ? `${((metrics.presentToday / metrics.teamMembers) * 100).toFixed(1)}% present today`
-                : '0.0% present today'}
+              {presentPctStr} present today
             </span>
           </div>
         </div>
@@ -966,7 +836,7 @@ export function AdminDashboard() {
                     className="flex flex-col items-center justify-center text-center leading-none"
                   >
                     <span className="font-display text-xl sm:text-2xl font-extrabold text-text tracking-tight">
-                      {activeTask ? activeTask.value : `${taskChartData[0]!.pct}%`}
+                      {activeTask ? activeTask.value : `${completedPct}%`}
                     </span>
                     <span
                       className="text-[10.5px] mt-1 font-bold truncate max-w-[78px]"
@@ -1030,18 +900,18 @@ export function AdminDashboard() {
             <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
               <div
                 className="maxr-progress-fill h-full rounded-full bg-primary"
-                style={{ width: `${taskChartData[0]?.pct ?? 0}%` }}
+                style={{ width: `${completedPct}%` }}
               />
             </div>
             <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
-              {taskCounts.completed} / {taskSum} Tasks
+              {taskCounts.completed} / {rawTotalTasks} Tasks
             </span>
           </div>
         </div>
       </section>
 
-      {/* 4. Bottom Section: 4 Cards (Pending Approvals, Priority Tasks, Upcoming Meetings, Personal Checklist) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 items-stretch">
+      {/* 4. Bottom Section: 3 Cards (Pending Approvals, Priority Tasks, Personal Checklist) */}
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 items-stretch">
         {/* Card 1: Pending Approvals */}
         <div
           style={{ animationDelay: '400ms' }}
@@ -1070,54 +940,53 @@ export function AdminDashboard() {
           {/* Approval Rows */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
             {approvals.length === 0 ? (
-              <div className="py-6 text-center text-xs text-text-subtle">
-                No pending approvals
-              </div>
+              <p className="text-xs text-text-muted py-5 text-center">No pending approvals</p>
             ) : (
               approvals.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 shadow-xs ${item.avatarBg}`}
-                  >
-                    {item.initial}
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 shadow-xs ${item.avatarBg}`}
+                    >
+                      {item.initial}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-text truncate leading-tight">{item.name}</p>
+                      <p className="text-[10.5px] sm:text-[11px] text-text-muted truncate mt-0.5">
+                        {item.detail}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-text truncate leading-tight">{item.name}</p>
-                    <p className="text-[10.5px] sm:text-[11px] text-text-muted truncate mt-0.5">
-                      {item.detail}
-                    </p>
-                  </div>
-                </div>
 
-                {item.type === 'expense' ? (
-                  <button
-                    type="button"
-                    onClick={() => navigateTo('/approvals')}
-                    className="px-2.5 py-1 rounded-lg border border-border text-[11px] sm:text-xs font-semibold text-text hover:bg-surface-raised flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap"
-                  >
-                    <IconEye className="w-3 h-3 text-text-muted" />
-                    <span>Review</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void handleApprove(item.id)}
-                    className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap ${
-                      item.status === 'approved'
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
-                        : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'
-                    }`}
-                  >
-                    <IconCheck className="w-3 h-3" />
-                    <span>{item.status === 'approved' ? 'Approved' : 'Approve'}</span>
-                  </button>
-                )}
-              </div>
-            )))}
+                  {item.type === 'expense' ? (
+                    <button
+                      type="button"
+                      onClick={() => navigateTo('/approvals')}
+                      className="px-2.5 py-1 rounded-lg border border-border text-[11px] sm:text-xs font-semibold text-text hover:bg-surface-raised flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap"
+                    >
+                      <IconEye className="w-3 h-3 text-text-muted" />
+                      <span>Review</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleApprove(item.id)}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap ${
+                        item.status === 'approved'
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                          : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'
+                      }`}
+                    >
+                      <IconCheck className="w-3 h-3" />
+                      <span>{item.status === 'approved' ? 'Approved' : 'Approve'}</span>
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
           {/* Footer Link */}
@@ -1160,9 +1029,7 @@ export function AdminDashboard() {
           {/* Task Rows - Fitted & Clean */}
           <div className="space-y-2 my-auto py-1.5 min-w-0">
             {priorityTasks.length === 0 ? (
-              <div className="py-6 text-center text-xs text-text-subtle">
-                No priority tasks
-              </div>
+              <p className="text-xs text-text-muted py-5 text-center">No active tasks</p>
             ) : (
               priorityTasks.map((task) => (
                 <div
@@ -1202,73 +1069,7 @@ export function AdminDashboard() {
             </button>
           </div>
         </div>
-
-        {/* Card 3: Upcoming Meetings - Perfectly Balanced */}
-        <div
-          onClick={() => navigateTo('/meetings')}
-          style={{ animationDelay: '500ms' }}
-          className="maxr-card-entrance p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-full min-w-0 transition-all duration-200 hover:border-border cursor-pointer group active:scale-[0.99]"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconCalendar className="w-3.5 h-3.5" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="text-sm font-bold text-text truncate">Upcoming Meetings</h2>
-                <p className="text-[10.5px] text-text-muted truncate">Today&apos;s calendar</p>
-              </div>
-            </div>
-            <IconChevronRight className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0" />
-          </div>
-
-          {/* Meeting Rows */}
-          <div className="space-y-2 my-auto py-1.5 min-w-0">
-            {upcomingMeetings.length === 0 ? (
-              <div className="py-6 text-center text-xs text-text-subtle">
-                No upcoming meetings scheduled
-              </div>
-            ) : (
-              upcomingMeetings.map((m, idx) => (
-                <div
-                  key={`${m.time}-${idx}`}
-                  className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-xl transition-all duration-200 hover:bg-surface-raised border border-transparent hover:border-border/60 text-xs min-w-0"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="px-2 py-1 rounded-lg bg-surface-muted border border-border/80 font-mono font-bold text-text shrink-0 text-[11px] shadow-xs flex items-center gap-1 whitespace-nowrap">
-                      <IconClock className="w-2.5 h-2.5 text-text-muted" />
-                      <span>{m.time}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-text truncate leading-tight">{m.title}</p>
-                      <p className="text-[10.5px] text-text-muted truncate mt-0.5">{m.desc}</p>
-                    </div>
-                  </div>
-                  <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                    <IconVideo className="w-3 h-3" />
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer Link matching other cards */}
-          <div className="pt-2.5 border-t border-border/80">
-            <button
-              type="button"
-              onClick={() => navigateTo('/meetings')}
-              className="text-xs font-semibold text-primary-ink hover:underline flex items-center gap-1 group whitespace-nowrap"
-            >
-              <span>View full calendar</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">
-                &rarr;
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Card 4: Personal Checklist Routine Widget */}
+        {/* Card 3: Personal Checklist Routine Widget */}
         <PersonalChecklistWidget className="maxr-card-entrance" />
       </section>
 

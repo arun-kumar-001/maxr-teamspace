@@ -1,6 +1,6 @@
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter } from 'react-router-dom';
 import { REFERENCE_VIEWPORTS, getBreakpointForWidth } from '../../styles/breakpoints';
 import { AuthProvider } from '../../auth/AuthContext';
 import { AppShell } from '../AppShell';

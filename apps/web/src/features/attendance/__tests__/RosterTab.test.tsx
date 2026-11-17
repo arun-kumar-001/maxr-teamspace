@@ -13,26 +13,34 @@ const mockEmployees: EmployeeDirectoryItem[] = [
     employeeCode: 'EMP001',
     firstName: 'Arun',
     lastName: 'Kumar',
-    workEmail: 'arun@example.com',
-    status: 'ACTIVE',
-    department: { id: 'dept-1', name: 'Engineering' },
-    designation: { id: 'des-1', title: 'Engineering Director' },
+    email: 'arun@example.com',
+    phone: null,
+    manager: null,
+    joiningDate: '2026-01-01',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    status: 'active',
+    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+    designation: { id: 'des-1', title: 'Engineering Director', code: 'ENG-DIR', level: 1 },
   },
   {
     id: 'emp-2',
     employeeCode: 'EMP002',
     firstName: 'Rajesh',
     lastName: 'Patel',
-    workEmail: 'rajesh@example.com',
-    status: 'ACTIVE',
-    department: { id: 'dept-1', name: 'Engineering' },
-    designation: { id: 'des-2', title: 'Staff Engineer' },
+    email: 'rajesh@example.com',
+    phone: null,
+    manager: null,
+    joiningDate: '2026-01-01',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    status: 'active',
+    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+    designation: { id: 'des-2', title: 'Staff Engineer', code: 'STAFF-ENG', level: 2 },
   },
 ];
 
-const mockDepartments: DepartmentItem[] = [
-  { id: 'dept-1', name: 'Engineering', code: 'ENG', employeeCount: 2 },
-];
+const mockDepartments: DepartmentItem[] = [{ id: 'dept-1', name: 'Engineering', code: 'ENG' }];
 
 describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
   afterEach(() => {

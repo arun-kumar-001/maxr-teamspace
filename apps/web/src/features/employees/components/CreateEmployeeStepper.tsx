@@ -1,16 +1,15 @@
 interface StepItem {
   number: number;
   label: string;
-  subtitle: string;
 }
 
 const STEPS: StepItem[] = [
-  { number: 1, label: 'Personal', subtitle: 'Name & Resume' },
-  { number: 2, label: 'Employment', subtitle: 'Role & Work Email' },
-  { number: 3, label: 'Bank Details', subtitle: 'Account & IDs' },
-  { number: 4, label: 'Documents', subtitle: 'KYC & Degrees' },
-  { number: 5, label: 'Access', subtitle: 'Role & Login' },
-  { number: 6, label: 'Declaration', subtitle: 'Checklist & Submit' },
+  { number: 1, label: 'Personal' },
+  { number: 2, label: 'Employment' },
+  { number: 3, label: 'Bank details' },
+  { number: 4, label: 'Documents' },
+  { number: 5, label: 'Access' },
+  { number: 6, label: 'Declaration' },
 ];
 
 export interface CreateEmployeeStepperProps {
@@ -38,7 +37,6 @@ export function CreateEmployeeStepper({
             <p className="text-xs font-semibold text-text">
               Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1]?.label}
             </p>
-            <p className="text-[11px] text-text-muted">{STEPS[currentStep - 1]?.subtitle}</p>
           </div>
         </div>
         <div className="flex gap-1">
@@ -125,7 +123,6 @@ export function CreateEmployeeStepper({
                   >
                     {step.label}
                   </p>
-                  <p className="text-[11px] text-text-muted truncate">{step.subtitle}</p>
                 </div>
               </button>
             </li>

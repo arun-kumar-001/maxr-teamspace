@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../auth/AuthContext';
 import { AdminDashboard } from '../AdminDashboard';
 import { HRDashboard } from '../HRDashboard';
@@ -97,15 +99,20 @@ describe('TC-12-05: Four Distinct Role Dashboard Shells', () => {
       expect(html).toContain('data-testid="team-lead-dashboard"');
     });
 
-    it('should route Staff role to profile', () => {
-      const html = renderToStaticMarkup(
-        <MemoryRouter>
-          <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
-            <DashboardRouter />
-          </AuthProvider>
-        </MemoryRouter>,
+    it('should redirect Staff to their profile', async () => {
+      render(
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <MemoryRouter initialEntries={['/dashboard']}>
+            <Routes>
+              <Route path="/dashboard" element={<DashboardRouter />} />
+              <Route path="/profile" element={<h1>Staff profile destination</h1>} />
+            </Routes>
+          </MemoryRouter>
+        </AuthProvider>,
       );
-      expect(html).not.toContain('data-testid="admin-dashboard"');
+      expect(
+        await screen.findByRole('heading', { name: 'Staff profile destination' }),
+      ).toBeTruthy();
     });
   });
 });

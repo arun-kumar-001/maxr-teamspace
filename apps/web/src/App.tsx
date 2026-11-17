@@ -28,7 +28,6 @@ import {
   SetPasswordPage,
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
-import { DesignationsPage } from './features/designations';
 import { MyProfilePage, ProfilePortalPage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
@@ -41,7 +40,6 @@ import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { DailyChecklistPage } from './features/tasks/pages/DailyChecklistPage';
 import { CompanySettingsPage } from './features/settings';
-import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
 import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
@@ -294,31 +292,10 @@ function AppRoutes() {
         }
       />
 
-      {/* Designations Management Routes (Issue #18) */}
-      <Route
-        path="/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/hr/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
-      />
+      {/* Designations Management Routes Redirect to Departments */}
+      <Route path="/designations" element={<Navigate to="/departments" replace />} />
+      <Route path="/admin/designations" element={<Navigate to="/admin/departments" replace />} />
+      <Route path="/hr/designations" element={<Navigate to="/hr/departments" replace />} />
 
       {/* My Profile Portal & Personal Details Routes */}
       <Route
@@ -621,39 +598,11 @@ function AppRoutes() {
         }
       />
 
-      {/* Meetings Routes (Issue #45) */}
-      <Route
-        path="/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/staff/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/lead/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
+      {/* Meetings Routes (Removed per user request - Redirect to dashboard) */}
+      <Route path="/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/staff/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/lead/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/admin/meetings" element={<Navigate to="/dashboard" replace />} />
 
       {/* Expenses Routes (Issue #29) */}
       <Route

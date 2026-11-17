@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Modal } from '../../../components/ui';
 import { fetchMyAttendanceHistory, fetchTeamAttendance } from '../api/attendance';
 import type { AttendanceRecord } from '../types';
@@ -38,23 +38,6 @@ function IconChevronRight({ className = 'w-4 h-4 shrink-0' }: { className?: stri
       aria-hidden="true"
     >
       <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-function IconChevronDown({ className = 'w-4 h-4 shrink-0' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
@@ -190,9 +173,10 @@ function formatPunchTime(iso: string | null | undefined): string {
 }
 
 function resolveEmployeePunch(
-  emp: EmployeeDirectoryItem,
+  _emp: EmployeeDirectoryItem,
   wd: { dateStr: string; isPast: boolean; isToday: boolean; isWeekend: boolean },
   record: AttendanceRecord | undefined,
+  shift?: Shift | null,
 ): {
   inTime: string;
   outTime: string | null;
@@ -227,33 +211,23 @@ function resolveEmployeePunch(
     };
   }
 
-  // Deterministic realistic variance around 09:00 - 19:00 (9 to 7) based on employee ID and date
-  const hash = (emp.id + wd.dateStr).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const inMinute = (hash % 18) - 5;
-  const outMinute = ((hash * 7) % 25) - 8;
-
-  const inH = inMinute < 0 ? 8 : 9;
-  const inM = inMinute < 0 ? 60 + inMinute : inMinute;
-  const inStr = `${String(inH).padStart(2, '0')}:${String(inM).padStart(2, '0')}`;
-
-  if (wd.isToday) {
+  if (wd.isWeekend) {
     return {
-      inTime: inStr,
+      inTime: '--:--',
       outTime: null,
-      status: 'active',
-      display: `${inStr} – In`,
+      status: 'absent',
+      display: 'Off',
     };
   }
 
-  const outH = outMinute < 0 ? 18 : 19;
-  const outM = outMinute < 0 ? 60 + outMinute : outMinute;
-  const outStr = `${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}`;
+  const shiftStart = shift?.startTime ? shift.startTime.slice(0, 5) : '09:00';
+  const shiftEnd = shift?.endTime ? shift.endTime.slice(0, 5) : '19:00';
 
   return {
-    inTime: inStr,
-    outTime: outStr,
-    status: inH === 9 && inM > 15 ? 'late' : 'present',
-    display: `${inStr} – ${outStr}`,
+    inTime: shiftStart,
+    outTime: shiftEnd,
+    status: 'present',
+    display: `${shiftStart} – ${shiftEnd}`,
   };
 }
 
@@ -293,9 +267,6 @@ export function RosterTab({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [monthOffset, setMonthOffset] = useState<number>(0);
-
-  // Department collapse state
-  const [collapsedDepts, setCollapsedDepts] = useState<Set<string>>(new Set());
 
   // Create Roster Bulk Modal state
   const [isCreateRosterOpen, setIsCreateRosterOpen] = useState(false);
@@ -347,6 +318,8 @@ export function RosterTab({
       graceMinutes: 15,
       isActive: true,
       crossesMidnight: false,
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
     }),
     [],
   );
@@ -647,34 +620,6 @@ export function RosterTab({
     viewMode,
   ]);
 
-  // Department Grouping for Grid
-  const departmentGroups = useMemo(() => {
-    const map = new Map<string, EmployeeDirectoryItem[]>();
-    for (const emp of filteredEmployees) {
-      const deptName = emp.department?.name || 'Operations';
-      if (!map.has(deptName)) {
-        map.set(deptName, []);
-      }
-      map.get(deptName)!.push(emp);
-    }
-    return Array.from(map.entries()).map(([deptName, emps]) => ({
-      deptName,
-      employees: emps,
-    }));
-  }, [filteredEmployees]);
-
-  const toggleDeptCollapse = (deptName: string) => {
-    setCollapsedDepts((prev) => {
-      const next = new Set(prev);
-      if (next.has(deptName)) {
-        next.delete(deptName);
-      } else {
-        next.add(deptName);
-      }
-      return next;
-    });
-  };
-
   // Helper for Shift styling & categorization (compact, executive, MaxR Flow tokens)
   const getShiftCellConfig = (shift: Shift | null, isLeave: boolean, isWeekend: boolean) => {
     if (isWeekend) {
@@ -703,8 +648,7 @@ export function RosterTab({
     const end = effective.endTime.slice(0, 5);
     const timing = `${start} – ${end}`;
     const isStandard =
-      (start === '09:00' && end === '19:00') ||
-      effective.code.toUpperCase() === 'STANDARD';
+      (start === '09:00' && end === '19:00') || effective.code.toUpperCase() === 'STANDARD';
 
     if (isStandard) {
       return {
@@ -722,8 +666,7 @@ export function RosterTab({
       isOff: false,
       isLeave: false,
       isCustom: true,
-      className:
-        'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100/80',
+      className: 'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100/80',
       badge: effective.name || timing,
       timing,
     };
@@ -1144,12 +1087,8 @@ export function RosterTab({
                           const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
-                          const cellConfig = getShiftCellConfig(
-                            shift,
-                            !!leave,
-                            wd.isWeekend,
-                          );
-                          const punch = resolveEmployeePunch(emp, wd, record);
+                          const cellConfig = getShiftCellConfig(shift, !!leave, wd.isWeekend);
+                          const punch = resolveEmployeePunch(emp, wd, record, shift);
 
                           return (
                             <td
@@ -1302,17 +1241,11 @@ export function RosterTab({
                           const leave = leaveByEmpDate.get(`${emp.id}__${d.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${d.dateStr}`);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
-                          const cellConfig = getShiftCellConfig(
-                            shift,
-                            !!leave,
-                            d.isWeekend,
-                          );
-                          const punch = resolveEmployeePunch(emp, d, record);
+                          const cellConfig = getShiftCellConfig(shift, !!leave, d.isWeekend);
+                          const punch = resolveEmployeePunch(emp, d, record, shift);
 
                           if (!d.isWeekend && !leave) {
-                            const h = shift
-                              ? parseShiftHours(shift.startTime, shift.endTime)
-                              : 8;
+                            const h = shift ? parseShiftHours(shift.startTime, shift.endTime) : 8;
                             monthlyHours += h;
                           }
 
@@ -1320,9 +1253,7 @@ export function RosterTab({
                             <td
                               key={d.dateStr}
                               className={`px-1 py-1.5 text-center align-middle border-r border-border/30 w-[68px] min-w-[68px] max-w-[68px] ${
-                                d.isToday
-                                  ? 'bg-emerald-50/25 border-x border-emerald-200/40'
-                                  : ''
+                                d.isToday ? 'bg-emerald-50/25 border-x border-emerald-200/40' : ''
                               }`}
                             >
                               {cellConfig.isOff ? (

@@ -31,6 +31,10 @@ const person = (id: string, code: string, email: string): EmployeeDetail => ({
   joiningDate: '2026-01-15',
   createdAt: '2026-01-15T00:00:00.000Z',
   updatedAt: '2026-01-15T00:00:00.000Z',
+  panNumber: 'ABCDE1234F',
+  aadhaarNumber: '123456789012',
+  bankAccountNumber: '1234567890',
+  bankIfscCode: 'TEST0001234',
   version: 1,
   account: { userId: `u-${id}`, isActive: true, lastLoginAt: null, roles: [ROLES.STAFF] },
 });
@@ -99,6 +103,23 @@ describe('GET /employees/{id}: access', () => {
       expect(res.body.data.account).toBeUndefined();
       expect(JSON.stringify(res.body)).not.toMatch(/password|hash|lastLoginAt/i);
     }
+  });
+
+  it('hides sensitive bank details and government IDs from Team Lead and Staff', async () => {
+    const s = await setup();
+    const tlRes = await s.as.team_lead.get(`/api/v1/employees/${s.staffId}`);
+    expect(tlRes.status).toBe(200);
+    const tlData = tlRes.body.data;
+    expect(tlData.bankAccountNumber).toBeUndefined();
+    expect(tlData.bankIfscCode).toBeUndefined();
+    expect(tlData.panNumber).toBeUndefined();
+    expect(tlData.aadhaarNumber).toBeUndefined();
+
+    const adminRes = await s.as.admin.get(`/api/v1/employees/${s.staffId}`);
+    expect(adminRes.status).toBe(200);
+    const adminData = adminRes.body.data;
+    expect(adminData.bankAccountNumber).toBe('1234567890');
+    expect(adminData.panNumber).toBe('ABCDE1234F');
   });
 
   it('returns the version to send back', async () => {
