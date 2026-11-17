@@ -286,6 +286,7 @@ export function PersonalTodoList({ className = '', pageSize = 10 }: PersonalTodo
         description: '',
         dueDate: dueDate || null,
         isCompleted: false,
+        completedAt: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

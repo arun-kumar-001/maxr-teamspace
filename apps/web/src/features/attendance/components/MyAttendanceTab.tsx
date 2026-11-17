@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   DataTable,
   type Column,
@@ -74,17 +74,6 @@ function formatDuration(minutes: number | null): string {
   return `${h}h ${m.toString().padStart(2, '0')}m`;
 }
 
-function getMonthBounds(yearMonth: string): { start: string; end: string } {
-  const [yStr, mStr] = yearMonth.split('-');
-  const year = Number(yStr);
-  const month = Number(mStr);
-  const lastDay = new Date(year, month, 0).getDate();
-  return {
-    start: `${yearMonth}-01`,
-    end: `${yearMonth}-${String(lastDay).padStart(2, '0')}`,
-  };
-}
-
 export function MyAttendanceTab({
   records,
   meta,
@@ -120,37 +109,9 @@ export function MyAttendanceTab({
   onOpenCorrectionModal,
   onGoToCheckIn,
 }: MyAttendanceTabProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string>('');
-
-  const handleMonthChange = (val: string) => {
-    setSelectedMonth(val);
-    if (!val) {
-      setStartDate('');
-      setEndDate('');
-    } else {
-      const { start, end } = getMonthBounds(val);
-      setStartDate(start);
-      setEndDate(end);
-    }
-    setPage(1);
-  };
-
   const handleResetAll = () => {
-    setSelectedMonth('');
     resetFilters();
   };
-
-  const monthOptions = useMemo(() => {
-    const opts: Array<{ value: string; label: string }> = [{ value: '', label: 'All Months' }];
-    const base = new Date();
-    for (let i = 0; i < 12; i += 1) {
-      const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
-      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-      opts.push({ value: val, label });
-    }
-    return opts;
-  }, []);
 
   const columns = useMemo<Column<AttendanceRecord>[]>(
     () => [
@@ -258,11 +219,9 @@ export function MyAttendanceTab({
           displayMode={displayMode}
           canViewTeam={canViewTeam}
           onStartDateChange={(d) => {
-            setSelectedMonth('');
             setStartDate(d);
           }}
           onEndDateChange={(d) => {
-            setSelectedMonth('');
             setEndDate(d);
           }}
           onStatusChange={setStatus}

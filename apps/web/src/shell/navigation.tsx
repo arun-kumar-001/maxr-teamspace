@@ -27,7 +27,7 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Dashboard',
     path: '/dashboard',
     iconName: 'home',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
   },
 
   // Admin Routes (AGENTS.md §1)
