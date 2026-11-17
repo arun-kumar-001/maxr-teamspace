@@ -41,7 +41,8 @@ function IconChevronRight({ className = 'w-4 h-4 shrink-0' }: { className?: stri
     </svg>
   );
 }
-({ className = 'w-4 h-4 shrink-0' }: { className?: string }) {
+
+function IconCalendar({ className = 'w-4 h-4 shrink-0' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"

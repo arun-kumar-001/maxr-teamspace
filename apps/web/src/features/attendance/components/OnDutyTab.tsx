@@ -6,23 +6,6 @@ import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/type
 import type { Shift } from '../../shifts/types';
 import type { LeaveCalendarEntry } from '../../leave/types';
 
-const AVATAR_COLORS = [
-  'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  'bg-teal-50 text-teal-700 border border-teal-200',
-  'bg-blue-50 text-blue-700 border border-blue-200',
-  'bg-purple-50 text-purple-700 border border-purple-200',
-  'bg-amber-50 text-amber-700 border border-amber-200',
-  'bg-rose-50 text-rose-700 border border-rose-200',
-];
-
-function getAvatarColors(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash << 5) - hash + name.charCodeAt(i);
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]!;
-}
-
 // Code-based SVG icons (Zero Raw Hex compliant)
 function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
