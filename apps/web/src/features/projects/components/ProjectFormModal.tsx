@@ -227,11 +227,11 @@ export function ProjectFormModal({
             htmlFor="project-code"
             required
             error={errors.code}
-            helperText="Uppercase identifier (e.g. PRJ-ALPHA, TEAM-OPS). 2-20 characters."
+            helperText="Uppercase identifier (2-20 characters)."
           >
             <Input
               id="project-code"
-              placeholder="e.g. PRJ-ALPHA"
+              placeholder="PRJ-ALPHA"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               disabled={submitting}
@@ -248,7 +248,7 @@ export function ProjectFormModal({
         <FormField label="Project Name" htmlFor="project-name" required error={errors.name}>
           <Input
             id="project-name"
-            placeholder="e.g. Mobile App Redesign"
+            placeholder="Project name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={submitting}
@@ -365,7 +365,7 @@ export function ProjectFormModal({
         <FormField
           label="Technologies Used"
           htmlFor="project-technologies"
-          helperText="Comma-separated (e.g. React 18, TypeScript, PostgreSQL)"
+          helperText="Comma-separated list of technologies"
         >
           <Input
             id="project-technologies"

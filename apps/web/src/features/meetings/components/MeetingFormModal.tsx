@@ -334,7 +334,7 @@ export function MeetingFormModal({
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Sprint Planning or Client Review"
+            placeholder="Meeting title"
             maxLength={200}
             data-testid="meeting-title-input"
           />

@@ -140,7 +140,7 @@ export function DepartmentModal({
               setName(e.target.value);
               if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
             }}
-            placeholder="e.g. Engineering, People Operations"
+            placeholder="Department name"
             disabled={isSubmitting}
             className="min-h-[44px]"
             data-testid="department-name-input"
@@ -162,7 +162,7 @@ export function DepartmentModal({
               setCode(e.target.value.toUpperCase());
               if (errors.code) setErrors((prev) => ({ ...prev, code: undefined }));
             }}
-            placeholder="e.g. ENG, HR, FIN"
+            placeholder="Department code"
             disabled={isSubmitting}
             className="min-h-[44px] font-mono"
             data-testid="department-code-input"

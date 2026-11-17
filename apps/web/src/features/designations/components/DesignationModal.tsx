@@ -167,7 +167,7 @@ export function DesignationModal({
           htmlFor="designation-title-input"
           required
           error={errors.title}
-          helperText="Official job title (e.g. Lead Engineer, HR Specialist)"
+          helperText="Official job title"
         >
           <Input
             id="designation-title-input"
@@ -177,7 +177,7 @@ export function DesignationModal({
               setTitle(e.target.value);
               if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
             }}
-            placeholder="e.g. Senior Software Engineer"
+            placeholder="Designation title"
             disabled={isSubmitting}
             className="min-h-[44px]"
             data-testid="designation-title-input"
@@ -199,7 +199,7 @@ export function DesignationModal({
               setCode(e.target.value.toUpperCase());
               if (errors.code) setErrors((prev) => ({ ...prev, code: undefined }));
             }}
-            placeholder="e.g. SR_SWE, HR_SPEC"
+            placeholder="Designation code"
             disabled={isSubmitting}
             className="min-h-[44px] font-mono"
             data-testid="designation-code-input"

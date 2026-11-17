@@ -148,7 +148,7 @@ export function ProjectMilestonesSection({
             <FormField label="Milestone Name" htmlFor="ms-title" required>
               <Input
                 id="ms-title"
-                placeholder="e.g. Integration Testing Sign-Off"
+                placeholder="Milestone title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={submitting}

@@ -1488,7 +1488,7 @@ export function RosterTab({
                             e.target.value.replace(/\s+/g, '_').toUpperCase().slice(0, 10),
                           );
                         }}
-                        placeholder="e.g. Early Morning, Flexi Shift"
+                        placeholder="Shift name"
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-text"
                       />
                     </div>
@@ -1501,7 +1501,7 @@ export function RosterTab({
                         required
                         value={customShiftCode}
                         onChange={(e) => setCustomShiftCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. EARLY_MORN"
+                        placeholder="Shift code"
                         className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-border bg-surface text-text font-mono uppercase"
                       />
                     </div>

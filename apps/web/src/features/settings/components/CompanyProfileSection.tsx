@@ -49,7 +49,7 @@ export function CompanyProfileSection({
             name="companyName"
             value={draft.companyName}
             onChange={(e) => onUpdate({ companyName: e.target.value })}
-            placeholder="e.g. MAXR Technologies"
+            placeholder="Company name"
             maxLength={255}
             disabled={disabled}
             data-testid="company-name-input"

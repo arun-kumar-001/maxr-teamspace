@@ -323,7 +323,7 @@ export function PersonalInformation({
                   type="email"
                   value={newEmailDraft}
                   onChange={(e) => setNewEmailDraft(e.target.value)}
-                  placeholder="e.g. alternate@example.com"
+                  placeholder="alternate@email.com"
                   className="flex-1 p-2 bg-surface border border-border rounded-input text-xs outline-none focus:ring-2 focus:ring-primary-strong/20"
                 />
                 <button

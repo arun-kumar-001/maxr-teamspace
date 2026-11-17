@@ -209,8 +209,8 @@ describe('Projects Feature (Issue #42)', () => {
 
     expect(screen.getByText('Create New Project')).toBeInTheDocument();
 
-    const codeInput = screen.getByPlaceholderText('e.g. PRJ-ALPHA');
-    const nameInput = screen.getByPlaceholderText('e.g. Mobile App Redesign');
+    const codeInput = screen.getByLabelText(/Project Code/i);
+    const nameInput = screen.getByLabelText(/Project Name/i);
 
     fireEvent.change(codeInput, { target: { value: 'PRJ-GAMMA' } });
     fireEvent.change(nameInput, { target: { value: 'Gamma Testing Platform' } });

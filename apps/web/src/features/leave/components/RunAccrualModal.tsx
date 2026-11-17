@@ -113,7 +113,7 @@ export const RunAccrualModal: React.FC<RunAccrualModalProps> = ({
               label="Calendar Year"
               htmlFor="accrual-year"
               required
-              helperText="Target year to allocate quotas (e.g. 2026)"
+              helperText="Target year to allocate quotas"
             >
               <input
                 id="accrual-year"

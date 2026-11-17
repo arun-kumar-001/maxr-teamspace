@@ -221,7 +221,7 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
             rows={3}
             maxLength={500}
             className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-subtle focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong transition-colors min-h-[88px]"
-            placeholder="Explain why the recorded attendance times need correction (e.g., forgot to check out, system network outage)..."
+            placeholder="Explain why the recorded attendance times need correction..."
             value={reason}
             onChange={(e) => {
               setReason(e.target.value);

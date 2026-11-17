@@ -105,7 +105,7 @@ export function AnnouncementModal({ isOpen, onClose, onSend }: AnnouncementModal
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Office town hall meeting this Friday"
+                placeholder="Announcement title"
                 maxLength={100}
                 required
                 data-testid="announcement-title-input"

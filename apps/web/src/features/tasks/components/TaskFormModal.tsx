@@ -289,8 +289,7 @@ export function TaskFormModal({
           <div className="space-y-0.5">
             <span className="text-sm font-medium text-text block">Daily Recurring Task</span>
             <span className="text-xs text-text-muted block">
-              Repeats every day (e.g. social media posts, daily updates) and stays in your Today /
-              Daily Updates list.
+              Repeats every day and stays in your Today / Daily Updates list.
             </span>
           </div>
         </label>
