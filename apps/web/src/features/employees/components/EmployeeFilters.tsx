@@ -45,7 +45,7 @@ export function EmployeeFilters({
 
   const departmentOptions = [
     { value: '', label: 'All Departments' },
-    ...departments.map((d) => ({ value: d.id, label: `${d.name} (${d.code})` })),
+    ...departments.map((d) => ({ value: d.id, label: d.name })),
   ];
 
   const designationOptions = [

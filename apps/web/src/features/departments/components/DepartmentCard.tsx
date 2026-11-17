@@ -42,11 +42,8 @@ export function DepartmentCard({
   const pendingCount = members.filter((m) => m.status === 'pending').length;
   const sharePct = totalWorkforce > 0 ? Math.round((members.length / totalWorkforce) * 100) : 0;
 
-  const sortedByLevel = [...members].sort(
-    (a, b) => (b.designation?.level ?? 0) - (a.designation?.level ?? 0),
-  );
-  const topLead = sortedByLevel[0];
-  const visibleAvatars = sortedByLevel.slice(0, 4);
+  const sortedMembers = [...members].sort((a, b) => a.firstName.localeCompare(b.firstName));
+  const visibleAvatars = sortedMembers.slice(0, 4);
   const extraCount = Math.max(0, members.length - visibleAvatars.length);
 
   return (
@@ -71,23 +68,13 @@ export function DepartmentCard({
         }`}
       />
 
-      {/* Header: Division Badge, Name, Code & Status */}
+      {/* Header: Department name and status */}
       <div className="flex items-start justify-between gap-3 pt-1">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div
-            className={`w-10 h-10 rounded-tile flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-transform duration-300 group-hover:scale-105 ${
-              department.isActive
-                ? 'bg-primary-soft text-primary-deep border border-primary-strong/20'
-                : 'bg-surface-muted text-text-subtle border border-border'
-            }`}
-          >
-            {department.code.slice(0, 4)}
-          </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm sm:text-base font-bold text-text truncate group-hover:text-primary-deep transition-colors">
               {department.name}
             </h3>
-            <span className="font-mono text-xs text-text-muted">{department.code}</span>
           </div>
         </div>
 
@@ -165,9 +152,7 @@ export function DepartmentCard({
             )}
           </div>
           <span className="text-[11px] text-text-muted truncate max-w-[140px]">
-            {topLead
-              ? `Lead: ${topLead.firstName} ${topLead.lastName}`
-              : `Created ${formattedDate}`}
+            {`Created ${formattedDate}`}
           </span>
         </div>
 

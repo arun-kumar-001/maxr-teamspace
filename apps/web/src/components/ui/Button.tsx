@@ -81,9 +81,13 @@ export function Button({
           aria-label="Loading"
         />
       )}
-      {!isLoading && leftIcon && <span className="icon-left shrink-0 inline-flex items-center">{leftIcon}</span>}
+      {!isLoading && leftIcon && (
+        <span className="icon-left shrink-0 inline-flex items-center">{leftIcon}</span>
+      )}
       <span className="inline-flex flex-row items-center gap-1.5 shrink-0">{children}</span>
-      {!isLoading && rightIcon && <span className="icon-right shrink-0 inline-flex items-center">{rightIcon}</span>}
+      {!isLoading && rightIcon && (
+        <span className="icon-right shrink-0 inline-flex items-center">{rightIcon}</span>
+      )}
     </button>
   );
 }

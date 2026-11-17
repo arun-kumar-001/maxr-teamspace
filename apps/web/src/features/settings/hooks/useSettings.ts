@@ -58,7 +58,9 @@ export function useSettings(): UseSettingsResult {
       setDraft(initDraft(data));
       try {
         localStorage.setItem('maxr_company_settings', JSON.stringify(data));
-      } catch {}
+      } catch {
+        // Browser storage can be unavailable while API settings remain usable.
+      }
       if (data.integrations?.payrollExport !== undefined) {
         setStaffPayslipsEnabled(data.integrations.payrollExport);
       }
@@ -193,7 +195,9 @@ export function useSettings(): UseSettingsResult {
       setDraft(initDraft(updated));
       try {
         localStorage.setItem('maxr_company_settings', JSON.stringify(updated));
-      } catch {}
+      } catch {
+        // Browser storage can be unavailable while API settings remain usable.
+      }
       if (updated.integrations?.payrollExport !== undefined) {
         setStaffPayslipsEnabled(updated.integrations.payrollExport);
       }

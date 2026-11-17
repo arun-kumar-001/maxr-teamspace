@@ -44,7 +44,7 @@ describe('Designations API: Query Builder & Service Functions', () => {
       const qs = buildDesignationQueryString({
         page: 3,
         pageSize: 15,
-        sortBy: 'level',
+        sortBy: 'title',
         sortOrder: 'desc',
         search: '  Architect  ',
         departmentId: 'dept-123',
@@ -54,7 +54,7 @@ describe('Designations API: Query Builder & Service Functions', () => {
       const params = new URLSearchParams(qs);
       expect(params.get('page')).toBe('3');
       expect(params.get('pageSize')).toBe('15');
-      expect(params.get('sortBy')).toBe('level');
+      expect(params.get('sortBy')).toBe('title');
       expect(params.get('sortOrder')).toBe('desc');
       expect(params.get('search')).toBe('Architect');
       expect(params.get('departmentId')).toBe('dept-123');
@@ -70,7 +70,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
           departmentId: 'dept-1',
           title: 'Senior Software Engineer',
           code: 'SR_SWE',
-          level: 3,
           isActive: true,
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z',
@@ -135,7 +134,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
         departmentId: 'dept-1',
         title: 'Lead Architect',
         code: 'LEAD_ARCH',
-        level: 5,
         isActive: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
@@ -150,7 +148,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
 
       const result = await fetchDesignationById('desig-1');
       expect(result.title).toBe('Lead Architect');
-      expect(result.level).toBe(5);
     });
 
     it('throws DesignationsApiError with 404 when designation not found', async () => {
@@ -177,7 +174,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
         departmentId: 'dept-1',
         title: 'Product Manager',
         code: 'PM',
-        level: 3,
         isActive: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
@@ -194,7 +190,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
         departmentId: 'dept-1',
         title: 'Product Manager',
         code: 'PM',
-        level: 3,
       });
 
       expect(apiFetchSpy).toHaveBeenCalledTimes(1);
@@ -205,7 +200,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
         departmentId: 'dept-1',
         title: 'Product Manager',
         code: 'PM',
-        level: 3,
       });
       expect(result.id).toBe('desig-new');
     });
@@ -228,7 +222,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
           departmentId: 'dept-1',
           title: 'Product Manager',
           code: 'PM',
-          level: 3,
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -244,7 +237,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
         departmentId: 'dept-1',
         title: 'Staff Architect',
         code: 'LEAD_ARCH',
-        level: 6,
         isActive: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-02T00:00:00Z',
@@ -259,18 +251,16 @@ describe('Designations API: Query Builder & Service Functions', () => {
 
       const result = await updateDesignation('desig-1', {
         title: 'Staff Architect',
-        level: 6,
       });
 
       expect(apiFetchSpy).toHaveBeenCalledWith(
         '/api/v1/designations/desig-1',
         expect.objectContaining({
           method: 'PUT',
-          body: JSON.stringify({ title: 'Staff Architect', level: 6 }),
+          body: JSON.stringify({ title: 'Staff Architect' }),
         }),
       );
       expect(result.title).toBe('Staff Architect');
-      expect(result.level).toBe(6);
     });
   });
 

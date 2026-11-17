@@ -3,7 +3,6 @@ import { Badge } from '../../../components/ui/StatusPill';
 import { getAvatarTone, getInitials } from '../../employees/components/hiringUtils';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import type { DepartmentOption, Designation } from '../types';
-import { getLevelTierMeta } from './levelMeta';
 
 export interface DesignationCardProps {
   designation: Designation;
@@ -30,8 +29,6 @@ export function DesignationCard({
 }: DesignationCardProps) {
   const dept = departmentMap.get(designation.departmentId);
   const departmentName = dept ? dept.name : 'Unknown Dept';
-  const tier = getLevelTierMeta(designation.level);
-  const clampedLevel = Math.min(4, Math.max(1, designation.level));
   const visibleHolders = holders.slice(0, 3);
   const extraHolders = Math.max(0, holders.length - visibleHolders.length);
 
@@ -53,7 +50,7 @@ export function DesignationCard({
       {/* Top Interactive Accent */}
       <div
         className={`absolute inset-x-0 top-0 h-1 transition-all duration-300 group-hover:h-1.5 ${
-          designation.isActive ? tier.barClass : 'bg-border-strong'
+          designation.isActive ? 'bg-primary-strong' : 'bg-border-strong'
         }`}
       />
 
@@ -76,40 +73,11 @@ export function DesignationCard({
         </Badge>
       </div>
 
-      {/* Title, Code & Career Band */}
+      {/* Designation title */}
       <div>
         <h3 className="text-sm sm:text-base font-bold text-text truncate group-hover:text-primary-deep transition-colors">
           {designation.title}
         </h3>
-        <div className="mt-1 flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded bg-surface-muted border border-border text-text-muted">
-            {designation.code}
-          </span>
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-semibold font-mono ${tier.pillClass}`}
-          >
-            Level {designation.level}
-          </span>
-          <span className="text-[11px] text-text-subtle">{tier.shortLabel}</span>
-        </div>
-      </div>
-
-      {/* 4-Step Animated Seniority Meter */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-[11px] text-text-muted">
-          <span>Hierarchy Band</span>
-          <span className="font-medium text-text">Tier {designation.level} / 4</span>
-        </div>
-        <div className="grid grid-cols-4 gap-1">
-          {[1, 2, 3, 4].map((step) => (
-            <div
-              key={step}
-              className={`h-1.5 rounded-full transition-colors duration-300 ${
-                step <= clampedLevel ? `${tier.barClass} animate-crm-bar` : 'bg-surface-muted'
-              }`}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Assigned Staff Preview */}

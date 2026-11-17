@@ -1,3 +1,4 @@
+import { createDesignationSchema, updateDesignationSchema } from './designation.schemas';
 import { describe, expect, it } from 'vitest';
 import { createLogger } from '../../../logging/logger';
 import { createTestPlatform } from '../../../platform';
@@ -21,6 +22,13 @@ function setup() {
 }
 
 describe('DesignationService (Unit Tests)', () => {
+  it('accepts designation creation without level and rejects the removed field', () => {
+    const input = { departmentId: uuid, title: 'Engineer', code: 'ENG' };
+    expect(createDesignationSchema.parse(input)).toEqual(input);
+    expect(createDesignationSchema.safeParse({ ...input, level: 1 }).success).toBe(false);
+    expect(updateDesignationSchema.safeParse({ level: 1 }).success).toBe(false);
+  });
+
   it('creates a designation successfully and records audit log and event', async () => {
     const { service, auditStore, platform, deptId, ctx } = setup();
     const events: unknown[] = [];
@@ -29,7 +37,7 @@ describe('DesignationService (Unit Tests)', () => {
     });
 
     const desig = await service.create(
-      { departmentId: deptId, title: 'Senior Software Engineer', code: 'SR_SWE', level: 3 },
+      { departmentId: deptId, title: 'Senior Software Engineer', code: 'SR_SWE' },
       ctx,
     );
 
@@ -37,7 +45,6 @@ describe('DesignationService (Unit Tests)', () => {
     expect(desig.departmentId).toBe(deptId);
     expect(desig.title).toBe('Senior Software Engineer');
     expect(desig.code).toBe('SR_SWE');
-    expect(desig.level).toBe(3);
     expect(desig.isActive).toBe(true);
 
     const auditEntries = auditStore.find(
@@ -54,10 +61,7 @@ describe('DesignationService (Unit Tests)', () => {
     repo.setActiveDepartmentChecker(() => false);
 
     await expect(
-      service.create(
-        { departmentId: deptId, title: 'Lead Architect', code: 'ARCH', level: 5 },
-        ctx,
-      ),
+      service.create({ departmentId: deptId, title: 'Lead Architect', code: 'ARCH' }, ctx),
     ).rejects.toMatchObject({
       statusCode: 422,
       code: 'UNPROCESSABLE_ENTITY',
@@ -67,10 +71,10 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('rejects duplicate designation codes with 409 Conflict', async () => {
     const { service, deptId, ctx } = setup();
-    await service.create({ departmentId: deptId, title: 'Engineer', code: 'ENG_1', level: 1 }, ctx);
+    await service.create({ departmentId: deptId, title: 'Engineer', code: 'ENG_1' }, ctx);
 
     await expect(
-      service.create({ departmentId: deptId, title: 'Engineer Two', code: 'eng_1', level: 2 }, ctx),
+      service.create({ departmentId: deptId, title: 'Engineer Two', code: 'eng_1' }, ctx),
     ).rejects.toMatchObject({
       statusCode: 409,
       code: 'CONFLICT',
@@ -79,14 +83,11 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('lists designations with department filtering and pagination', async () => {
     const { service, deptId, ctx } = setup();
-    await service.create({ departmentId: deptId, title: 'Engineer 1', code: 'E1', level: 1 }, ctx);
-    await service.create({ departmentId: deptId, title: 'Engineer 2', code: 'E2', level: 2 }, ctx);
+    await service.create({ departmentId: deptId, title: 'Engineer 1', code: 'E1' }, ctx);
+    await service.create({ departmentId: deptId, title: 'Engineer 2', code: 'E2' }, ctx);
 
     const otherDeptId = '4f2b8c1e-5d4a-4b6f-9c0e-7a1d2e3f4a99';
-    await service.create(
-      { departmentId: otherDeptId, title: 'HR Associate', code: 'HRA', level: 1 },
-      ctx,
-    );
+    await service.create({ departmentId: otherDeptId, title: 'HR Associate', code: 'HRA' }, ctx);
 
     const filtered = await service.list({
       page: 1,
@@ -101,13 +102,12 @@ describe('DesignationService (Unit Tests)', () => {
   it('updates designation and logs audit entry', async () => {
     const { service, auditStore, deptId, ctx } = setup();
     const desig = await service.create(
-      { departmentId: deptId, title: 'Engineer', code: 'ENG_X', level: 1 },
+      { departmentId: deptId, title: 'Engineer', code: 'ENG_X' },
       ctx,
     );
 
-    const updated = await service.update(desig.id, { title: 'Staff Engineer', level: 4 }, ctx);
+    const updated = await service.update(desig.id, { title: 'Staff Engineer' }, ctx);
     expect(updated.title).toBe('Staff Engineer');
-    expect(updated.level).toBe(4);
 
     const auditEntries = auditStore.find(
       (e) => e.entityType === 'designation' && e.entityId === desig.id,
@@ -117,10 +117,7 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('deactivates an unreferenced designation', async () => {
     const { service, auditStore, deptId, ctx } = setup();
-    const desig = await service.create(
-      { departmentId: deptId, title: 'Intern', code: 'INT', level: 1 },
-      ctx,
-    );
+    const desig = await service.create({ departmentId: deptId, title: 'Intern', code: 'INT' }, ctx);
 
     await expect(service.deactivate(desig.id, ctx)).resolves.not.toThrow();
 
@@ -136,7 +133,7 @@ describe('DesignationService (Unit Tests)', () => {
   it('rejects deactivating an already inactive designation with 422 Unprocessable', async () => {
     const { service, deptId, ctx } = setup();
     const desig = await service.create(
-      { departmentId: deptId, title: 'Intern', code: 'INT_2', level: 1 },
+      { departmentId: deptId, title: 'Intern', code: 'INT_2' },
       ctx,
     );
     await service.deactivate(desig.id, ctx);
@@ -150,7 +147,7 @@ describe('DesignationService (Unit Tests)', () => {
   it('rejects deactivating a designation with active employees (in-use guard)', async () => {
     const { service, repo, deptId, ctx } = setup();
     const desig = await service.create(
-      { departmentId: deptId, title: 'Tech Lead', code: 'TL', level: 4 },
+      { departmentId: deptId, title: 'Tech Lead', code: 'TL' },
       ctx,
     );
 
@@ -177,29 +174,29 @@ describe('DesignationService (Unit Tests)', () => {
   it('guarantees deterministic pagination with stable sorting tie-breaker when levels match', async () => {
     const { service, deptId, ctx } = setup();
     const d1 = await service.create(
-      { departmentId: deptId, title: 'Same Level A', code: 'SL_A', level: 3 },
+      { departmentId: deptId, title: 'Same Level A', code: 'SL_A' },
       ctx,
     );
     const d2 = await service.create(
-      { departmentId: deptId, title: 'Same Level B', code: 'SL_B', level: 3 },
+      { departmentId: deptId, title: 'Same Level B', code: 'SL_B' },
       ctx,
     );
     const d3 = await service.create(
-      { departmentId: deptId, title: 'Same Level C', code: 'SL_C', level: 3 },
+      { departmentId: deptId, title: 'Same Level C', code: 'SL_C' },
       ctx,
     );
 
     const page1 = await service.list({
       page: 1,
       pageSize: 2,
-      sortBy: 'level',
+      sortBy: 'title',
       sortOrder: 'asc',
       departmentId: deptId,
     });
     const page2 = await service.list({
       page: 2,
       pageSize: 2,
-      sortBy: 'level',
+      sortBy: 'title',
       sortOrder: 'asc',
       departmentId: deptId,
     });

@@ -67,15 +67,14 @@ export function DepartmentDeactivateDialog({
 
         <p className="text-xs sm:text-sm text-text leading-relaxed">
           Are you sure you want to delete{' '}
-          <strong className="text-text font-semibold">{department.name}</strong> (
-          <span className="font-mono">{department.code}</span>)?
+          <strong className="text-text font-semibold">{department.name}</strong>?
         </p>
 
         <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-card">
           <p className="font-semibold mb-1">Important System Rule:</p>
           <p>
-            Departments with active designations or employees cannot be deleted. You must
-            reassign or delete all associated records first.
+            Departments with active designations or employees cannot be deleted. You must reassign
+            or delete all associated records first.
           </p>
         </div>
       </div>

@@ -355,32 +355,48 @@ export function ProfilePortalPage() {
           style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
         >
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'rgb(16, 185, 129)' }} />
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>Status:</span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>Active Account</span>
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Status:
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+            Active Account
+          </span>
         </div>
 
         <div
           className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
           style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
         >
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>Role:</span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>{displayRole}</span>
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Role:
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+            {displayRole}
+          </span>
         </div>
 
         <div
           className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
           style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
         >
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>Shift:</span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>General (09:00 - 18:00)</span>
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Shift:
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+            General (09:00 - 18:00)
+          </span>
         </div>
 
         <div
           className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
           style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
         >
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>Workspace:</span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(13, 148, 136)' }}>MAXR Teamspace</span>
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Workspace:
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(13, 148, 136)' }}>
+            MAXR Teamspace
+          </span>
         </div>
       </div>
 
@@ -390,7 +406,8 @@ export function ProfilePortalPage() {
         <div
           className="relative rounded-[26px] overflow-hidden shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72 w-full flex flex-col justify-between p-5"
           style={{
-            background: 'linear-gradient(135deg, rgb(14, 40, 38) 0%, rgb(18, 56, 53) 50%, rgb(10, 30, 28) 100%)',
+            background:
+              'linear-gradient(135deg, rgb(14, 40, 38) 0%, rgb(18, 56, 53) 50%, rgb(10, 30, 28) 100%)',
             border: '1px solid rgba(85, 205, 179, 0.2)',
           }}
         >
@@ -431,7 +448,9 @@ export function ProfilePortalPage() {
               {displayName}
             </h2>
             <p className="text-xs font-medium text-emerald-200/80 mt-0.5">{displayRole}</p>
-            <p className="text-[11px] text-white/50 truncate mt-1">{user?.email || 'admin@maxr.internal'}</p>
+            <p className="text-[11px] text-white/50 truncate mt-1">
+              {user?.email || 'admin@maxr.internal'}
+            </p>
           </div>
         </div>
 
@@ -548,7 +567,9 @@ export function ProfilePortalPage() {
               Task Completion Process
             </span>
             <span className="text-3xl font-light font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              {activeTasksCount > 0 ? `${Math.round((completedTasksCount / Math.max(activeTasksCount, 1)) * 100)}%` : '0%'}
+              {activeTasksCount > 0
+                ? `${Math.round((completedTasksCount / Math.max(activeTasksCount, 1)) * 100)}%`
+                : '0%'}
             </span>
           </div>
 
@@ -579,7 +600,9 @@ export function ProfilePortalPage() {
           </div>
 
           <div className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.5)' }}>
-            <span>{activeTasksCount > 0 ? 'Assigned tasks in current cycle' : 'No tasks assigned'}</span>
+            <span>
+              {activeTasksCount > 0 ? 'Assigned tasks in current cycle' : 'No tasks assigned'}
+            </span>
           </div>
         </div>
       </div>

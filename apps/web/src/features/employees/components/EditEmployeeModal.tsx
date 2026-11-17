@@ -478,7 +478,7 @@ export function EditEmployeeModal({
               disabled={isSaving || isReloading || isLoadingRefs}
               options={departments.map((d) => ({
                 value: d.id,
-                label: d.code ? `${d.name} (${d.code})` : d.name,
+                label: d.name,
               }))}
               data-testid="edit-department-select"
             />
@@ -498,7 +498,7 @@ export function EditEmployeeModal({
               placeholder="Select designation..."
               options={designations.map((des) => ({
                 value: des.id,
-                label: des.code ? `${des.title} (${des.code})` : des.title,
+                label: des.title,
               }))}
               data-testid="edit-designation-select"
             />

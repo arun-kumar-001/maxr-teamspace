@@ -30,7 +30,7 @@ export function DesignationFilters({
     { value: '', label: 'All Departments' },
     ...departments.map((d) => ({
       value: d.id,
-      label: `${d.name} (${d.code})`,
+      label: d.name,
     })),
   ];
 

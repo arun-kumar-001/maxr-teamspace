@@ -1,3 +1,4 @@
+import { PgOnboardingRepository } from '../onboarding/onboarding.repository';
 import { randomUUID } from 'node:crypto';
 import { ROLES } from '@maxr/shared';
 import type { Pool, PoolClient } from 'pg';
@@ -87,6 +88,30 @@ describe('employee creation against PostgreSQL', () => {
     await outer.query('ROLLBACK');
     outer.release();
     await closePool();
+  });
+
+  it('carries department and designation into onboarding without hierarchy levels', async () => {
+    await outer.query('SAVEPOINT onboarding_link_test');
+    try {
+      const created = await service.create(dto(99), {
+        actorId: randomUUID(),
+        roles: [ROLES.ADMIN],
+      });
+      const onboarding = new PgOnboardingRepository(() => nested(outer));
+      const checklist = await onboarding.ensureChecklist(outer, created.id);
+      expect(checklist).toMatchObject({
+        employeeId: created.id,
+        departmentId: ids.dept,
+        designationId: ids.desig,
+        designationTitle: 'Creator',
+        employeeStatus: 'pending',
+        userActive: false,
+      });
+      expect(checklist.items.length).toBeGreaterThan(0);
+      expect(checklist).not.toHaveProperty('level');
+    } finally {
+      await outer.query('ROLLBACK TO SAVEPOINT onboarding_link_test');
+    }
   });
 
   it('stores a pending employee, an inactive user and the role, and links them', async () => {

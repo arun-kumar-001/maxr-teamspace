@@ -30,7 +30,6 @@ interface DesignationRow {
   department_id: string;
   title: string;
   code: string;
-  level: number;
   is_active: boolean;
   created_at: Date | string;
   updated_at: Date | string;
@@ -41,7 +40,6 @@ const toEntity = (row: DesignationRow): DesignationEntity => ({
   departmentId: row.department_id,
   title: row.title,
   code: row.code,
-  level: row.level,
   isActive: row.is_active,
   createdAt:
     row.created_at instanceof Date
@@ -60,7 +58,7 @@ export class PgDesignationRepository implements IDesignationRepository {
 
   async findById(id: string): Promise<DesignationEntity | null> {
     const res = await this.getPool().query<DesignationRow>(
-      `SELECT id, department_id, title, code, level, is_active, created_at, updated_at
+      `SELECT id, department_id, title, code, is_active, created_at, updated_at
          FROM designations
         WHERE id = $1`,
       [id],
@@ -70,7 +68,7 @@ export class PgDesignationRepository implements IDesignationRepository {
 
   async findByCode(code: string): Promise<DesignationEntity | null> {
     const res = await this.getPool().query<DesignationRow>(
-      `SELECT id, department_id, title, code, level, is_active, created_at, updated_at
+      `SELECT id, department_id, title, code, is_active, created_at, updated_at
          FROM designations
         WHERE LOWER(code) = LOWER($1)`,
       [code],
@@ -107,10 +105,9 @@ export class PgDesignationRepository implements IDesignationRepository {
     const sortColumnMap: Record<string, string> = {
       title: 'title',
       code: 'code',
-      level: 'level',
       createdAt: 'created_at',
     };
-    const sortCol = sortColumnMap[params.sort.column] ?? 'level';
+    const sortCol = sortColumnMap[params.sort.column] ?? 'title';
     const sortDir = params.sort.order === 'asc' ? 'ASC' : 'DESC';
 
     const countRes = await this.getPool().query<{ count: number }>(
@@ -124,7 +121,7 @@ export class PgDesignationRepository implements IDesignationRepository {
     const offsetPlaceholder = `$${dataValues.length}`;
 
     const res = await this.getPool().query<DesignationRow>(
-      `SELECT id, department_id, title, code, level, is_active, created_at, updated_at
+      `SELECT id, department_id, title, code, is_active, created_at, updated_at
          FROM designations
         ${whereClause}
         ORDER BY ${sortCol} ${sortDir}, id ASC
@@ -140,10 +137,10 @@ export class PgDesignationRepository implements IDesignationRepository {
 
   async create(dto: CreateDesignationDto): Promise<DesignationEntity> {
     const res = await this.getPool().query<DesignationRow>(
-      `INSERT INTO designations (department_id, title, code, level, is_active, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, true, NOW(), NOW())
-       RETURNING id, department_id, title, code, level, is_active, created_at, updated_at`,
-      [dto.departmentId, dto.title, dto.code, dto.level],
+      `INSERT INTO designations (department_id, title, code, is_active, created_at, updated_at)
+       VALUES ($1, $2, $3, true, NOW(), NOW())
+       RETURNING id, department_id, title, code, is_active, created_at, updated_at`,
+      [dto.departmentId, dto.title, dto.code],
     );
     return toEntity(res.rows[0]!);
   }
@@ -164,10 +161,6 @@ export class PgDesignationRepository implements IDesignationRepository {
       values.push(dto.code);
       updates.push(`code = $${values.length}`);
     }
-    if (dto.level !== undefined) {
-      values.push(dto.level);
-      updates.push(`level = $${values.length}`);
-    }
 
     if (updates.length === 0) {
       return this.findById(id);
@@ -179,7 +172,7 @@ export class PgDesignationRepository implements IDesignationRepository {
       `UPDATE designations
           SET ${updates.join(', ')}
         WHERE id = $1
-        RETURNING id, department_id, title, code, level, is_active, created_at, updated_at`,
+        RETURNING id, department_id, title, code, is_active, created_at, updated_at`,
       values,
     );
 
@@ -261,7 +254,7 @@ export class MemoryDesignationRepository implements IDesignationRepository {
       rows = rows.filter((r) => r.isActive === params.isActive);
     }
 
-    const key = params.sort.column as 'title' | 'code' | 'level' | 'createdAt';
+    const key = params.sort.column as 'title' | 'code' | 'createdAt';
     const direction = params.sort.order === 'asc' ? 1 : -1;
     rows.sort((a, b) => {
       if (a[key] < b[key]) return -1 * direction;
@@ -292,7 +285,6 @@ export class MemoryDesignationRepository implements IDesignationRepository {
       departmentId: dto.departmentId,
       title: dto.title,
       code: dto.code,
-      level: dto.level,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -323,7 +315,6 @@ export class MemoryDesignationRepository implements IDesignationRepository {
       ...(dto.departmentId !== undefined ? { departmentId: dto.departmentId } : {}),
       ...(dto.title !== undefined ? { title: dto.title } : {}),
       ...(dto.code !== undefined ? { code: dto.code } : {}),
-      ...(dto.level !== undefined ? { level: dto.level } : {}),
       updatedAt: new Date().toISOString(),
     };
     this.items.set(id, updated);

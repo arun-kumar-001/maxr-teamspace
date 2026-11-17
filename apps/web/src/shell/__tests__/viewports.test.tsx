@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { REFERENCE_VIEWPORTS, getBreakpointForWidth } from '../../styles/breakpoints';
@@ -34,7 +35,9 @@ describe('TC-12-04: Mandatory 9-Viewport Responsive Verification (AGENTS.md §8)
         const html = renderToStaticMarkup(
           <AuthProvider initialRole={role} persistSession={false}>
             <AppShell currentPath="/dashboard" onNavigate={() => {}}>
-              <DashboardRouter />
+              <MemoryRouter>
+                <DashboardRouter />
+              </MemoryRouter>
             </AppShell>
           </AuthProvider>,
         );

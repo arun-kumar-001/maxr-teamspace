@@ -136,9 +136,8 @@ export async function deleteDepartment(
   const res = await apiFetch(`/api/v1/departments/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
-  const body = await handleResponse<{ data: { id: string; deleted?: boolean; isActive?: boolean } }>(
-    res,
-  );
+  const body = await handleResponse<{
+    data: { id: string; deleted?: boolean; isActive?: boolean };
+  }>(res);
   return body.data;
 }
-

@@ -23,10 +23,7 @@ export function DepartmentFilters({
   ];
 
   return (
-    <div
-      className="flex items-center justify-end gap-2 w-full"
-      data-testid="department-filters"
-    >
+    <div className="flex items-center justify-end gap-2 w-full" data-testid="department-filters">
       {/* Compact Status Select */}
       <div className="w-32 sm:w-36 shrink-0">
         <Select

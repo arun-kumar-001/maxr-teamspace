@@ -24,7 +24,7 @@ const mockEmployees: EmployeeDirectoryItem[] = [
     updatedAt: '2026-01-01T00:00:00Z',
     status: 'active',
     department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'des-1', title: 'Engineering Director', code: 'ENG-DIR', level: 1 },
+    designation: { id: 'des-1', title: 'Engineering Director', code: 'ENG-DIR' },
   },
   {
     id: 'emp-2',
@@ -39,13 +39,11 @@ const mockEmployees: EmployeeDirectoryItem[] = [
     updatedAt: '2026-01-01T00:00:00Z',
     status: 'active',
     department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'des-2', title: 'Staff Engineer', code: 'STAFF-ENG', level: 2 },
+    designation: { id: 'des-2', title: 'Staff Engineer', code: 'STAFF-ENG' },
   },
 ];
 
-const mockDepartments: DepartmentItem[] = [
-  { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-];
+const mockDepartments: DepartmentItem[] = [{ id: 'dept-1', name: 'Engineering', code: 'ENG' }];
 
 const mockRecords: AttendanceRecord[] = [
   {

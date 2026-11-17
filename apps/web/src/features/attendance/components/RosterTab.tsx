@@ -1086,11 +1086,7 @@ export function RosterTab({
                           const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
-                          const cellConfig = getShiftCellConfig(
-                            shift,
-                            !!leave,
-                            wd.isWeekend,
-                          );
+                          const cellConfig = getShiftCellConfig(shift, !!leave, wd.isWeekend);
                           const punch = resolveEmployeePunch(emp, wd, record, shift);
 
                           return (
@@ -1244,11 +1240,7 @@ export function RosterTab({
                           const leave = leaveByEmpDate.get(`${emp.id}__${d.dateStr}`);
                           const record = recordByEmpDate.get(`${emp.id}__${d.dateStr}`);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
-                          const cellConfig = getShiftCellConfig(
-                            shift,
-                            !!leave,
-                            d.isWeekend,
-                          );
+                          const cellConfig = getShiftCellConfig(shift, !!leave, d.isWeekend);
                           const punch = resolveEmployeePunch(emp, d, record, shift);
 
                           if (!d.isWeekend && !leave) {

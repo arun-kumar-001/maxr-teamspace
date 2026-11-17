@@ -37,8 +37,7 @@ import { UsersPage } from './features/users';
 import { NotificationsInboxPage } from './features/notifications';
 import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
-import { TasksPage, DailyChecklistPage } from './features/tasks';
-import { PersonalTodosPage } from './features/todos';
+import { TasksPage } from './features/tasks';
 import { CompanySettingsPage } from './features/settings';
 import { ExpensesPage } from './features/expenses';
 import { PayslipsPage } from './features/payslips';
@@ -293,18 +292,9 @@ function AppRoutes() {
       />
 
       {/* Designations Management Routes Redirect to Departments */}
-      <Route
-        path="/designations"
-        element={<Navigate to="/departments" replace />}
-      />
-      <Route
-        path="/admin/designations"
-        element={<Navigate to="/admin/departments" replace />}
-      />
-      <Route
-        path="/hr/designations"
-        element={<Navigate to="/hr/departments" replace />}
-      />
+      <Route path="/designations" element={<Navigate to="/departments" replace />} />
+      <Route path="/admin/designations" element={<Navigate to="/admin/departments" replace />} />
+      <Route path="/hr/designations" element={<Navigate to="/hr/departments" replace />} />
 
       {/* My Profile Portal & Personal Details Routes */}
       <Route
@@ -585,42 +575,6 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <TasksPage initialScope="team" />
-          </ShellLayout>
-        }
-      />
-
-      {/* Daily Checklist Routes */}
-      <Route
-        path="/checklist"
-        element={
-          <ShellLayout>
-            <DailyChecklistPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/staff/checklist"
-        element={
-          <ShellLayout>
-            <DailyChecklistPage />
-          </ShellLayout>
-        }
-      />
-
-      {/* Personal To-Do List Routes */}
-      <Route
-        path="/todos"
-        element={
-          <ShellLayout>
-            <PersonalTodosPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/staff/todos"
-        element={
-          <ShellLayout>
-            <PersonalTodosPage />
           </ShellLayout>
         }
       />
