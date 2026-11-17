@@ -28,7 +28,6 @@ export interface DepartmentSummary {
 
 export interface DesignationSummary {
   id: string;
-  code: string;
   title: string;
   departmentId?: string;
   isActive: boolean;

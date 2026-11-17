@@ -18,7 +18,6 @@ export const employeeDirectoryItemSchema = z
     designation: z.object({
       id: z.string().uuid(),
       title: z.string(),
-      code: z.string(),
     }),
     manager: z
       .object({

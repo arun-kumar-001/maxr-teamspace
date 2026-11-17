@@ -14,7 +14,6 @@ export interface DesignationFindManyParams {
 
 export interface IDesignationRepository {
   findById(id: string): Promise<DesignationEntity | null>;
-  findByCode(code: string): Promise<DesignationEntity | null>;
   findMany(
     params: DesignationFindManyParams,
   ): Promise<{ items: DesignationEntity[]; total: number }>;
@@ -29,7 +28,6 @@ interface DesignationRow {
   id: string;
   department_id: string;
   title: string;
-  code: string;
   is_active: boolean;
   created_at: Date | string;
   updated_at: Date | string;
@@ -39,7 +37,6 @@ const toEntity = (row: DesignationRow): DesignationEntity => ({
   id: row.id,
   departmentId: row.department_id,
   title: row.title,
-  code: row.code,
   isActive: row.is_active,
   createdAt:
     row.created_at instanceof Date
@@ -58,20 +55,10 @@ export class PgDesignationRepository implements IDesignationRepository {
 
   async findById(id: string): Promise<DesignationEntity | null> {
     const res = await this.getPool().query<DesignationRow>(
-      `SELECT id, department_id, title, code, is_active, created_at, updated_at
+      `SELECT id, department_id, title, is_active, created_at, updated_at
          FROM designations
         WHERE id = $1`,
       [id],
-    );
-    return res.rows[0] ? toEntity(res.rows[0]) : null;
-  }
-
-  async findByCode(code: string): Promise<DesignationEntity | null> {
-    const res = await this.getPool().query<DesignationRow>(
-      `SELECT id, department_id, title, code, is_active, created_at, updated_at
-         FROM designations
-        WHERE LOWER(code) = LOWER($1)`,
-      [code],
     );
     return res.rows[0] ? toEntity(res.rows[0]) : null;
   }
@@ -90,9 +77,7 @@ export class PgDesignationRepository implements IDesignationRepository {
     if (params.search) {
       const escaped = escapeLikePattern(params.search);
       values.push(`%${escaped}%`);
-      conditions.push(
-        `(title ILIKE $${values.length} ESCAPE '\\' OR code ILIKE $${values.length} ESCAPE '\\')`,
-      );
+      conditions.push(`title ILIKE $${values.length} ESCAPE '\\'`);
     }
 
     if (params.isActive !== undefined) {
@@ -104,7 +89,6 @@ export class PgDesignationRepository implements IDesignationRepository {
 
     const sortColumnMap: Record<string, string> = {
       title: 'title',
-      code: 'code',
       createdAt: 'created_at',
     };
     const sortCol = sortColumnMap[params.sort.column] ?? 'title';
@@ -121,7 +105,7 @@ export class PgDesignationRepository implements IDesignationRepository {
     const offsetPlaceholder = `$${dataValues.length}`;
 
     const res = await this.getPool().query<DesignationRow>(
-      `SELECT id, department_id, title, code, is_active, created_at, updated_at
+      `SELECT id, department_id, title, is_active, created_at, updated_at
          FROM designations
         ${whereClause}
         ORDER BY ${sortCol} ${sortDir}, id ASC
@@ -137,10 +121,10 @@ export class PgDesignationRepository implements IDesignationRepository {
 
   async create(dto: CreateDesignationDto): Promise<DesignationEntity> {
     const res = await this.getPool().query<DesignationRow>(
-      `INSERT INTO designations (department_id, title, code, is_active, created_at, updated_at)
-       VALUES ($1, $2, $3, true, NOW(), NOW())
-       RETURNING id, department_id, title, code, is_active, created_at, updated_at`,
-      [dto.departmentId, dto.title, dto.code],
+      `INSERT INTO designations (department_id, title, is_active, created_at, updated_at)
+       VALUES ($1, $2, true, NOW(), NOW())
+       RETURNING id, department_id, title, is_active, created_at, updated_at`,
+      [dto.departmentId, dto.title],
     );
     return toEntity(res.rows[0]!);
   }
@@ -157,10 +141,6 @@ export class PgDesignationRepository implements IDesignationRepository {
       values.push(dto.title);
       updates.push(`title = $${values.length}`);
     }
-    if (dto.code !== undefined) {
-      values.push(dto.code);
-      updates.push(`code = $${values.length}`);
-    }
 
     if (updates.length === 0) {
       return this.findById(id);
@@ -172,7 +152,7 @@ export class PgDesignationRepository implements IDesignationRepository {
       `UPDATE designations
           SET ${updates.join(', ')}
         WHERE id = $1
-        RETURNING id, department_id, title, code, is_active, created_at, updated_at`,
+        RETURNING id, department_id, title, is_active, created_at, updated_at`,
       values,
     );
 
@@ -232,11 +212,6 @@ export class MemoryDesignationRepository implements IDesignationRepository {
     return this.items.get(id) ?? null;
   }
 
-  async findByCode(code: string): Promise<DesignationEntity | null> {
-    const lower = code.toLowerCase();
-    return [...this.items.values()].find((d) => d.code.toLowerCase() === lower) ?? null;
-  }
-
   async findMany(
     params: DesignationFindManyParams,
   ): Promise<{ items: DesignationEntity[]; total: number }> {
@@ -246,15 +221,13 @@ export class MemoryDesignationRepository implements IDesignationRepository {
     }
     if (params.search) {
       const q = params.search.toLowerCase();
-      rows = rows.filter(
-        (r) => r.title.toLowerCase().includes(q) || r.code.toLowerCase().includes(q),
-      );
+      rows = rows.filter((r) => r.title.toLowerCase().includes(q));
     }
     if (params.isActive !== undefined) {
       rows = rows.filter((r) => r.isActive === params.isActive);
     }
 
-    const key = params.sort.column as 'title' | 'code' | 'createdAt';
+    const key = params.sort.column as 'title' | 'createdAt';
     const direction = params.sort.order === 'asc' ? 1 : -1;
     rows.sort((a, b) => {
       if (a[key] < b[key]) return -1 * direction;
@@ -269,22 +242,11 @@ export class MemoryDesignationRepository implements IDesignationRepository {
   }
 
   async create(dto: CreateDesignationDto): Promise<DesignationEntity> {
-    const existing = await this.findByCode(dto.code);
-    if (existing) {
-      const err = Object.assign(
-        new Error('duplicate key value violates unique constraint "designations_code_key"'),
-        {
-          code: '23505',
-        },
-      );
-      throw err;
-    }
     const now = new Date().toISOString();
     const entity: DesignationEntity = {
       id: randomUUID(),
       departmentId: dto.departmentId,
       title: dto.title,
-      code: dto.code,
       isActive: true,
       createdAt: now,
       updatedAt: now,
@@ -298,23 +260,10 @@ export class MemoryDesignationRepository implements IDesignationRepository {
     if (!existing) {
       return null;
     }
-    if (dto.code && dto.code.toLowerCase() !== existing.code.toLowerCase()) {
-      const duplicate = await this.findByCode(dto.code);
-      if (duplicate && duplicate.id !== id) {
-        const err = Object.assign(
-          new Error('duplicate key value violates unique constraint "designations_code_key"'),
-          {
-            code: '23505',
-          },
-        );
-        throw err;
-      }
-    }
     const updated: DesignationEntity = {
       ...existing,
       ...(dto.departmentId !== undefined ? { departmentId: dto.departmentId } : {}),
       ...(dto.title !== undefined ? { title: dto.title } : {}),
-      ...(dto.code !== undefined ? { code: dto.code } : {}),
       updatedAt: new Date().toISOString(),
     };
     this.items.set(id, updated);

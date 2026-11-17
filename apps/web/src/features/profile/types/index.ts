@@ -11,7 +11,6 @@ export interface EmployeeDepartment {
 export interface EmployeeDesignation {
   id: string;
   title: string;
-  code: string;
   level?: number;
 }
 

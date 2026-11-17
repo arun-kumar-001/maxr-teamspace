@@ -70,8 +70,8 @@ describe('task comments and attachments against PostgreSQL', () => {
     ).rows[0]?.id as string;
     ids.desig = (
       await outer.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Worker', $2) RETURNING id`,
-        [ids.dept, `CB-${run}`],
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Worker') RETURNING id`,
+        [ids.dept],
       )
     ).rows[0]?.id as string;
     for (const name of ['lead', 'amy']) {

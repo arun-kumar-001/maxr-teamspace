@@ -69,7 +69,7 @@ describe('Designations API: Query Builder & Service Functions', () => {
           id: 'desig-1',
           departmentId: 'dept-1',
           title: 'Senior Software Engineer',
-          code: 'SR_SWE',
+
           isActive: true,
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z',
@@ -133,7 +133,7 @@ describe('Designations API: Query Builder & Service Functions', () => {
         id: 'desig-1',
         departmentId: 'dept-1',
         title: 'Lead Architect',
-        code: 'LEAD_ARCH',
+
         isActive: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
@@ -173,7 +173,7 @@ describe('Designations API: Query Builder & Service Functions', () => {
         id: 'desig-new',
         departmentId: 'dept-1',
         title: 'Product Manager',
-        code: 'PM',
+
         isActive: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
@@ -189,7 +189,6 @@ describe('Designations API: Query Builder & Service Functions', () => {
       const result = await createDesignation({
         departmentId: 'dept-1',
         title: 'Product Manager',
-        code: 'PM',
       });
 
       expect(apiFetchSpy).toHaveBeenCalledTimes(1);
@@ -199,17 +198,16 @@ describe('Designations API: Query Builder & Service Functions', () => {
       expect(JSON.parse(init?.body as string)).toEqual({
         departmentId: 'dept-1',
         title: 'Product Manager',
-        code: 'PM',
       });
       expect(result.id).toBe('desig-new');
     });
 
-    it('handles 409 conflict code duplicate error', async () => {
+    it('handles a failed create response', async () => {
       const mockResponse = new Response(
         JSON.stringify({
           error: {
-            code: 'DUPLICATE_CODE',
-            message: 'A designation with code PM already exists in this department',
+            code: 'CONFLICT',
+            message: 'Could not create designation',
           },
         }),
         { status: 409, headers: { 'Content-Type': 'application/json' } },
@@ -221,11 +219,10 @@ describe('Designations API: Query Builder & Service Functions', () => {
         createDesignation({
           departmentId: 'dept-1',
           title: 'Product Manager',
-          code: 'PM',
         }),
       ).rejects.toMatchObject({
         status: 409,
-        code: 'DUPLICATE_CODE',
+        code: 'CONFLICT',
       });
     });
   });
@@ -236,7 +233,7 @@ describe('Designations API: Query Builder & Service Functions', () => {
         id: 'desig-1',
         departmentId: 'dept-1',
         title: 'Staff Architect',
-        code: 'LEAD_ARCH',
+
         isActive: true,
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-02T00:00:00Z',

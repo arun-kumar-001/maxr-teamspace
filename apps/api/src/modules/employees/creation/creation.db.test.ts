@@ -70,8 +70,8 @@ describe('employee creation against PostgreSQL', () => {
     ids.desig =
       (
         await outer.query<{ id: string }>(
-          `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Creator', $2) RETURNING id`,
-          [ids.dept, `CR-${run}`],
+          `INSERT INTO designations (department_id, title) VALUES ($1, 'Creator') RETURNING id`,
+          [ids.dept],
         )
       ).rows[0]?.id ?? '';
     ids.manager =

@@ -116,7 +116,7 @@ export function DesignationsPage() {
   }
 
   const handleSortChange = (key: string, direction: SortDirection) => {
-    if (key === 'title' || key === 'code' || key === 'createdAt') {
+    if (key === 'title' || key === 'createdAt') {
       setSort(key, direction);
     }
   };

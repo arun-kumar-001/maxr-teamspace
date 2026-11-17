@@ -23,7 +23,7 @@ function setup() {
 
 describe('DesignationService (Unit Tests)', () => {
   it('accepts designation creation without level and rejects the removed field', () => {
-    const input = { departmentId: uuid, title: 'Engineer', code: 'ENG' };
+    const input = { departmentId: uuid, title: 'Engineer' };
     expect(createDesignationSchema.parse(input)).toEqual(input);
     expect(createDesignationSchema.safeParse({ ...input, level: 1 }).success).toBe(false);
     expect(updateDesignationSchema.safeParse({ level: 1 }).success).toBe(false);
@@ -37,14 +37,14 @@ describe('DesignationService (Unit Tests)', () => {
     });
 
     const desig = await service.create(
-      { departmentId: deptId, title: 'Senior Software Engineer', code: 'SR_SWE' },
+      { departmentId: deptId, title: 'Senior Software Engineer' },
       ctx,
     );
 
     expect(desig.id).toBeDefined();
     expect(desig.departmentId).toBe(deptId);
     expect(desig.title).toBe('Senior Software Engineer');
-    expect(desig.code).toBe('SR_SWE');
+    expect(desig).not.toHaveProperty('code');
     expect(desig.isActive).toBe(true);
 
     const auditEntries = auditStore.find(
@@ -61,7 +61,7 @@ describe('DesignationService (Unit Tests)', () => {
     repo.setActiveDepartmentChecker(() => false);
 
     await expect(
-      service.create({ departmentId: deptId, title: 'Lead Architect', code: 'ARCH' }, ctx),
+      service.create({ departmentId: deptId, title: 'Lead Architect' }, ctx),
     ).rejects.toMatchObject({
       statusCode: 422,
       code: 'UNPROCESSABLE_ENTITY',
@@ -69,25 +69,22 @@ describe('DesignationService (Unit Tests)', () => {
     });
   });
 
-  it('rejects duplicate designation codes with 409 Conflict', async () => {
+  it('keeps designation identity independent of its title', async () => {
     const { service, deptId, ctx } = setup();
-    await service.create({ departmentId: deptId, title: 'Engineer', code: 'ENG_1' }, ctx);
-
-    await expect(
-      service.create({ departmentId: deptId, title: 'Engineer Two', code: 'eng_1' }, ctx),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-      code: 'CONFLICT',
-    });
+    const first = await service.create({ departmentId: deptId, title: 'Engineer' }, ctx);
+    const second = await service.create({ departmentId: deptId, title: 'Engineer' }, ctx);
+    expect(first.id).not.toBe(second.id);
+    expect(await service.getById(first.id)).toEqual(first);
+    expect(await service.getById(second.id)).toEqual(second);
   });
 
   it('lists designations with department filtering and pagination', async () => {
     const { service, deptId, ctx } = setup();
-    await service.create({ departmentId: deptId, title: 'Engineer 1', code: 'E1' }, ctx);
-    await service.create({ departmentId: deptId, title: 'Engineer 2', code: 'E2' }, ctx);
+    await service.create({ departmentId: deptId, title: 'Engineer 1' }, ctx);
+    await service.create({ departmentId: deptId, title: 'Engineer 2' }, ctx);
 
     const otherDeptId = '4f2b8c1e-5d4a-4b6f-9c0e-7a1d2e3f4a99';
-    await service.create({ departmentId: otherDeptId, title: 'HR Associate', code: 'HRA' }, ctx);
+    await service.create({ departmentId: otherDeptId, title: 'HR Associate' }, ctx);
 
     const filtered = await service.list({
       page: 1,
@@ -101,10 +98,7 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('updates designation and logs audit entry', async () => {
     const { service, auditStore, deptId, ctx } = setup();
-    const desig = await service.create(
-      { departmentId: deptId, title: 'Engineer', code: 'ENG_X' },
-      ctx,
-    );
+    const desig = await service.create({ departmentId: deptId, title: 'Engineer' }, ctx);
 
     const updated = await service.update(desig.id, { title: 'Staff Engineer' }, ctx);
     expect(updated.title).toBe('Staff Engineer');
@@ -117,7 +111,7 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('deactivates an unreferenced designation', async () => {
     const { service, auditStore, deptId, ctx } = setup();
-    const desig = await service.create({ departmentId: deptId, title: 'Intern', code: 'INT' }, ctx);
+    const desig = await service.create({ departmentId: deptId, title: 'Intern' }, ctx);
 
     await expect(service.deactivate(desig.id, ctx)).resolves.not.toThrow();
 
@@ -132,10 +126,7 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('rejects deactivating an already inactive designation with 422 Unprocessable', async () => {
     const { service, deptId, ctx } = setup();
-    const desig = await service.create(
-      { departmentId: deptId, title: 'Intern', code: 'INT_2' },
-      ctx,
-    );
+    const desig = await service.create({ departmentId: deptId, title: 'Intern' }, ctx);
     await service.deactivate(desig.id, ctx);
 
     await expect(service.deactivate(desig.id, ctx)).rejects.toMatchObject({
@@ -146,10 +137,7 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('rejects deactivating a designation with active employees (in-use guard)', async () => {
     const { service, repo, deptId, ctx } = setup();
-    const desig = await service.create(
-      { departmentId: deptId, title: 'Tech Lead', code: 'TL' },
-      ctx,
-    );
+    const desig = await service.create({ departmentId: deptId, title: 'Tech Lead' }, ctx);
 
     repo.setActiveEmployeeChecker((id) => id === desig.id);
 
@@ -173,18 +161,9 @@ describe('DesignationService (Unit Tests)', () => {
 
   it('guarantees deterministic pagination with stable sorting tie-breaker when levels match', async () => {
     const { service, deptId, ctx } = setup();
-    const d1 = await service.create(
-      { departmentId: deptId, title: 'Same Level A', code: 'SL_A' },
-      ctx,
-    );
-    const d2 = await service.create(
-      { departmentId: deptId, title: 'Same Level B', code: 'SL_B' },
-      ctx,
-    );
-    const d3 = await service.create(
-      { departmentId: deptId, title: 'Same Level C', code: 'SL_C' },
-      ctx,
-    );
+    const d1 = await service.create({ departmentId: deptId, title: 'Same Level A' }, ctx);
+    const d2 = await service.create({ departmentId: deptId, title: 'Same Level B' }, ctx);
+    const d3 = await service.create({ departmentId: deptId, title: 'Same Level C' }, ctx);
 
     const page1 = await service.list({
       page: 1,

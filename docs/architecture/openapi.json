@@ -1711,15 +1711,11 @@
               },
               "title": {
                 "type": "string"
-              },
-              "code": {
-                "type": "string"
               }
             },
             "required": [
               "id",
-              "title",
-              "code"
+              "title"
             ]
           },
           "manager": {
@@ -2370,11 +2366,6 @@
             "minLength": 1,
             "maxLength": 255
           },
-          "code": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50
-          },
           "isActive": {
             "type": "boolean"
           },
@@ -2391,7 +2382,6 @@
           "id",
           "departmentId",
           "title",
-          "code",
           "isActive",
           "createdAt",
           "updatedAt"
@@ -2450,15 +2440,11 @@
               },
               "title": {
                 "type": "string"
-              },
-              "code": {
-                "type": "string"
               }
             },
             "required": [
               "id",
-              "title",
-              "code"
+              "title"
             ]
           },
           "manager": {
@@ -17537,18 +17523,11 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 255
-                  },
-                  "code": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50,
-                    "pattern": "^[A-Za-z0-9_-]+$"
                   }
                 },
                 "required": [
                   "departmentId",
-                  "title",
-                  "code"
+                  "title"
                 ],
                 "additionalProperties": false
               }
@@ -17778,12 +17757,6 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 255
-                  },
-                  "code": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50,
-                    "pattern": "^[A-Za-z0-9_-]+$"
                   }
                 },
                 "additionalProperties": false

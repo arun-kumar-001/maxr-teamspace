@@ -49,7 +49,7 @@ export const employeeDetailSchema = z
     email: z.string().email(),
     phone: z.string().nullable(),
     department: z.object({ id: z.string().uuid(), name: z.string(), code: z.string() }),
-    designation: z.object({ id: z.string().uuid(), title: z.string(), code: z.string() }),
+    designation: z.object({ id: z.string().uuid(), title: z.string() }),
     manager: z
       .object({
         id: z.string().uuid(),

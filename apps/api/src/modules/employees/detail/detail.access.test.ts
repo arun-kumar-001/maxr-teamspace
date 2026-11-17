@@ -25,7 +25,7 @@ const person = (id: string, code: string, email: string): EmployeeDetail => ({
   email,
   phone: null,
   department: { id: DEPT, name: 'Engineering', code: 'ENG' },
-  designation: { id: DESIG, title: 'Engineer', code: 'ENG-1' },
+  designation: { id: DESIG, title: 'Engineer' },
   manager: null,
   status: 'active',
   joiningDate: '2026-01-15',

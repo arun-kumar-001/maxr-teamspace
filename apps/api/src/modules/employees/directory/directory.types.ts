@@ -14,7 +14,6 @@ export interface EmployeeDepartmentRef {
 export interface EmployeeDesignationRef {
   id: string;
   title: string;
-  code: string;
 }
 
 export interface EmployeeManagerRef {

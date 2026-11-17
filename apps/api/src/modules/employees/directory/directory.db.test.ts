@@ -29,7 +29,6 @@ describe('PgEmployeeDirectoryRepository (PostgreSQL Integration)', () => {
     const desig = await desigRepo.create({
       departmentId: deptId,
       title: 'Directory Engineer',
-      code: `DED_${randomUUID().slice(0, 8)}`,
     });
     desigId = desig.id;
   });
@@ -281,7 +280,7 @@ describe('PgEmployeeDirectoryRepository (PostgreSQL Integration)', () => {
         `INSERT INTO departments (name, code) VALUES ('Perf Dept', 'PERF_D') RETURNING id`,
       );
       const tDesig = await client.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Perf Desig', 'PERF_DSG') RETURNING id`,
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Perf Desig') RETURNING id`,
         [tDept.rows[0]!.id],
       );
 
@@ -310,7 +309,7 @@ describe('PgEmployeeDirectoryRepository (PostgreSQL Integration)', () => {
          SELECT
            e.id, e.employee_code, e.first_name, e.last_name, e.email, e.phone, e.status, e.joining_date, e.created_at, e.updated_at,
            d.id AS dept_id, d.name AS dept_name, d.code AS dept_code,
-           des.id AS desig_id, des.title AS desig_title, des.code AS desig_code,
+           des.id AS desig_id, des.title AS desig_title,
            m.id AS manager_id, m.first_name AS manager_first_name, m.last_name AS manager_last_name, m.employee_code AS manager_employee_code
          FROM employees e
          JOIN departments d ON e.department_id = d.id

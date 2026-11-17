@@ -23,7 +23,7 @@ const detail = (id: string, overrides: Partial<EmployeeDetail> = {}): EmployeeDe
   email: id === ID ? 'asha@maxr.internal' : 'other@maxr.internal',
   phone: '+91 90000 00001',
   department: { id: DEPT, name: 'Engineering', code: 'ENG' },
-  designation: { id: DESIG, title: 'Engineer', code: 'ENG-1' },
+  designation: { id: DESIG, title: 'Engineer' },
   manager: null,
   status: 'active',
   joiningDate: '2026-01-15',

@@ -16,7 +16,7 @@ describe('OnboardingPage Hiring & Onboarding Workspace', () => {
       { id: 'dept-2', name: 'Human Resources', code: 'HR' },
     ]);
     vi.spyOn(employeesApi, 'fetchDesignations').mockResolvedValue([
-      { id: 'desig-1', title: 'Software Engineer', code: 'SWE' },
+      { id: 'desig-1', title: 'Software Engineer' },
     ]);
     vi.spyOn(employeesApi, 'fetchEmployeeDirectory').mockResolvedValue({
       data: [],
