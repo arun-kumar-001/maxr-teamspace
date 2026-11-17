@@ -30,6 +30,7 @@ describe('ProfilePortalPage', () => {
     expect(screen.getByText('Checked In')).toBeTruthy();
     expect(screen.getByText('Recent Payslips')).toBeTruthy();
     expect(screen.getByText('Personal Checklist')).toBeTruthy();
+    expect(screen.queryByText('Daily Work Plan & Routine')).toBeNull();
     expect(screen.getByText('Task Completion Progress')).toBeTruthy();
   });
 

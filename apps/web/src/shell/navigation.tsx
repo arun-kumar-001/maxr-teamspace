@@ -277,7 +277,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path === '/dashboard' ||
     path === '/login' ||
     path === '/set-password' ||
-    path === '/components'
+    path === '/components' ||
+    path === '/personal-checklist' ||
+    path.startsWith('/personal-checklist/') ||
+    path === '/staff/personal-checklist' ||
+    path.startsWith('/staff/personal-checklist/')
   ) {
     return true;
   }
@@ -377,15 +381,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return true;
   }
 
-  // Daily Checklist & Routine Reports routes
-  if (
-    path === '/checklist' ||
-    path.startsWith('/checklist/') ||
-    path === '/staff/checklist' ||
-    path.startsWith('/staff/checklist/')
-  ) {
-    return true;
-  }
   // Onboarding routes authorization
   if (
     path.startsWith('/hr/onboarding') ||

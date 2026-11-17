@@ -580,9 +580,9 @@ function AppRoutes() {
         }
       />
 
-      {/* Daily Checklist & Day-wise Routine Reports */}
+      {/* Personal Checklist & Day-wise Routine Reports */}
       <Route
-        path="/checklist"
+        path="/personal-checklist"
         element={
           <ShellLayout>
             <DailyChecklistPage />
@@ -590,13 +590,15 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/staff/checklist"
+        path="/staff/personal-checklist"
         element={
           <ShellLayout>
             <DailyChecklistPage />
           </ShellLayout>
         }
       />
+      <Route path="/checklist" element={<Navigate to="/personal-checklist" replace />} />
+      <Route path="/staff/checklist" element={<Navigate to="/staff/personal-checklist" replace />} />
 
       {/* Meetings Routes (Removed per user request - Redirect to dashboard) */}
       <Route path="/meetings" element={<Navigate to="/dashboard" replace />} />

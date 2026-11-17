@@ -85,12 +85,25 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-sm font-bold text-text truncate">Personal Checklist</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = user?.role === ROLES.STAFF ? '/staff/personal-checklist' : '/personal-checklist';
+                    if (onNavigate) {
+                      onNavigate(target);
+                    } else if (typeof window !== 'undefined') {
+                      window.location.href = target;
+                    }
+                  }}
+                  className="text-sm font-bold text-text truncate hover:text-primary-deep text-left cursor-pointer transition-colors"
+                  title="Open Personal Checklist Page"
+                >
+                  Personal Checklist
+                </button>
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-soft text-primary-deep shrink-0">
                   {stats.completed}/{stats.total}
                 </span>
               </div>
-              <p className="text-[10.5px] text-text-muted truncate">Daily routine &amp; habits</p>
             </div>
           </div>
 
@@ -272,7 +285,7 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
           <button
             type="button"
             onClick={() => {
-              const target = user?.role === ROLES.STAFF ? '/staff/checklist' : '/checklist';
+              const target = user?.role === ROLES.STAFF ? '/staff/personal-checklist' : '/personal-checklist';
               if (onNavigate) {
                 onNavigate(target);
               } else if (typeof window !== 'undefined') {
@@ -282,7 +295,7 @@ export function PersonalChecklistWidget({ className = '', onNavigate }: Personal
             data-testid="widget-view-checklist-link"
             className="text-primary-ink hover:underline font-semibold flex items-center gap-1 cursor-pointer"
           >
-            <span>Full Report &amp; Day View</span>
+            <span>Personal Checklist Page</span>
             <span>&rarr;</span>
           </button>
         </div>

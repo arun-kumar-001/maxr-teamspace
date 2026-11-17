@@ -51,7 +51,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('reports')) return 'Workforce Reports';
     if (path.includes('leave')) return 'My Leave & Balances';
     if (path.includes('projects')) return 'Projects & Initiatives';
-    if (path.includes('checklist')) return 'Daily Checklist & Routines';
+    if (path.includes('checklist')) return 'Personal Checklist';
     if (path.includes('tasks')) return 'Tasks & Projects';
     if (path.includes('profile')) return 'My Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
@@ -92,14 +92,14 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
         ) : null}
       </div>
 
-      {/* Right: Daily Checklist, Notifications & User Profile Menu with Dropdown */}
+      {/* Right: Personal Checklist, Notifications & User Profile Menu with Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3">
         {user && (
           <button
             type="button"
-            onClick={() => onNavigate?.(user.role === ROLES.STAFF ? '/staff/checklist' : '/checklist')}
+            onClick={() => onNavigate?.(user.role === ROLES.STAFF ? '/staff/personal-checklist' : '/personal-checklist')}
             data-testid="navbar-checklist-btn"
-            title="Daily Checklist & Routines"
+            title="Personal Checklist"
             className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-full border border-border bg-surface text-text hover:bg-surface-raised hover:border-border-strong focus:outline-none focus:ring-2 focus:ring-primary h-10 min-h-[40px] transition-colors shadow-xs cursor-pointer"
           >
             <span className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
@@ -107,7 +107,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </span>
-            <span className="hidden sm:inline">Daily Checklist</span>
+            <span className="hidden sm:inline">Personal Checklist</span>
           </button>
         )}
 

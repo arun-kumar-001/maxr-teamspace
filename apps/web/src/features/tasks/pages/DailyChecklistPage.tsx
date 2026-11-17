@@ -211,7 +211,7 @@ export function DailyChecklistPage() {
   return (
     <div
       className="flex flex-col gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full"
-      data-testid="daily-checklist-page"
+      data-testid="personal-checklist-page"
     >
       {/* 1. Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-muted">
@@ -232,7 +232,7 @@ export function DailyChecklistPage() {
         </button>
         <span className="text-border-strong select-none">/</span>
         <span className="text-text font-semibold" aria-current="page">
-          Daily Checklist
+          Personal Checklist
         </span>
       </nav>
 
@@ -241,14 +241,14 @@ export function DailyChecklistPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-text tracking-tight">
-              Daily Checklist &amp; Routines
+              Personal Checklist
             </h1>
             <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-primary-soft text-primary-deep border border-primary/20">
               {dateCompletedCount}/{dateTotalCount} Done
             </span>
           </div>
           <p className="text-sm text-text-muted mt-1">
-            Track daily work routines, habits, and download day-wise audit reports.
+            Manage your personal daily checklist, track routine items, and export audit reports.
           </p>
         </div>
 

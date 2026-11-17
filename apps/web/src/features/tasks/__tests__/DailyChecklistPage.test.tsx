@@ -25,8 +25,8 @@ describe('DailyChecklistPage', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId('daily-checklist-page')).toBeTruthy();
-    expect(screen.getByText('Daily Checklist & Routines')).toBeTruthy();
+    expect(screen.getByTestId('personal-checklist-page')).toBeTruthy();
+    expect(screen.getAllByText('Personal Checklist').length).toBeGreaterThan(0);
     expect(screen.getByTestId('download-checklist-report-btn')).toBeTruthy();
     expect(screen.getByTestId('page-add-checklist-btn')).toBeTruthy();
     expect(screen.getByText('Total Routines')).toBeTruthy();

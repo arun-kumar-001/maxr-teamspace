@@ -18,7 +18,7 @@ describe('PersonalChecklistWidget', () => {
 
     expect(screen.getByTestId('personal-checklist-widget')).toBeTruthy();
     expect(screen.getByText('Personal Checklist')).toBeTruthy();
-    expect(screen.getByText('Daily routine & habits')).toBeTruthy();
+    expect(screen.queryByText('Daily routine & habits')).toBeNull();
     expect(screen.getByText('0/3')).toBeTruthy();
     expect(screen.getByText('Daily standup & team status check')).toBeTruthy();
   });
