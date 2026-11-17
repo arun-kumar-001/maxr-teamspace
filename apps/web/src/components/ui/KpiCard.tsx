@@ -1,13 +1,6 @@
 import React from 'react';
 
-export type KpiColorVariant =
-  | 'teal'
-  | 'emerald'
-  | 'amber'
-  | 'rose'
-  | 'purple'
-  | 'blue'
-  | 'gray';
+export type KpiColorVariant = 'teal' | 'emerald' | 'amber' | 'rose' | 'purple' | 'blue' | 'gray';
 
 export interface KpiCardProps {
   label: string;
@@ -111,9 +104,7 @@ export function KpiCard({
         onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : 'hover:shadow-card'
       } ${isActive ? 'ring-2 ring-primary-strong/40' : ''} ${className}`}
     >
-      <div className={`${iconCls} flex items-center justify-center shrink-0`}>
-        {icon}
-      </div>
+      <div className={`${iconCls} flex items-center justify-center shrink-0`}>{icon}</div>
       <div className="min-w-0 flex-1 pr-16 sm:pr-20">
         <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
           {label}

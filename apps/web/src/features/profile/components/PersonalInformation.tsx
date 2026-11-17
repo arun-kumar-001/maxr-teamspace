@@ -152,11 +152,7 @@ export function PersonalInformation({
               </select>
             ) : (
               <div className="p-2.5 bg-surface-muted border border-border rounded-input text-sm font-medium text-text capitalize">
-                {gender === 'female'
-                  ? 'Female'
-                  : gender === 'male'
-                    ? 'Male'
-                    : 'Prefer not to say'}
+                {gender === 'female' ? 'Female' : gender === 'male' ? 'Male' : 'Prefer not to say'}
               </div>
             )}
           </div>
@@ -254,9 +250,7 @@ export function PersonalInformation({
 
         {/* Section: My email Address (Image 1 Template) */}
         <div className="border-t border-border pt-4">
-          <span className="block text-xs font-bold text-text mb-2.5">
-            My email Address
-          </span>
+          <span className="block text-xs font-bold text-text mb-2.5">My email Address</span>
 
           <div className="space-y-2">
             {/* Primary Verified Email */}
@@ -278,10 +272,10 @@ export function PersonalInformation({
                   </svg>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text truncate">
-                    {profile.email}
+                  <p className="text-sm font-semibold text-text truncate">{profile.email}</p>
+                  <p className="text-[11px] text-text-muted">
+                    Primary Work Email &middot; 1 month ago
                   </p>
-                  <p className="text-[11px] text-text-muted">Primary Work Email &middot; 1 month ago</p>
                 </div>
               </div>
 
@@ -314,9 +308,7 @@ export function PersonalInformation({
                 </div>
                 <button
                   type="button"
-                  onClick={() =>
-                    setAdditionalEmails((prev) => prev.filter((_, i) => i !== index))
-                  }
+                  onClick={() => setAdditionalEmails((prev) => prev.filter((_, i) => i !== index))}
                   className="text-xs text-rose-600 hover:text-rose-800"
                 >
                   Remove

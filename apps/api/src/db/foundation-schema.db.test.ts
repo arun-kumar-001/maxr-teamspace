@@ -72,15 +72,15 @@ describe('Foundation Schema Constraints & Data Integrity (TL-04)', () => {
 
   describe('Referential Integrity & Delete Restraints', () => {
     it('restricts deleting a department that has active designations', async () => {
-      // Engineering department has designations linked
-      await expect(pool.query("DELETE FROM departments WHERE code = 'ENG'")).rejects.toThrow(
+      // Seeded HR department has designations linked
+      await expect(pool.query("DELETE FROM departments WHERE code = 'HR'")).rejects.toThrow(
         /violates foreign key constraint/i,
       );
     });
 
     it('restricts deleting a designation that has active employees', async () => {
-      // ENG-DIR has EMP-0001 linked
-      await expect(pool.query("DELETE FROM designations WHERE code = 'ENG-DIR'")).rejects.toThrow(
+      // SYS-ADMIN has EMP-0001 linked
+      await expect(pool.query("DELETE FROM designations WHERE code = 'SYS-ADMIN'")).rejects.toThrow(
         /violates foreign key constraint/i,
       );
     });

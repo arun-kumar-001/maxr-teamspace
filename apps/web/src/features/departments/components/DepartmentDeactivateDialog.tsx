@@ -74,8 +74,8 @@ export function DepartmentDeactivateDialog({
         <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-card">
           <p className="font-semibold mb-1">Important System Rule:</p>
           <p>
-            Departments with active designations or employees cannot be deleted. You must
-            reassign or delete all associated records first.
+            Departments with active designations or employees cannot be deleted. You must reassign
+            or delete all associated records first.
           </p>
         </div>
       </div>

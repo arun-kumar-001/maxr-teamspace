@@ -126,28 +126,16 @@ export function LeaveRequestsTab() {
       {/* Request Status Counters */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
-          <p className="text-xs font-semibold text-text-muted">
-            Pending Approval
-          </p>
-          <p className="text-2xl font-bold font-display mt-1 text-amber-600">
-            {counts.pending}
-          </p>
+          <p className="text-xs font-semibold text-text-muted">Pending Approval</p>
+          <p className="text-2xl font-bold font-display mt-1 text-amber-600">{counts.pending}</p>
         </div>
         <div className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
-          <p className="text-xs font-semibold text-text-muted">
-            Approved Leaves
-          </p>
-          <p className="text-2xl font-bold font-display mt-1 text-emerald-600">
-            {counts.approved}
-          </p>
+          <p className="text-xs font-semibold text-text-muted">Approved Leaves</p>
+          <p className="text-2xl font-bold font-display mt-1 text-emerald-600">{counts.approved}</p>
         </div>
         <div className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all">
-          <p className="text-xs font-semibold text-text-muted">
-            Rejected Requests
-          </p>
-          <p className="text-2xl font-bold font-display mt-1 text-rose-600">
-            {counts.rejected}
-          </p>
+          <p className="text-xs font-semibold text-text-muted">Rejected Requests</p>
+          <p className="text-2xl font-bold font-display mt-1 text-rose-600">{counts.rejected}</p>
         </div>
       </div>
 
@@ -182,9 +170,7 @@ export function LeaveRequestsTab() {
                   className="p-4 rounded-card border border-border/80 bg-white shadow-xs hover:shadow-card hover:-translate-y-0.5 transition-all space-y-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-text">
-                      {bal.name}
-                    </span>
+                    <span className="text-sm font-bold text-text">{bal.name}</span>
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary-soft text-primary-deep border border-primary/20">
                       {bal.code}
                     </span>
@@ -248,10 +234,10 @@ export function LeaveRequestsTab() {
                 >
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-bold text-text">
-                        {req.leaveTypeName}
-                      </span>
-                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${chip.className}`}>
+                      <span className="text-sm font-bold text-text">{req.leaveTypeName}</span>
+                      <span
+                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${chip.className}`}
+                      >
                         {chip.label}
                       </span>
                     </div>
@@ -261,9 +247,7 @@ export function LeaveRequestsTab() {
                       {req.halfDay ? ' (Half day)' : ''}
                     </p>
                     {req.reason && (
-                      <p className="text-xs italic text-text-subtle">
-                        &ldquo;{req.reason}&rdquo;
-                      </p>
+                      <p className="text-xs italic text-text-subtle">&ldquo;{req.reason}&rdquo;</p>
                     )}
                   </div>
 

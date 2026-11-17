@@ -30,7 +30,8 @@ export function EmployeeCard({
   // Deterministic activity percentage based on employee ID (matching Image 2 mockup ratios)
   const hash = employee.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const percentages = [100, 82, 66, 100, 33, 48, 75, 90];
-  const progressPercent = employee.status === 'active' ? percentages[hash % percentages.length] ?? 82 : 33;
+  const progressPercent =
+    employee.status === 'active' ? (percentages[hash % percentages.length] ?? 82) : 33;
   const activeSegments = progressPercent >= 100 ? 3 : progressPercent >= 66 ? 2 : 1;
 
   return (

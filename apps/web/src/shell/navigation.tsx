@@ -315,7 +315,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
-
   // Expenses routes (Issue #29) - accessible to all authenticated roles
   if (
     path === '/expenses' ||
@@ -874,9 +873,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Team Tasks',
           href: '/lead/tasks',
           icon: <NavSvgIcon name="check" />,
-          children: [
-            { id: '/lead/tasks', label: 'Team Tasks', href: '/lead/tasks' },
-          ],
+          children: [{ id: '/lead/tasks', label: 'Team Tasks', href: '/lead/tasks' }],
         },
         {
           id: '/projects',
