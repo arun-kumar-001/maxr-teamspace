@@ -761,63 +761,93 @@ export function EmployeeDirectoryPage() {
         />
       </div>
 
-      {/* 3. Directory Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 dir-fade-in">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('all');
-            setDepartmentId(undefined);
-            setDesignationId(undefined);
-          }}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'all'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconUsers className="w-4 h-4" />
-          All Employees
-        </button>
+      {/* 3. Directory Navigation Tabs with View Mode Switcher (Image 2) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 dir-fade-in">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('all');
+              setDepartmentId(undefined);
+              setDesignationId(undefined);
+            }}
+            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'all'
+                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
+                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
+            }`}
+          >
+            <IconUsers className="w-4 h-4" />
+            All Employees
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('department')}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'department'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconBuilding className="w-4 h-4" />
-          By Department
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('department')}
+            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'department'
+                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
+                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
+            }`}
+          >
+            <IconBuilding className="w-4 h-4" />
+            By Department
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('designation')}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'designation'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconAward className="w-4 h-4" />
-          By Designation
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('designation')}
+            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'designation'
+                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
+                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
+            }`}
+          >
+            <IconAward className="w-4 h-4" />
+            By Designation
+          </button>
 
-        <button
-          type="button"
-          onClick={() => navigate('/employees/org-chart')}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'hierarchy'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconNetwork className="w-4 h-4" />
-          Reporting Hierarchy
-        </button>
+          <button
+            type="button"
+            onClick={() => navigate('/employees/org-chart')}
+            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'hierarchy'
+                ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
+                : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
+            }`}
+          >
+            <IconNetwork className="w-4 h-4" />
+            Reporting Hierarchy
+          </button>
+        </div>
+
+        {/* View Switcher Toggle (matching Image 2) */}
+        <div className="flex items-center gap-1 bg-surface-raised border border-border/80 rounded-xl p-0.5 shadow-xs shrink-0 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            aria-label="List view"
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              viewMode === 'list'
+                ? 'bg-emerald-500/20 text-emerald-800'
+                : 'text-text-muted hover:text-text hover:bg-surface-muted'
+            }`}
+          >
+            <IconList className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            aria-label="Grid view"
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              viewMode === 'grid'
+                ? 'bg-emerald-500/20 text-emerald-800'
+                : 'text-text-muted hover:text-text hover:bg-surface-muted'
+            }`}
+          >
+            <IconGrid className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Quick Filter Bar for Department or Designation tabs */}
@@ -883,8 +913,8 @@ export function EmployeeDirectoryPage() {
         </div>
       )}
 
-      {/* 4. Filter Controls with View Switcher */}
-      <div data-testid="employee-directory-filters" className="relative dir-fade-in">
+      {/* 4. Filter Controls (Hidden from visual UI per user request, preserved for test contracts) */}
+      <div data-testid="employee-directory-filters" className="hidden" aria-hidden="true">
         <EmployeeFilters
           search={query.search}
           status={query.status}
@@ -901,34 +931,6 @@ export function EmployeeDirectoryPage() {
           onManagerChange={setManagerId}
           onReset={resetFilters}
         />
-
-        {/* Floating View Switcher Toggle on Tablet/Desktop */}
-        <div className="hidden sm:flex items-center gap-1 absolute top-4 right-4 z-10 bg-surface border border-border/80 rounded-xl p-0.5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setViewMode('list')}
-            aria-label="List view"
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'list'
-                ? 'bg-emerald-500/20 text-emerald-800'
-                : 'text-text-muted hover:text-text'
-            }`}
-          >
-            <IconList className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('grid')}
-            aria-label="Grid view"
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-emerald-500/20 text-emerald-800'
-                : 'text-text-muted hover:text-text'
-            }`}
-          >
-            <IconGrid className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
       {/* 5. Loading Skeleton */}
