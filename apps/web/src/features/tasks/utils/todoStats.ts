@@ -116,7 +116,10 @@ export function toggleSidebarTodo(id: string): TodoItemData[] {
   return updated;
 }
 
-export function addSidebarTodo(title: string, frequency: 'daily' | 'once' = 'daily'): TodoItemData[] {
+export function addSidebarTodo(
+  title: string,
+  frequency: 'daily' | 'once' = 'daily',
+): TodoItemData[] {
   const todos = getSidebarTodos();
   const newItem: TodoItemData = {
     id: `todo-${Date.now()}`,

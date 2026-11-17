@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  TODOS_STORAGE_KEY,
-  notifyTodosUpdated,
-  DEFAULT_INITIAL_TODOS,
-} from '../utils/todoStats';
+import { TODOS_STORAGE_KEY, notifyTodosUpdated, DEFAULT_INITIAL_TODOS } from '../utils/todoStats';
 
 export interface TodoItem {
   id: string;
@@ -211,7 +207,13 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
       <div className="p-4 sm:p-5 border-b border-border/80 flex items-center justify-between gap-3 bg-surface-raised/40">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-primary-soft text-primary-deep flex items-center justify-center font-bold">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
@@ -249,7 +251,13 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
               title="Collapse To-Do List"
               aria-label="Collapse To-Do List"
             >
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
                 <rect x="3" y="3" width="14" height="14" rx="3" />
                 <path d="M13 3v14" />
                 <path d="m9 8 2 2-2 2" />
@@ -427,8 +435,14 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
                 key={item.id}
                 data-testid={`todo-item-${item.id}`}
                 className="relative overflow-hidden group select-none transition-colors"
-                onTouchStart={(e) => handleGestureStart(e.touches[0].clientX, e.touches[0].clientY)}
-                onTouchMove={(e) => handleGestureMove(e.touches[0].clientX, e.touches[0].clientY, item.id)}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  if (touch) handleGestureStart(touch.clientX, touch.clientY);
+                }}
+                onTouchMove={(e) => {
+                  const touch = e.touches[0];
+                  if (touch) handleGestureMove(touch.clientX, touch.clientY, item.id);
+                }}
                 onTouchEnd={handleGestureEnd}
                 onPointerDown={(e) => handleGestureStart(e.clientX, e.clientY)}
                 onPointerMove={(e) => handleGestureMove(e.clientX, e.clientY, item.id)}
@@ -450,7 +464,15 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
                     className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
                     title="Edit item"
                   >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
@@ -466,7 +488,15 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
                     className="h-8 px-2.5 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
                     title="Delete item"
                   >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                       <line x1="10" y1="11" x2="10" y2="17" />
@@ -502,9 +532,7 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
                       <p
                         data-testid={`todo-title-${item.id}`}
                         className={`text-xs font-medium leading-snug break-words transition-all ${
-                          completed
-                            ? 'line-through text-text-muted opacity-60'
-                            : 'text-text'
+                          completed ? 'line-through text-text-muted opacity-60' : 'text-text'
                         }`}
                       >
                         {item.title}
@@ -547,7 +575,15 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
                           title="Edit item"
                           aria-label="Edit item"
                         >
-                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            className="w-3.5 h-3.5 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
@@ -564,7 +600,15 @@ export function TaskTodoListSidebar({ onToggleCollapse }: TaskTodoListSidebarPro
                           title="Delete item"
                           aria-label="Delete item"
                         >
-                          <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            className="w-3.5 h-3.5 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                             <line x1="10" y1="11" x2="10" y2="17" />

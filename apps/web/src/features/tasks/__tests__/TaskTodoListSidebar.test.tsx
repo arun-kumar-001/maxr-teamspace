@@ -20,7 +20,9 @@ describe('TaskTodoListSidebar (My Tasks Right-Side To-Do Panel)', () => {
     expect(screen.getByText('To-Do List')).toBeInTheDocument();
     expect(screen.getByText('Daily checklist & quick tasks')).toBeInTheDocument();
     expect(screen.getByTestId('add-todo-btn')).toBeInTheDocument();
-    expect(screen.getByTestId('todo-title-todo-1')).toHaveTextContent('Daily standup & team status check');
+    expect(screen.getByTestId('todo-title-todo-1')).toHaveTextContent(
+      'Daily standup & team status check',
+    );
   });
 
   it('filters by All, Daily, and Once', () => {
@@ -28,12 +30,16 @@ describe('TaskTodoListSidebar (My Tasks Right-Side To-Do Panel)', () => {
 
     // Filter to Once only
     fireEvent.click(screen.getByTestId('filter-btn-once'));
-    expect(screen.getByTestId('todo-title-todo-3')).toHaveTextContent('Verify onboarding checklist documents');
+    expect(screen.getByTestId('todo-title-todo-3')).toHaveTextContent(
+      'Verify onboarding checklist documents',
+    );
     expect(screen.queryByTestId('todo-title-todo-1')).not.toBeInTheDocument();
 
     // Filter to Daily only
     fireEvent.click(screen.getByTestId('filter-btn-daily'));
-    expect(screen.getByTestId('todo-title-todo-1')).toHaveTextContent('Daily standup & team status check');
+    expect(screen.getByTestId('todo-title-todo-1')).toHaveTextContent(
+      'Daily standup & team status check',
+    );
     expect(screen.queryByTestId('todo-title-todo-3')).not.toBeInTheDocument();
 
     // Filter to All
@@ -61,7 +67,9 @@ describe('TaskTodoListSidebar (My Tasks Right-Side To-Do Panel)', () => {
 
     // Verify localStorage has the new task
     const stored = JSON.parse(localStorage.getItem('maxr_sidebar_todos_v2') || '[]');
-    expect(stored.some((item: { title: string }) => item.title === 'Prepare release checklist notes')).toBe(true);
+    expect(
+      stored.some((item: { title: string }) => item.title === 'Prepare release checklist notes'),
+    ).toBe(true);
   });
 
   it('toggles task completion status', () => {

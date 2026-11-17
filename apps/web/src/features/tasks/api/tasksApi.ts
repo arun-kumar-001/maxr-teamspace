@@ -273,7 +273,12 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
     return local;
   }
 
-  const { assignerEmployeeId, assigneeName, assignerName, ...apiPayload } = input;
+  const {
+    assignerEmployeeId: _assignerEmployeeId,
+    assigneeName: _assigneeName,
+    assignerName: _assignerName,
+    ...apiPayload
+  } = input;
   try {
     const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}`, {
       method: 'PUT',
@@ -320,10 +325,14 @@ export async function changeTaskStatus(id: string, status: TaskStatus): Promise<
 
 export async function toggleTaskDailyDone(id: string): Promise<Task> {
   const isLocal = id.startsWith('local-');
+  const today = new Date().toISOString().slice(0, 10);
   if (isLocal) {
     const localTasks = getLocalTasks();
     const existing = localTasks.find((t) => t.id === id);
-    const updated = updateLocalTask(id, { isDailyDoneToday: !existing?.isDailyDoneToday });
+    const isDone = existing?.dailyLastDoneDate === today;
+    const updated = updateLocalTask(id, {
+      dailyLastDoneDate: isDone ? null : today,
+    });
     if (updated) return updated;
   }
 
@@ -337,7 +346,10 @@ export async function toggleTaskDailyDone(id: string): Promise<Task> {
   } catch (err) {
     const localTasks = getLocalTasks();
     const existing = localTasks.find((t) => t.id === id);
-    const updated = updateLocalTask(id, { isDailyDoneToday: !existing?.isDailyDoneToday });
+    const isDone = existing?.dailyLastDoneDate === today;
+    const updated = updateLocalTask(id, {
+      dailyLastDoneDate: isDone ? null : today,
+    });
     if (updated) return updated;
     throw err;
   }

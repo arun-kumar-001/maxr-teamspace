@@ -239,9 +239,7 @@ function AttendanceOpsWorkspace({
 
   const validInitialTab: 'on-duty' | 'roster' | 'timesheets' =
     initialTab === 'roster' || initialTab === 'timesheets' ? initialTab : 'on-duty';
-  const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets'>(
-    validInitialTab,
-  );
+  const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets'>(validInitialTab);
   useEffect(() => {
     setActiveTab(initialTab === 'roster' || initialTab === 'timesheets' ? initialTab : 'on-duty');
   }, [initialTab]);

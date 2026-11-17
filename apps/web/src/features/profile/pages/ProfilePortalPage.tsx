@@ -10,10 +10,7 @@ import type { PayslipRecord } from '../../payslips/types';
 import { isPayslipEnabledForStaff } from '../../../shell/navigation';
 import { fetchMyTasks } from '../../tasks/api/tasksApi';
 import type { Task } from '../../tasks/types';
-import {
-  getSidebarTodoStats,
-  TODOS_UPDATED_EVENT,
-} from '../../tasks/utils/todoStats';
+import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../../tasks/utils/todoStats';
 
 const WEEKLY_PROGRESS_BARS = [
   { day: 'S', height: 0, active: false },
@@ -114,11 +111,16 @@ export function ProfilePortalPage() {
   const totalPending = hasRealTasks ? realInProgress : todoStats.pending;
   const totalOverdue = hasRealTasks ? realOverdue : 0;
   const combinedTotal = hasRealTasks ? realTotal : todoStats.total;
-  const combinedPct =
-    combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
+  const combinedPct = combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
   const activeTasksCount = totalPending;
 
-  const taskChartData: DonutChartSegment[] = [
+  interface TaskChartSegment extends DonutChartSegment {
+    inkColor: string;
+    pct: number;
+    pillClass: string;
+  }
+
+  const taskChartData: TaskChartSegment[] = [
     {
       label: 'Completed',
       value: totalCompleted,
@@ -336,9 +338,23 @@ export function ProfilePortalPage() {
                 {user?.avatarInitials || displayName.slice(0, 2).toUpperCase()}
               </div>
               <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-surface border border-border shadow-xs text-text flex items-center gap-1.5 group-hover:bg-primary-soft group-hover:text-primary-deep transition-colors">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 Upload Photo
               </span>
@@ -358,10 +374,27 @@ export function ProfilePortalPage() {
               </h2>
               <p className="text-xs text-white/80 drop-shadow-sm">{displayRole}</p>
             </div>
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-white/20 backdrop-blur-xs text-white" title="Change photo">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-white/20 backdrop-blur-xs text-white"
+              title="Change photo"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </div>
           </div>

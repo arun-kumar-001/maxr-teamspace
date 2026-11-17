@@ -494,9 +494,7 @@ export function CreateEmployeeForm({
                 </Button>
               )}
             </div>
-            {photoError && (
-              <p className="text-xs text-danger font-medium pt-1">{photoError}</p>
-            )}
+            {photoError && <p className="text-xs text-danger font-medium pt-1">{photoError}</p>}
           </div>
         </div>
 

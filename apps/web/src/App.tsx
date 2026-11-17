@@ -442,10 +442,7 @@ function AppRoutes() {
           </ShellLayout>
         }
       />
-      <Route
-        path="/attendance/check-in-out"
-        element={<Navigate to="/attendance" replace />}
-      />
+      <Route path="/attendance/check-in-out" element={<Navigate to="/attendance" replace />} />
       <Route
         path="/staff/attendance"
         element={
@@ -593,7 +590,10 @@ function AppRoutes() {
         }
       />
       <Route path="/checklist" element={<Navigate to="/personal-checklist" replace />} />
-      <Route path="/staff/checklist" element={<Navigate to="/staff/personal-checklist" replace />} />
+      <Route
+        path="/staff/checklist"
+        element={<Navigate to="/staff/personal-checklist" replace />}
+      />
 
       {/* Meetings Routes (Removed per user request - Redirect to dashboard) */}
       <Route path="/meetings" element={<Navigate to="/dashboard" replace />} />

@@ -692,7 +692,9 @@ export function TimesheetsTab({
 
             {/* Interactive Stats Footer */}
             {(() => {
-              const activeDay = hoursByDay.find((d) => d.day === (hoveredChartDay || selectedChartDay));
+              const activeDay = hoursByDay.find(
+                (d) => d.day === (hoveredChartDay || selectedChartDay),
+              );
               return (
                 <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
                   <span className="text-text-muted text-[11px] font-medium">

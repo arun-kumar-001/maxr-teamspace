@@ -660,8 +660,10 @@ export function useCreateEmployee({
       if (formData.avatarUrl && typeof window !== 'undefined' && window.localStorage) {
         try {
           if (result.id) localStorage.setItem(`maxr_avatar_${result.id}`, formData.avatarUrl);
-          if (result.userId) localStorage.setItem(`maxr_avatar_${result.userId}`, formData.avatarUrl);
-          if (result.email) localStorage.setItem(`maxr_avatar_${result.email.toLowerCase()}`, formData.avatarUrl);
+          if (result.userId)
+            localStorage.setItem(`maxr_avatar_${result.userId}`, formData.avatarUrl);
+          if (result.email)
+            localStorage.setItem(`maxr_avatar_${result.email.toLowerCase()}`, formData.avatarUrl);
         } catch {
           // ignore localStorage error
         }

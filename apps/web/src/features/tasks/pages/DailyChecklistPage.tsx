@@ -4,7 +4,6 @@ import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import {
   getSidebarTodos,
-  getSidebarTodoStats,
   isTodoCompletedToday,
   toggleSidebarTodo,
   addSidebarTodo,
@@ -20,7 +19,6 @@ export function DailyChecklistPage() {
   const navigate = useNavigate();
 
   const [todos, setTodos] = useState<TodoItemData[]>(() => getSidebarTodos());
-  const [stats, setStats] = useState(() => getSidebarTodoStats());
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -39,7 +37,6 @@ export function DailyChecklistPage() {
   useEffect(() => {
     const handleUpdate = () => {
       setTodos(getSidebarTodos());
-      setStats(getSidebarTodoStats());
     };
     window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
     return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
@@ -70,14 +67,15 @@ export function DailyChecklistPage() {
     if (selectedDate === todayStr) {
       toggleSidebarTodo(id);
       setTodos(getSidebarTodos());
-      setStats(getSidebarTodoStats());
     } else {
       // Toggle for historical date
       const updated = todos.map((item) => {
         if (item.id !== id) return item;
         const dates = Array.isArray(item.completedDates) ? [...item.completedDates] : [];
         const exists = dates.includes(selectedDate);
-        const nextDates = exists ? dates.filter((d) => d !== selectedDate) : [...dates, selectedDate];
+        const nextDates = exists
+          ? dates.filter((d) => d !== selectedDate)
+          : [...dates, selectedDate];
         return { ...item, completedDates: nextDates };
       });
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -98,14 +96,12 @@ export function DailyChecklistPage() {
     setNewTitle('');
     setIsAdding(false);
     setTodos(getSidebarTodos());
-    setStats(getSidebarTodoStats());
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     deleteSidebarTodo(id);
     setTodos(getSidebarTodos());
-    setStats(getSidebarTodoStats());
   };
 
   const handleStartEdit = (item: TodoItemData, e: React.MouseEvent) => {
@@ -127,7 +123,6 @@ export function DailyChecklistPage() {
     if (!editTitle.trim()) return;
     updateSidebarTodo(id, { title: editTitle.trim(), frequency: editFrequency });
     setTodos(getSidebarTodos());
-    setStats(getSidebarTodoStats());
     setEditingId(null);
     setEditTitle('');
   };
@@ -218,9 +213,13 @@ export function DailyChecklistPage() {
     rows.push(`"--- DATE RANGE AUDIT SUMMARY ---",,,,,,,,,,`);
     rows.push(`"Selected Date Range","${start} to ${end}",,,,,,,,,,`);
     rows.push(`"Total Days Covered","${dates.length}",,,,,,,,,,`);
-    rows.push(`"Total Checks Completed","${totalChecksCompleted} of ${totalChecksPossible}",,,,,,,,,,`);
+    rows.push(
+      `"Total Checks Completed","${totalChecksCompleted} of ${totalChecksPossible}",,,,,,,,,,`,
+    );
     const overallRate =
-      totalChecksPossible > 0 ? `${Math.round((totalChecksCompleted / totalChecksPossible) * 100)}%` : '0%';
+      totalChecksPossible > 0
+        ? `${Math.round((totalChecksCompleted / totalChecksPossible) * 100)}%`
+        : '0%';
     rows.push(`"Overall Completion Rate","${overallRate}",,,,,,,,,,`);
     rows.push(`"Export Timestamp","${new Date().toISOString()}",,,,,,,,,,`);
 
@@ -291,7 +290,13 @@ export function DailyChecklistPage() {
               title="Previous day"
               className="p-1.5 rounded-lg hover:bg-surface-muted text-text-muted hover:text-text transition-colors cursor-pointer"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
@@ -311,7 +316,13 @@ export function DailyChecklistPage() {
               title="Next day"
               className="p-1.5 rounded-lg hover:bg-surface-muted text-text-muted hover:text-text transition-colors cursor-pointer"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -344,15 +355,25 @@ export function DailyChecklistPage() {
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5 p-4 bg-white border border-border/80 rounded-2xl shadow-xs">
         <div className="flex items-center gap-2.5">
           <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </span>
           <div>
-            <h2 className="text-xs sm:text-sm font-bold text-text">Export Routine Checklist Report</h2>
-            <p className="text-[11px] text-text-muted">Select Start and End dates to export comprehensive day-wise audit report</p>
+            <h2 className="text-xs sm:text-sm font-bold text-text">
+              Export Routine Checklist Report
+            </h2>
+            <p className="text-[11px] text-text-muted">
+              Select Start and End dates to export comprehensive day-wise audit report
+            </p>
           </div>
         </div>
 
@@ -427,7 +448,13 @@ export function DailyChecklistPage() {
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer"
             title={`Export checklist report from ${startDate} to ${endDate}`}
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              className="w-3.5 h-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
@@ -442,7 +469,9 @@ export function DailyChecklistPage() {
         <div className="p-4 rounded-2xl bg-white border border-border/80 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-semibold text-text-muted">Total Routines</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="font-display text-2xl sm:text-3xl font-bold text-text">{dateTotalCount}</span>
+            <span className="font-display text-2xl sm:text-3xl font-bold text-text">
+              {dateTotalCount}
+            </span>
             <span className="text-xs text-text-muted">Habits active</span>
           </div>
         </div>
@@ -450,7 +479,9 @@ export function DailyChecklistPage() {
         <div className="p-4 rounded-2xl bg-white border border-border/80 shadow-xs flex flex-col justify-between">
           <span className="text-xs font-semibold text-text-muted">Completed for Date</span>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="font-display text-2xl sm:text-3xl font-bold text-emerald-600">{dateCompletedCount}</span>
+            <span className="font-display text-2xl sm:text-3xl font-bold text-emerald-600">
+              {dateCompletedCount}
+            </span>
             <span className="text-xs text-emerald-700 font-medium">{datePct}% Rate</span>
           </div>
         </div>
@@ -574,7 +605,8 @@ export function DailyChecklistPage() {
       <div className="space-y-2">
         {filteredTodos.length === 0 ? (
           <div className="py-12 text-center text-sm text-text-muted bg-white rounded-2xl border border-border">
-            No routines or checklist items found. Click "+ Add Routine" to create your first checklist item.
+            No routines or checklist items found. Click "+ Add Routine" to create your first
+            checklist item.
           </div>
         ) : (
           filteredTodos.map((item) => {
@@ -705,7 +737,13 @@ export function DailyChecklistPage() {
                     className="opacity-0 group-hover:opacity-100 hover:text-primary-deep text-text-muted p-1.5 rounded-lg hover:bg-surface-muted transition-all shrink-0 cursor-pointer"
                     title="Edit routine"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                     </svg>
@@ -719,7 +757,13 @@ export function DailyChecklistPage() {
                     className="opacity-0 group-hover:opacity-100 hover:text-danger text-text-muted p-1.5 rounded-lg hover:bg-surface-muted transition-all shrink-0 cursor-pointer"
                     title="Delete routine"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      className="w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M3 6h18" />
                       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
                       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
