@@ -17,14 +17,14 @@ const mockEmployees: EmployeeDirectoryItem[] = [
     firstName: 'Arun',
     lastName: 'Kumar',
     email: 'arun@example.com',
-    status: 'active',
-    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'des-1', title: 'Engineering Director', code: 'DIR', level: 6 },
     phone: null,
     manager: null,
     joiningDate: '2026-01-01',
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
+    status: 'active',
+    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+    designation: { id: 'des-1', title: 'Engineering Director', code: 'ENG-DIR', level: 1 },
   },
   {
     id: 'emp-2',
@@ -32,29 +32,34 @@ const mockEmployees: EmployeeDirectoryItem[] = [
     firstName: 'Rajesh',
     lastName: 'Patel',
     email: 'rajesh@example.com',
-    status: 'active',
-    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'des-2', title: 'Staff Engineer', code: 'SE', level: 4 },
     phone: null,
     manager: null,
     joiningDate: '2026-01-01',
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
+    status: 'active',
+    department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+    designation: { id: 'des-2', title: 'Staff Engineer', code: 'STAFF-ENG', level: 2 },
   },
 ];
 
-const mockDepartments: DepartmentItem[] = [{ id: 'dept-1', name: 'Engineering', code: 'ENG' }];
+const mockDepartments: DepartmentItem[] = [
+  { id: 'dept-1', name: 'Engineering', code: 'ENG' },
+];
 
 const mockRecords: AttendanceRecord[] = [
   {
     id: 'rec-1',
     employeeId: 'emp-1',
+    employeeName: 'Arun Kumar',
+    date: '2026-11-13',
     workDate: '2026-11-13',
     checkInTime: '2026-11-13T09:05:00.000Z',
     checkOutTime: '2026-11-13T18:15:00.000Z',
     durationMinutes: 550,
     status: 'present',
-    location: null,
+    source: 'web',
+    location: { workMode: 'office' },
     notes: null,
     createdAt: '2026-11-13T09:05:00.000Z',
     updatedAt: '2026-11-13T18:15:00.000Z',

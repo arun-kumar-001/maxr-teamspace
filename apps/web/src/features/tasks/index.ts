@@ -12,3 +12,4 @@ export * from './components/TaskDetailModal';
 export * from './components/TaskCommentsThread';
 export * from './components/TaskAttachmentsList';
 export * from './pages/TasksPage';
+export * from './pages/DailyChecklistPage';

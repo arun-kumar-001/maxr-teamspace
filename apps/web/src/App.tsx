@@ -28,7 +28,6 @@ import {
   SetPasswordPage,
 } from './features/employees';
 import { DepartmentsPage } from './features/departments';
-import { DesignationsPage } from './features/designations';
 import { MyProfilePage, ProfilePortalPage } from './features/profile';
 import { AttendancePage } from './features/attendance';
 import { ApprovalsInboxPage } from './features/approvals';
@@ -38,9 +37,9 @@ import { UsersPage } from './features/users';
 import { NotificationsInboxPage } from './features/notifications';
 import { AuditLogsPage } from './features/audit-logs';
 import { ProjectsListPage, ProjectDetailPage } from './features/projects';
-import { TasksPage } from './features/tasks';
+import { TasksPage, DailyChecklistPage } from './features/tasks';
+import { PersonalTodosPage } from './features/todos';
 import { CompanySettingsPage } from './features/settings';
-import { MeetingsPage } from './features/meetings';
 import { ExpensesPage } from './features/expenses';
 import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
@@ -293,30 +292,18 @@ function AppRoutes() {
         }
       />
 
-      {/* Designations Management Routes (Issue #18) */}
+      {/* Designations Management Routes Redirect to Departments */}
       <Route
         path="/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
+        element={<Navigate to="/departments" replace />}
       />
       <Route
         path="/admin/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
+        element={<Navigate to="/admin/departments" replace />}
       />
       <Route
         path="/hr/designations"
-        element={
-          <ShellLayout>
-            <DesignationsPage />
-          </ShellLayout>
-        }
+        element={<Navigate to="/hr/departments" replace />}
       />
 
       {/* My Profile Portal & Personal Details Routes */}
@@ -602,39 +589,47 @@ function AppRoutes() {
         }
       />
 
-      {/* Meetings Routes (Issue #45) */}
+      {/* Daily Checklist Routes */}
       <Route
-        path="/meetings"
+        path="/checklist"
         element={
           <ShellLayout>
-            <MeetingsPage />
+            <DailyChecklistPage />
           </ShellLayout>
         }
       />
       <Route
-        path="/staff/meetings"
+        path="/staff/checklist"
         element={
           <ShellLayout>
-            <MeetingsPage />
+            <DailyChecklistPage />
+          </ShellLayout>
+        }
+      />
+
+      {/* Personal To-Do List Routes */}
+      <Route
+        path="/todos"
+        element={
+          <ShellLayout>
+            <PersonalTodosPage />
           </ShellLayout>
         }
       />
       <Route
-        path="/lead/meetings"
+        path="/staff/todos"
         element={
           <ShellLayout>
-            <MeetingsPage />
+            <PersonalTodosPage />
           </ShellLayout>
         }
       />
-      <Route
-        path="/admin/meetings"
-        element={
-          <ShellLayout>
-            <MeetingsPage />
-          </ShellLayout>
-        }
-      />
+
+      {/* Meetings Routes (Removed per user request - Redirect to dashboard) */}
+      <Route path="/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/staff/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/lead/meetings" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/admin/meetings" element={<Navigate to="/dashboard" replace />} />
 
       {/* Expenses Routes (Issue #29) */}
       <Route

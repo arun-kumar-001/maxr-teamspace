@@ -1,4 +1,4 @@
-import { Button } from '../../../components/ui/Button';
+import { PrimaryActionButton } from '../../../components/ui';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
@@ -182,14 +182,13 @@ export function ProjectFilters({
 
         {canCreate && onCreateClick && (
           <div className="shrink-0 flex items-center">
-            <Button
-              variant="primary"
+            <PrimaryActionButton
+              type="button"
               onClick={onCreateClick}
-              className="w-full sm:w-auto"
               data-testid="create-project-btn"
             >
               Create Project
-            </Button>
+            </PrimaryActionButton>
           </div>
         )}
       </div>

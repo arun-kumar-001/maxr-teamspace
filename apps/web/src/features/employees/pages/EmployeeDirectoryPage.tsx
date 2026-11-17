@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge, Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
+import { Badge, Button, ErrorState, ForbiddenState, Skeleton, KpiCard, PrimaryActionButton } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
@@ -145,23 +145,6 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconPlus({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
 
 function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -370,7 +353,7 @@ export function EmployeeDirectoryPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'department' | 'designation' | 'hierarchy'>(
     'all',
   );
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Workforce Calculated Metrics
@@ -548,197 +531,61 @@ export function EmployeeDirectoryPage() {
             variant="outline"
             size="sm"
             onClick={handleExportCSV}
-            className="min-h-[44px] px-3.5 bg-surface/90 hover:bg-surface border-border/80 shadow-xs text-xs font-semibold flex items-center gap-2"
+            className="min-h-[44px] px-3.5 bg-surface/90 hover:bg-surface border-border/80 shadow-xs text-xs font-semibold flex flex-row items-center gap-2 whitespace-nowrap shrink-0"
           >
-            <IconDownload className="w-4 h-4 text-text-muted" />
-            Export
+            <IconDownload className="w-4 h-4 text-text-muted shrink-0" />
+            <span>Export</span>
           </Button>
 
           {canCreateEmployee && (
-            <Button
+            <PrimaryActionButton
               type="button"
-              variant="primary"
               onClick={() => navigate('/employees/new')}
               data-testid="add-employee-button"
-              className="min-h-[44px] px-4 shadow-sm text-xs font-bold flex items-center gap-2 bg-primary-deep text-white hover:bg-primary-ink"
             >
-              <IconPlus className="w-4 h-4" />
               Add Employee
-            </Button>
+            </PrimaryActionButton>
           )}
         </div>
       </div>
 
       {/* 2. Workforce Summary Cards (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 dir-fade-in">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 dir-fade-in">
         {/* Card 1: Total Employees */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconUsers className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Total Employees</span>
-            </div>
-            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 shrink-0">
-              ↑ +6%
-            </span>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {totalEmployees}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Green */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-green" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10"
-                fill="none"
-                stroke="rgb(16, 185, 129)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,25 C30,22 50,28 80,18 C110,8 135,16 160,10 L160,30 L0,30 Z"
-                fill="url(#wave-green)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Total Employees"
+          value={totalEmployees}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge="↑ +6%"
+          variant="emerald"
+        />
 
         {/* Card 2: Active Employees */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconUserCheck className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Active Employees</span>
-            </div>
-            <span className="text-xs font-semibold text-text-muted">({activePercentage}%)</span>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {activeEmployees}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Teal */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-teal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(20, 184, 166)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(20, 184, 166)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14"
-                fill="none"
-                stroke="rgb(20, 184, 166)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,26 C35,26 55,16 90,20 C125,24 140,12 160,14 L160,30 L0,30 Z"
-                fill="url(#wave-teal)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Active Employees"
+          value={activeEmployees}
+          icon={<IconUserCheck className="w-7 h-7" />}
+          badge={`${activePercentage}% active`}
+          variant="teal"
+        />
 
         {/* Card 3: Inactive Employees */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconUserMinus className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Inactive Employees</span>
-            </div>
-            <span className="text-xs font-semibold text-text-muted">({inactivePercentage}%)</span>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {inactiveEmployees}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Coral */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-coral" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(249, 115, 22)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(249, 115, 22)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18"
-                fill="none"
-                stroke="rgb(249, 115, 22)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,28 C40,28 60,18 95,22 C130,26 145,15 160,18 L160,30 L0,30 Z"
-                fill="url(#wave-coral)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Inactive Employees"
+          value={inactiveEmployees}
+          icon={<IconUserMinus className="w-7 h-7" />}
+          badge={`${inactivePercentage}%`}
+          variant="amber"
+        />
 
         {/* Card 4: Departments */}
-        <div className="p-4 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg group">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-xs">
-                <IconNetwork className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-text-muted truncate">Departments</span>
-            </div>
-          </div>
-
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="font-display text-2xl sm:text-3xl font-extrabold text-text tracking-tight">
-              {departments.length || 6}
-            </span>
-          </div>
-
-          {/* SVG Wave Sparkline Purple */}
-          <div className="mt-2 -mx-1">
-            <svg className="w-full h-8 overflow-visible" viewBox="0 0 160 30" fill="none">
-              <defs>
-                <linearGradient id="wave-purple" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(168, 85, 247)" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10"
-                fill="none"
-                stroke="rgb(168, 85, 247)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M0,22 C30,12 60,26 90,14 C120,4 140,20 160,10 L160,30 L0,30 Z"
-                fill="url(#wave-purple)"
-              />
-            </svg>
-          </div>
-        </div>
+        <KpiCard
+          label="Departments"
+          value={departments.length || 6}
+          icon={<IconNetwork className="w-7 h-7" />}
+          badge="Active units"
+          variant="purple"
+        />
       </div>
 
       {/* 3. Directory Navigation Tabs */}
@@ -993,47 +840,28 @@ export function EmployeeDirectoryPage() {
         </div>
       )}
 
-      {/* 8. Desktop & Tablet Views (>=640px) */}
+      {/* 8. Desktop & Tablet Views (>=640px) matching Image 2 Template */}
       {!isLoading && employees.length > 0 && viewMode === 'grid' && (
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 dir-fade-in">
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 dir-fade-in">
           {employees.map((emp) => {
-            const avatarBg = getAvatarColors(`${emp.firstName} ${emp.lastName}`);
             const initials = `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
+            const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const percentages = [100, 82, 66, 100, 33, 48, 75, 90];
+            const progressPercent = emp.status === 'active' ? percentages[hash % percentages.length] ?? 82 : 33;
+            const activeSegments = progressPercent >= 100 ? 3 : progressPercent >= 66 ? 2 : 1;
             const isSelf = emp.id === user?.employeeId;
             const isDeactivated = emp.status === 'deactivated';
 
             return (
               <div
                 key={emp.id}
-                className="p-5 bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
+                className="p-5 bg-surface border border-border/80 rounded-card shadow-card hover:shadow-lg transition-all duration-200 flex flex-col justify-between relative group"
+                data-testid={`employee-grid-card-${emp.id}`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-11 h-11 rounded-full ${avatarBg} font-bold flex items-center justify-center shrink-0 text-sm`}
-                    >
-                      {initials}
-                    </div>
-                    <div className="min-w-0">
-                      <a
-                        href={`/employees/${emp.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate(`/employees/${emp.id}`);
-                        }}
-                        className="text-sm font-bold text-text hover:text-primary-deep hover:underline truncate block"
-                        data-testid={`employee-link-${emp.id}`}
-                      >
-                        {emp.firstName} {emp.lastName}
-                      </a>
-                      <span className="text-xs font-mono text-text-muted block truncate">
-                        {emp.employeeCode}
-                      </span>
-                    </div>
-                  </div>
-
+                {/* Top Bar: Status Badge + 3-Dots Quick Actions */}
+                <div className="flex items-center justify-between w-full mb-1">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0 ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                       emp.status === 'active'
                         ? 'bg-emerald-500/10 text-emerald-700'
                         : emp.status === 'pending'
@@ -1056,43 +884,13 @@ export function EmployeeDirectoryPage() {
                         ? 'Pending'
                         : 'Deactivated'}
                   </span>
-                </div>
 
-                <div className="my-3 py-2.5 border-t border-b border-border/60 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-muted">Department:</span>
-                    <span className="font-semibold text-text">
-                      {emp.department?.name || '\u2014'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-muted">Designation:</span>
-                    <span className="font-semibold text-text truncate max-w-[140px]">
-                      {emp.designation?.title || '\u2014'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-muted">Manager:</span>
-                    <span className="text-text truncate max-w-[140px]">
-                      {emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : '\u2014'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs text-text-muted">
-                    Joined:{' '}
-                    <span className="font-medium text-text">
-                      {formatJoiningDate(emp.joiningDate)}
-                    </span>
-                  </span>
-
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       aria-label="View Details"
                       onClick={() => navigate(`/employees/${emp.id}`)}
-                      className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors"
+                      className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
                     >
                       <IconEye className="w-4 h-4" />
                     </button>
@@ -1110,7 +908,7 @@ export function EmployeeDirectoryPage() {
                             size="sm"
                             onClick={() => setDeactivatingEmployee(emp)}
                             data-testid={`deactivate-btn-table-${emp.id}`}
-                            className="min-h-[36px] text-xs px-2.5 py-1"
+                            className="min-h-[32px] text-[11px] px-2 py-0.5 ml-1"
                           >
                             Deactivate
                           </Button>
@@ -1118,6 +916,92 @@ export function EmployeeDirectoryPage() {
                       </>
                     )}
                   </div>
+                </div>
+
+                {/* Centered Avatar with Status Indicator Ring (Image 2 Reference) */}
+                <div className="flex flex-col items-center text-center mt-2">
+                  <div className="relative">
+                    <div
+                      className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center border-2 border-primary-strong/20 shadow-xs overflow-hidden"
+                      aria-hidden="true"
+                    >
+                      {initials}
+                    </div>
+
+                    {/* Status Ring / Dot */}
+                    <span
+                      className={`absolute top-0 right-0 w-3.5 h-3.5 rounded-full ring-2 ring-surface ${
+                        emp.status === 'active'
+                          ? 'bg-emerald-500'
+                          : emp.status === 'pending'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Centered Name */}
+                  <a
+                    href={`/employees/${emp.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/employees/${emp.id}`);
+                    }}
+                    className="text-base font-bold font-display text-text hover:text-primary-deep hover:underline truncate max-w-[200px] mt-3 block"
+                    data-testid={`employee-link-${emp.id}`}
+                  >
+                    {emp.firstName} {emp.lastName}
+                  </a>
+
+                  {/* Centered Email */}
+                  <p className="text-xs text-text-muted truncate max-w-[220px] mt-0.5">
+                    {emp.email || '—'}
+                  </p>
+
+                  <span className="text-[11px] font-mono text-text-subtle mt-0.5">
+                    {emp.employeeCode}
+                  </span>
+
+                  {/* Centered Segmented Progress / Activity Bar (Image 2 Reference) */}
+                  <div className="flex items-center gap-2 mt-4 px-3 py-1 bg-surface-muted/50 rounded-full border border-border/50">
+                    <div className="w-3.5 h-3.5 rounded-full border border-primary-strong/60 flex items-center justify-center shrink-0">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary-strong" />
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={`h-1.5 w-6 rounded-full transition-colors ${
+                          activeSegments >= 1 ? 'bg-primary-deep' : 'bg-border-strong'
+                        }`}
+                      />
+                      <span
+                        className={`h-1.5 w-6 rounded-full transition-colors ${
+                          activeSegments >= 2 ? 'bg-primary-deep' : 'bg-border-strong'
+                        }`}
+                      />
+                      <span
+                        className={`h-1.5 w-6 rounded-full transition-colors ${
+                          activeSegments >= 3 ? 'bg-primary-deep' : 'bg-border-strong'
+                        }`}
+                      />
+                    </div>
+
+                    <span className="text-[11px] font-semibold text-text-muted ml-0.5">
+                      {progressPercent}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bottom Full-Width Strip: Uppercase Designation & Department (Image 2 Reference) */}
+                <div className="pt-3 mt-4 border-t border-border/70 text-center">
+                  <span className="text-[11px] font-bold tracking-widest text-text-subtle uppercase block truncate">
+                    {emp.designation?.title || 'STAFF'}
+                  </span>
+                  {emp.department?.name && (
+                    <span className="text-[11px] text-text-muted block truncate mt-0.5">
+                      {emp.department.name}
+                    </span>
+                  )}
                 </div>
               </div>
             );

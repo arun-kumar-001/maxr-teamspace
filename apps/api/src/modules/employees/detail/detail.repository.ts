@@ -97,15 +97,15 @@ const toDetail = (row: Row, withAccount: boolean): EmployeeDetail => ({
   permanentAddress: row.permanent_address,
   currentAddress: row.current_address,
   bloodGroup: row.blood_group,
-  panNumber: row.pan_number,
-  aadhaarNumber: row.aadhaar_number,
-  bankAccountHolder: row.bank_account_holder,
-  bankName: row.bank_name,
-  bankAccountNumber: row.bank_account_number,
-  bankIfscCode: row.bank_ifsc_code,
-  bankBranch: row.bank_branch,
   ...(withAccount
     ? {
+        panNumber: row.pan_number,
+        aadhaarNumber: row.aadhaar_number,
+        bankAccountHolder: row.bank_account_holder,
+        bankName: row.bank_name,
+        bankAccountNumber: row.bank_account_number,
+        bankIfscCode: row.bank_ifsc_code,
+        bankBranch: row.bank_branch,
         account: {
           userId: row.user_id,
           isActive: row.user_active ?? false,

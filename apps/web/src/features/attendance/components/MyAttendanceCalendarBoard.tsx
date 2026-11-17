@@ -110,15 +110,6 @@ const CATEGORY_STYLES: Record<
   },
 };
 
-const LEGEND_ITEMS: Array<{ label: string; dotColor: string }> = [
-  { label: 'Present (P)', dotColor: 'rgb(22, 163, 74)' },
-  { label: 'Absent (A)', dotColor: 'rgb(220, 38, 38)' },
-  { label: 'Late Check-in (L)', dotColor: 'rgb(217, 119, 6)' },
-  { label: 'Half Day (HD)', dotColor: 'rgb(37, 99, 235)' },
-  { label: 'Approved Leave (L)', dotColor: 'rgb(147, 51, 234)' },
-  { label: 'Holiday (H) / Weekly Off (WO)', dotColor: 'rgb(107, 114, 128)' },
-];
-
 function toDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -285,7 +276,6 @@ export function MyAttendanceCalendarBoard({
   const [selectedDateKey, setSelectedDateKey] = useState<string>(() => toDateKey(new Date()));
   const [calendarView, setCalendarView] = useState<CalendarViewMode>('week');
   const [popoverDateKey, setPopoverDateKey] = useState<string | null>(null);
-  const [categoriesOpen, setCategoriesOpen] = useState<boolean>(true);
 
   useEffect(() => {
     if (!popoverDateKey) return;
@@ -469,7 +459,6 @@ export function MyAttendanceCalendarBoard({
     }
   };
 
-  const miniMonthTitle = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const mainMonthTitle = `${viewDate.toLocaleDateString('en-US', { month: 'long' })}, ${viewDate.getFullYear()}`;
 
   const kpiCards = [
@@ -518,198 +507,9 @@ export function MyAttendanceCalendarBoard({
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[268px_minmax(0,1fr)] gap-5 items-start">
-      {/* Left Content Panel */}
-      <aside className="space-y-4">
-        {/* Mini Monthly Calendar */}
-        <div
-          className="p-4 rounded-2xl border bg-white"
-          style={{ borderColor: 'rgb(229, 231, 235)' }}
-          data-testid="mini-attendance-calendar"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              {miniMonthTitle}
-            </h2>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-label="Previous month"
-                onClick={() => {
-                  const prev = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
-                  setViewDate(prev);
-                }}
-                className="w-7 h-7 rounded-lg border flex items-center justify-center text-xs hover:bg-gray-50 cursor-pointer"
-                style={{ borderColor: 'rgb(229, 231, 235)', color: 'rgb(8, 11, 12)' }}
-              >
-                &lsaquo;
-              </button>
-              <button
-                type="button"
-                aria-label="Next month"
-                onClick={() => {
-                  const next = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
-                  setViewDate(next);
-                }}
-                className="w-7 h-7 rounded-lg border flex items-center justify-center text-xs hover:bg-gray-50 cursor-pointer"
-                style={{ borderColor: 'rgb(229, 231, 235)', color: 'rgb(8, 11, 12)' }}
-              >
-                &rsaquo;
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-gray-500 mb-1.5">
-            {WEEKDAYS.map((w) => (
-              <div key={w}>{w}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {miniMonthCells.map((d, idx) => {
-              if (!d) return <div key={`empty-${idx}`} className="h-8" />;
-              const key = toDateKey(d);
-              const isSelected = key === selectedDateKey;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleSelectDay(d, true)}
-                  className="h-8 w-8 mx-auto rounded-full text-xs font-medium flex items-center justify-center transition-colors cursor-pointer"
-                  style={
-                    isSelected
-                      ? {
-                          backgroundColor: 'rgb(85, 205, 179)',
-                          color: 'rgb(8, 11, 12)',
-                          fontWeight: 700,
-                        }
-                      : { color: 'rgb(8, 11, 12)' }
-                  }
-                >
-                  {d.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Monthly Summary Card */}
-        <div
-          className="p-4 rounded-2xl border bg-white space-y-3"
-          style={{ borderColor: 'rgb(229, 231, 235)' }}
-          data-testid="monthly-summary-card"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              Monthly Summary
-            </h2>
-            <svg
-              className="w-4 h-4 text-gray-500"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <path d="M3 3v18h18M8 16v-5M13 16V7M18 16v-3" strokeLinecap="round" />
-            </svg>
-          </div>
-
-          <div className="space-y-2 text-xs sm:text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Working Days</span>
-              <span className="font-bold tabular-nums" style={{ color: 'rgb(8, 11, 12)' }}>
-                {monthStats.workingDays}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Present Days</span>
-              <span className="font-bold tabular-nums" style={{ color: 'rgb(22, 163, 74)' }}>
-                {monthStats.presentDays}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Absent Days</span>
-              <span className="font-bold tabular-nums" style={{ color: 'rgb(220, 38, 38)' }}>
-                {monthStats.absentDays}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Late Arrivals</span>
-              <span className="font-bold tabular-nums" style={{ color: 'rgb(217, 119, 6)' }}>
-                {monthStats.lateArrivals}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">Leave Days</span>
-              <span className="font-bold tabular-nums" style={{ color: 'rgb(147, 51, 234)' }}>
-                {monthStats.leaveDays}
-              </span>
-            </div>
-          </div>
-
-          <div
-            className="p-3 rounded-xl flex items-center justify-between"
-            style={{ backgroundColor: 'rgb(240, 253, 250)' }}
-          >
-            <div>
-              <p className="text-xs font-medium text-gray-600">Attendance %</p>
-              <p
-                className="text-lg font-bold font-display tabular-nums"
-                style={{ color: 'rgb(15, 118, 110)' }}
-              >
-                {monthStats.pctText}
-              </p>
-            </div>
-            <CircularProgressRing percentage={monthStats.pct} />
-          </div>
-        </div>
-
-        {/* Attendance Categories Legend */}
-        <div
-          className="p-4 rounded-2xl border bg-white"
-          style={{ borderColor: 'rgb(229, 231, 235)' }}
-          data-testid="attendance-categories-legend"
-        >
-          <button
-            type="button"
-            onClick={() => setCategoriesOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between text-left cursor-pointer"
-            aria-expanded={categoriesOpen}
-          >
-            <span className="text-sm font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              Attendance Categories
-            </span>
-            <svg
-              className={`w-4 h-4 text-gray-500 transition-transform ${
-                categoriesOpen ? 'rotate-180' : ''
-              }`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          {categoriesOpen && (
-            <ul className="mt-3 space-y-2">
-              {LEGEND_ITEMS.map((item) => (
-                <li key={item.label} className="flex items-center gap-2.5 text-xs text-gray-700">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: item.dotColor }}
-                  />
-                  <span>{item.label}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </aside>
-
-      {/* Right Main Attendance Calendar */}
-      <div className="min-w-0 space-y-4 relative">
+    <div className="w-full space-y-5">
+      {/* Main Attendance Calendar (Expanded Full-Width) */}
+      <div className="w-full space-y-4 relative">
         {/* Calendar Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2

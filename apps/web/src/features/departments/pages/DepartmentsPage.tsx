@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { Button } from '../../../components/ui/Button';
+import { Button, PrimaryActionButton } from '../../../components/ui';
 import { DataTable, type Column, type SortDirection } from '../../../components/ui/DataTable';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -20,7 +20,7 @@ import { DepartmentModal } from '../components/DepartmentModal';
 import { useDepartments } from '../hooks/useDepartments';
 import type { Department } from '../types';
 
-type DeptViewMode = 'all' | 'cards' | 'table';
+type DeptViewMode = 'cards' | 'table';
 
 export function DepartmentsPage() {
   const { role } = useAuth();
@@ -29,7 +29,7 @@ export function DepartmentsPage() {
   const canEdit = role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   const canDeactivate = role === ROLES.ADMIN;
 
-  const [viewMode, setViewMode] = useState<DeptViewMode>('all');
+  const [viewMode, setViewMode] = useState<DeptViewMode>('cards');
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
 
@@ -244,16 +244,17 @@ export function DepartmentsPage() {
             </Button>
           )}
 
-          {canDeactivate && row.isActive && (
+          {canDeactivate && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => openDeactivate(row)}
-              className="min-h-[44px] min-w-[44px] text-xs font-medium text-danger hover:bg-rose-50"
+              className="min-h-[44px] min-w-[44px] text-xs font-semibold text-danger hover:bg-rose-50"
               data-testid={`table-deactivate-dept-${row.id}`}
+              aria-label={`Deactivate or delete department ${row.name}`}
             >
-              Deactivate
+              Delete
             </Button>
           )}
         </div>
@@ -301,7 +302,6 @@ export function DepartmentsPage() {
           >
             {(
               [
-                { id: 'all', label: 'All' },
                 { id: 'cards', label: 'Cards' },
                 { id: 'table', label: 'Table' },
               ] as const
@@ -310,7 +310,7 @@ export function DepartmentsPage() {
                 key={opt.id}
                 type="button"
                 onClick={() => setViewMode(opt.id)}
-                className={`px-2.5 py-1 rounded-input text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-input text-xs font-semibold transition-all cursor-pointer ${
                   viewMode === opt.id
                     ? 'bg-surface text-text shadow-sm'
                     : 'text-text-muted hover:text-text'
@@ -322,15 +322,13 @@ export function DepartmentsPage() {
           </div>
 
           {canCreate && (
-            <Button
+            <PrimaryActionButton
               type="button"
-              variant="primary"
               onClick={openCreate}
-              className="min-h-[44px] text-xs sm:text-sm font-semibold shrink-0"
               data-testid="add-department-btn"
             >
               Add Department
-            </Button>
+            </PrimaryActionButton>
           )}
         </div>
       </div>

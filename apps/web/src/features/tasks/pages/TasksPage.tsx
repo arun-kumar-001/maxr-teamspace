@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
@@ -14,9 +14,10 @@ import type { CreateTaskInput, Task, TaskStatus, UpdateTaskInput } from '../type
 
 export interface TasksPageProps {
   initialScope?: 'mine' | 'team';
+  initialViewMode?: 'board' | 'list' | 'assigned';
 }
 
-export function TasksPage({ initialScope }: TasksPageProps) {
+export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
   const { user, role } = useAuth();
   const effectiveRole = role ?? user?.role;
   const isAdmin = effectiveRole === ROLES.ADMIN;
@@ -25,12 +26,29 @@ export function TasksPage({ initialScope }: TasksPageProps) {
 
   const defaultScope = initialScope ?? (canManage ? 'team' : 'mine');
 
-  const [viewMode, setViewMode] = useState<'board' | 'list' | 'assigned'>('board');
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'assigned'>(
+    initialViewMode ?? 'board',
+  );
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | undefined>(undefined);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  // Redirect legacy query parameters to their dedicated standalone routes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tab = searchParams.get('tab');
+      if (tab === 'checklist') {
+        const isStaff = window.location.pathname.startsWith('/staff');
+        window.location.replace(isStaff ? '/staff/checklist' : '/checklist');
+      } else if (tab === 'todo' || tab === 'todos') {
+        const isStaff = window.location.pathname.startsWith('/staff');
+        window.location.replace(isStaff ? '/staff/todos' : '/todos');
+      }
+    }
+  }, []);
 
   const {
     tasks,

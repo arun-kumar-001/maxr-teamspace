@@ -22,7 +22,6 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(adminPaths).toContain('/admin/users');
     expect(adminPaths).toContain('/admin/employees');
     expect(adminPaths).toContain('/admin/departments');
-    expect(adminPaths).toContain('/admin/designations');
     expect(adminPaths).toContain('/admin/audit');
     expect(adminPaths).toContain('/admin/settings');
     expect(adminPaths).toContain('/profile');
@@ -43,7 +42,6 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
     expect(hrPaths).toContain('/dashboard');
     expect(hrPaths).toContain('/hr/employees');
     expect(hrPaths).toContain('/hr/departments');
-    expect(hrPaths).toContain('/hr/designations');
     expect(hrPaths).toContain('/hr/lifecycle');
     expect(hrPaths).toContain('/hr/policies');
     expect(hrPaths).toContain('/hr/reports');
@@ -166,10 +164,8 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/admin/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/deactivate', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/admin/departments', ROLES.ADMIN)).toBe(true);
-      expect(isPathAuthorizedForRole('/admin/designations', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/employees', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/hr/departments', ROLES.HR_MANAGER)).toBe(true);
-      expect(isPathAuthorizedForRole('/hr/designations', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/lead/team', ROLES.TEAM_LEAD)).toBe(true);
       expect(isPathAuthorizedForRole('/lead/approvals', ROLES.TEAM_LEAD)).toBe(true);
       expect(isPathAuthorizedForRole('/staff/payslips', ROLES.STAFF)).toBe(true);
@@ -178,8 +174,6 @@ describe('TC-12-02: Role-Based Navigation Registry & Route Isolation', () => {
       expect(isPathAuthorizedForRole('/employees', ROLES.TEAM_LEAD)).toBe(true);
       expect(isPathAuthorizedForRole('/departments', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/departments', ROLES.HR_MANAGER)).toBe(true);
-      expect(isPathAuthorizedForRole('/designations', ROLES.ADMIN)).toBe(true);
-      expect(isPathAuthorizedForRole('/designations', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.ADMIN)).toBe(true);
       expect(isPathAuthorizedForRole('/employees/emp-1/documents', ROLES.HR_MANAGER)).toBe(true);
       expect(isPathAuthorizedForRole('/staff/documents', ROLES.STAFF)).toBe(true);

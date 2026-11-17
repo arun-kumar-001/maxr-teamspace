@@ -38,10 +38,10 @@ export function DepartmentDeactivateDialog({
         variant="primary"
         onClick={onConfirm}
         disabled={isDeactivating}
-        className="min-h-[44px] bg-danger hover:bg-rose-700 text-white"
+        className="min-h-[44px] bg-danger hover:bg-rose-700 text-white font-semibold"
         data-testid="department-deactivate-confirm"
       >
-        {isDeactivating ? 'Deactivating...' : 'Confirm Deactivation'}
+        {isDeactivating ? 'Deleting...' : 'Delete Department'}
       </Button>
     </>
   );
@@ -50,7 +50,7 @@ export function DepartmentDeactivateDialog({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Deactivate Department"
+      title="Delete Department"
       maxWidth="md"
       footer={footer}
     >
@@ -66,7 +66,7 @@ export function DepartmentDeactivateDialog({
         )}
 
         <p className="text-xs sm:text-sm text-text leading-relaxed">
-          Are you sure you want to deactivate{' '}
+          Are you sure you want to delete{' '}
           <strong className="text-text font-semibold">{department.name}</strong> (
           <span className="font-mono">{department.code}</span>)?
         </p>
@@ -74,8 +74,8 @@ export function DepartmentDeactivateDialog({
         <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-card">
           <p className="font-semibold mb-1">Important System Rule:</p>
           <p>
-            Departments with active designations or employees cannot be deactivated. You must
-            reassign or deactivate all associated records first.
+            Departments with active designations or employees cannot be deleted. You must
+            reassign or delete all associated records first.
           </p>
         </div>
       </div>
