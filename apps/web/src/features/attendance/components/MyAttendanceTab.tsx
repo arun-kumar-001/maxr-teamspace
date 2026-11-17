@@ -242,27 +242,9 @@ export function MyAttendanceTab({
       {/* Month selector + Existing Attendance Records & Corrections Table */}
       <div className="p-3 sm:p-4 rounded-card border border-border/80 space-y-3 bg-white shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border/80">
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="attendance-month-filter"
-              className="text-xs font-semibold text-text-muted"
-            >
-              Month Filter:
-            </label>
-            <select
-              id="attendance-month-filter"
-              value={selectedMonth}
-              onChange={(e) => handleMonthChange(e.target.value)}
-              className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-border/80 bg-white text-text min-h-[38px] shadow-xs"
-              data-testid="attendance-month-filter"
-            >
-              {monthOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <span className="text-xs font-semibold text-text">
+            Attendance Records &amp; History
+          </span>
           <span className="text-xs text-text-muted">
             Showing {records.length} of {meta.total} attendance record(s)
           </span>

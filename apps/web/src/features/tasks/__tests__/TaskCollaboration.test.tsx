@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { TaskCommentsThread } from '../components/TaskCommentsThread';
 import { TaskAttachmentsList } from '../components/TaskAttachmentsList';
 import { TaskDetailModal } from '../components/TaskDetailModal';
@@ -94,6 +95,10 @@ describe('Task Collaboration (Issue #44 - Comments and Attachments)', () => {
       meta: { page: 1, pageSize: 100, total: 2 },
     });
     vi.mocked(tasksApi.fetchTaskAttachments).mockResolvedValue(mockAttachments);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('TaskCommentsThread', () => {

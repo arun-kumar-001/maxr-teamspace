@@ -177,15 +177,13 @@ export function TimeTrackerCard({
   };
 
   const handlePausePlay = async () => {
-    if (busy) return;
+    // Cannot start timer without official active check-in
+    if (busy || !isCheckedIn) return;
     const nextRunning = !timeTrackerRunning;
     setTimeTrackerRunning(nextRunning);
     setBusy(true);
     try {
-      if (nextRunning && !isCheckedIn) {
-        await checkIn({ notes: 'Resumed work' });
-        setIsCheckedIn(true);
-      } else if (!nextRunning && isCheckedIn) {
+      if (!nextRunning && isCheckedIn) {
         await checkOut({ notes: 'Break' });
         setIsCheckedIn(false);
       }
@@ -293,15 +291,27 @@ export function TimeTrackerCard({
       <button
         type="button"
         onClick={() => void handlePausePlay()}
-        disabled={busy}
-        className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:scale-105 active:scale-95 disabled:opacity-70"
+        disabled={busy || !isCheckedIn}
+        className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         style={{
           backgroundColor: !timeTrackerRunning ? 'rgb(73, 53, 72)' : 'rgb(244, 247, 246)',
           color: !timeTrackerRunning ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
           border: '1px solid rgba(8, 11, 12, 0.12)',
         }}
-        aria-label={timeTrackerRunning ? 'Pause work time' : 'Play work time'}
-        title={timeTrackerRunning ? 'Pause work time' : 'Play work time'}
+        aria-label={
+          !isCheckedIn
+            ? 'Check in first to enable timer'
+            : timeTrackerRunning
+              ? 'Pause work time'
+              : 'Resume work time'
+        }
+        title={
+          !isCheckedIn
+            ? 'Check in first to enable timer'
+            : timeTrackerRunning
+              ? 'Pause work time'
+              : 'Resume work time'
+        }
       >
         <span>{timeTrackerRunning ? '❚❚' : '▷'}</span>
       </button>

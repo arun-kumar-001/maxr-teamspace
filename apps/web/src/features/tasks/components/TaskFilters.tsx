@@ -148,7 +148,7 @@ export function TaskFilters({
       </div>
 
       {/* Filter Row: Search + Assignee Pills + Priority/Status/Overdue */}
-      {viewMode !== 'assigned' && (
+      {viewMode !== 'assigned' && viewMode !== 'checklist' && (
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 flex-wrap">
             <div className="w-full sm:w-64">
