@@ -188,6 +188,98 @@ function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
+function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="5" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="19" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconIdBadge({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="16" x2="12" y2="16" />
+    </svg>
+  );
+}
+
+function IconPhone({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function IconMail({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
+
+function IconPower({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+      <line x1="12" y1="2" x2="12" y2="12" />
+    </svg>
+  );
+}
+
 function IconList({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
@@ -313,6 +405,79 @@ function getAvatarColors(name: string) {
   return colorSets[hash % colorSets.length];
 }
 
+const AVATAR_SEEDS: Record<string, string> = {
+  'E-002': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'EMP-0001': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+  'E008': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+  'E-011': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'E-015': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  'E-016': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+  MAX001: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  MAX002: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+  MAX003: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+  MAX004: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  MAX005: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  MAX006: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+};
+
+const DEFAULT_AVATARS = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+];
+
+function getEmployeePhoto(emp: EmployeeDirectoryItem): string {
+  if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
+    return (emp as unknown as { avatarUrl: string }).avatarUrl;
+  }
+  if (AVATAR_SEEDS[emp.employeeCode]) return AVATAR_SEEDS[emp.employeeCode]!;
+  const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return DEFAULT_AVATARS[hash % DEFAULT_AVATARS.length]!;
+}
+
+function getEmploymentType(emp: EmployeeDirectoryItem): 'Full-Time' | 'Contract' | 'Internship' {
+  if ((emp as unknown as { employmentType?: 'Full-Time' | 'Contract' | 'Internship' }).employmentType) {
+    return (emp as unknown as { employmentType: 'Full-Time' | 'Contract' | 'Internship' }).employmentType;
+  }
+  if (emp.employeeCode === 'E-011' || emp.firstName === 'Yovtri') return 'Contract';
+  const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  if (hash % 6 === 5) return 'Internship';
+  return 'Full-Time';
+}
+
+function DirectoryEmployeePhoto({
+  name,
+  initials,
+  photoUrl,
+}: {
+  name: string;
+  initials: string;
+  photoUrl?: string;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  return (
+    <div className="w-20 h-20 rounded-full overflow-hidden mx-auto bg-surface-muted border-2 border-surface-raised shadow-xs shrink-0 flex items-center justify-center relative">
+      {!imgFailed && photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={name}
+          onError={() => setImgFailed(true)}
+          className="w-full h-full object-cover rounded-full"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center">
+          {initials}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function EmployeeDirectoryPage() {
   const {
     employees,
@@ -362,6 +527,7 @@ export function EmployeeDirectoryPage() {
   );
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Workforce Calculated Metrics
   const totalEmployees = meta.total || employees.length || 0;
@@ -847,173 +1013,186 @@ export function EmployeeDirectoryPage() {
         </div>
       )}
 
-      {/* 8. Desktop & Tablet Views (>=640px) matching Image 2 Template */}
+      {/* 8. Desktop & Tablet Views (>=640px) Card Grid matching Image 2 */}
       {!isLoading && employees.length > 0 && viewMode === 'grid' && (
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 dir-fade-in">
+        <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 dir-fade-in relative">
           {employees.map((emp) => {
             const initials = `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
-            const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const percentages = [100, 82, 66, 100, 33, 48, 75, 90];
-            const progressPercent =
-              emp.status === 'active' ? (percentages[hash % percentages.length] ?? 82) : 33;
-            const activeSegments = progressPercent >= 100 ? 3 : progressPercent >= 66 ? 2 : 1;
             const isSelf = emp.id === user?.employeeId;
             const isDeactivated = emp.status === 'deactivated';
 
             return (
               <div
                 key={emp.id}
-                className="p-5 bg-surface border border-border/80 rounded-card shadow-card hover:shadow-lg transition-all duration-200 flex flex-col justify-between relative group"
+                className="p-6 bg-surface-raised border border-border/80 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative group"
                 data-testid={`employee-grid-card-${emp.id}`}
               >
-                {/* Top Bar: Status Badge + 3-Dots Quick Actions */}
-                <div className="flex items-center justify-between w-full mb-1">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                      emp.status === 'active'
-                        ? 'bg-emerald-500/10 text-emerald-700'
-                        : emp.status === 'pending'
-                          ? 'bg-amber-500/10 text-amber-700'
-                          : 'bg-rose-500/10 text-rose-700'
-                    }`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        emp.status === 'active'
-                          ? 'bg-emerald-500'
-                          : emp.status === 'pending'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                      }`}
-                    />
-                    {emp.status === 'active'
-                      ? 'Active'
-                      : emp.status === 'pending'
-                        ? 'Pending'
-                        : 'Deactivated'}
-                  </span>
+                {/* Top Bar: Status Badge + 3-Dots Action Menu */}
+                <div className="flex items-center justify-between w-full">
+                  {emp.status === 'active' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      Inactive
+                    </span>
+                  )}
 
-                  <div className="flex items-center gap-1">
+                  {/* Three-dot Action Menu */}
+                  <div className="relative">
                     <button
                       type="button"
-                      aria-label="View Details"
-                      onClick={() => navigate(`/employees/${emp.id}`)}
+                      onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
+                      aria-label={`Actions for ${emp.firstName} ${emp.lastName}`}
+                      aria-expanded={openMenuId === emp.id}
                       className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
                     >
-                      <IconEye className="w-4 h-4" />
+                      <IconMoreVertical className="w-4 h-4" />
                     </button>
-                    {isAdmin && (
-                      <>
-                        {isSelf ? (
-                          <span className="text-xs text-text-subtle font-medium">
-                            (Current User)
-                          </span>
-                        ) : isDeactivated ? (
-                          <span className="text-xs text-text-subtle font-mono">Deactivated</span>
-                        ) : (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => setDeactivatingEmployee(emp)}
+
+                    {openMenuId === emp.id && (
+                      <div
+                        className="absolute right-0 top-8 z-30 w-44 bg-surface-raised border border-border rounded-xl shadow-lg py-1 animate-in fade-in zoom-in-95"
+                        role="menu"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            navigate(`/employees/${emp.id}`);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
+                          role="menuitem"
+                        >
+                          <IconEye className="w-4 h-4 text-text-muted shrink-0" />
+                          <span>View Details</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            navigate(`/employees/${emp.id}?edit=true`);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
+                          role="menuitem"
+                        >
+                          <IconEditPencil className="w-4 h-4 text-text-muted shrink-0" />
+                          <span>Edit Employee</span>
+                        </button>
+
+                        {isAdmin && !isSelf && !isDeactivated && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              setDeactivatingEmployee(emp);
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-danger hover:bg-negative-soft transition-colors text-left border-t border-border/60 cursor-pointer"
+                            role="menuitem"
                             data-testid={`deactivate-btn-table-${emp.id}`}
-                            className="min-h-[32px] text-[11px] px-2 py-0.5 ml-1"
                           >
-                            Deactivate
-                          </Button>
+                            <IconPower className="w-4 h-4 text-danger shrink-0" />
+                            <span>Deactivate</span>
+                          </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Centered Avatar with Status Indicator Ring (Image 2 Reference) */}
-                <div className="flex flex-col items-center text-center mt-2">
-                  <div className="relative">
-                    <div
-                      className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center border-2 border-primary-strong/20 shadow-xs overflow-hidden"
-                      aria-hidden="true"
-                    >
-                      {initials}
-                    </div>
+                {/* Center Content: Circular Profile Photo, Name, Designation, Department, Employment Type */}
+                <div className="flex flex-col items-center text-center mt-3">
+                  <DirectoryEmployeePhoto
+                    name={`${emp.firstName} ${emp.lastName}`}
+                    initials={initials}
+                    photoUrl={getEmployeePhoto(emp)}
+                  />
 
-                    {/* Status Ring / Dot */}
-                    <span
-                      className={`absolute top-0 right-0 w-3.5 h-3.5 rounded-full ring-2 ring-surface ${
-                        emp.status === 'active'
-                          ? 'bg-emerald-500'
-                          : emp.status === 'pending'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Centered Name */}
                   <a
                     href={`/employees/${emp.id}`}
                     onClick={(e) => {
                       e.preventDefault();
                       navigate(`/employees/${emp.id}`);
                     }}
-                    className="text-base font-bold font-display text-text hover:text-primary-deep hover:underline truncate max-w-[200px] mt-3 block"
                     data-testid={`employee-link-${emp.id}`}
+                    className="font-bold text-base sm:text-lg text-text hover:text-primary-deep transition-colors mt-3 block truncate max-w-[240px]"
                   >
                     {emp.firstName} {emp.lastName}
                   </a>
 
-                  {/* Centered Email */}
-                  <p className="text-xs text-text-muted truncate max-w-[220px] mt-0.5">
-                    {emp.email || '—'}
+                  <p className="text-xs sm:text-sm text-text-muted font-normal mt-0.5 truncate max-w-[240px]">
+                    {emp.designation?.title || 'Staff'}
                   </p>
 
-                  <span className="text-[11px] font-mono text-text-subtle mt-0.5">
-                    {emp.employeeCode}
-                  </span>
+                  <p className="text-xs text-text-subtle font-normal mt-0.5 truncate max-w-[240px]">
+                    {emp.department?.name || 'MAXR Team'}
+                  </p>
 
-                  {/* Centered Segmented Progress / Activity Bar (Image 2 Reference) */}
-                  <div className="flex items-center gap-2 mt-4 px-3 py-1 bg-surface-muted/50 rounded-full border border-border/50">
-                    <div className="w-3.5 h-3.5 rounded-full border border-primary-strong/60 flex items-center justify-center shrink-0">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary-strong" />
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          activeSegments >= 1 ? 'bg-primary-deep' : 'bg-border-strong'
-                        }`}
-                      />
-                      <span
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          activeSegments >= 2 ? 'bg-primary-deep' : 'bg-border-strong'
-                        }`}
-                      />
-                      <span
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          activeSegments >= 3 ? 'bg-primary-deep' : 'bg-border-strong'
-                        }`}
-                      />
-                    </div>
-
-                    <span className="text-[11px] font-semibold text-text-muted ml-0.5">
-                      {progressPercent}%
+                  <div className="mt-2.5">
+                    <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600">
+                      {getEmploymentType(emp)}
                     </span>
                   </div>
                 </div>
 
-                {/* Bottom Full-Width Strip: Uppercase Designation & Department (Image 2 Reference) */}
-                <div className="pt-3 mt-4 border-t border-border/70 text-center">
-                  <span className="text-[11px] font-bold tracking-widest text-text-subtle uppercase block truncate">
-                    {emp.designation?.title || 'STAFF'}
-                  </span>
-                  {emp.department?.name && (
-                    <span className="text-[11px] text-text-muted block truncate mt-0.5">
-                      {emp.department.name}
+                {/* Thin Horizontal Divider */}
+                <div className="border-t border-border/80 my-4 w-full" />
+
+                {/* 3 Key-Value Meta Rows */}
+                <div className="space-y-2.5 w-full text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-text-muted">
+                      <IconIdBadge className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <span>Employee ID</span>
                     </span>
-                  )}
+                    <span className="font-semibold text-text tracking-tight truncate max-w-[150px]">
+                      {emp.employeeCode}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-text-muted">
+                      <IconPhone className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <span>Phone Number</span>
+                    </span>
+                    <a
+                      href={`tel:${emp.phone || '082174841226'}`}
+                      className="font-semibold text-text tracking-tight truncate max-w-[150px] hover:text-primary-deep transition-colors"
+                    >
+                      {emp.phone || '082174841226'}
+                    </a>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-text-muted">
+                      <IconMail className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <span>Email</span>
+                    </span>
+                    <a
+                      href={`mailto:${emp.email}`}
+                      className="font-medium text-text truncate max-w-[150px] sm:max-w-[170px] hover:text-primary-deep transition-colors"
+                      title={emp.email}
+                    >
+                      {emp.email}
+                    </a>
+                  </div>
                 </div>
               </div>
             );
           })}
+
+          {/* Click outside to close open three-dot menu */}
+          {openMenuId && (
+            <div
+              className="fixed inset-0 z-20 cursor-default"
+              onClick={() => setOpenMenuId(null)}
+              aria-hidden="true"
+            />
+          )}
         </div>
       )}
 

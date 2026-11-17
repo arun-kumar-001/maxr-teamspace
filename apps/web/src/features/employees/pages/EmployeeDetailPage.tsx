@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import {
   Badge,
@@ -67,6 +67,7 @@ function BankAccountDetailsSection({ employee }: { employee: EmployeeDetail }) {
 export function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { role, user } = useAuth();
 
   const { employee, isLoading, isSaving, error, isNotFound, isForbidden, refetch, updateEmployee } =
@@ -85,6 +86,12 @@ export function EmployeeDetailPage() {
   const canEdit = (isAdmin || isHR) && employee?.status !== 'deactivated';
   const canDeactivate =
     isAdmin && employee?.status !== 'deactivated' && employee?.id !== user?.employeeId;
+
+  useEffect(() => {
+    if (searchParams.get('edit') === 'true' && canEdit) {
+      setIsEditOpen(true);
+    }
+  }, [searchParams, canEdit]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
