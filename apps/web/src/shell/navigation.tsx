@@ -216,34 +216,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'file-text',
     allowedRoles: [ROLES.STAFF],
   },
-  {
-    id: 'staff-checklist',
-    label: 'Daily Checklist',
-    path: '/staff/checklist',
-    iconName: 'check',
-    allowedRoles: [ROLES.STAFF],
-  },
-  {
-    id: 'staff-todos',
-    label: 'To-Do List',
-    path: '/staff/todos',
-    iconName: 'file-text',
-    allowedRoles: [ROLES.STAFF],
-  },
-  {
-    id: 'checklist',
-    label: 'Daily Checklist',
-    path: '/checklist',
-    iconName: 'check',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
-  },
-  {
-    id: 'todos',
-    label: 'To-Do List',
-    path: '/todos',
-    iconName: 'file-text',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
-  },
 ] as const;
 
 export function isPayslipEnabledForStaff(): boolean {
@@ -286,6 +258,19 @@ export function getNavItemsForRole(role: Role): NavItem[] {
  * Checks whether a given path is authorized for the given role.
  */
 export function isPathAuthorizedForRole(path: string, role: Role): boolean {
+  if (
+    path === '/checklist' ||
+    path.startsWith('/checklist/') ||
+    path === '/staff/checklist' ||
+    path.startsWith('/staff/checklist/') ||
+    path === '/todos' ||
+    path.startsWith('/todos/') ||
+    path === '/staff/todos' ||
+    path.startsWith('/staff/todos/')
+  ) {
+    return false;
+  }
+
   // Common paths allowed for all authenticated users
   if (
     path === '/' ||
@@ -390,26 +375,6 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.TEAM_LEAD || role === ROLES.ADMIN;
   }
   if (path === '/staff/tasks' || path.startsWith('/staff/tasks')) {
-    return true;
-  }
-
-  // Daily Checklist routes (standalone feature page)
-  if (
-    path === '/checklist' ||
-    path.startsWith('/checklist/') ||
-    path === '/staff/checklist' ||
-    path.startsWith('/staff/checklist/')
-  ) {
-    return true;
-  }
-
-  // Personal To-Do List routes (standalone feature page)
-  if (
-    path === '/todos' ||
-    path.startsWith('/todos/') ||
-    path === '/staff/todos' ||
-    path.startsWith('/staff/todos/')
-  ) {
     return true;
   }
 
@@ -664,8 +629,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="check" />,
           children: [
             { id: '/tasks', label: 'Tasks', href: '/tasks' },
-            { id: '/checklist', label: 'Daily Checklist', href: '/checklist' },
-            { id: '/todos', label: 'To-Do List', href: '/todos' },
             { id: '/projects', label: 'Projects', href: '/projects' },
           ],
         },
@@ -806,8 +769,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="check" />,
           children: [
             { id: '/tasks', label: 'Tasks', href: '/tasks' },
-            { id: '/checklist', label: 'Daily Checklist', href: '/checklist' },
-            { id: '/todos', label: 'To-Do List', href: '/todos' },
             { id: '/projects', label: 'Projects', href: '/projects' },
           ],
         },
@@ -915,8 +876,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="check" />,
           children: [
             { id: '/lead/tasks', label: 'Team Tasks', href: '/lead/tasks' },
-            { id: '/checklist', label: 'Daily Checklist', href: '/checklist' },
-            { id: '/todos', label: 'To-Do List', href: '/todos' },
           ],
         },
         {
@@ -986,18 +945,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         label: 'My Tasks',
         href: '/staff/tasks',
         icon: <NavSvgIcon name="check" />,
-      },
-      {
-        id: '/staff/checklist',
-        label: 'Daily Checklist',
-        href: '/staff/checklist',
-        icon: <NavSvgIcon name="check" />,
-      },
-      {
-        id: '/staff/todos',
-        label: 'To-Do List',
-        href: '/staff/todos',
-        icon: <NavSvgIcon name="file-text" />,
       },
     ];
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
@@ -34,21 +34,6 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  // Redirect legacy query parameters to their dedicated standalone routes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const tab = searchParams.get('tab');
-      if (tab === 'checklist') {
-        const isStaff = window.location.pathname.startsWith('/staff');
-        window.location.replace(isStaff ? '/staff/checklist' : '/checklist');
-      } else if (tab === 'todo' || tab === 'todos') {
-        const isStaff = window.location.pathname.startsWith('/staff');
-        window.location.replace(isStaff ? '/staff/todos' : '/todos');
-      }
-    }
-  }, []);
 
   const {
     tasks,
