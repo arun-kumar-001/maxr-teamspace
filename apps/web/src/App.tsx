@@ -40,7 +40,6 @@ import { ProjectsListPage, ProjectDetailPage } from './features/projects';
 import { TasksPage } from './features/tasks';
 import { DailyChecklistPage } from './features/tasks/pages/DailyChecklistPage';
 import { CompanySettingsPage } from './features/settings';
-import { ExpensesPage } from './features/expenses';
 import { PayslipsPage } from './features/payslips';
 import { ReportsPage } from './features/reports';
 
@@ -445,11 +444,7 @@ function AppRoutes() {
       />
       <Route
         path="/attendance/check-in-out"
-        element={
-          <ShellLayout>
-            <AttendancePage initialTab="check-in-out" />
-          </ShellLayout>
-        }
+        element={<Navigate to="/attendance" replace />}
       />
       <Route
         path="/staff/attendance"
@@ -606,29 +601,24 @@ function AppRoutes() {
       <Route path="/lead/meetings" element={<Navigate to="/dashboard" replace />} />
       <Route path="/admin/meetings" element={<Navigate to="/dashboard" replace />} />
 
-      {/* Expenses Routes (Issue #29) */}
-      <Route
-        path="/expenses"
-        element={
-          <ShellLayout>
-            <ExpensesPage />
-          </ShellLayout>
-        }
-      />
+      {/* Expenses Routes (Removed from app - redirect to dashboard) */}
+      <Route path="/expenses" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/expenses/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/staff/expenses" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/staff/expenses/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/lead/expenses" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/lead/expenses/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/hr/expenses" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/hr/expenses/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/admin/expenses" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/admin/expenses/*" element={<Navigate to="/dashboard" replace />} />
+
       {/* Reports Routes (Issue #15 & #47) */}
       <Route
         path="/reports"
         element={
           <ShellLayout>
             <ReportsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/staff/expenses"
-        element={
-          <ShellLayout>
-            <ExpensesPage />
           </ShellLayout>
         }
       />
@@ -641,34 +631,10 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/lead/expenses"
-        element={
-          <ShellLayout>
-            <ExpensesPage />
-          </ShellLayout>
-        }
-      />
-      <Route
         path="/hr/reports"
         element={
           <ShellLayout>
             <ReportsPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/hr/expenses"
-        element={
-          <ShellLayout>
-            <ExpensesPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/expenses"
-        element={
-          <ShellLayout>
-            <ExpensesPage />
           </ShellLayout>
         }
       />

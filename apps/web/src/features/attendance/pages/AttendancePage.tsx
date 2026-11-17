@@ -8,7 +8,6 @@ import {
   fetchTodayAttendance,
 } from '../api/attendance';
 import { CheckInOutTab } from '../components/CheckInOutTab';
-import { CompanyCheckInOutTab } from '../components/CompanyCheckInOutTab';
 import { LeaveRequestsTab } from '../components/LeaveRequestsTab';
 import { MyAttendanceTab } from '../components/MyAttendanceTab';
 import { OnDutyTab } from '../components/OnDutyTab';
@@ -238,11 +237,13 @@ function AttendanceOpsWorkspace({
   const isLead = role === ROLES.TEAM_LEAD;
   const canManage = isAdmin || isHr || isLead;
 
-  const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets' | 'check-in-out'>(
-    initialTab,
+  const validInitialTab: 'on-duty' | 'roster' | 'timesheets' =
+    initialTab === 'roster' || initialTab === 'timesheets' ? initialTab : 'on-duty';
+  const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets'>(
+    validInitialTab,
   );
   useEffect(() => {
-    setActiveTab(initialTab);
+    setActiveTab(initialTab === 'roster' || initialTab === 'timesheets' ? initialTab : 'on-duty');
   }, [initialTab]);
   const [selectedDate, setSelectedDate] = useState<string>(() =>
     new Date().toISOString().slice(0, 10),
@@ -339,17 +340,13 @@ function AttendanceOpsWorkspace({
     if (activeTab === 'roster') {
       return 'Weekly shift schedules and employee assignments.';
     }
-    if (activeTab === 'timesheets') {
-      return 'Review and approve employee working hours and overtime.';
-    }
-    return 'Live employee check-in and check-out tracking with photos, locations, and break statuses.';
+    return 'Review and approve employee working hours.';
   })();
 
   const tabBreadcrumb = (() => {
     if (activeTab === 'on-duty') return 'On Duty';
     if (activeTab === 'roster') return 'Roster';
-    if (activeTab === 'timesheets') return 'Timesheets';
-    return 'Check-In / Check-Out';
+    return 'Timesheets';
   })();
 
   return (
@@ -461,21 +458,6 @@ function AttendanceOpsWorkspace({
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
           )}
         </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('check-in-out')}
-          className={`pb-3 relative transition-colors ${
-            activeTab === 'check-in-out'
-              ? 'text-emerald-700 font-bold'
-              : 'text-text-muted hover:text-text'
-          }`}
-        >
-          <span>Check-In / Check-Out</span>
-          {activeTab === 'check-in-out' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
-          )}
-        </button>
       </div>
 
       {isLoading ? (
@@ -526,16 +508,6 @@ function AttendanceOpsWorkspace({
               employees={employees}
               departments={departments}
               canApproveTimesheets={canManage}
-            />
-          )}
-
-          {activeTab === 'check-in-out' && (
-            <CompanyCheckInOutTab
-              records={records}
-              employees={employees}
-              departments={departments}
-              selectedDate={selectedDate}
-              onRequestCorrection={(rec) => openRequestModal(rec)}
             />
           )}
         </>
