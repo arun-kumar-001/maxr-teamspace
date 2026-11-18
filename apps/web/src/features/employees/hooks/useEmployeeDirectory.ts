@@ -373,14 +373,22 @@ export function useEmployeeDirectory(
       }
     } catch (err: unknown) {
       if (triggerId === fetchTriggerRef.current) {
-        const isAuthError =
-          (err instanceof ApiError && (err.status === 401 || err.statusCode === 401)) ||
+        const isOfflineOrAuthError =
+          (err instanceof ApiError &&
+            (err.status === 401 ||
+              err.statusCode === 401 ||
+              err.status === 503 ||
+              err.statusCode === 503 ||
+              err.code === 'BACKEND_OFFLINE')) ||
           (err instanceof Error &&
             (err.message.toLowerCase().includes('authentication') ||
-              err.message.toLowerCase().includes('unauthorized')));
+              err.message.toLowerCase().includes('unauthorized') ||
+              err.message.toLowerCase().includes('backend api is not running') ||
+              err.message.toLowerCase().includes('failed to fetch') ||
+              err.message.toLowerCase().includes('networkerror')));
 
-        if (isAuthError) {
-          // Dev / demo / unauthenticated session fallback
+        if (isOfflineOrAuthError) {
+          // Dev / demo / offline backend / unauthenticated session fallback
           const fallback = filterFallbackEmployees(FALLBACK_EMPLOYEES, currentQuery);
           setEmployees(fallback.data);
           setMeta(fallback.meta);
