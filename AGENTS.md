@@ -213,6 +213,8 @@ Before each verification command, check the task's existing results and identify
 
 Every PR must pass the required CI checks defined in `.github/workflows/ci.yml` and ADR D-09. CI provides full-workspace typecheck, lint/format, production builds, unit tests, PostgreSQL integration tests, migration/seed verification, dependency audit and secret scanning. PR evidence includes the relevant local checks and CI results. Run the required gates locally when CI is unavailable before merge or deployment.
 
+Full Playwright E2E runs belong to final deployment, not routine pushes or PRs (TL decision, 2026-11-18). `.github/workflows/e2e.yml` can run manually and is a required predecessor of the Deploy job. Use targeted local browser checks when a changed critical interaction or layout needs them; do not start the full E2E suite for routine integration or main merges.
+
 Before deployment, use the required CI results for the exact release revision as full-suite evidence. Check the commit and results before starting additional verification. Reuse successful checks for the same code and relevant environment. Run additional checks for documented deployment-specific gaps, including configuration and migration compatibility. Build required deployment artifacts, apply migrations and confirm deployment health with affected-flow smoke checks. Security, authorization, data integrity and responsive behavior remain acceptance requirements.
 
 ## 11. Git, commits and PRs

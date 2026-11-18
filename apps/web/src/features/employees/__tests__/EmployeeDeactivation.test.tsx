@@ -250,6 +250,8 @@ describe('Employee Deactivation Feature Suite (Issue #26)', () => {
       // Self employee row has (Current User)
       expect(screen.getAllByText('(Current User)').length).toBeGreaterThan(0);
 
+      fireEvent.click(screen.getByRole('button', { name: 'List view' }));
+
       // Active other employee has Deactivate button
       expect(screen.getAllByTestId('deactivate-btn-table-emp-201').length).toBeGreaterThan(0);
 

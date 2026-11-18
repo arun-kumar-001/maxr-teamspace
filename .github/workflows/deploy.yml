@@ -22,8 +22,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  e2e:
+    name: Pre-deployment browser checks
+    uses: ./.github/workflows/e2e.yml
+
   deploy:
     name: Deploy to Cantobo Server
+    needs: e2e
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -84,4 +89,3 @@ jobs:
         env:
           CANTOBO_HOST: ${{ secrets.CANTOBO_HOST }}
           CANTOBO_SSH_KEY: ${{ secrets.CANTOBO_SSH_KEY }}
-

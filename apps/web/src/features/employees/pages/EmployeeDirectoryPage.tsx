@@ -1009,6 +1009,8 @@ export function EmployeeDirectoryPage() {
                     {emp.firstName} {emp.lastName}
                   </a>
 
+                  {isSelf && <span className="text-xs text-text-subtle">(Current User)</span>}
+
                   <p className="text-xs sm:text-sm text-text-muted font-normal mt-0.5 truncate max-w-[240px]">
                     {emp.designation?.title || 'Staff'}
                   </p>
