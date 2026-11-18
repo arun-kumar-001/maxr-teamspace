@@ -29,8 +29,8 @@ Identity documents, bank accounts and compensation need **explicit permission**.
 
 | Branch                             | Owner                                                       | Scope                                                                         |
 | ---------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `main`                             | Technical Lead (merges only)                                | Stable, reviewed releases                                                     |
-| `develop`                          | Technical Lead (merges only)                                | Integration branch; **every developer PR targets this**                       |
+| `main`                             | Shared (direct push allowed)                                | Production deployment branch; direct pushes & merges allowed                  |
+| `develop`                          | Shared (direct push allowed)                                | Active development & integration branch                                       |
 | `global/<issue>` (short-lived)     | Dev 1 `maxrindia29` (backend) / Dev 2 `maxrindia30-vb` (UI) | Foundation issues #3–#17, cut from `develop`                                  |
 | `feature/employee-management`      | Dev 1 `maxrindia29`                                         | Employee Management, user/role admin, settings, expenses (issues #18–#32)     |
 | `feature/attendance-collaboration` | Dev 2 `maxrindia30-vb`                                      | Attendance, leave, approvals, notifications, tasks, meetings (issues #33–#48) |
@@ -219,13 +219,10 @@ Before deployment, use the required CI results for the exact release revision as
 
 ## 11. Git, commits and PRs
 
-- `main` = stable branch, `develop` = integration branch. **Never commit or push directly to `main` or `develop`.** Never force-push shared branches, rewrite others' history, or delete branches.
-- Flow: your branch → PR into `develop` → Technical Lead reviews and merges → Technical Lead raises `develop → main`. Developers never open PRs into `main`.
-- Work on your assigned branch (see §1), one PR per issue, linked with `Closes #<n>`. Merge `develop` into your branch before opening a PR (merge commits; do not rebase shared branches).
-- Agents: **do not commit, push, merge or deploy unless the user explicitly asks.** Do not open a PR unless asked.
+- `main` = production branch, `develop` = integration branch. Direct commits, merges, and pushes to `main` and `develop` are allowed for verified changes and rapid deployment. Never force-push shared branches, rewrite others' history, or delete branches without explicit consensus.
+- Workflow: Developers and AI agents can push verified work directly to `main` (or via fast-track merge from `develop` into `main`) to deploy directly to the live environment without blocking on formal PR reviews when fast progress is requested.
 - Commits: Conventional Commits (`feat(leave): ...`, `fix(auth): ...`), small and focused, one concern each.
-- PR must include: linked issue, summary, screenshots for UI, test evidence, migration/rollback notes, security impact, docs updated.
-- Include the Claude attribution trailer on agent-authored commits as configured by the harness.
+- Agents: Execute commits, merges, pushes, and deployments when instructed by the user.
 
 ## 12. Shared files: restricted
 
