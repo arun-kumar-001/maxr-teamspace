@@ -353,7 +353,7 @@ export const PayslipsPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
         <KpiCard
           label="Latest Net Pay"
-          value={latestSlip ? formatInr(latestSlip.netPay) : '—'}
+          value={latestSlip ? formatInr(latestSlip.netPay) : '0'}
           badge={latestSlip?.periodLabel}
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,7 +369,7 @@ export const PayslipsPage: React.FC = () => {
         />
         <KpiCard
           label="Latest Gross Earnings"
-          value={latestSlip ? formatInr(latestSlip.totalEarnings) : '—'}
+          value={latestSlip ? formatInr(latestSlip.totalEarnings) : '0'}
           badge={latestSlip ? `${latestSlip.daysPaid}d paid` : undefined}
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
