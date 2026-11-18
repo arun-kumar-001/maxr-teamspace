@@ -354,16 +354,15 @@ export function DepartmentsPage() {
         </div>
       </div>
 
-      {/* Interactive Division Overview Strip (Universal KpiCard - Compact Horizontal) */}
+      {/* Interactive Division Overview Strip (Universal KpiCard - OnDuty Style) */}
       {!isLoading && !error && departments.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
           <KpiCard
-            size="sm"
             label="Active Divisions"
             value={overviewStats.activeDepts}
             badge={`of ${departments.length}`}
             icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -376,7 +375,6 @@ export function DepartmentsPage() {
           />
 
           <KpiCard
-            size="sm"
             label="Workforce Aligned"
             value={overviewStats.totalStaff}
             badge={
@@ -385,7 +383,7 @@ export function DepartmentsPage() {
                 : undefined
             }
             icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -398,12 +396,11 @@ export function DepartmentsPage() {
           />
 
           <KpiCard
-            size="sm"
             label="Mapped Designations"
             value={designations.length}
             badge="Role tiers"
             icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -416,12 +413,11 @@ export function DepartmentsPage() {
           />
 
           <KpiCard
-            size="sm"
             label="Largest Division"
             value={overviewStats.topDept?.name ?? '—'}
             badge={overviewStats.topDept ? `${overviewStats.topCount} staff` : undefined}
             icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
