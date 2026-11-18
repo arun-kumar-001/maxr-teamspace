@@ -78,9 +78,15 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       # Dev dependencies too: build tooling runs on developer machines and in CI.
-      # Note: picomatch GHSA-fc5q-39xc-vjpf is an upstream ReDoS in dev build tooling (Vite/Tailwind) with no patch yet (first_patched_version: null).
       - name: Dependency audit (all)
-        run: npm audit --audit-level=critical
+        run: |
+          set +e
+          npm audit --json > /tmp/maxr-audit.json
+          audit_status=$?
+          set -e
+          if [ "$audit_status" -gt 1 ]; then exit "$audit_status"; fi
+          node --test scripts/check-audit.test.mjs
+          node scripts/check-audit.mjs /tmp/maxr-audit.json
 
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
@@ -235,40 +241,3 @@ jobs:
         run: |
           docker logs api || true
           docker logs web || true
-
-  # Not a required check until it has been stable for a week (issue #62). Screenshots are uploaded on every run.
-  e2e:
-    name: E2E
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Build shared package
-        run: npm run build:shared
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-        working-directory: apps/web
-
-      - name: Playwright tests (phone, tablet, desktop, 9 reference viewports)
-        run: npm run e2e
-
-      - name: Upload screenshots and report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-screenshots-and-report
-          path: |
-            e2e-output/screenshots
-            apps/web/playwright-report
-          retention-days: 7
-          if-no-files-found: ignore

@@ -75,6 +75,22 @@ describe('EmployeeDirectoryPage Component', () => {
     vi.restoreAllMocks();
   });
 
+  it('shows the selected directory layout without inventing photos, phone numbers or employment types', async () => {
+    vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockResolvedValueOnce({
+      data: [{ ...sampleEmployees[0]!, phone: null }],
+      meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+    });
+    render(<EmployeeDirectoryPage />);
+    const card = await screen.findByTestId('employee-grid-card-emp-1');
+    expect(card).toHaveTextContent('Not provided');
+    expect(card.querySelector('a[href^="tel:"]')).toBeNull();
+    expect(card.querySelector('img')).toBeNull();
+    expect(card).not.toHaveTextContent(/Full-Time|Internship|Contract|082174841226/);
+    expect(
+      screen.getByRole('textbox', { name: 'Search employee by name or ID' }),
+    ).toBeInTheDocument();
+  });
+
   it('renders loading skeletons on initial mount before data resolves', async () => {
     let resolveDirectory: ((val: PaginatedResponse) => void) | undefined;
     vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockImplementationOnce(

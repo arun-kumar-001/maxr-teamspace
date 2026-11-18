@@ -4,16 +4,18 @@ Applying for leave, deciding it through the approvals engine, cancelling it (bal
 
 ## API
 
-| Route | Permission | Notes |
-| --- | --- | --- |
-| `POST /leave-requests` | `leave.apply` (own) | `Idempotency-Key` required. Body: `leaveTypeId`, `startDate`, `endDate` (`YYYY-MM-DD`), `halfDay` (default false), `reason` (optional, up to 500 characters). The employee is the signed-in caller. 201 with the request, `pending`. |
-| `GET /leave-requests/me` | `leave.read_own` | Your requests, latest first. Filters `status`, `leaveTypeId`, `from`, `to` (requests touching the range), `page`, `pageSize`. |
-| `GET /leave-requests` | `leave.list` | Team Lead: direct reports; HR and Admin: everyone. Same filters plus `employeeId`. |
-| `GET /leave-requests/{id}` | `leave.read_own` | Yours, or one inside the approvers' scope (`leave.list`). 404 otherwise, identical to a missing id. |
-| `GET /leave-requests/calendar?from=&to=` | `leave.list` | Who is away: pending and approved leave touching the range (at most 62 days), for direct reports (Team Lead) or everyone (HR, Admin). No reasons. At most 2000 entries. |
-| `POST /leave-requests/{id}/cancel` | `leave.cancel` (own); `leave.cancel_any` (HR, Admin) | See below. |
+`GET /leave-requests/approval-route` requires `leave.apply` and returns `{ data: { approverRoles: ["hr_manager", "team_lead", "admin"] } }` with only the signed-in employee's allowed choices. Apply Leave displays these in a required **Send request to** dropdown with no automatic selection. HR employees may select Admin only. Other employees may select HR Manager or Admin; Team Lead is offered only when an active Team Lead is assigned. Responses are not cached. Submission revalidates the selected role and stores the corresponding approval stage; an unavailable selection is rejected rather than silently rerouted. Missing `approverRole` is rejected with 422 by the service.
 
-Approvers decide in `GET /approvals?subjectType=leave_request&awaitingMyDecision=true` with `POST /approvals/{id}/approve` or `/reject` (a rejection needs a comment). Route (D-12): the requester's manager; HR when there is none; a Team Lead's, HR Manager's or Admin's own leave goes to HR / Admin. Nobody decides their own request.
+| Route                                    | Permission                                           | Notes                                                                                                                                                                                                                                |
+| ---------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST /leave-requests`                   | `leave.apply` (own)                                  | `Idempotency-Key` required. Body: `approverRole` (required by service), `leaveTypeId`, `startDate`, `endDate` (`YYYY-MM-DD`), `halfDay` (default false), `reason` (optional, up to 500 characters). The employee is the signed-in caller. 201 with the request, `pending`. |
+| `GET /leave-requests/me`                 | `leave.read_own`                                     | Your requests, latest first. Filters `status`, `leaveTypeId`, `from`, `to` (requests touching the range), `page`, `pageSize`.                                                                                                        |
+| `GET /leave-requests`                    | `leave.list`                                         | Team Lead: direct reports; HR and Admin: everyone. Same filters plus `employeeId`.                                                                                                                                                   |
+| `GET /leave-requests/{id}`               | `leave.read_own`                                     | Yours, or one inside the approvers' scope (`leave.list`). 404 otherwise, identical to a missing id.                                                                                                                                  |
+| `GET /leave-requests/calendar?from=&to=` | `leave.list`                                         | Who is away: pending and approved leave touching the range (at most 62 days), for direct reports (Team Lead) or everyone (HR, Admin). No reasons. At most 2000 entries.                                                              |
+| `POST /leave-requests/{id}/cancel`       | `leave.cancel` (own); `leave.cancel_any` (HR, Admin) | See below.                                                                                                                                                                                                                           |
+
+Approvers decide in `GET /approvals?subjectType=leave_request&awaitingMyDecision=true` with `POST /approvals/{id}/approve` or `/reject` (a rejection needs a comment). Routing uses the employee's manually selected `approverRole` (D-39). HR leave goes to Admin; self-approval is forbidden. The default-approver card has been removed from Leave Policies. The existing approval-settings storage/API remains for compatibility but does not control new submissions.
 
 ## Rules (D-30)
 

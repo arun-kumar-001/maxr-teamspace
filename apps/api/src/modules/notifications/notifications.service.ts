@@ -24,7 +24,7 @@ export interface NotificationCaller {
   requestId?: string;
 }
 
-type Stage = 'manager' | 'hr';
+type Stage = 'manager' | 'hr' | 'admin';
 
 interface TaskEventPayload {
   taskId: string;
@@ -80,7 +80,11 @@ export class NotificationsService {
 
   private async onApprovalStep(event: DomainEvent, type: TemplateType): Promise<void> {
     const p = event.payload as ApprovalEventPayload;
-    for (const recipient of await this.approversFor(p.stage, p.requesterEmployeeId)) {
+    for (const recipient of await this.approversFor(
+      p.stage,
+      p.requesterEmployeeId,
+      p.subjectType,
+    )) {
       await this.notify(recipient, type, {
         subjectType: p.subjectType,
         link: `/approvals/${p.approvalId}`,
@@ -195,16 +199,22 @@ export class NotificationsService {
     if (recipient) await this.notify(recipient, type, options);
   }
 
-  /** Who decides the step: the requester's manager, or the HR Managers and Admins (never the requester). */
+  /** Notification recipients follow the subject and its current approver stage. */
   private async approversFor(
     stage: Stage | undefined,
     requesterEmployeeId: string,
+    subjectType: string,
   ): Promise<Recipient[]> {
     if (stage === 'manager') {
       const manager = await this.repository.findManagerOf(requesterEmployeeId);
       return manager ? [manager] : [];
     }
-    if (stage === 'hr') return this.repository.findHrApprovers(requesterEmployeeId);
+    if (stage === 'admin') return this.repository.findHrApprovers(requesterEmployeeId, 'admin');
+    if (stage === 'hr')
+      return this.repository.findHrApprovers(
+        requesterEmployeeId,
+        subjectType === 'leave_request' ? 'hr_manager' : undefined,
+      );
     return [];
   }
 
@@ -297,7 +307,11 @@ export class NotificationsService {
     const cutoff = new Date(now.getTime() - REMINDER_AFTER_HOURS * HOUR_MS);
     let sent = 0;
     for (const stale of await this.repository.findStaleApprovals(cutoff)) {
-      for (const recipient of await this.approversFor(stale.stage, stale.requesterEmployeeId)) {
+      for (const recipient of await this.approversFor(
+        stale.stage,
+        stale.requesterEmployeeId,
+        stale.subjectType,
+      )) {
         const created = await this.notify(recipient, 'approval.reminder', {
           subjectType: stale.subjectType,
           link: `/approvals/${stale.approvalId}`,

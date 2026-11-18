@@ -1,6 +1,7 @@
 import type { PoolClient } from 'pg';
 import { conflict } from '../../../http/errors';
 import {
+  LeaveApprovalSettings,
   LeavePolicy,
   LeavePolicyValues,
   LeaveTx,
@@ -9,6 +10,12 @@ import {
 } from './policies.types';
 
 export interface ILeavePoliciesRepository {
+  getApprovalSettings(tx?: LeaveTx): Promise<LeaveApprovalSettings>;
+  lockApprovalSettings(tx: LeaveTx): Promise<LeaveApprovalSettings>;
+  updateApprovalSettings(
+    tx: LeaveTx,
+    approverRole: LeaveApprovalSettings['approverRole'],
+  ): Promise<LeaveApprovalSettings>;
   transaction<T>(work: (tx: LeaveTx) => Promise<T>): Promise<T>;
   list(): Promise<LeavePolicy[]>;
   /** Locks the type and its policy until the transaction ends. */
@@ -57,6 +64,34 @@ const isUniqueViolation = (err: unknown): boolean => (err as { code?: string }).
 
 export class PgLeavePoliciesRepository implements ILeavePoliciesRepository {
   constructor(private readonly getPool: PoolGetter) {}
+
+  async getApprovalSettings(tx: LeaveTx = this.getPool()): Promise<LeaveApprovalSettings> {
+    const result = await tx.query<LeaveApprovalSettings>(
+      'SELECT approver_role AS "approverRole", version FROM leave_approval_settings WHERE singleton = true',
+    );
+    if (!result.rows[0]) throw new Error('Leave approval settings are missing');
+    return result.rows[0];
+  }
+
+  async lockApprovalSettings(tx: LeaveTx): Promise<LeaveApprovalSettings> {
+    await tx.query(
+      'SELECT singleton FROM leave_approval_settings WHERE singleton = true FOR UPDATE',
+    );
+    return this.getApprovalSettings(tx);
+  }
+
+  async updateApprovalSettings(
+    tx: LeaveTx,
+    approverRole: LeaveApprovalSettings['approverRole'],
+  ): Promise<LeaveApprovalSettings> {
+    const result = await tx.query<LeaveApprovalSettings>(
+      `UPDATE leave_approval_settings SET approver_role = $1, version = version + 1, updated_at = NOW()
+       WHERE singleton = true RETURNING approver_role AS "approverRole", version`,
+      [approverRole],
+    );
+    if (!result.rows[0]) throw new Error('Leave approval settings are missing');
+    return result.rows[0];
+  }
 
   async transaction<T>(work: (tx: LeaveTx) => Promise<T>): Promise<T> {
     const client: PoolClient = await this.getPool().connect();

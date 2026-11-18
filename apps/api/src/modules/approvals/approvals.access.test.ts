@@ -27,7 +27,7 @@ async function setup() {
   });
   const applied: string[] = [];
   approvals.service.registerHandler({
-    subjectType: 'leave_request',
+    subjectType: 'attendance_correction',
     async apply(_tx, approval, outcome) {
       applied.push(`${approval.subjectId}:${outcome}`);
     },
@@ -63,7 +63,7 @@ async function setup() {
   const open = (n: number, requester: string, stages: ApprovalStage[]): Promise<Approval> =>
     repo.transaction((tx) =>
       approvals.service.submit(tx, {
-        subjectType: 'leave_request',
+        subjectType: 'attendance_correction',
         subjectId: subject(n),
         requesterEmployeeId: requester,
         stages,

@@ -122,7 +122,7 @@ export const ApprovalDetailsModal: React.FC<ApprovalDetailsModalProps> = ({
                         : 'bg-surface text-text-subtle border border-border'
                   }`}
                 >
-                  {idx + 1}. {stg === 'manager' ? 'Manager' : 'HR'}
+                  {idx + 1}. {stg === 'manager' ? 'Manager' : stg === 'admin' ? 'Admin' : 'HR'}
                 </span>
               ))}
             </div>
@@ -260,7 +260,12 @@ export const ApprovalDetailsModal: React.FC<ApprovalDetailsModalProps> = ({
           {approval.decisions.length === 0 ? (
             <div className="p-4 rounded-tile bg-surface border border-dashed border-border text-center text-sm text-text-subtle">
               No decisions recorded yet. This request is waiting for{' '}
-              {currentStageName === 'manager' ? 'Manager' : 'HR'} review.
+              {currentStageName === 'manager'
+                ? 'Manager'
+                : currentStageName === 'admin'
+                  ? 'Admin'
+                  : 'HR'}{' '}
+              review.
             </div>
           ) : (
             <div className="space-y-3">

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAuth } from '../../../auth/AuthContext';
+import { canDecideApproval } from '../approval-permissions';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { DataTable, type Column } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/Button';
@@ -15,6 +17,9 @@ import { useApprovals } from '../hooks/useApprovals';
 import type { Approval } from '../types';
 
 export const ApprovalsInboxPage: React.FC = () => {
+  const { user, role } = useAuth();
+  const mayDecide = (approval: Approval) =>
+    canDecideApproval(approval, user?.employeeId, user?.roles ?? (role ? [role] : []));
   const {
     approvals,
     meta,
@@ -106,7 +111,7 @@ export const ApprovalsInboxPage: React.FC = () => {
       key: 'actions',
       header: 'Actions',
       render: (row) => {
-        const isPending = row.status === 'pending';
+        const canDecide = mayDecide(row);
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -118,7 +123,7 @@ export const ApprovalsInboxPage: React.FC = () => {
             >
               Details
             </Button>
-            {isPending && (
+            {canDecide && (
               <>
                 <Button
                   type="button"
@@ -227,6 +232,7 @@ export const ApprovalsInboxPage: React.FC = () => {
                 <ApprovalCard
                   key={approval.id}
                   approval={approval}
+                  canDecide={mayDecide(approval)}
                   onApprove={openApprove}
                   onReject={openReject}
                   onViewDetails={openDetails}
@@ -285,7 +291,7 @@ export const ApprovalsInboxPage: React.FC = () => {
           approval={selectedApproval}
           onApproveClick={openApprove}
           onRejectClick={openReject}
-          canDecide={true}
+          canDecide={selectedApproval ? mayDecide(selectedApproval) : false}
         />
       </div>
     </PageContainer>

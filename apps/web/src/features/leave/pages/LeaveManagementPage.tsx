@@ -100,7 +100,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
 
   const tabOptions = [
     { value: 'requests', label: 'My Requests' },
-    ...(canReviewApprovals ? [{ value: 'approvals', label: 'Team Approvals' }] : []),
+    ...(canReviewApprovals ? [{ value: 'approvals', label: 'Leave Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),

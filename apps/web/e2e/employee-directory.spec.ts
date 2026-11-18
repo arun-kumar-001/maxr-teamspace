@@ -166,6 +166,7 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
       });
 
       await page.goto('/hr/employees');
+      if (width >= 640) await page.getByRole('button', { name: 'List view' }).click();
 
       // 1. Verify key landmarks are visible
       await expect(
@@ -229,7 +230,8 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await expect(page.getByRole('heading', { level: 1, name: 'Employee Directory' })).toBeVisible();
 
     // Type in search
-    const searchInput = page.getByPlaceholder('Search by name, code, or email...');
+    await page.getByRole('button', { name: 'List view' }).click();
+    const searchInput = page.getByRole('textbox', { name: 'Search employee by name or ID' });
     await searchInput.fill('Knight');
 
     // Wait for debounced search and filtered results
@@ -238,6 +240,7 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
 
     // Reset filters
     const clearBtn = page.getByTestId('employee-filters-reset');
+    await page.getByText('Filters', { exact: true }).click();
     await expect(clearBtn).toBeVisible();
     await clearBtn.click();
 
@@ -291,6 +294,7 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await page.goto('/employees');
     await expect(page.getByRole('heading', { level: 1, name: 'Employee Directory' })).toBeVisible();
     await expect(page.getByTestId('employee-directory-filters')).toBeVisible();
+    await page.getByRole('button', { name: 'List view' }).click();
     await expect(page.getByTestId('datatable-desktop-table')).toBeVisible();
   });
 

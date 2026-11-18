@@ -12,6 +12,10 @@ import { ApprovalsInboxPage } from '../pages/ApprovalsInboxPage';
 import * as approvalsApi from '../api/approvals';
 import type { Approval } from '../types';
 
+vi.mock('../../../auth/AuthContext', () => ({
+  useAuth: () => ({ user: { employeeId: 'emp-mgr-1', roles: ['team_lead'] }, role: 'team_lead' }),
+}));
+
 vi.mock('../api/approvals', () => ({
   fetchApprovals: vi.fn(),
   fetchApproval: vi.fn(),
