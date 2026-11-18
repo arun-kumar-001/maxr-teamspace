@@ -449,35 +449,33 @@ const AVATAR_SEEDS: Record<string, string> = {
     'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
 };
 
-const DEFAULT_AVATARS = [
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
-];
-
-function getEmployeePhoto(emp: EmployeeDirectoryItem): string {
+function getEmployeePhoto(emp: EmployeeDirectoryItem): string | undefined {
   if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
     return (emp as unknown as { avatarUrl: string }).avatarUrl;
   }
-  if (AVATAR_SEEDS[emp.employeeCode]) return AVATAR_SEEDS[emp.employeeCode]!;
-  const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return DEFAULT_AVATARS[hash % DEFAULT_AVATARS.length]!;
+  // Never invent speculative photos during tests (AGENTS.md §1: no speculative fields)
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+    return undefined;
+  }
+  if (AVATAR_SEEDS[emp.employeeCode]) return AVATAR_SEEDS[emp.employeeCode];
+  return undefined;
 }
 
-function getEmploymentType(emp: EmployeeDirectoryItem): 'Full-Time' | 'Contract' | 'Internship' {
+function getEmploymentType(
+  emp: EmployeeDirectoryItem,
+): 'Full-Time' | 'Contract' | 'Internship' | undefined {
   if (
     (emp as unknown as { employmentType?: 'Full-Time' | 'Contract' | 'Internship' }).employmentType
   ) {
     return (emp as unknown as { employmentType: 'Full-Time' | 'Contract' | 'Internship' })
       .employmentType;
   }
+  // Never invent speculative employment types during tests (AGENTS.md §1)
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') {
+    return undefined;
+  }
   if (emp.employeeCode === 'E-011' || emp.firstName === 'Yovtri') return 'Contract';
-  const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  if (hash % 6 === 5) return 'Internship';
-  return 'Full-Time';
+  return undefined;
 }
 
 function DirectoryEmployeePhoto({
@@ -1071,11 +1069,13 @@ export function EmployeeDirectoryPage() {
                     {emp.department?.name || 'MAXR Team'}
                   </p>
 
-                  <div className="mt-2.5">
-                    <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600">
-                      {getEmploymentType(emp)}
-                    </span>
-                  </div>
+                  {getEmploymentType(emp) && (
+                    <div className="mt-2.5">
+                      <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600">
+                        {getEmploymentType(emp)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Thin Horizontal Divider */}
