@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { KpiCard } from '../../../components/ui';
 import type { LeaveCalendarEntry } from '../types';
 
 export interface LeaveCalendarViewProps {
@@ -202,175 +203,79 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({ entries, o
         )}
       </div>
 
-      {/* 2. Top 4 Balance Cards (Image 3) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. Top 4 Balance Cards (Universal KpiCard) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Annual Leave */}
-        <div className="p-4 bg-surface rounded-card border border-border shadow-card flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-text-muted">Annual Leave</h4>
-              <p className="text-sm font-extrabold text-text font-display mt-0.5">
-                14 of 18 days left
-              </p>
-            </div>
-          </div>
-          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-            <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+        <KpiCard
+          label="Annual Leave"
+          value="14 Days"
+          badge="14 of 18 days left"
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
-                className="text-border"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="text-emerald-500"
-                strokeDasharray="77, 100"
                 strokeLinecap="round"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-          </div>
-        </div>
+          }
+          variant="emerald"
+        />
 
         {/* Card 2: Sick Leave */}
-        <div className="p-4 bg-surface rounded-card border border-border shadow-card flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-text-muted">Sick Leave</h4>
-              <p className="text-sm font-extrabold text-text font-display mt-0.5">
-                8 of 10 days left
-              </p>
-            </div>
-          </div>
-          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-            <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+        <KpiCard
+          label="Sick Leave"
+          value="8 Days"
+          badge="8 of 10 days left"
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
-                className="text-border"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="text-pink-500"
-                strokeDasharray="80, 100"
                 strokeLinecap="round"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
-          </div>
-        </div>
+          }
+          variant="rose"
+        />
 
         {/* Card 3: Casual Leave */}
-        <div className="p-4 bg-surface rounded-card border border-border shadow-card flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-text-muted">Casual Leave</h4>
-              <p className="text-sm font-extrabold text-text font-display mt-0.5">
-                4 of 6 days left
-              </p>
-            </div>
-          </div>
-          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-            <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+        <KpiCard
+          label="Casual Leave"
+          value="4 Days"
+          badge="4 of 6 days left"
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
-                className="text-border"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="text-sky-500"
-                strokeDasharray="66, 100"
                 strokeLinecap="round"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
-          </div>
-        </div>
+          }
+          variant="amber"
+        />
 
         {/* Card 4: Work from Home */}
-        <div className="p-4 bg-surface rounded-card border border-border shadow-card flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-text-muted">Work from Home</h4>
-              <p className="text-sm font-extrabold text-text font-display mt-0.5">
-                6 of 6 days left
-              </p>
-            </div>
-          </div>
-          <div className="relative w-8 h-8 shrink-0 flex items-center justify-center">
-            <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+        <KpiCard
+          label="Work from Home"
+          value="6 Days"
+          badge="6 of 6 days left"
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
-                className="text-border"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="text-emerald-500"
-                strokeDasharray="100, 100"
                 strokeLinecap="round"
-                strokeWidth="4"
-                stroke="currentColor"
-                fill="none"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
               />
             </svg>
-          </div>
-        </div>
+          }
+          variant="teal"
+        />
       </div>
 
       {/* 3. Main Body: Calendar Left + Sidebar Right (Image 3) */}

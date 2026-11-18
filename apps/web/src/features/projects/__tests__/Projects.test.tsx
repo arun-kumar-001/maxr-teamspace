@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
@@ -86,6 +87,10 @@ const mockProjectDetail: ProjectDetail = {
 };
 
 describe('Projects Feature (Issue #42)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(window, 'confirm').mockImplementation(() => true);

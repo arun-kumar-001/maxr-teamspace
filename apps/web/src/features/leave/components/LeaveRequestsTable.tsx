@@ -232,14 +232,13 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         filterValue: 'all' as const,
         label: 'Total Requests',
         value: String(totalCount),
-        badge: 'All submissions',
         borderColor: 'border-teal-300',
         iconColor: 'text-teal-600',
         pillBg: 'bg-teal-50',
         pillText: 'text-teal-800',
         icon: (
           <svg
-            className="w-7 h-7"
+            className="w-6 h-6"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -257,14 +256,13 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         filterValue: 'pending' as const,
         label: 'Pending Requests',
         value: String(pendingCount),
-        badge: 'Awaiting review',
         borderColor: 'border-amber-300',
         iconColor: 'text-amber-600',
         pillBg: 'bg-amber-50',
         pillText: 'text-amber-800',
         icon: (
           <svg
-            className="w-7 h-7"
+            className="w-6 h-6"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -280,14 +278,13 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         filterValue: 'approved' as const,
         label: 'Approved Requests',
         value: String(approvedCount),
-        badge: 'Approved',
         borderColor: 'border-emerald-300',
         iconColor: 'text-emerald-600',
         pillBg: 'bg-emerald-50',
         pillText: 'text-emerald-800',
         icon: (
           <svg
-            className="w-7 h-7"
+            className="w-6 h-6"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -303,14 +300,13 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
         filterValue: 'rejected' as const,
         label: 'Rejected Requests',
         value: String(rejectedCount),
-        badge: 'Declined',
         borderColor: 'border-rose-300',
         iconColor: 'text-rose-600',
         pillBg: 'bg-rose-50',
         pillText: 'text-rose-800',
         icon: (
           <svg
-            className="w-7 h-7"
+            className="w-6 h-6"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -456,7 +452,6 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
             label={card.label}
             value={card.value}
             icon={card.icon}
-            badge={card.badge}
             borderColor={card.borderColor}
             iconColor={card.iconColor}
             pillBg={card.pillBg}

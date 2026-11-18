@@ -53,7 +53,7 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   todo: 'To Do',
   in_progress: 'In Progress',
   in_review: 'In Review',
-  blocked: 'Hold',
+  blocked: 'On Hold',
   completed: 'Completed',
 };
 
@@ -90,6 +90,9 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   assigneeEmployeeId: string;
+  assigneeName?: string;
+  assignerEmployeeId?: string;
+  assignerName?: string;
   priority?: TaskPriority;
   dueDate?: string;
   projectId?: string;
@@ -100,6 +103,9 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
   assigneeEmployeeId?: string;
+  assigneeName?: string;
+  assignerEmployeeId?: string;
+  assignerName?: string;
   priority?: TaskPriority;
   dueDate?: string | null;
   projectId?: string | null;

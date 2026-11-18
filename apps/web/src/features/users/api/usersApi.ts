@@ -179,3 +179,24 @@ export async function updateUserStatus(id: string, isActive: boolean): Promise<U
   const json = (await res.json()) as { data: UserAccount };
   return json.data;
 }
+
+/**
+ * Verifies admin password securely against the backend authentication API before sensitive operations.
+ * POST /api/v1/auth/verify-password
+ */
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const res = await apiFetch('/api/v1/auth/verify-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, 'Admin authentication failed');
+  }
+
+  const json = (await res.json()) as { data: { verified: boolean } };
+  return Boolean(json.data?.verified);
+}

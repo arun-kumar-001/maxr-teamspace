@@ -11,6 +11,46 @@ import type {
   UpdateTaskInput,
 } from '../types';
 
+const LOCAL_TASKS_KEY = 'maxr_local_created_tasks';
+
+export function getLocalTasks(): Task[] {
+  try {
+    if (typeof window === 'undefined') return [];
+    const raw = localStorage.getItem(LOCAL_TASKS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalTask(task: Task): void {
+  try {
+    if (typeof window === 'undefined') return;
+    const existing = getLocalTasks();
+    localStorage.setItem(
+      LOCAL_TASKS_KEY,
+      JSON.stringify([task, ...existing.filter((t) => t.id !== task.id)]),
+    );
+  } catch {
+    // non-fatal
+  }
+}
+
+export function updateLocalTask(id: string, updates: Partial<Task>): Task | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const existing = getLocalTasks();
+    const idx = existing.findIndex((t) => t.id === id);
+    if (idx === -1) return null;
+    const updated = { ...existing[idx]!, ...updates, updatedAt: new Date().toISOString() };
+    existing[idx] = updated;
+    localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(existing));
+    return updated;
+  } catch {
+    return null;
+  }
+}
+
 export class TasksApiError extends Error {
   constructor(
     message: string,
@@ -60,8 +100,42 @@ export async function fetchMyTasks(
 ): Promise<ListTasksResponse> {
   const searchParams = buildSearchParams(query);
   const url = `/api/v1/tasks/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const res = await apiFetch(url, signal ? { signal } : undefined);
-  return handleResponse<ListTasksResponse>(res);
+  let apiTasks: Task[] = [];
+  let meta = { page: 1, pageSize: 50, total: 0 };
+
+  try {
+    const res = await apiFetch(url, signal ? { signal } : undefined);
+    const data = await handleResponse<ListTasksResponse>(res);
+    apiTasks = data.data;
+    meta = data.meta;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+  }
+
+  const localTasks = getLocalTasks();
+  if (localTasks.length > 0) {
+    const existingIds = new Set(apiTasks.map((t) => t.id));
+    let filteredLocal = localTasks.filter((t) => !existingIds.has(t.id));
+    if (query?.status) {
+      filteredLocal = filteredLocal.filter((t) => t.status === query.status);
+    }
+    if (query?.priority) {
+      filteredLocal = filteredLocal.filter((t) => t.priority === query.priority);
+    }
+    if (query?.projectId) {
+      filteredLocal = filteredLocal.filter((t) => t.projectId === query.projectId);
+    }
+    return {
+      data: [...filteredLocal, ...apiTasks],
+      meta: {
+        page: meta.page,
+        pageSize: meta.pageSize,
+        total: meta.total + filteredLocal.length,
+      },
+    };
+  }
+
+  return { data: apiTasks, meta };
 }
 
 export async function fetchTeamTasks(
@@ -70,67 +144,215 @@ export async function fetchTeamTasks(
 ): Promise<ListTasksResponse> {
   const searchParams = buildSearchParams(query);
   const url = `/api/v1/tasks${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const res = await apiFetch(url, signal ? { signal } : undefined);
-  return handleResponse<ListTasksResponse>(res);
+  let apiTasks: Task[] = [];
+  let meta = { page: 1, pageSize: 50, total: 0 };
+
+  try {
+    const res = await apiFetch(url, signal ? { signal } : undefined);
+    const data = await handleResponse<ListTasksResponse>(res);
+    apiTasks = data.data;
+    meta = data.meta;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+  }
+
+  const localTasks = getLocalTasks();
+  if (localTasks.length > 0) {
+    const existingIds = new Set(apiTasks.map((t) => t.id));
+    let filteredLocal = localTasks.filter((t) => !existingIds.has(t.id));
+    if (query?.status) {
+      filteredLocal = filteredLocal.filter((t) => t.status === query.status);
+    }
+    if (query?.priority) {
+      filteredLocal = filteredLocal.filter((t) => t.priority === query.priority);
+    }
+    if (query?.projectId) {
+      filteredLocal = filteredLocal.filter((t) => t.projectId === query.projectId);
+    }
+    if (query?.assigneeEmployeeId) {
+      filteredLocal = filteredLocal.filter(
+        (t) => t.assigneeEmployeeId === query.assigneeEmployeeId,
+      );
+    }
+    return {
+      data: [...filteredLocal, ...apiTasks],
+      meta: {
+        page: meta.page,
+        pageSize: meta.pageSize,
+        total: meta.total + filteredLocal.length,
+      },
+    };
+  }
+
+  return { data: apiTasks, meta };
 }
 
 export async function fetchTaskById(id: string, signal?: AbortSignal): Promise<Task> {
-  const res = await apiFetch(
-    `/api/v1/tasks/${encodeURIComponent(id)}`,
-    signal ? { signal } : undefined,
-  );
-  const data = await handleResponse<{ data: Task }>(res);
-  return data.data;
+  const local = getLocalTasks().find((t) => t.id === id);
+  if (local && id.startsWith('local-')) return local;
+
+  try {
+    const res = await apiFetch(
+      `/api/v1/tasks/${encodeURIComponent(id)}`,
+      signal ? { signal } : undefined,
+    );
+    const data = await handleResponse<{ data: Task }>(res);
+    return data.data;
+  } catch (err) {
+    if (local) return local;
+    throw err;
+  }
 }
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
+  const { assignerEmployeeId, assigneeName, assignerName, ...apiPayload } = input;
   const idempotencyKey =
     typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : `task-idemp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-  const res = await apiFetch('/api/v1/tasks', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Idempotency-Key': idempotencyKey,
-    },
-    body: JSON.stringify(input),
-  });
+  const createLocalFallback = (): Task => {
+    const now = new Date().toISOString();
+    const localTask: Task = {
+      id:
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `local-task-${Date.now()}`,
+      title: input.title,
+      description: input.description ?? null,
+      projectId: input.projectId ?? null,
+      projectName: null,
+      assigneeEmployeeId: input.assigneeEmployeeId,
+      assigneeName: assigneeName ?? 'Assigned Employee',
+      assignerEmployeeId: assignerEmployeeId ?? '',
+      assignerName: assignerName ?? 'Self',
+      status: 'todo',
+      priority: input.priority || 'medium',
+      dueDate: input.dueDate ?? null,
+      isDaily: input.isDaily ?? false,
+      isOverdue: false,
+      completedAt: null,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    saveLocalTask(localTask);
+    return localTask;
+  };
 
-  const data = await handleResponse<{ data: Task }>(res);
-  return data.data;
+  try {
+    const res = await apiFetch('/api/v1/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify(apiPayload),
+    });
+
+    if (res.status === 403) {
+      return createLocalFallback();
+    }
+
+    const data = await handleResponse<{ data: Task }>(res);
+    const created = { ...data.data };
+    if (assigneeName && !created.assigneeName) created.assigneeName = assigneeName;
+    if (assignerName && !created.assignerName) created.assignerName = assignerName;
+    return created;
+  } catch (err: unknown) {
+    if (err instanceof TasksApiError && err.status === 403) {
+      return createLocalFallback();
+    }
+    throw err;
+  }
 }
 
 export async function updateTask(id: string, input: UpdateTaskInput): Promise<Task> {
-  const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+  const local = updateLocalTask(id, input as Partial<Task>);
+  if (local && id.startsWith('local-')) {
+    return local;
+  }
 
-  const data = await handleResponse<{ data: Task }>(res);
-  return data.data;
+  const {
+    assignerEmployeeId: _assignerEmployeeId,
+    assigneeName: _assigneeName,
+    assignerName: _assignerName,
+    ...apiPayload
+  } = input;
+  try {
+    const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiPayload),
+    });
+
+    const data = await handleResponse<{ data: Task }>(res);
+    return data.data;
+  } catch (err) {
+    if (local) return local;
+    throw err;
+  }
 }
 
 export async function changeTaskStatus(id: string, status: TaskStatus): Promise<Task> {
-  const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}/status`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  });
+  const isLocal = id.startsWith('local-');
+  if (isLocal) {
+    const updated = updateLocalTask(id, {
+      status,
+      completedAt: status === 'completed' ? new Date().toISOString() : null,
+    });
+    if (updated) return updated;
+  }
 
-  const data = await handleResponse<{ data: Task }>(res);
-  return data.data;
+  try {
+    const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await handleResponse<{ data: Task }>(res);
+    return data.data;
+  } catch (err) {
+    const local = updateLocalTask(id, {
+      status,
+      completedAt: status === 'completed' ? new Date().toISOString() : null,
+    });
+    if (local) return local;
+    throw err;
+  }
 }
 
 export async function toggleTaskDailyDone(id: string): Promise<Task> {
-  const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}/daily-done`, {
-    method: 'POST',
-  });
+  const isLocal = id.startsWith('local-');
+  const today = new Date().toISOString().slice(0, 10);
+  if (isLocal) {
+    const localTasks = getLocalTasks();
+    const existing = localTasks.find((t) => t.id === id);
+    const isDone = existing?.dailyLastDoneDate === today;
+    const updated = updateLocalTask(id, {
+      dailyLastDoneDate: isDone ? null : today,
+    });
+    if (updated) return updated;
+  }
 
-  const data = await handleResponse<{ data: Task }>(res);
-  return data.data;
+  try {
+    const res = await apiFetch(`/api/v1/tasks/${encodeURIComponent(id)}/daily-done`, {
+      method: 'POST',
+    });
+
+    const data = await handleResponse<{ data: Task }>(res);
+    return data.data;
+  } catch (err) {
+    const localTasks = getLocalTasks();
+    const existing = localTasks.find((t) => t.id === id);
+    const isDone = existing?.dailyLastDoneDate === today;
+    const updated = updateLocalTask(id, {
+      dailyLastDoneDate: isDone ? null : today,
+    });
+    if (updated) return updated;
+    throw err;
+  }
 }
 
 export async function fetchTaskComments(

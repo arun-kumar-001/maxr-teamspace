@@ -3,7 +3,6 @@ import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState, ErrorState } from '../../../components/ui/StateCards';
-import { AssignedToMeView } from '../components/AssignedToMeView';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 import { TaskFilters, type AssigneeOption } from '../components/TaskFilters';
 import { TaskFormModal } from '../components/TaskFormModal';
@@ -14,7 +13,7 @@ import type { CreateTaskInput, Task, TaskStatus, UpdateTaskInput } from '../type
 
 export interface TasksPageProps {
   initialScope?: 'mine' | 'team';
-  initialViewMode?: 'board' | 'list' | 'assigned';
+  initialViewMode?: 'board' | 'list';
 }
 
 export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
@@ -26,14 +25,15 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
 
   const defaultScope = initialScope ?? (canManage ? 'team' : 'mine');
 
-  const [viewMode, setViewMode] = useState<'board' | 'list' | 'assigned'>(
-    initialViewMode ?? 'board',
+  const [viewMode, setViewMode] = useState<'board' | 'list'>(
+    initialViewMode === 'list' ? 'list' : 'board',
   );
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<string | undefined>(undefined);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [dueDateFilter, setDueDateFilter] = useState<string>('');
 
   const {
     tasks,
@@ -57,7 +57,7 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
     toggleDailyDone,
   } = useTasks({ scope: defaultScope, autoFetch: true });
 
-  // Dynamic assignee quick-filter list derived from real loaded CRM tasks
+  // Dynamic assignee quick-filter list derived from real loaded tasks
   const assigneeOptions = useMemo<AssigneeOption[]>(() => {
     const map = new Map<string, string>();
     for (const t of allTasks) {
@@ -68,10 +68,32 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [allTasks]);
 
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  // Filter tasks based on assignee, text search, and optional due date quick-filter
   const visibleTasks = useMemo(() => {
-    if (!selectedAssigneeId) return tasks;
-    return tasks.filter((t) => t.assigneeEmployeeId === selectedAssigneeId);
-  }, [tasks, selectedAssigneeId]);
+    let result = tasks;
+    if (selectedAssigneeId) {
+      result = result.filter((t) => t.assigneeEmployeeId === selectedAssigneeId);
+    }
+    if (dueDateFilter === 'today') {
+      result = result.filter((t) => t.status !== 'completed' && t.dueDate === todayStr);
+    } else if (dueDateFilter === 'this_week') {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const weekAhead = new Date(now.getTime() + 7 * 86_400_000);
+      result = result.filter((t) => {
+        if (!t.dueDate || t.status === 'completed') return false;
+        const d = new Date(t.dueDate);
+        return d >= now && d <= weekAhead;
+      });
+    } else if (dueDateFilter === 'has_due') {
+      result = result.filter((t) => Boolean(t.dueDate));
+    } else if (dueDateFilter === 'no_due') {
+      result = result.filter((t) => !t.dueDate);
+    }
+    return result;
+  }, [tasks, selectedAssigneeId, dueDateFilter, todayStr]);
 
   const visibleBoardColumns = useMemo(() => {
     const cols: Record<TaskStatus, Task[]> = {
@@ -155,54 +177,63 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
     URL.revokeObjectURL(url);
   };
 
-  // Live header summary metrics
-  const openTasksCount = allTasks.filter((t) => t.status !== 'completed').length;
-  const projectCount = new Set(allTasks.map((t) => t.projectId).filter(Boolean)).size;
-  const overdueCount = allTasks.filter((t) => t.isOverdue).length;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const dueTodayCount = allTasks.filter(
-    (t) => t.status !== 'completed' && t.dueDate === todayStr,
-  ).length;
-  const assignedToMeCount = user?.employeeId
-    ? allTasks.filter((t) => t.assigneeEmployeeId === user.employeeId && t.status !== 'completed')
-        .length
-    : openTasksCount;
-
   return (
     <div
-      className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl mx-auto w-full"
+      className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl xl:max-w-[1600px] mx-auto w-full"
       data-testid="tasks-page"
     >
-      {/* Page Header */}
+      {/* 1. Page Header: Title, Description, Create Task & Export */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-text tracking-tight">
             {scope === 'team' ? 'Team Tasks' : 'My Tasks'}
           </h1>
           <p className="text-sm text-text-muted mt-1">
-            {openTasksCount} open across {projectCount}{' '}
-            {projectCount === 1 ? 'project' : 'projects'}
-            {' · '}
-            {overdueCount} overdue · {dueTodayCount} due today
+            {scope === 'team'
+              ? 'Manage team tasks and track work progress across your team.'
+              : 'Manage your assigned tasks and track your progress.'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           {visibleTasks.length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleExportCsv}
-              className="min-h-[40px]"
+              className="min-h-[40px] inline-flex items-center gap-1.5"
               data-testid="export-tasks-btn"
             >
-              Export
+              <svg
+                className="w-4 h-4 text-text-muted"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Export</span>
             </Button>
           )}
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+            className="min-h-[40px] inline-flex items-center gap-1.5"
+            data-testid="create-task-btn"
+          >
+            <span className="text-base font-bold leading-none">+</span>
+            <span>Add Task</span>
+          </Button>
         </div>
       </div>
 
-      {/* Tabs, Filters, and Actions */}
+      {/* 2. Tabs, Filters, and Scope Controls */}
       <TaskFilters
         search={search}
         onSearchChange={setSearch}
@@ -218,6 +249,8 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
         onPriorityChange={setPriority}
         status={status}
         onStatusChange={setStatus}
+        dueDateFilter={dueDateFilter}
+        onDueDateFilterChange={setDueDateFilter}
         overdueOnly={overdueOnly}
         onOverdueOnlyToggle={() => setOverdueOnly(!overdueOnly)}
         assignees={scope === 'team' ? assigneeOptions : []}
@@ -225,78 +258,79 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
         onAssigneeSelect={setSelectedAssigneeId}
         counts={{
           board: visibleTasks.length,
-          assigned: assignedToMeCount,
+          list: visibleTasks.length,
         }}
-        canCreate={canManage}
-        onCreateClick={() => setIsCreateOpen(true)}
       />
 
-      {/* Main Content Area */}
-      {loading ? (
-        <div className="flex gap-4 overflow-hidden py-4">
-          {[1, 2, 3, 4, 5].map((col) => (
-            <div
-              key={col}
-              className="flex-1 min-w-[240px] h-96 bg-surface-muted border border-border rounded-card animate-pulse p-4"
-            />
-          ))}
-        </div>
-      ) : error ? (
-        <ErrorState title="Could not load tasks" message={error} onRetry={() => void refetch()} />
-      ) : visibleTasks.length === 0 && viewMode !== 'assigned' ? (
-        <EmptyState
-          title={
-            search || priority || status || overdueOnly || selectedAssigneeId
-              ? 'No matching tasks found'
-              : 'No tasks yet'
-          }
-          description={
-            search || priority || status || overdueOnly || selectedAssigneeId
-              ? 'Try clearing or modifying your filters to see more tasks.'
-              : canManage
-                ? 'Delegate work to team members or create a personal task to get started.'
-                : 'No tasks have been assigned to you yet.'
-          }
-          actionLabel={
-            canManage && !search && !priority && !status && !overdueOnly && !selectedAssigneeId
-              ? 'Create First Task'
-              : undefined
-          }
-          onAction={
-            canManage && !search && !priority && !status && !overdueOnly && !selectedAssigneeId
-              ? () => setIsCreateOpen(true)
-              : undefined
-          }
-        />
-      ) : viewMode === 'assigned' ? (
-        <AssignedToMeView
-          tasks={allTasks}
-          onSelectTask={handleSelectTask}
-          onStatusChange={handleStatusChange}
-          onToggleDailyDone={handleToggleDailyDone}
-          currentEmployeeId={user?.employeeId ?? undefined}
-          isAdmin={isAdmin}
-        />
-      ) : viewMode === 'board' ? (
-        <TaskKanbanBoard
-          columns={visibleBoardColumns}
-          onSelectTask={handleSelectTask}
-          onStatusChange={handleStatusChange}
-          onToggleDailyDone={handleToggleDailyDone}
-          onQuickCreateClick={() => setIsCreateOpen(true)}
-          canCreate={canManage}
-          currentEmployeeId={user?.employeeId ?? undefined}
-          isAdmin={isAdmin}
-        />
-      ) : (
-        <TaskTableView
-          tasks={visibleTasks}
-          onSelectTask={handleSelectTask}
-          onStatusChange={handleStatusChange}
-          currentEmployeeId={user?.employeeId ?? undefined}
-          isAdmin={isAdmin}
-        />
-      )}
+      {/* 4. Full-Width Workspace: Kanban Board or Table List View */}
+      <div className="w-full">
+        {loading ? (
+          <div className="flex gap-4 overflow-hidden py-4">
+            {[1, 2, 3, 4, 5].map((col) => (
+              <div
+                key={col}
+                className="flex-1 min-w-[220px] h-96 bg-surface-muted border border-border rounded-card animate-pulse p-4"
+              />
+            ))}
+          </div>
+        ) : error ? (
+          <ErrorState title="Could not load tasks" message={error} onRetry={() => void refetch()} />
+        ) : visibleTasks.length === 0 ? (
+          <EmptyState
+            title={
+              search || priority || status || overdueOnly || dueDateFilter || selectedAssigneeId
+                ? 'No matching tasks found'
+                : 'No tasks yet'
+            }
+            description={
+              search || priority || status || overdueOnly || dueDateFilter || selectedAssigneeId
+                ? 'Try clearing or modifying your filters to see more tasks.'
+                : canManage
+                  ? 'Delegate work to team members or create a task to get started.'
+                  : 'No tasks have been assigned to you yet.'
+            }
+            actionLabel={
+              !search &&
+              !priority &&
+              !status &&
+              !overdueOnly &&
+              !dueDateFilter &&
+              !selectedAssigneeId
+                ? 'Add First Task'
+                : undefined
+            }
+            onAction={
+              !search &&
+              !priority &&
+              !status &&
+              !overdueOnly &&
+              !dueDateFilter &&
+              !selectedAssigneeId
+                ? () => setIsCreateOpen(true)
+                : undefined
+            }
+          />
+        ) : viewMode === 'board' ? (
+          <TaskKanbanBoard
+            columns={visibleBoardColumns}
+            onSelectTask={handleSelectTask}
+            onStatusChange={handleStatusChange}
+            onToggleDailyDone={handleToggleDailyDone}
+            onQuickCreateClick={() => setIsCreateOpen(true)}
+            canCreate={true}
+            currentEmployeeId={user?.employeeId ?? undefined}
+            isAdmin={isAdmin}
+          />
+        ) : (
+          <TaskTableView
+            tasks={visibleTasks}
+            onSelectTask={handleSelectTask}
+            onStatusChange={handleStatusChange}
+            currentEmployeeId={user?.employeeId ?? undefined}
+            isAdmin={isAdmin}
+          />
+        )}
+      </div>
 
       {/* Task Slide-Over Detail Drawer */}
       <TaskDetailModal
@@ -316,6 +350,7 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
         onClose={() => setIsCreateOpen(false)}
         mode="create"
         defaultAssigneeId={scope === 'mine' ? (user?.employeeId ?? undefined) : undefined}
+        defaultAssignerId={user?.employeeId ?? undefined}
         onSubmitCreate={handleCreateSubmit}
       />
 

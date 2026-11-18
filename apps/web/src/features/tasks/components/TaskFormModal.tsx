@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
@@ -16,6 +17,7 @@ export interface TaskFormModalProps {
   mode: 'create' | 'edit';
   initialTask?: Task | null;
   defaultAssigneeId?: string;
+  defaultAssignerId?: string;
   defaultProjectId?: string;
   onSubmitCreate?: (input: CreateTaskInput) => Promise<unknown>;
   onSubmitEdit?: (input: Omit<UpdateTaskInput, 'version'>) => Promise<unknown>;
@@ -27,16 +29,19 @@ export function TaskFormModal({
   mode,
   initialTask,
   defaultAssigneeId,
+  defaultAssignerId,
   defaultProjectId,
   onSubmitCreate,
   onSubmitEdit,
 }: TaskFormModalProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [dueDate, setDueDate] = useState('');
   const [projectId, setProjectId] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
+  const [assignerId, setAssignerId] = useState('');
   const [isDaily, setIsDaily] = useState(false);
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -44,6 +49,90 @@ export function TaskFormModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Derive leads, managers, and the selected assignee's direct reporting manager
+  const assignerOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [
+      { value: '', label: 'Select Assigner (Lead / Manager / Self)' },
+    ];
+
+    const addedIds = new Set<string>();
+
+    // 1. Direct Reporting Manager of the selected assignee
+    const selectedAssignee = employees.find((e) => e.id === assigneeId);
+    if (selectedAssignee?.manager?.id) {
+      options.push({
+        value: selectedAssignee.manager.id,
+        label: `⭐ ${selectedAssignee.manager.firstName} ${selectedAssignee.manager.lastName} (${selectedAssignee.manager.employeeCode}) — Reporting Manager`,
+      });
+      addedIds.add(selectedAssignee.manager.id);
+    }
+
+    // 2. Current Logged-in User (Lead / Manager / Admin / Self)
+    if (user?.employeeId && !addedIds.has(user.employeeId)) {
+      options.push({
+        value: user.employeeId,
+        label: `👤 ${user.name} — Current User (${user.title || user.role})`,
+      });
+      addedIds.add(user.employeeId);
+    } else if (defaultAssignerId && !addedIds.has(defaultAssignerId)) {
+      options.push({
+        value: defaultAssignerId,
+        label: `👤 Self / Current Assigner`,
+      });
+      addedIds.add(defaultAssignerId);
+    }
+
+    // 3. Organization Leads and Managers (designation contains Lead / Manager / Head / Director)
+    const leadManagers = employees.filter((emp) => {
+      const title = (emp.designation?.title || '').toLowerCase();
+      return (
+        title.includes('lead') ||
+        title.includes('manager') ||
+        title.includes('head') ||
+        title.includes('director') ||
+        title.includes('supervisor') ||
+        title.includes('admin')
+      );
+    });
+
+    for (const lead of leadManagers) {
+      if (!addedIds.has(lead.id)) {
+        options.push({
+          value: lead.id,
+          label: `${lead.firstName} ${lead.lastName} (${lead.employeeCode}) — ${lead.designation?.title || 'Team Lead / Manager'}`,
+        });
+        addedIds.add(lead.id);
+      }
+    }
+
+    // 4. Other active employees
+    for (const emp of employees) {
+      if (!addedIds.has(emp.id)) {
+        options.push({
+          value: emp.id,
+          label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})${
+            emp.designation?.title ? ` — ${emp.designation.title}` : ''
+          }`,
+        });
+        addedIds.add(emp.id);
+      }
+    }
+
+    return options;
+  }, [employees, assigneeId, defaultAssignerId, user]);
+
+  const handleAssigneeChange = (newAssigneeId: string) => {
+    setAssigneeId(newAssigneeId);
+    if (!assignerId || assignerId === defaultAssigneeId) {
+      const emp = employees.find((e) => e.id === newAssigneeId);
+      if (emp?.manager?.id) {
+        setAssignerId(emp.manager.id);
+      } else if (user?.employeeId) {
+        setAssignerId(user.employeeId);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -58,6 +147,7 @@ export function TaskFormModal({
       setDueDate(initialTask.dueDate ?? '');
       setProjectId(initialTask.projectId ?? '');
       setAssigneeId(initialTask.assigneeEmployeeId);
+      setAssignerId(initialTask.assignerEmployeeId ?? '');
       setIsDaily(Boolean(initialTask.isDaily));
     } else {
       setTitle('');
@@ -66,6 +156,7 @@ export function TaskFormModal({
       setDueDate('');
       setProjectId(defaultProjectId ?? '');
       setAssigneeId(defaultAssigneeId ?? '');
+      setAssignerId(defaultAssignerId ?? defaultAssigneeId ?? '');
       setIsDaily(false);
     }
 
@@ -77,7 +168,7 @@ export function TaskFormModal({
     void fetchEmployeeDirectory({ status: 'active', pageSize: 100 })
       .then((res) => setEmployees(res.data))
       .catch(() => setEmployees([]));
-  }, [isOpen, mode, initialTask, defaultAssigneeId, defaultProjectId]);
+  }, [isOpen, mode, initialTask, defaultAssigneeId, defaultAssignerId, defaultProjectId]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -112,12 +203,24 @@ export function TaskFormModal({
     setServerError(null);
 
     try {
+      const selectedAssignee = employees.find((e) => e.id === assigneeId);
+      const selectedAssigner = employees.find((e) => e.id === assignerId);
+      const assigneeName = selectedAssignee
+        ? `${selectedAssignee.firstName} ${selectedAssignee.lastName}`
+        : undefined;
+      const assignerName = selectedAssigner
+        ? `${selectedAssigner.firstName} ${selectedAssigner.lastName}`
+        : undefined;
+
       if (mode === 'create') {
         if (!onSubmitCreate) return;
         const input: CreateTaskInput = {
           title: title.trim(),
           description: description.trim() || undefined,
           assigneeEmployeeId: assigneeId,
+          assigneeName,
+          assignerEmployeeId: assignerId || undefined,
+          assignerName,
           priority,
           dueDate: dueDate || undefined,
           projectId: projectId || undefined,
@@ -130,6 +233,9 @@ export function TaskFormModal({
           title: title.trim(),
           description: description.trim() || null,
           assigneeEmployeeId: assigneeId,
+          assigneeName,
+          assignerEmployeeId: assignerId || undefined,
+          assignerName,
           priority,
           dueDate: dueDate || null,
           projectId: projectId || null,
@@ -213,14 +319,22 @@ export function TaskFormModal({
         </FormField>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Assignee" htmlFor="task-assignee" required error={errors.assigneeId}>
+          <FormField
+            label="Assigned To (Assignee)"
+            htmlFor="task-assignee"
+            required
+            error={errors.assigneeId}
+          >
             <Select
               id="task-assignee"
               value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
+              onChange={(e) => handleAssigneeChange(e.target.value)}
               disabled={submitting}
               options={[
                 { value: '', label: 'Select Team Member' },
+                ...(defaultAssigneeId && !employees.some((e) => e.id === defaultAssigneeId)
+                  ? [{ value: defaultAssigneeId, label: 'Myself (Assign to me)' }]
+                  : []),
                 ...employees.map((emp) => ({
                   value: emp.id,
                   label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})`,
@@ -229,6 +343,22 @@ export function TaskFormModal({
             />
           </FormField>
 
+          <FormField
+            label="Assigned By"
+            htmlFor="task-assigner"
+            helperText="Who delegated or assigned this task (Reporting Manager / Lead / Self)"
+          >
+            <Select
+              id="task-assigner"
+              value={assignerId}
+              onChange={(e) => setAssignerId(e.target.value)}
+              disabled={submitting}
+              options={assignerOptions}
+            />
+          </FormField>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField label="Priority" htmlFor="task-priority">
             <Select
               id="task-priority"
@@ -243,24 +373,6 @@ export function TaskFormModal({
               ]}
             />
           </FormField>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField label="Project" htmlFor="task-project" helperText="Optional group">
-            <Select
-              id="task-project"
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              disabled={submitting}
-              options={[
-                { value: '', label: 'No Project (Standalone)' },
-                ...projects.map((p) => ({
-                  value: p.id,
-                  label: `${p.name} (${p.code})`,
-                })),
-              ]}
-            />
-          </FormField>
 
           <FormField label="Due Date" htmlFor="task-due-date" error={errors.dueDate}>
             <Input
@@ -272,6 +384,22 @@ export function TaskFormModal({
             />
           </FormField>
         </div>
+
+        <FormField label="Project" htmlFor="task-project" helperText="Optional group">
+          <Select
+            id="task-project"
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            disabled={submitting}
+            options={[
+              { value: '', label: 'No Project (Standalone)' },
+              ...projects.map((p) => ({
+                value: p.id,
+                label: `${p.name} (${p.code})`,
+              })),
+            ]}
+          />
+        </FormField>
 
         <label
           htmlFor="task-is-daily"

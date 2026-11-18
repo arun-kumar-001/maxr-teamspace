@@ -272,7 +272,7 @@ export function TimeTrackerCard({
         onClick={() => void handleAttendanceToggle()}
         disabled={busy}
         data-testid="attendance-toggle-button"
-        className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 disabled:opacity-70 ${
+        className={`px-4 py-1.5 min-h-[44px] rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 disabled:opacity-70 ${
           isCheckedIn && timeTrackerRunning ? 'animate-pulse-ring' : 'hover:opacity-90'
         }`}
         style={{

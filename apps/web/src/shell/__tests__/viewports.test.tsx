@@ -33,13 +33,13 @@ describe('TC-12-04: Mandatory 9-Viewport Responsive Verification (AGENTS.md §8)
       for (const viewport of REFERENCE_VIEWPORTS) {
         expect(viewport.width).toBeGreaterThanOrEqual(360);
         const html = renderToStaticMarkup(
-          <AuthProvider initialRole={role} persistSession={false}>
-            <AppShell currentPath="/dashboard" onNavigate={() => {}}>
-              <MemoryRouter>
+          <MemoryRouter>
+            <AuthProvider initialRole={role} persistSession={false}>
+              <AppShell currentPath="/dashboard" onNavigate={() => {}}>
                 <DashboardRouter />
-              </MemoryRouter>
-            </AppShell>
-          </AuthProvider>,
+              </AppShell>
+            </AuthProvider>
+          </MemoryRouter>,
         );
 
         // Core assertions for every viewport

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { fireEvent, render, screen, waitFor, cleanup } from '@testing-library/react';
 import { AddUserModal } from '../components/AddUserModal';
 import * as usersApi from '../api/usersApi';
 import type { UserAccount } from '../types';
@@ -21,6 +21,10 @@ const createdUser: UserAccount = {
 describe('AddUserModal', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('validates required fields inline before submitting', async () => {

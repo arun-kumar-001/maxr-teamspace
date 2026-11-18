@@ -3,7 +3,7 @@ import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { DataTable, type Column } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/Button';
-import { StatCard } from '../../../components/ui/StatCard';
+import { KpiCard } from '../../../components/ui/KpiCard';
 import { ErrorState, ForbiddenState, EmptyState } from '../../../components/ui/StateCards';
 import { useAuditLogs } from '../hooks/useAuditLogs';
 import { useCompanyTimezone, formatInTimezone } from '../hooks/useCompanyTimezone';
@@ -152,14 +152,13 @@ export function AuditLogsPage() {
         </div>
       </div>
 
-      {/* Summary Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard
+      {/* Summary Stat Cards (Universal KpiCard) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <KpiCard
           label="Total Logged"
-          value={totalCount}
-          isLoading={isLoading}
+          value={isLoading ? '—' : totalCount}
           icon={
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -168,18 +167,13 @@ export function AuditLogsPage() {
               />
             </svg>
           }
+          variant="teal"
         />
-        <StatCard
+        <KpiCard
           label="Page Success"
-          value={successCount}
-          isLoading={isLoading}
+          value={isLoading ? '—' : successCount}
           icon={
-            <svg
-              className="w-4 h-4 text-emerald-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -188,18 +182,13 @@ export function AuditLogsPage() {
               />
             </svg>
           }
+          variant="emerald"
         />
-        <StatCard
+        <KpiCard
           label="Page Denied"
-          value={deniedCount}
-          isLoading={isLoading}
+          value={isLoading ? '—' : deniedCount}
           icon={
-            <svg
-              className="w-4 h-4 text-amber-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -208,18 +197,13 @@ export function AuditLogsPage() {
               />
             </svg>
           }
+          variant="amber"
         />
-        <StatCard
+        <KpiCard
           label="Page Failure"
-          value={failureCount}
-          isLoading={isLoading}
+          value={isLoading ? '—' : failureCount}
           icon={
-            <svg
-              className="w-4 h-4 text-rose-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -228,6 +212,7 @@ export function AuditLogsPage() {
               />
             </svg>
           }
+          variant="rose"
         />
       </div>
 

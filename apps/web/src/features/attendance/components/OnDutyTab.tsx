@@ -382,13 +382,13 @@ export function OnDutyTab({
   return (
     <div className="space-y-6">
       {/* 1. Four Top KPI Cards (Universal KpiCard) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* On Duty */}
         <KpiCard
           label="On Duty"
           value={onDutyCount}
-          icon={<IconUsers className="w-7 h-7" />}
-          badge={`${onDutyPercent}% of total`}
+          icon={<IconUsers className="w-6 h-6" />}
+          badge={`${onDutyPercent}%`}
           variant="emerald"
         />
 
@@ -396,8 +396,7 @@ export function OnDutyTab({
         <KpiCard
           label="Late Today"
           value={lateCount}
-          icon={<IconClock className="w-7 h-7" />}
-          badge="> 15 min after shift"
+          icon={<IconClock className="w-6 h-6" />}
           variant="amber"
         />
 
@@ -405,8 +404,7 @@ export function OnDutyTab({
         <KpiCard
           label="Absent Today"
           value={absentCount}
-          icon={<IconUserX className="w-7 h-7" />}
-          badge="Not checked in"
+          icon={<IconUserX className="w-6 h-6" />}
           variant="rose"
         />
 
@@ -414,8 +412,7 @@ export function OnDutyTab({
         <KpiCard
           label="On Leave"
           value={onLeaveCount}
-          icon={<IconCalendar className="w-7 h-7" />}
-          badge="Approved leave"
+          icon={<IconCalendar className="w-6 h-6" />}
           variant="purple"
         />
       </div>

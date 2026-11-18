@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Modal } from '../../../components/ui';
+import { Button, KpiCard, Modal } from '../../../components/ui';
 import { fetchMyAttendanceHistory, fetchTeamAttendance } from '../api/attendance';
 import type { AttendanceRecord } from '../types';
 import type { DepartmentItem, EmployeeDirectoryItem } from '../../employees/types';
@@ -832,58 +832,38 @@ export function RosterTab({
       )}
 
       {/* 1. Four Summary Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Card 1: Team Members */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs flex items-center justify-between hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-text-muted block">Team Members</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-text font-display tabular-nums tracking-tight block">
-              {metrics.teamMembers}
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-            <IconUsers className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="Team Members"
+          value={metrics.teamMembers}
+          icon={<IconUsers className="w-6 h-6" />}
+          variant="teal"
+        />
 
         {/* Card 2: Scheduled */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs flex items-center justify-between hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-text-muted block">Scheduled</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-text font-display tabular-nums tracking-tight block">
-              {metrics.scheduled}
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-            <IconCalendar className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="Scheduled"
+          value={metrics.scheduled}
+          icon={<IconCalendar className="w-6 h-6" />}
+          variant="emerald"
+        />
 
         {/* Card 3: Total Hours */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs flex items-center justify-between hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-text-muted block">Total Hours</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-text font-display tabular-nums tracking-tight block">
-              {metrics.totalHours.toLocaleString()}h
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 shadow-xs">
-            <IconClock className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="Total Hours"
+          value={`${metrics.totalHours.toLocaleString()}h`}
+          icon={<IconClock className="w-6 h-6" />}
+          variant="blue"
+        />
 
         {/* Card 4: On Leave */}
-        <div className="p-5 bg-white border border-border/80 rounded-card shadow-xs flex items-center justify-between hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-text-muted block">On Leave</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-text font-display tabular-nums tracking-tight block">
-              {metrics.onLeave}
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 shadow-xs">
-            <IconUmbrella className="w-6 h-6" />
-          </div>
-        </div>
+        <KpiCard
+          label="On Leave"
+          value={metrics.onLeave}
+          icon={<IconUmbrella className="w-6 h-6" />}
+          variant="purple"
+        />
       </div>
 
       {/* 2. Control Bar: View Switcher (Week / Month), Date Navigator with Directional Jump, Department Filter, and Search */}

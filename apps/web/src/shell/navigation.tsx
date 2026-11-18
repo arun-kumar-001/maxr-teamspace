@@ -172,14 +172,6 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     iconName: 'briefcase',
     allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
   },
-  // Shared Expenses Route (Issue #29 - Available to all authenticated roles)
-  {
-    id: 'expenses',
-    label: 'Expenses',
-    path: '/expenses',
-    iconName: 'file-text',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
-  },
   // Shared My Profile Route (Issue #22 - Available to all authenticated roles)
   {
     id: 'my-profile',
@@ -277,7 +269,11 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path === '/dashboard' ||
     path === '/login' ||
     path === '/set-password' ||
-    path === '/components'
+    path === '/components' ||
+    path === '/personal-checklist' ||
+    path.startsWith('/personal-checklist/') ||
+    path === '/staff/personal-checklist' ||
+    path.startsWith('/staff/personal-checklist/')
   ) {
     return true;
   }
@@ -315,7 +311,7 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
   }
 
-  // Expenses routes (Issue #29) - accessible to all authenticated roles
+  // Expenses routes (Removed from app - denied/redirected to dashboard)
   if (
     path === '/expenses' ||
     path.startsWith('/expenses/') ||
@@ -328,7 +324,12 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
     path === '/admin/expenses' ||
     path.startsWith('/admin/expenses/')
   ) {
-    return true;
+    return false;
+  }
+
+  // Standalone check-in-out page (Removed from app)
+  if (path === '/attendance/check-in-out' || path.startsWith('/attendance/check-in-out/')) {
+    return false;
   }
 
   // Reports routes (Issue #15 & #47)
@@ -587,11 +588,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
       { id: '/attendance', label: 'On Duty', href: '/attendance' },
       { id: '/attendance/roster', label: 'Roster', href: '/attendance/roster' },
       { id: '/attendance/timesheets', label: 'Timesheets', href: '/attendance/timesheets' },
-      {
-        id: '/attendance/check-in-out',
-        label: 'Check-In / Check-Out',
-        href: '/attendance/check-in-out',
-      },
     ],
   };
 
@@ -630,12 +626,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
             { id: '/tasks', label: 'Tasks', href: '/tasks' },
             { id: '/projects', label: 'Projects', href: '/projects' },
           ],
-        },
-        {
-          id: '/expenses',
-          label: 'Expenses & Claims',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
         },
         {
           id: '/admin/payslips',
@@ -772,12 +762,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           ],
         },
         {
-          id: '/expenses',
-          label: 'Expenses',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-        {
           id: '/hr/payslips',
           label: 'Payslips',
           href: '/hr/payslips',
@@ -880,12 +864,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           label: 'Projects',
           href: '/projects',
           icon: <NavSvgIcon name="briefcase" />,
-        },
-        {
-          id: '/expenses',
-          label: 'Expenses',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
         },
         {
           id: '/payslips',

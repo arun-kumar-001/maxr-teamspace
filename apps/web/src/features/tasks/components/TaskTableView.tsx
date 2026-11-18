@@ -134,13 +134,20 @@ export function TaskTableView({
                   )}
                 </td>
 
-                {/* Assignee */}
+                {/* Assignee & Assigner */}
                 <td className="py-3.5 px-4 whitespace-nowrap text-text text-xs">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-semibold text-[10px] shrink-0">
                       {getInitials(task.assigneeName)}
                     </span>
-                    <span className="font-medium">{task.assigneeName}</span>
+                    <div>
+                      <span className="font-medium text-text block">{task.assigneeName}</span>
+                      {task.assignerName && task.assignerName !== task.assigneeName && (
+                        <span className="text-[11px] text-text-subtle block">
+                          By: {task.assignerName}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
 
