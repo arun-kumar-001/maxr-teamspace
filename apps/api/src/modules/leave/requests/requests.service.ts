@@ -13,7 +13,7 @@ import type {
 import { ScopeFilter } from '../../rbac';
 import type { CompanySettingsReader } from '../../settings';
 import type { HolidayReader } from '../holidays/holidays.types';
-import type { LeavePolicy } from '../policies/policies.types';
+import type { LeaveApprovalSettings, LeavePolicy, LeaveTx } from '../policies/policies.types';
 import { countLeaveDays } from './leave-days';
 import { ILeaveRequestsRepository } from './requests.repository';
 import type {
@@ -48,13 +48,26 @@ export class LeaveRequestsService implements ApprovalHandler {
 
   constructor(
     private readonly repository: ILeaveRequestsRepository,
-    private readonly approvals: Pick<ApprovalsService, 'route' | 'submit' | 'cancel'>,
+    private readonly approvals: Pick<
+      ApprovalsService,
+      'route' | 'submit' | 'cancel' | 'leaveApproverOptions'
+    >,
     private readonly platform: Deps,
     private readonly settings: CompanySettingsReader,
     private readonly holidays: HolidayReader,
-    private readonly policies: { get(id: string): Promise<LeavePolicy | null> },
+    private readonly policies: {
+      get(id: string): Promise<LeavePolicy | null>;
+      getApprovalSettings(tx?: LeaveTx): Promise<LeaveApprovalSettings>;
+    },
     private readonly clock: () => Date = () => new Date(),
   ) {}
+
+  async approvalRoute(caller: LeaveCaller) {
+    return this.repository.transaction(async (tx) => {
+      const approverRoles = await this.approvals.leaveApproverOptions(tx, caller.employeeId);
+      return { approverRoles };
+    });
+  }
 
   /**
    * Applies for leave (D-12, D-30): checks the dates, counts the working days, checks the
@@ -62,6 +75,8 @@ export class LeaveRequestsService implements ApprovalHandler {
    * `applied` for an instant and `pending` once routed to an approver's inbox.
    */
   async request(input: ApplyForLeaveInput, caller: LeaveCaller): Promise<LeaveRequest> {
+    if (!input.approverRole) throw unprocessable('Select who should approve your leave request');
+    const approverRole = input.approverRole;
     const policy = await this.policies.get(input.leaveTypeId);
     if (!policy || !policy.isActive) throw unprocessable('Choose an active leave type');
     if (input.halfDay && !policy.allowHalfDay) {
@@ -115,7 +130,9 @@ export class LeaveRequestsService implements ApprovalHandler {
         days,
         reason: input.reason ?? null,
       });
-      const stages = await this.approvals.route(tx, caller.employeeId);
+      const stages = await this.approvals.route(tx, caller.employeeId, {
+        selectedLeaveApprover: approverRole,
+      });
       const approval = await this.approvals.submit(
         tx,
         {

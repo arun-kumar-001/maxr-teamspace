@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerRoute } from '../../../openapi/registry';
 import {
   createLeavePolicySchema,
+  leaveApprovalSettingsSchema,
   leavePolicyIdParamsSchema,
   leavePolicySchema,
   updateLeavePolicySchema,
@@ -9,6 +10,33 @@ import {
 
 const tags = ['Leave'];
 const one = z.object({ data: leavePolicySchema });
+
+registerRoute({
+  method: 'get',
+  path: '/leave-policies/approval-settings',
+  tags,
+  summary: 'Read the company leave approver setting',
+  permission: 'leave_policies.manage',
+  success: {
+    status: 200,
+    description: 'The current approval role and version',
+    schema: z.object({ data: leaveApprovalSettingsSchema }),
+  },
+});
+registerRoute({
+  method: 'put',
+  path: '/leave-policies/approval-settings',
+  tags,
+  summary: 'Choose HR or Team Lead for new leave requests. HR leave goes to Admin',
+  permission: 'leave_policies.manage',
+  body: leaveApprovalSettingsSchema,
+  extraResponses: { 409: 'The settings version is stale' },
+  success: {
+    status: 200,
+    description: 'The saved approval role and version',
+    schema: z.object({ data: leaveApprovalSettingsSchema }),
+  },
+});
 
 registerRoute({
   method: 'get',

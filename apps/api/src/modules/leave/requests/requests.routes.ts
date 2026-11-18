@@ -32,6 +32,15 @@ export function createLeaveRequestsRouter(options: {
   const router = Router();
   router.use(options.authenticate);
 
+  router.get(
+    '/approval-route',
+    requirePermission('leave.apply'),
+    asyncHandler(async (req: Request, res: Response) => {
+      res.set('Cache-Control', 'no-store');
+      res.status(200).json({ data: await service.approvalRoute(caller(req)) });
+    }),
+  );
+
   router.post(
     '/',
     requirePermission('leave.apply'),

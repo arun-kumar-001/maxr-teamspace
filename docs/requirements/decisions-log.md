@@ -45,4 +45,12 @@ Every business or technical decision the Technical Lead (TL) has made, newest fi
 | D-36 | What do the attendance, leave and task reports count? | Working days are the company's working days minus holidays, from joining to deactivation and not after today. Present is a day with a session, late is a late first session, a half day is worked time from the policy's half day to below its full day, on leave is a working day under approved leave, absent is a working day with neither. Leave usage shows allotted, carried forward, used, pending and remaining per type and year. Task status counts per assignee with overdue on the company calendar; project status counts per project. A Team Lead sees direct reports; HR and Admin everyone, except HR has no task report. Exports are audited. | #47 |
 | D-37 | How are meetings scheduled, answered and reminded? | Team Lead, HR Manager and Admin schedule; Staff are invited and answer. Only the organizer and invitees see a meeting, and only the organizer changes or cancels it. Up to 100 active invitees. Overlaps with the organizer's or an invitee's other meetings are returned as warnings, not refused. Times are UTC, shown in the company timezone; a meeting lasts at most 24 hours and starts in the future. Agenda and minutes are plain text, the minutes up to 20,000 characters. Invitees are reminded 15 minutes before, except those who declined, once per meeting. | #45 |
 
+## D-38 - Leave approval ownership, approved by TL on 2026-11-17
+
+All leave defaults to HR approval. HR employees' leave goes to Admin. HR/Admin may select Team Lead as the default approver later through Leave Policies. Team Lead mode uses the assigned active Team Lead, with HR fallback. Self-approval is forbidden. Setting changes apply to new submissions. This supersedes the leave-routing portion of D-12.
+
 New entries are added as each open rule is reached. D-25 (data retention) stays with the TL.
+
+## D-39 - Manual leave approver selection, requested by TL on 2026-11-18
+
+Supersedes D-38 for new submissions: remove the Leave Policies default-approver card and let the employee select HR Manager, their assigned active Team Lead, or Admin in Apply Leave. No automatic selection. Server validates the choice; unavailable Team Lead selections are rejected. HR leave still goes to Admin and self-approval remains forbidden. Existing request routes and decision history are preserved. Implementation review comes first; new or updated test cases are deferred until the TL approves this version.

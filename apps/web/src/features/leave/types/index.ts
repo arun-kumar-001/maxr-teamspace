@@ -99,6 +99,7 @@ export interface LeaveRequest extends Record<string, unknown> {
 
 export interface ApplyForLeavePayload {
   leaveTypeId: string;
+  approverRole?: 'hr_manager' | 'team_lead' | 'admin';
   startDate: string;
   endDate: string;
   halfDay?: boolean;
@@ -125,4 +126,12 @@ export interface LeaveCalendarEntry {
   halfDay: boolean;
   days: number;
   status: 'pending' | 'approved';
+}
+
+export interface LeaveApprovalSettings {
+  approverRole: 'hr_manager' | 'team_lead';
+  version: number;
+}
+export interface LeaveApprovalRoute {
+  approverRoles: ('hr_manager' | 'team_lead' | 'admin')[];
 }

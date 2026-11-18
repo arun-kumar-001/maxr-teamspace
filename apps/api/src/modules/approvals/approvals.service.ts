@@ -5,7 +5,7 @@ import { buildPage, toOffsetLimit } from '../../http/pagination';
 import type { PlatformServices } from '../../platform';
 import { EventCollector } from '../../platform/events/event-bus';
 import { ScopeFilter, scopeAllows } from '../rbac';
-import { currentStageOf, defaultRoute, denialReason } from './approval-rules';
+import { currentStageOf, defaultRoute, denialReason, leaveRoute } from './approval-rules';
 import { IApprovalsRepository } from './approvals.repository';
 import {
   APPROVAL_TRANSITIONS,
@@ -63,6 +63,23 @@ export class ApprovalsService {
     this.handlers.set(handler.subjectType, handler);
   }
 
+  async leaveApproverOptions(tx: ApprovalTx, requesterEmployeeId: string) {
+    const context = await this.repository.getRequesterContext(tx, requesterEmployeeId);
+    if (!context) throw unprocessable('The requester does not exist');
+    const options: ('hr_manager' | 'team_lead' | 'admin')[] = ['admin'];
+    if (!context.roles.includes(ROLES.HR_MANAGER)) {
+      options.unshift('hr_manager');
+      if (
+        context.managerId &&
+        context.managerId !== requesterEmployeeId &&
+        context.managerIsTeamLead
+      ) {
+        options.push('team_lead');
+      }
+    }
+    return options;
+  }
+
   /**
    * The route for a new request (D-12, D-17). Call it with the same transaction that stores the
    * subject, then pass the result to `submit`.
@@ -70,10 +87,28 @@ export class ApprovalsService {
   async route(
     tx: ApprovalTx,
     requesterEmployeeId: string,
-    options: { twoStep?: boolean } = {},
+    options: {
+      twoStep?: boolean;
+      leaveApprover?: 'hr_manager' | 'team_lead';
+      selectedLeaveApprover?: 'hr_manager' | 'team_lead' | 'admin';
+    } = {},
   ): Promise<ApprovalStage[]> {
+    if (options.selectedLeaveApprover) {
+      const allowed = await this.leaveApproverOptions(tx, requesterEmployeeId);
+      if (!allowed.includes(options.selectedLeaveApprover)) {
+        throw unprocessable(
+          'Choose an available leave approver. HR leave must go to Admin; Team Lead requires an assigned active Team Lead.',
+        );
+      }
+      return [
+        { hr_manager: 'hr', team_lead: 'manager', admin: 'admin' }[
+          options.selectedLeaveApprover
+        ] as ApprovalStage,
+      ];
+    }
     const context = await this.repository.getRequesterContext(tx, requesterEmployeeId);
     if (!context) throw unprocessable('The requester does not exist');
+    if (options.leaveApprover) return leaveRoute(context, options.leaveApprover);
     return defaultRoute(context, options.twoStep ?? false);
   }
 
@@ -126,7 +161,7 @@ export class ApprovalsService {
       ...rest,
       filter,
       awaiting: awaitingMyDecision
-        ? { employeeId: caller.employeeId, hr: this.mayDecideHr(caller) }
+        ? { employeeId: caller.employeeId, roles: caller.roles }
         : undefined,
       ...toOffsetLimit({ page, pageSize }),
     });
@@ -241,9 +276,5 @@ export class ApprovalsService {
       });
       throw err;
     }
-  }
-
-  private mayDecideHr(caller: ApprovalCaller): boolean {
-    return caller.roles.includes(ROLES.HR_MANAGER) || caller.roles.includes(ROLES.ADMIN);
   }
 }

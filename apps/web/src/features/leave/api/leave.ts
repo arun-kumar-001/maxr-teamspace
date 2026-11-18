@@ -1,4 +1,7 @@
+import { apiFetch } from '../../../api/client';
 import type {
+  LeaveApprovalRoute,
+  LeaveApprovalSettings,
   LeavePolicy,
   CreateLeavePolicyInput,
   UpdateLeavePolicyInput,
@@ -163,11 +166,10 @@ export async function runYearlyAccrual(year: number): Promise<AccrualResult> {
 }
 
 export async function applyForLeave(payload: ApplyForLeavePayload): Promise<LeaveRequest> {
-  const res = await fetch('/api/v1/leave-requests', {
+  const res = await apiFetch('/api/v1/leave-requests', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      credentials: 'include',
+      'Idempotency-Key': crypto.randomUUID(),
     },
     body: JSON.stringify(payload),
   });
@@ -221,4 +223,26 @@ export async function fetchLeaveCalendar(from: string, to: string): Promise<Leav
   });
   const json = await handleResponse<{ data: LeaveCalendarEntry[] }>(res);
   return json.data;
+}
+
+export async function fetchLeaveApprovalSettings(
+  signal?: AbortSignal,
+): Promise<LeaveApprovalSettings> {
+  const response = await apiFetch('/api/v1/leave-policies/approval-settings', { signal });
+  return (await handleResponse<{ data: LeaveApprovalSettings }>(response)).data;
+}
+
+export async function fetchLeaveApprovalRoute(signal?: AbortSignal): Promise<LeaveApprovalRoute> {
+  const response = await apiFetch('/api/v1/leave-requests/approval-route', { signal });
+  return (await handleResponse<{ data: LeaveApprovalRoute }>(response)).data;
+}
+
+export async function updateLeaveApprovalSettings(
+  settings: LeaveApprovalSettings,
+): Promise<LeaveApprovalSettings> {
+  const response = await apiFetch('/api/v1/leave-policies/approval-settings', {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  });
+  return (await handleResponse<{ data: LeaveApprovalSettings }>(response)).data;
 }

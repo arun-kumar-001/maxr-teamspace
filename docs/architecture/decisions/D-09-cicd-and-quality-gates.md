@@ -41,6 +41,10 @@ Quality regressions, broken types, security vulnerabilities, or database migrati
 
 ## Consequences
 
+### TL amendment — 2026-11-18
+
+Full Playwright E2E is deferred to final deployment. Routine CI on PRs and main/develop pushes retains Quality, Security, Database and Docker checks. The reusable/manual `.github/workflows/e2e.yml` contains the full browser suite; `.github/workflows/deploy.yml` requires it to pass before its deploy job can start. Targeted local interaction/layout checks remain selected by actual change impact. This changes E2E scheduling only; audit and other merge gates are unchanged.
+
 ### Positive
 
 - Prevents breaking changes from entering `develop`.

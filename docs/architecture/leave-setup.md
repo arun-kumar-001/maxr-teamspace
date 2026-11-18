@@ -4,17 +4,17 @@ The set-up half of leave. Applying for leave (#39) and deciding it (#40) build o
 
 ## API
 
-| Route | Permission | Notes |
-| --- | --- | --- |
-| `GET /leave-policies` | `leave_policies.read` (everyone) | Every leave type with its policy: `annualDays`, `carryForwardMax`, `allowHalfDay`, `maxBackdateDays`, `hasBalance`, `isActive`, `version`. |
-| `POST /leave-policies` | `leave_policies.manage` (HR, Admin) | `Idempotency-Key` required. Adds a type (the code is upper-cased) with its policy. 409 for a repeated code or name. |
-| `PUT /leave-policies/{id}` | `leave_policies.manage` | `{id}` is the leave type id. Send the `version` you read; 409 if it changed. Sending nothing different writes nothing. Code and `hasBalance` never change. |
-| `GET /holidays?year=` | `holidays.read` (everyone) | Default year: the current company year. |
-| `POST /holidays` | `holidays.manage` | `Idempotency-Key` required. One holiday per date (409). |
-| `DELETE /holidays/{id}` | `holidays.manage` | Only a holiday that has not passed (today counts as not passed); 422 otherwise. |
-| `GET /leave-balances/me?year=` | `leave.read_own` | Your balances, one per leave type that has a balance. |
-| `GET /leave-balances` | `leave_balances.list` | Team Lead: direct reports; HR and Admin: everyone. `employeeId`, `year`, `page`, `pageSize`. |
-| `POST /leave-balances/accrual` | `leave_balances.accrue` (HR, Admin) | `{ year }`. Creates the missing balances. Safe to repeat. 422 for a year that has not started. |
+| Route                          | Permission                          | Notes                                                                                                                                                      |
+| ------------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /leave-policies`          | `leave_policies.read` (everyone)    | Every leave type with its policy: `annualDays`, `carryForwardMax`, `allowHalfDay`, `maxBackdateDays`, `hasBalance`, `isActive`, `version`.                 |
+| `POST /leave-policies`         | `leave_policies.manage` (HR, Admin) | `Idempotency-Key` required. Adds a type (the code is upper-cased) with its policy. 409 for a repeated code or name.                                        |
+| `PUT /leave-policies/{id}`     | `leave_policies.manage`             | `{id}` is the leave type id. Send the `version` you read; 409 if it changed. Sending nothing different writes nothing. Code and `hasBalance` never change. |
+| `GET /holidays?year=`          | `holidays.read` (everyone)          | Default year: the current company year.                                                                                                                    |
+| `POST /holidays`               | `holidays.manage`                   | `Idempotency-Key` required. One holiday per date (409).                                                                                                    |
+| `DELETE /holidays/{id}`        | `holidays.manage`                   | Only a holiday that has not passed (today counts as not passed); 422 otherwise.                                                                            |
+| `GET /leave-balances/me?year=` | `leave.read_own`                    | Your balances, one per leave type that has a balance.                                                                                                      |
+| `GET /leave-balances`          | `leave_balances.list`               | Team Lead: direct reports; HR and Admin: everyone. `employeeId`, `year`, `page`, `pageSize`.                                                               |
+| `POST /leave-balances/accrual` | `leave_balances.accrue` (HR, Admin) | `{ year }`. Creates the missing balances. Safe to repeat. 422 for a year that has not started.                                                             |
 
 ## Rules (D-29)
 
@@ -29,3 +29,11 @@ The set-up half of leave. Applying for leave (#39) and deciding it (#40) build o
 ## Data
 
 Migration `20261030000020`: `leave_types`, `leave_policies` (one per type, `version` for compare-and-set), `leave_balances` (`UNIQUE (employee_id, leave_type_id, year)`), `holidays` (`UNIQUE (holiday_date)`), plus the seeded types and policies. RBAC keys in `20261030000021`.
+
+## Leave approval setting (D-38)
+
+`GET /leave-policies/approval-settings` and `PUT /leave-policies/approval-settings` require `leave_policies.manage` (HR Manager or Admin). Both return `{ data: { approverRole, version } }`. PUT accepts those two fields, with `approverRole` equal to `hr_manager` or `team_lead` and the version read by the editor. Stale writes return 409. Invalid input returns 400. Updates and their `leave_approval_settings.update` audit entry share one transaction.
+
+The Leave Policies page exposes a Default approver selection. HR is the initial value. HR employees' leave always goes to Admin. Team Lead mode falls back to HR when the assigned Team Lead is unavailable. Each new request stores its route, preserving the route of already-submitted requests after configuration changes.
+
+Migration `20261117000003_leave_approval_routing.sql` creates `leave_approval_settings` and extends the approval-stage constraint. Apply it before running the updated API. Rollback requires reverting settings and approval routes using a pre-migration database backup before restoring the earlier stage constraint.

@@ -41,15 +41,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "description",
-          "ownerId",
-          "isActive",
-          "createdAt",
-          "updatedAt"
-        ]
+        "required": ["id", "name", "description", "ownerId", "isActive", "createdAt", "updatedAt"]
       },
       "ErrorEnvelope": {
         "type": "object",
@@ -79,24 +71,17 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "message"
-                  ]
+                  "required": ["message"]
                 }
               },
               "requestId": {
                 "type": "string"
               }
             },
-            "required": [
-              "code",
-              "message"
-            ]
+            "required": ["code", "message"]
           }
         },
-        "required": [
-          "error"
-        ]
+        "required": ["error"]
       },
       "AuditLogEntry": {
         "type": "object",
@@ -114,11 +99,7 @@
           },
           "outcome": {
             "type": "string",
-            "enum": [
-              "success",
-              "denied",
-              "failure"
-            ]
+            "enum": ["success", "denied", "failure"]
           },
           "actor": {
             "type": "object",
@@ -137,11 +118,7 @@
                 "nullable": true
               }
             },
-            "required": [
-              "id",
-              "name",
-              "role"
-            ]
+            "required": ["id", "name", "role"]
           },
           "entityType": {
             "type": "string"
@@ -195,15 +172,10 @@
                 "type": "string"
               }
             },
-            "required": [
-              "user",
-              "csrfToken"
-            ]
+            "required": ["user", "csrfToken"]
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AuthProfile": {
         "type": "object",
@@ -227,23 +199,13 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "admin",
-              "hr_manager",
-              "team_lead",
-              "staff"
-            ]
+            "enum": ["admin", "hr_manager", "team_lead", "staff"]
           },
           "roles": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "admin",
-                "hr_manager",
-                "team_lead",
-                "staff"
-              ]
+              "enum": ["admin", "hr_manager", "team_lead", "staff"]
             }
           },
           "permissions": {
@@ -293,15 +255,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "present",
-              "absent",
-              "half_day",
-              "late",
-              "on_leave",
-              "holiday",
-              "weekend"
-            ]
+            "enum": ["present", "absent", "half_day", "late", "on_leave", "holiday", "weekend"]
           },
           "location": {
             "type": "object",
@@ -318,10 +272,7 @@
               },
               "workMode": {
                 "type": "string",
-                "enum": [
-                  "office",
-                  "remote"
-                ]
+                "enum": ["office", "remote"]
               }
             }
           },
@@ -429,12 +380,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending",
-              "approved",
-              "rejected",
-              "cancelled"
-            ]
+            "enum": ["pending", "approved", "rejected", "cancelled"]
           },
           "approvalId": {
             "type": "string",
@@ -533,11 +479,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "date",
-          "name"
-        ]
+        "required": ["id", "date", "name"]
       },
       "LeaveBalance": {
         "type": "object",
@@ -638,10 +580,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "year",
-          "created"
-        ]
+        "required": ["year", "created"]
       },
       "LeaveRequest": {
         "type": "object",
@@ -685,13 +624,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "applied",
-              "pending",
-              "approved",
-              "rejected",
-              "cancelled"
-            ]
+            "enum": ["applied", "pending", "approved", "rejected", "cancelled"]
           },
           "approvalId": {
             "type": "string",
@@ -759,10 +692,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending",
-              "approved"
-            ]
+            "enum": ["pending", "approved"]
           }
         },
         "required": [
@@ -808,15 +738,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "type",
-          "title",
-          "body",
-          "link",
-          "readAt",
-          "createdAt"
-        ]
+        "required": ["id", "type", "title", "body", "link", "readAt", "createdAt"]
       },
       "Project": {
         "type": "object",
@@ -837,10 +759,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "archived"
-            ]
+            "enum": ["active", "archived"]
           },
           "ownerEmployeeId": {
             "type": "string",
@@ -907,10 +826,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "archived"
-            ]
+            "enum": ["active", "archived"]
           },
           "ownerEmployeeId": {
             "type": "string",
@@ -958,11 +874,7 @@
                   "format": "date-time"
                 }
               },
-              "required": [
-                "employeeId",
-                "name",
-                "addedAt"
-              ]
+              "required": ["employeeId", "name", "addedAt"]
             }
           }
         },
@@ -1022,22 +934,11 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "todo",
-              "in_progress",
-              "in_review",
-              "completed",
-              "blocked"
-            ]
+            "enum": ["todo", "in_progress", "in_review", "completed", "blocked"]
           },
           "priority": {
             "type": "string",
-            "enum": [
-              "low",
-              "medium",
-              "high",
-              "urgent"
-            ]
+            "enum": ["low", "medium", "high", "urgent"]
           },
           "dueDate": {
             "type": "string",
@@ -1118,14 +1019,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "taskId",
-          "authorEmployeeId",
-          "authorName",
-          "body",
-          "createdAt"
-        ]
+        "required": ["id", "taskId", "authorEmployeeId", "authorName", "body", "createdAt"]
       },
       "TaskAttachment": {
         "type": "object",
@@ -1181,10 +1075,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "url",
-          "expiresAt"
-        ]
+        "required": ["url", "expiresAt"]
       },
       "Meeting": {
         "type": "object",
@@ -1221,10 +1112,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "scheduled",
-              "cancelled"
-            ]
+            "enum": ["scheduled", "cancelled"]
           },
           "version": {
             "type": "integer"
@@ -1243,12 +1131,7 @@
                 },
                 "rsvp": {
                   "type": "string",
-                  "enum": [
-                    "pending",
-                    "accepted",
-                    "declined",
-                    "tentative"
-                  ]
+                  "enum": ["pending", "accepted", "declined", "tentative"]
                 },
                 "respondedAt": {
                   "type": "string",
@@ -1256,12 +1139,7 @@
                   "format": "date-time"
                 }
               },
-              "required": [
-                "employeeId",
-                "name",
-                "rsvp",
-                "respondedAt"
-              ]
+              "required": ["employeeId", "name", "rsvp", "respondedAt"]
             }
           },
           "createdAt": {
@@ -1317,20 +1195,11 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "key",
-                "label"
-              ]
+              "required": ["key", "label"]
             }
           }
         },
-        "required": [
-          "name",
-          "title",
-          "description",
-          "module",
-          "columns"
-        ]
+        "required": ["name", "title", "description", "module", "columns"]
       },
       "Approval": {
         "type": "object",
@@ -1350,6 +1219,11 @@
             "type": "string",
             "format": "uuid"
           },
+          "requesterManagerId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
           "requesterName": {
             "type": "string"
           },
@@ -1357,10 +1231,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "manager",
-                "hr"
-              ]
+              "enum": ["manager", "hr", "admin"]
             }
           },
           "currentStage": {
@@ -1368,12 +1239,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending",
-              "approved",
-              "rejected",
-              "cancelled"
-            ]
+            "enum": ["pending", "approved", "rejected", "cancelled"]
           },
           "decisions": {
             "type": "array",
@@ -1389,10 +1255,7 @@
                 },
                 "outcome": {
                   "type": "string",
-                  "enum": [
-                    "approved",
-                    "rejected"
-                  ]
+                  "enum": ["approved", "rejected"]
                 },
                 "comment": {
                   "type": "string",
@@ -1403,13 +1266,7 @@
                   "format": "date-time"
                 }
               },
-              "required": [
-                "stage",
-                "decidedByEmployeeId",
-                "outcome",
-                "comment",
-                "decidedAt"
-              ]
+              "required": ["stage", "decidedByEmployeeId", "outcome", "comment", "decidedAt"]
             }
           },
           "createdAt": {
@@ -1427,6 +1284,7 @@
           "subjectType",
           "subjectId",
           "requesterEmployeeId",
+          "requesterManagerId",
           "requesterName",
           "stages",
           "currentStage",
@@ -1479,18 +1337,11 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending"
-            ]
+            "enum": ["pending"]
           },
           "role": {
             "type": "string",
-            "enum": [
-              "admin",
-              "hr_manager",
-              "team_lead",
-              "staff"
-            ]
+            "enum": ["admin", "hr_manager", "team_lead", "staff"]
           },
           "joiningDate": {
             "type": "string"
@@ -1526,9 +1377,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "deactivated"
-            ]
+            "enum": ["deactivated"]
           },
           "deactivatedAt": {
             "type": "string",
@@ -1559,11 +1408,7 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "id",
-                "employeeCode",
-                "name"
-              ]
+              "required": ["id", "employeeCode", "name"]
             }
           }
         },
@@ -1595,24 +1440,13 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "pending",
-              "deactivated"
-            ]
+            "enum": ["active", "pending", "deactivated"]
           },
           "directReportCount": {
             "type": "integer"
           }
         },
-        "required": [
-          "id",
-          "employeeCode",
-          "name",
-          "designation",
-          "status",
-          "directReportCount"
-        ]
+        "required": ["id", "employeeCode", "name", "designation", "status", "directReportCount"]
       },
       "ManagerChange": {
         "type": "object",
@@ -1641,22 +1475,13 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "employeeCode",
-              "name"
-            ]
+            "required": ["id", "employeeCode", "name"]
           },
           "version": {
             "type": "integer"
           }
         },
-        "required": [
-          "id",
-          "managerId",
-          "manager",
-          "version"
-        ]
+        "required": ["id", "managerId", "manager", "version"]
       },
       "EmployeeDetail": {
         "type": "object",
@@ -1696,11 +1521,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "name",
-              "code"
-            ]
+            "required": ["id", "name", "code"]
           },
           "designation": {
             "type": "object",
@@ -1713,10 +1534,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "title"
-            ]
+            "required": ["id", "title"]
           },
           "manager": {
             "type": "object",
@@ -1736,20 +1554,11 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "firstName",
-              "lastName",
-              "employeeCode"
-            ]
+            "required": ["id", "firstName", "lastName", "employeeCode"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "pending",
-              "deactivated"
-            ]
+            "enum": ["active", "pending", "deactivated"]
           },
           "joiningDate": {
             "type": "string"
@@ -1840,12 +1649,7 @@
                 }
               }
             },
-            "required": [
-              "userId",
-              "isActive",
-              "lastLoginAt",
-              "roles"
-            ]
+            "required": ["userId", "isActive", "lastLoginAt", "roles"]
           }
         },
         "required": [
@@ -1893,74 +1697,35 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "email",
-              "sms",
-              "calendarSync",
-              "payrollExport"
-            ]
+            "required": ["email", "sms", "calendarSync", "payrollExport"]
           },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "required": [
-          "companyName",
-          "timezone",
-          "workWeek",
-          "integrations",
-          "updatedAt"
-        ]
+        "required": ["companyName", "timezone", "workWeek", "integrations", "updatedAt"]
       },
       "WorkWeek": {
         "type": "object",
         "properties": {
           "start": {
             "type": "string",
-            "enum": [
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday",
-              "Sunday"
-            ]
+            "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
           },
           "end": {
             "type": "string",
-            "enum": [
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday",
-              "Sunday"
-            ]
+            "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
           },
           "days": {
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday"
-              ]
+              "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             }
           }
         },
-        "required": [
-          "start",
-          "end",
-          "days"
-        ]
+        "required": ["start", "end", "days"]
       },
       "BasicSettings": {
         "type": "object",
@@ -1975,11 +1740,7 @@
             "$ref": "#/components/schemas/WorkWeek"
           }
         },
-        "required": [
-          "companyName",
-          "timezone",
-          "workWeek"
-        ]
+        "required": ["companyName", "timezone", "workWeek"]
       },
       "Shift": {
         "type": "object",
@@ -2090,14 +1851,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "employeeId",
-          "shift",
-          "effectiveFrom",
-          "effectiveTo",
-          "createdAt"
-        ]
+        "required": ["id", "employeeId", "shift", "effectiveFrom", "effectiveTo", "createdAt"]
       },
       "AttendancePolicy": {
         "type": "object",
@@ -2163,11 +1917,7 @@
                 }
               }
             },
-            "required": [
-              "start",
-              "end",
-              "days"
-            ]
+            "required": ["start", "end", "days"]
           },
           "updatedAt": {
             "type": "string",
@@ -2211,12 +1961,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "admin",
-                "hr_manager",
-                "team_lead",
-                "staff"
-              ]
+              "enum": ["admin", "hr_manager", "team_lead", "staff"]
             }
           },
           "lastLoginAt": {
@@ -2250,12 +1995,7 @@
           },
           "key": {
             "type": "string",
-            "enum": [
-              "admin",
-              "hr_manager",
-              "team_lead",
-              "staff"
-            ]
+            "enum": ["admin", "hr_manager", "team_lead", "staff"]
           },
           "name": {
             "type": "string"
@@ -2268,13 +2008,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "id",
-          "key",
-          "name",
-          "description",
-          "activeUsers"
-        ]
+        "required": ["id", "key", "name", "description", "activeUsers"]
       },
       "Permission": {
         "type": "object",
@@ -2295,22 +2029,11 @@
             "type": "object",
             "additionalProperties": {
               "type": "string",
-              "enum": [
-                "own",
-                "team",
-                "hr",
-                "all"
-              ]
+              "enum": ["own", "team", "hr", "all"]
             }
           }
         },
-        "required": [
-          "key",
-          "module",
-          "action",
-          "description",
-          "grants"
-        ]
+        "required": ["key", "module", "action", "description", "grants"]
       },
       "Department": {
         "type": "object",
@@ -2341,14 +2064,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "code",
-          "isActive",
-          "createdAt",
-          "updatedAt"
-        ]
+        "required": ["id", "name", "code", "isActive", "createdAt", "updatedAt"]
       },
       "Designation": {
         "type": "object",
@@ -2378,14 +2094,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "departmentId",
-          "title",
-          "isActive",
-          "createdAt",
-          "updatedAt"
-        ]
+        "required": ["id", "departmentId", "title", "isActive", "createdAt", "updatedAt"]
       },
       "EmployeeDirectoryItem": {
         "type": "object",
@@ -2425,11 +2134,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "name",
-              "code"
-            ]
+            "required": ["id", "name", "code"]
           },
           "designation": {
             "type": "object",
@@ -2442,10 +2147,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "title"
-            ]
+            "required": ["id", "title"]
           },
           "manager": {
             "type": "object",
@@ -2465,20 +2167,11 @@
                 "type": "string"
               }
             },
-            "required": [
-              "id",
-              "firstName",
-              "lastName",
-              "employeeCode"
-            ]
+            "required": ["id", "firstName", "lastName", "employeeCode"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "pending",
-              "deactivated"
-            ]
+            "enum": ["active", "pending", "deactivated"]
           },
           "joiningDate": {
             "type": "string"
@@ -2540,10 +2233,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "draft",
-              "published"
-            ]
+            "enum": ["draft", "published"]
           },
           "designation": {
             "type": "string"
@@ -2767,9 +2457,7 @@
   "paths": {
     "/templates": {
       "get": {
-        "tags": [
-          "Template (sample module)"
-        ],
+        "tags": ["Template (sample module)"],
         "summary": "List templates (paginated)",
         "description": "Required permission: `employees.list`",
         "parameters": [
@@ -2806,10 +2494,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -2829,10 +2514,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "isActive",
@@ -2869,18 +2551,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -2938,9 +2612,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Template (sample module)"
-        ],
+        "tags": ["Template (sample module)"],
         "summary": "Create a template (idempotent)",
         "description": "Required permission: `employees.create`",
         "parameters": [
@@ -2973,9 +2645,7 @@
                     "maxLength": 500
                   }
                 },
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "additionalProperties": false
               }
             }
@@ -2993,9 +2663,7 @@
                       "$ref": "#/components/schemas/Template"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -3075,9 +2743,7 @@
     },
     "/templates/{id}": {
       "get": {
-        "tags": [
-          "Template (sample module)"
-        ],
+        "tags": ["Template (sample module)"],
         "summary": "Get one template",
         "description": "Required permission: `employees.read`",
         "parameters": [
@@ -3103,9 +2769,7 @@
                       "$ref": "#/components/schemas/Template"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -3173,9 +2837,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Template (sample module)"
-        ],
+        "tags": ["Template (sample module)"],
         "summary": "Update a template",
         "description": "Required permission: `employees.update`",
         "parameters": [
@@ -3226,9 +2888,7 @@
                       "$ref": "#/components/schemas/Template"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -3318,9 +2978,7 @@
     },
     "/templates/{id}/deactivate": {
       "post": {
-        "tags": [
-          "Template (sample module)"
-        ],
+        "tags": ["Template (sample module)"],
         "summary": "Deactivate a template",
         "description": "Required permission: `employees.deactivate`",
         "parameters": [
@@ -3351,20 +3009,13 @@
                         },
                         "isActive": {
                           "type": "boolean",
-                          "enum": [
-                            false
-                          ]
+                          "enum": [false]
                         }
                       },
-                      "required": [
-                        "id",
-                        "isActive"
-                      ]
+                      "required": ["id", "isActive"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -3454,9 +3105,7 @@
     },
     "/audit-logs": {
       "get": {
-        "tags": [
-          "Audit logs"
-        ],
+        "tags": ["Audit logs"],
         "summary": "Search the audit trail (Admin; read only). Filters: actor, action or module, entity, outcome, date range",
         "description": "Required permission: `audit_logs.list`",
         "parameters": [
@@ -3533,11 +3182,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "success",
-                "denied",
-                "failure"
-              ]
+              "enum": ["success", "denied", "failure"]
             },
             "required": false,
             "name": "outcome",
@@ -3564,10 +3209,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             },
             "required": false,
@@ -3605,18 +3247,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -3676,9 +3310,7 @@
     },
     "/auth/login": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Sign in with email and password",
         "description": "Access: Public",
         "requestBody": {
@@ -3699,10 +3331,7 @@
                     "maxLength": 128
                   }
                 },
-                "required": [
-                  "email",
-                  "password"
-                ],
+                "required": ["email", "password"],
                 "additionalProperties": false
               }
             }
@@ -3794,9 +3423,7 @@
     },
     "/auth/me": {
       "get": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "The signed-in user, their role and permissions, and the CSRF token",
         "description": "Access: Any signed-in user",
         "responses": {
@@ -3865,9 +3492,7 @@
     },
     "/auth/logout": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "End the current session",
         "description": "Required permission: `auth.logout`",
         "responses": {
@@ -3949,9 +3574,7 @@
     },
     "/auth/change-password": {
       "post": {
-        "tags": [
-          "Auth"
-        ],
+        "tags": ["Auth"],
         "summary": "Change the password; all other sessions of the user end",
         "description": "Access: Any signed-in user",
         "requestBody": {
@@ -3972,10 +3595,7 @@
                     "maxLength": 128
                   }
                 },
-                "required": [
-                  "currentPassword",
-                  "newPassword"
-                ],
+                "required": ["currentPassword", "newPassword"],
                 "additionalProperties": false
               }
             }
@@ -4060,9 +3680,7 @@
     },
     "/attendance/check-in": {
       "post": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Check in for work session",
         "description": "Required permission: `attendance.check_in`",
         "requestBody": {
@@ -4091,10 +3709,7 @@
                       },
                       "workMode": {
                         "type": "string",
-                        "enum": [
-                          "office",
-                          "remote"
-                        ]
+                        "enum": ["office", "remote"]
                       }
                     },
                     "additionalProperties": false
@@ -4126,9 +3741,7 @@
                       "$ref": "#/components/schemas/AttendanceRecord"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -4208,9 +3821,7 @@
     },
     "/attendance/check-out": {
       "post": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Check out of active work session",
         "description": "Required permission: `attendance.check_out`",
         "requestBody": {
@@ -4239,10 +3850,7 @@
                       },
                       "workMode": {
                         "type": "string",
-                        "enum": [
-                          "office",
-                          "remote"
-                        ]
+                        "enum": ["office", "remote"]
                       }
                     },
                     "additionalProperties": false
@@ -4274,9 +3882,7 @@
                       "$ref": "#/components/schemas/AttendanceRecord"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -4356,9 +3962,7 @@
     },
     "/attendance/active": {
       "get": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Get caller active attendance session",
         "description": "Required permission: `attendance.read_own`",
         "responses": {
@@ -4380,9 +3984,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -4442,9 +4044,7 @@
     },
     "/attendance/today": {
       "get": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Get caller today attendance summary",
         "description": "Required permission: `attendance.read_own`",
         "responses": {
@@ -4459,9 +4059,7 @@
                       "$ref": "#/components/schemas/TodayAttendanceSummary"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -4521,9 +4119,7 @@
     },
     "/attendance/me": {
       "get": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Get caller own attendance history (paginated)",
         "description": "Required permission: `attendance.read_own`",
         "parameters": [
@@ -4549,11 +4145,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "workDate",
-                "checkInTime",
-                "createdAt"
-              ]
+              "enum": ["workDate", "checkInTime", "createdAt"]
             },
             "required": false,
             "name": "sort",
@@ -4562,10 +4154,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             },
             "required": false,
             "name": "order",
@@ -4626,18 +4215,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -4697,9 +4278,7 @@
     },
     "/attendance": {
       "get": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "List attendance records in caller record scope (paginated)",
         "description": "Required permission: `attendance.list`",
         "parameters": [
@@ -4725,11 +4304,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "workDate",
-                "checkInTime",
-                "createdAt"
-              ]
+              "enum": ["workDate", "checkInTime", "createdAt"]
             },
             "required": false,
             "name": "sort",
@@ -4738,10 +4313,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             },
             "required": false,
             "name": "order",
@@ -4811,18 +4383,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -4882,9 +4446,7 @@
     },
     "/attendance/corrections": {
       "post": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Ask to correct the times of one of your own attendance records (up to 30 days old, one pending request per record). Your manager decides, or HR when you have none, through /approvals",
         "description": "Required permission: `attendance.request_correction`",
         "parameters": [
@@ -4948,9 +4510,7 @@
                       "$ref": "#/components/schemas/AttendanceCorrection"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5038,9 +4598,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Your own correction requests, newest first",
         "description": "Required permission: `attendance.read_own`",
         "parameters": [
@@ -5068,12 +4626,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "pending",
-                "approved",
-                "rejected",
-                "cancelled"
-              ]
+              "enum": ["pending", "approved", "rejected", "cancelled"]
             },
             "required": false,
             "name": "status",
@@ -5110,18 +4663,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -5181,9 +4726,7 @@
     },
     "/attendance/corrections/{id}": {
       "get": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "One correction: yours, or one inside the approvers’ scope (Team Lead: direct reports, HR and Admin: everyone). 404 otherwise",
         "description": "Required permission: `attendance.read_own`",
         "parameters": [
@@ -5209,9 +4752,7 @@
                       "$ref": "#/components/schemas/AttendanceCorrection"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5281,9 +4822,7 @@
     },
     "/attendance/corrections/{id}/cancel": {
       "post": {
-        "tags": [
-          "Attendance"
-        ],
+        "tags": ["Attendance"],
         "summary": "Withdraw your own correction while it is still pending",
         "description": "Required permission: `attendance.request_correction`",
         "parameters": [
@@ -5309,9 +4848,7 @@
                       "$ref": "#/components/schemas/AttendanceCorrection"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5399,11 +4936,223 @@
         }
       }
     },
+    "/leave-policies/approval-settings": {
+      "get": {
+        "tags": ["Leave"],
+        "summary": "Read the company leave approver setting",
+        "description": "Required permission: `leave_policies.manage`",
+        "responses": {
+          "200": {
+            "description": "The current approval role and version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "approverRole": {
+                          "type": "string",
+                          "enum": ["hr_manager", "team_lead"]
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": ["approverRole", "version"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Leave"],
+        "summary": "Choose HR or Team Lead for new leave requests. HR leave goes to Admin",
+        "description": "Required permission: `leave_policies.manage`",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "approverRole": {
+                    "type": "string",
+                    "enum": ["hr_manager", "team_lead"]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": ["approverRole", "version"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The saved approval role and version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "approverRole": {
+                          "type": "string",
+                          "enum": ["hr_manager", "team_lead"]
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      },
+                      "required": ["approverRole", "version"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The settings version is stale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/leave-policies": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Leave types with their policies (every signed-in role)",
         "description": "Required permission: `leave_policies.read`",
         "responses": {
@@ -5421,9 +5170,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5481,9 +5228,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Add a leave type with its policy (HR Manager, Admin). Run the yearly accrual afterwards to create balances for existing employees",
         "description": "Required permission: `leave_policies.manage`",
         "parameters": [
@@ -5542,10 +5287,7 @@
                     "default": 0
                   }
                 },
-                "required": [
-                  "code",
-                  "name"
-                ],
+                "required": ["code", "name"],
                 "additionalProperties": false
               }
             }
@@ -5563,9 +5305,7 @@
                       "$ref": "#/components/schemas/LeavePolicy"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5645,9 +5385,7 @@
     },
     "/leave-policies/{id}": {
       "put": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Change a policy (HR Manager, Admin). Send the version you read; balances that already exist are not changed",
         "description": "Required permission: `leave_policies.manage`",
         "parameters": [
@@ -5699,9 +5437,7 @@
                     "minimum": 1
                   }
                 },
-                "required": [
-                  "version"
-                ],
+                "required": ["version"],
                 "additionalProperties": false
               }
             }
@@ -5719,9 +5455,7 @@
                       "$ref": "#/components/schemas/LeavePolicy"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5811,9 +5545,7 @@
     },
     "/holidays": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "The holiday calendar of a year (default: the current company year), by date",
         "description": "Required permission: `holidays.read`",
         "parameters": [
@@ -5843,9 +5575,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -5903,9 +5633,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Add a holiday (HR Manager, Admin). Holidays are not counted as leave days",
         "description": "Required permission: `holidays.manage`",
         "parameters": [
@@ -5938,10 +5666,7 @@
                     "maxLength": 100
                   }
                 },
-                "required": [
-                  "date",
-                  "name"
-                ],
+                "required": ["date", "name"],
                 "additionalProperties": false
               }
             }
@@ -5959,9 +5684,7 @@
                       "$ref": "#/components/schemas/Holiday"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -6041,9 +5764,7 @@
     },
     "/holidays/{id}": {
       "delete": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Remove a holiday that has not passed yet (HR Manager, Admin)",
         "description": "Required permission: `holidays.manage`",
         "parameters": [
@@ -6069,9 +5790,7 @@
                       "$ref": "#/components/schemas/Holiday"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -6161,9 +5880,7 @@
     },
     "/leave-balances/me": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Your own leave balances for a year (default: the current company year)",
         "description": "Required permission: `leave.read_own`",
         "parameters": [
@@ -6193,9 +5910,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -6255,9 +5970,7 @@
     },
     "/leave-balances": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Leave balances in your scope for a year (Team Lead: direct reports, HR Manager and Admin: everyone)",
         "description": "Required permission: `leave_balances.list`",
         "parameters": [
@@ -6332,18 +6045,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -6403,9 +6108,7 @@
     },
     "/leave-balances/accrual": {
       "post": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Create the missing balances of a year for everyone (HR Manager, Admin): pro-rata for joiners, carry-forward from the year before. Repeating it creates nothing new",
         "description": "Required permission: `leave_balances.accrue`",
         "requestBody": {
@@ -6421,9 +6124,7 @@
                     "maximum": 2100
                   }
                 },
-                "required": [
-                  "year"
-                ],
+                "required": ["year"],
                 "additionalProperties": false
               }
             }
@@ -6441,9 +6142,7 @@
                       "$ref": "#/components/schemas/LeaveAccrualResult"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -6521,12 +6220,95 @@
         }
       }
     },
+    "/leave-requests/approval-route": {
+      "get": {
+        "tags": ["Leave"],
+        "summary": "List the approver roles the signed-in employee may select for this leave request. HR leave is restricted to Admin; Team Lead requires an assigned active Team Lead.",
+        "description": "Required permission: `leave.apply`",
+        "responses": {
+          "200": {
+            "description": "Available approver roles, without creating a request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "approverRoles": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": ["hr_manager", "team_lead", "admin"]
+                          }
+                        }
+                      },
+                      "required": ["approverRoles"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/leave-requests": {
       "post": {
-        "tags": [
-          "Leave"
-        ],
-        "summary": "Apply for leave. Working days are counted (company week, holidays skipped); the balance must cover them, taking your other pending requests into account. Your manager decides, or HR when you have none, through /approvals",
+        "tags": ["Leave"],
+        "summary": "Apply for leave with an explicitly selected approverRole: hr_manager, team_lead or admin. HR leave must go to Admin. Team Lead requires an assigned active Team Lead; unavailable selections are rejected. Working days exclude holidays and must fit the available balance including pending requests.",
         "description": "Required permission: `leave.apply`",
         "parameters": [
           {
@@ -6552,6 +6334,10 @@
                     "type": "string",
                     "format": "uuid"
                   },
+                  "approverRole": {
+                    "type": "string",
+                    "enum": ["hr_manager", "team_lead", "admin"]
+                  },
                   "startDate": {
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
@@ -6570,11 +6356,7 @@
                     "maxLength": 500
                   }
                 },
-                "required": [
-                  "leaveTypeId",
-                  "startDate",
-                  "endDate"
-                ],
+                "required": ["leaveTypeId", "startDate", "endDate"],
                 "additionalProperties": false
               }
             }
@@ -6592,9 +6374,7 @@
                       "$ref": "#/components/schemas/LeaveRequest"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -6672,9 +6452,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Leave requests in your scope (Team Lead: direct reports, HR Manager and Admin: everyone), latest first",
         "description": "Required permission: `leave.list`",
         "parameters": [
@@ -6702,13 +6480,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "applied",
-                "pending",
-                "approved",
-                "rejected",
-                "cancelled"
-              ]
+              "enum": ["applied", "pending", "approved", "rejected", "cancelled"]
             },
             "required": false,
             "name": "status",
@@ -6781,18 +6553,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -6852,9 +6616,7 @@
     },
     "/leave-requests/me": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Your own leave requests, latest first; filter by status, type or a date range",
         "description": "Required permission: `leave.read_own`",
         "parameters": [
@@ -6882,13 +6644,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "applied",
-                "pending",
-                "approved",
-                "rejected",
-                "cancelled"
-              ]
+              "enum": ["applied", "pending", "approved", "rejected", "cancelled"]
             },
             "required": false,
             "name": "status",
@@ -6952,18 +6708,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -7023,9 +6771,7 @@
     },
     "/leave-requests/{id}": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "One request: yours, or one inside the approvers’ scope. 404 otherwise",
         "description": "Required permission: `leave.read_own`",
         "parameters": [
@@ -7051,9 +6797,7 @@
                       "$ref": "#/components/schemas/LeaveRequest"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -7123,9 +6867,7 @@
     },
     "/leave-requests/calendar": {
       "get": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Who is away between two dates (at most 62 days): pending and approved leave of your direct reports (Team Lead) or everyone (HR Manager, Admin). Reasons are not included",
         "description": "Required permission: `leave.list`",
         "parameters": [
@@ -7163,9 +6905,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -7225,9 +6965,7 @@
     },
     "/leave-requests/{id}/cancel": {
       "post": {
-        "tags": [
-          "Leave"
-        ],
+        "tags": ["Leave"],
         "summary": "Cancel a leave request. You can cancel your own while it is pending, and approved leave only before it starts; HR Manager and Admin can cancel approved or pending leave of others at any time. Approved leave gives its days back to the balance",
         "description": "Required permission: `leave.cancel`",
         "parameters": [
@@ -7253,9 +6991,7 @@
                       "$ref": "#/components/schemas/LeaveRequest"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -7345,9 +7081,7 @@
     },
     "/notifications": {
       "get": {
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "summary": "Your own notifications, newest first. `meta.unread` is the badge count",
         "description": "Required permission: `notifications.read_own`",
         "parameters": [
@@ -7375,10 +7109,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "unread",
@@ -7418,19 +7149,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages",
-                        "unread"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages", "unread"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -7490,9 +7212,7 @@
     },
     "/notifications/read-all": {
       "post": {
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "summary": "Mark all of your notifications read",
         "description": "Required permission: `notifications.read_own`",
         "responses": {
@@ -7510,14 +7230,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "updated"
-                      ]
+                      "required": ["updated"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -7597,9 +7313,7 @@
     },
     "/notifications/{id}/read": {
       "post": {
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "summary": "Mark one of your notifications read (repeating it is harmless). 404 for anyone else’s",
         "description": "Required permission: `notifications.read_own`",
         "parameters": [
@@ -7625,9 +7339,7 @@
                       "$ref": "#/components/schemas/Notification"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -7717,9 +7429,7 @@
     },
     "/notifications/announcements": {
       "post": {
-        "tags": [
-          "Notifications"
-        ],
+        "tags": ["Notifications"],
         "summary": "Send an in-app announcement to every active employee (Admin). Announcements are not e-mailed",
         "description": "Required permission: `notifications.announce`",
         "parameters": [
@@ -7753,10 +7463,7 @@
                     "maxLength": 1000
                   }
                 },
-                "required": [
-                  "title",
-                  "message"
-                ],
+                "required": ["title", "message"],
                 "additionalProperties": false
               }
             }
@@ -7777,14 +7484,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "recipients"
-                      ]
+                      "required": ["recipients"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -7864,9 +7567,7 @@
     },
     "/projects": {
       "get": {
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "summary": "The projects you own or belong to (an Admin sees all), by status and name",
         "description": "Required permission: `projects.read`",
         "parameters": [
@@ -7894,10 +7595,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "archived"
-              ]
+              "enum": ["active", "archived"]
             },
             "required": false,
             "name": "status",
@@ -7944,18 +7642,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -8013,9 +7703,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "summary": "Create a project (Team Lead, Admin). A Team Lead owns it; an Admin may name another Team Lead or Admin as owner. Members must be the owner or the owner’s direct reports",
         "description": "Required permission: `projects.manage`",
         "parameters": [
@@ -8073,10 +7761,7 @@
                     "maxItems": 200
                   }
                 },
-                "required": [
-                  "code",
-                  "name"
-                ],
+                "required": ["code", "name"],
                 "additionalProperties": false
               }
             }
@@ -8094,9 +7779,7 @@
                       "$ref": "#/components/schemas/ProjectDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -8176,9 +7859,7 @@
     },
     "/projects/{id}": {
       "get": {
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "summary": "One project with its members",
         "description": "Required permission: `projects.read`",
         "parameters": [
@@ -8204,9 +7885,7 @@
                       "$ref": "#/components/schemas/ProjectDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -8274,9 +7953,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "summary": "Change a project, or archive and reactivate it with `status`. Send the `version` you read. An archived project is read-only except for reactivating it",
         "description": "Required permission: `projects.manage`",
         "parameters": [
@@ -8310,10 +7987,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "active",
-                      "archived"
-                    ]
+                    "enum": ["active", "archived"]
                   },
                   "startDate": {
                     "type": "string",
@@ -8330,9 +8004,7 @@
                     "minimum": 1
                   }
                 },
-                "required": [
-                  "version"
-                ],
+                "required": ["version"],
                 "additionalProperties": false
               }
             }
@@ -8350,9 +8022,7 @@
                       "$ref": "#/components/schemas/ProjectDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -8442,9 +8112,7 @@
     },
     "/projects/{id}/members": {
       "post": {
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "summary": "Add a member (the owner’s direct report). Adding someone already in is harmless",
         "description": "Required permission: `projects.manage`",
         "parameters": [
@@ -8470,9 +8138,7 @@
                     "format": "uuid"
                   }
                 },
-                "required": [
-                  "employeeId"
-                ],
+                "required": ["employeeId"],
                 "additionalProperties": false
               }
             }
@@ -8490,9 +8156,7 @@
                       "$ref": "#/components/schemas/ProjectDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -8582,9 +8246,7 @@
     },
     "/projects/{id}/members/{employeeId}": {
       "delete": {
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "summary": "Remove a member. The owner cannot be removed",
         "description": "Required permission: `projects.manage`",
         "parameters": [
@@ -8619,9 +8281,7 @@
                       "$ref": "#/components/schemas/ProjectDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -8711,9 +8371,7 @@
     },
     "/tasks": {
       "post": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Create and assign a task (Team Lead, Admin). A Team Lead assigns to themselves or their direct reports; an Admin to any active employee. With a project, the assignee must be one of its members",
         "description": "Required permission: `tasks.create`",
         "parameters": [
@@ -8752,12 +8410,7 @@
                   },
                   "priority": {
                     "type": "string",
-                    "enum": [
-                      "low",
-                      "medium",
-                      "high",
-                      "urgent"
-                    ],
+                    "enum": ["low", "medium", "high", "urgent"],
                     "default": "medium"
                   },
                   "dueDate": {
@@ -8772,10 +8425,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "title",
-                  "assigneeEmployeeId"
-                ],
+                "required": ["title", "assigneeEmployeeId"],
                 "additionalProperties": false
               }
             }
@@ -8793,9 +8443,7 @@
                       "$ref": "#/components/schemas/Task"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -8873,9 +8521,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "The team board: tasks you assigned and tasks assigned to your direct reports (Team Lead); every task (Admin)",
         "description": "Required permission: `tasks.read_team`",
         "parameters": [
@@ -8903,13 +8549,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "todo",
-                "in_progress",
-                "in_review",
-                "completed",
-                "blocked"
-              ]
+              "enum": ["todo", "in_progress", "in_review", "completed", "blocked"]
             },
             "required": false,
             "name": "status",
@@ -8918,12 +8558,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "low",
-                "medium",
-                "high",
-                "urgent"
-              ]
+              "enum": ["low", "medium", "high", "urgent"]
             },
             "required": false,
             "name": "priority",
@@ -8941,10 +8576,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "overdue",
@@ -9008,18 +8640,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -9079,9 +8703,7 @@
     },
     "/tasks/me": {
       "get": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Tasks assigned to you: open work first, soonest due first, then by priority. `overdue=true` lists the ones past their due date",
         "description": "Required permission: `tasks.read_own`",
         "parameters": [
@@ -9109,13 +8731,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "todo",
-                "in_progress",
-                "in_review",
-                "completed",
-                "blocked"
-              ]
+              "enum": ["todo", "in_progress", "in_review", "completed", "blocked"]
             },
             "required": false,
             "name": "status",
@@ -9124,12 +8740,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "low",
-                "medium",
-                "high",
-                "urgent"
-              ]
+              "enum": ["low", "medium", "high", "urgent"]
             },
             "required": false,
             "name": "priority",
@@ -9147,10 +8758,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "overdue",
@@ -9205,18 +8813,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -9276,9 +8876,7 @@
     },
     "/tasks/{id}": {
       "get": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "One task: yours, one you assigned, one assigned to a direct report, or any task for an Admin",
         "description": "Required permission: `tasks.read_own`",
         "parameters": [
@@ -9304,9 +8902,7 @@
                       "$ref": "#/components/schemas/Task"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -9374,9 +8970,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Edit a task that is not completed (the person who assigned it, or an Admin). Send the `version` you read. Giving it to someone else restarts it as `todo`",
         "description": "Required permission: `tasks.create`",
         "parameters": [
@@ -9414,12 +9008,7 @@
                   },
                   "priority": {
                     "type": "string",
-                    "enum": [
-                      "low",
-                      "medium",
-                      "high",
-                      "urgent"
-                    ]
+                    "enum": ["low", "medium", "high", "urgent"]
                   },
                   "dueDate": {
                     "type": "string",
@@ -9439,9 +9028,7 @@
                     "minimum": 1
                   }
                 },
-                "required": [
-                  "version"
-                ],
+                "required": ["version"],
                 "additionalProperties": false
               }
             }
@@ -9459,9 +9046,7 @@
                       "$ref": "#/components/schemas/Task"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -9551,9 +9136,7 @@
     },
     "/tasks/{id}/status": {
       "post": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Move a task along todo, in_progress, in_review, completed (and blocked). The assignee moves it as far as in_review; only the person who assigned it, or an Admin, completes or reopens it. Repeating the status it already has is a 200",
         "description": "Required permission: `tasks.update_status`",
         "parameters": [
@@ -9576,18 +9159,10 @@
                 "properties": {
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "todo",
-                      "in_progress",
-                      "in_review",
-                      "completed",
-                      "blocked"
-                    ]
+                    "enum": ["todo", "in_progress", "in_review", "completed", "blocked"]
                   }
                 },
-                "required": [
-                  "status"
-                ],
+                "required": ["status"],
                 "additionalProperties": false
               }
             }
@@ -9605,9 +9180,7 @@
                       "$ref": "#/components/schemas/Task"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -9697,9 +9270,7 @@
     },
     "/tasks/{id}/comments": {
       "get": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "The comment thread of a task you can see, oldest first",
         "description": "Required permission: `tasks.read_own`",
         "parameters": [
@@ -9764,18 +9335,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -9843,9 +9406,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Comment on a task you can see. Comments cannot be edited or deleted. The assignee and the assigner are told (without the text)",
         "description": "Required permission: `tasks.collaborate`",
         "parameters": [
@@ -9872,9 +9433,7 @@
                     "maxLength": 2000
                   }
                 },
-                "required": [
-                  "body"
-                ],
+                "required": ["body"],
                 "additionalProperties": false
               }
             }
@@ -9892,9 +9451,7 @@
                       "$ref": "#/components/schemas/TaskComment"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -9984,9 +9541,7 @@
     },
     "/tasks/{id}/attachments": {
       "get": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "The files attached to a task you can see",
         "description": "Required permission: `tasks.read_own`",
         "parameters": [
@@ -10015,9 +9570,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -10085,9 +9638,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Attach a file to a task you can see: the file is the raw request body. PDF, PNG or JPEG up to 10 MB, checked by content and scanned. The same file is attached once (409); a task holds at most 20 files",
         "description": "Required permission: `tasks.collaborate`",
         "parameters": [
@@ -10147,9 +9698,7 @@
                       "$ref": "#/components/schemas/TaskAttachment"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -10249,9 +9798,7 @@
     },
     "/tasks/{id}/attachments/{attachmentId}/download-link": {
       "get": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "A short-lived download link for one file, bound to your session. Follow `url` (GET /files/download) to download it",
         "description": "Required permission: `tasks.read_own`",
         "parameters": [
@@ -10286,9 +9833,7 @@
                       "$ref": "#/components/schemas/DownloadLink"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -10358,9 +9903,7 @@
     },
     "/tasks/{id}/attachments/{attachmentId}": {
       "delete": {
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "summary": "Remove a file (the person who attached it, the person who assigned the task, or an Admin)",
         "description": "Required permission: `tasks.collaborate`",
         "parameters": [
@@ -10398,14 +9941,10 @@
                           "type": "boolean"
                         }
                       },
-                      "required": [
-                        "removed"
-                      ]
+                      "required": ["removed"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -10495,9 +10034,7 @@
     },
     "/meetings": {
       "get": {
-        "tags": [
-          "Meetings"
-        ],
+        "tags": ["Meetings"],
         "summary": "Meetings you organise or are invited to that overlap a window (at most 62 days), earliest first",
         "description": "Required permission: `meetings.read_own`",
         "parameters": [
@@ -10575,18 +10112,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -10644,9 +10173,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Meetings"
-        ],
+        "tags": ["Meetings"],
         "summary": "Schedule a meeting (Team Lead, HR Manager, Admin). Up to 100 invitees; overlaps with the organizer’s or an invitee’s other meetings are returned as warnings, not refused",
         "description": "Required permission: `meetings.schedule`",
         "requestBody": {
@@ -10684,11 +10211,7 @@
                     "default": []
                   }
                 },
-                "required": [
-                  "title",
-                  "startsAt",
-                  "endsAt"
-                ],
+                "required": ["title", "startsAt", "endsAt"],
                 "additionalProperties": false
               }
             }
@@ -10722,22 +10245,14 @@
                                 "format": "uuid"
                               }
                             },
-                            "required": [
-                              "employeeId",
-                              "meetingId"
-                            ]
+                            "required": ["employeeId", "meetingId"]
                           }
                         }
                       },
-                      "required": [
-                        "meeting",
-                        "overlaps"
-                      ]
+                      "required": ["meeting", "overlaps"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -10817,9 +10332,7 @@
     },
     "/meetings/{id}": {
       "get": {
-        "tags": [
-          "Meetings"
-        ],
+        "tags": ["Meetings"],
         "summary": "One meeting with its invitees and their answers, for the organizer and the invitees",
         "description": "Required permission: `meetings.read_own`",
         "parameters": [
@@ -10845,9 +10358,7 @@
                       "$ref": "#/components/schemas/Meeting"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -10915,9 +10426,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Meetings"
-        ],
+        "tags": ["Meetings"],
         "summary": "Change a meeting (the organizer). Send the `version` you read. Adding invitees invites them; removing one drops them. Minutes are plain text up to 20,000 characters",
         "description": "Required permission: `meetings.schedule`",
         "parameters": [
@@ -10975,9 +10484,7 @@
                     "minimum": 1
                   }
                 },
-                "required": [
-                  "version"
-                ],
+                "required": ["version"],
                 "additionalProperties": false
               }
             }
@@ -11011,22 +10518,14 @@
                                 "format": "uuid"
                               }
                             },
-                            "required": [
-                              "employeeId",
-                              "meetingId"
-                            ]
+                            "required": ["employeeId", "meetingId"]
                           }
                         }
                       },
-                      "required": [
-                        "meeting",
-                        "overlaps"
-                      ]
+                      "required": ["meeting", "overlaps"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -11116,9 +10615,7 @@
     },
     "/meetings/{id}/cancel": {
       "post": {
-        "tags": [
-          "Meetings"
-        ],
+        "tags": ["Meetings"],
         "summary": "Cancel a meeting (the organizer). The invitees are told",
         "description": "Required permission: `meetings.schedule`",
         "parameters": [
@@ -11144,9 +10641,7 @@
                       "$ref": "#/components/schemas/Meeting"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -11236,9 +10731,7 @@
     },
     "/meetings/{id}/rsvp": {
       "post": {
-        "tags": [
-          "Meetings"
-        ],
+        "tags": ["Meetings"],
         "summary": "Answer an invitation: accepted, declined or tentative. Only invitees may answer",
         "description": "Required permission: `meetings.rsvp`",
         "parameters": [
@@ -11261,16 +10754,10 @@
                 "properties": {
                   "response": {
                     "type": "string",
-                    "enum": [
-                      "accepted",
-                      "declined",
-                      "tentative"
-                    ]
+                    "enum": ["accepted", "declined", "tentative"]
                   }
                 },
-                "required": [
-                  "response"
-                ],
+                "required": ["response"],
                 "additionalProperties": false
               }
             }
@@ -11288,9 +10775,7 @@
                       "$ref": "#/components/schemas/Meeting"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -11380,9 +10865,7 @@
     },
     "/reports": {
       "get": {
-        "tags": [
-          "Reports"
-        ],
+        "tags": ["Reports"],
         "summary": "Reports the caller may run",
         "description": "Required permission: `reports.read`",
         "responses": {
@@ -11400,9 +10883,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -11462,9 +10943,7 @@
     },
     "/reports/{name}": {
       "get": {
-        "tags": [
-          "Reports"
-        ],
+        "tags": ["Reports"],
         "summary": "Preview a report (paginated). Filters differ per report; unknown query keys are rejected",
         "description": "Required permission: `reports.read`",
         "parameters": [
@@ -11531,18 +11010,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -11612,9 +11083,7 @@
     },
     "/reports/{name}/export": {
       "get": {
-        "tags": [
-          "Reports"
-        ],
+        "tags": ["Reports"],
         "summary": "Download a report as CSV (at most 10,000 rows) or PDF (at most 2,000 rows); audited",
         "description": "Required permission: `reports.export`",
         "parameters": [
@@ -11631,10 +11100,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "csv",
-                "pdf"
-              ]
+              "enum": ["csv", "pdf"]
             },
             "required": false,
             "name": "format",
@@ -11730,9 +11196,7 @@
     },
     "/approvals": {
       "get": {
-        "tags": [
-          "Approvals"
-        ],
+        "tags": ["Approvals"],
         "summary": "The approvals inbox: requests in your scope, oldest first (Staff see their own requests; awaitingMyDecision=true lists what waits for you)",
         "description": "Required permission: `approvals.list`",
         "parameters": [
@@ -11760,12 +11224,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "pending",
-                "approved",
-                "rejected",
-                "cancelled"
-              ]
+              "enum": ["pending", "approved", "rejected", "cancelled"]
             },
             "required": false,
             "name": "status",
@@ -11784,10 +11243,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "awaitingMyDecision",
@@ -11824,18 +11280,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -11895,9 +11343,7 @@
     },
     "/approvals/{id}": {
       "get": {
-        "tags": [
-          "Approvals"
-        ],
+        "tags": ["Approvals"],
         "summary": "One approval with its decisions (404 outside your scope)",
         "description": "Required permission: `approvals.read`",
         "parameters": [
@@ -11923,9 +11369,7 @@
                       "$ref": "#/components/schemas/Approval"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -11995,9 +11439,7 @@
     },
     "/approvals/{id}/approve": {
       "post": {
-        "tags": [
-          "Approvals"
-        ],
+        "tags": ["Approvals"],
         "summary": "Approve the current step. The last step applies the decision to the request in the same transaction. Repeating an approval that already stands is a 200 with no change",
         "description": "Required permission: `approvals.decide`",
         "parameters": [
@@ -12041,9 +11483,7 @@
                       "$ref": "#/components/schemas/Approval"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -12133,9 +11573,7 @@
     },
     "/approvals/{id}/reject": {
       "post": {
-        "tags": [
-          "Approvals"
-        ],
+        "tags": ["Approvals"],
         "summary": "Reject at the current step; a comment is required. Ends the request",
         "description": "Required permission: `approvals.decide`",
         "parameters": [
@@ -12162,9 +11600,7 @@
                     "maxLength": 500
                   }
                 },
-                "required": [
-                  "comment"
-                ],
+                "required": ["comment"],
                 "additionalProperties": false
               }
             }
@@ -12182,9 +11618,7 @@
                       "$ref": "#/components/schemas/Approval"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -12274,9 +11708,7 @@
     },
     "/employees": {
       "post": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Create an employee with a sign-in account and role in one step (Admin, HR Manager). The account starts pending and cannot sign in until onboarding activates it",
         "description": "Required permission: `employees.create`",
         "parameters": [
@@ -12340,12 +11772,7 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "admin",
-                      "hr_manager",
-                      "team_lead",
-                      "staff"
-                    ],
+                    "enum": ["admin", "hr_manager", "team_lead", "staff"],
                     "default": "staff"
                   },
                   "additionalEmails": {
@@ -12436,9 +11863,7 @@
                       "$ref": "#/components/schemas/CreatedEmployee"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -12516,9 +11941,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "List employee directory records (paginated, scoped)",
         "description": "Required permission: `employees.list`",
         "parameters": [
@@ -12548,12 +11971,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "name",
-                "employeeCode",
-                "joiningDate",
-                "createdAt"
-              ],
+              "enum": ["name", "employeeCode", "joiningDate", "createdAt"],
               "default": "name"
             },
             "required": false,
@@ -12563,10 +11981,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -12603,11 +12018,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "pending",
-                "deactivated"
-              ]
+              "enum": ["active", "pending", "deactivated"]
             },
             "required": false,
             "name": "status",
@@ -12653,18 +12064,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -12724,9 +12127,7 @@
     },
     "/employees/{id}/deactivate": {
       "post": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Deactivate an employee now (Admin only): the employee and the sign-in account are switched off and every session ends. Nothing is deleted. Repeating the call is a 200 that changes nothing",
         "description": "Required permission: `employees.deactivate`",
         "parameters": [
@@ -12764,9 +12165,7 @@
                       "$ref": "#/components/schemas/DeactivationResult"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -12856,9 +12255,7 @@
     },
     "/employees/org-roots": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "The top of the org chart: employees with no manager (deactivated ones only with status=deactivated). Admin and HR see the company; a Team Lead sees none, since their team reports to them",
         "description": "Required permission: `employees.list`",
         "parameters": [
@@ -12886,11 +12283,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "pending",
-                "deactivated"
-              ]
+              "enum": ["active", "pending", "deactivated"]
             },
             "required": false,
             "name": "status",
@@ -12927,18 +12320,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -12998,9 +12383,7 @@
     },
     "/employees/{id}/direct-reports": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "The direct reports of one employee, to open the org chart one level at a time. A Team Lead can ask for themselves",
         "description": "Required permission: `employees.list`",
         "parameters": [
@@ -13037,11 +12420,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "pending",
-                "deactivated"
-              ]
+              "enum": ["active", "pending", "deactivated"]
             },
             "required": false,
             "name": "status",
@@ -13078,18 +12457,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -13159,9 +12530,7 @@
     },
     "/employees/{id}/manager": {
       "put": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Assign, change or remove (managerId null) an employee's manager (Admin, HR Manager). Refuses a manager who is the employee or reports to them (a loop), or who is not active",
         "description": "Required permission: `employees.update`",
         "parameters": [
@@ -13192,10 +12561,7 @@
                     "format": "uuid"
                   }
                 },
-                "required": [
-                  "version",
-                  "managerId"
-                ],
+                "required": ["version", "managerId"],
                 "additionalProperties": false
               }
             }
@@ -13213,9 +12579,7 @@
                       "$ref": "#/components/schemas/ManagerChange"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -13305,9 +12669,7 @@
     },
     "/employees/me": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "The signed-in employee's own profile, with the `version` to send back on edit",
         "description": "Required permission: `profile.read`",
         "responses": {
@@ -13322,9 +12684,7 @@
                       "$ref": "#/components/schemas/EmployeeDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -13382,9 +12742,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Change your own phone number. Nothing else can be changed here: any other field (role, manager, code, status, department, email, name) is a 400",
         "description": "Required permission: `profile.update`",
         "requestBody": {
@@ -13404,10 +12762,7 @@
                     "pattern": "^[0-9+()\\-\\s]{6,50}$"
                   }
                 },
-                "required": [
-                  "version",
-                  "phone"
-                ],
+                "required": ["version", "phone"],
                 "additionalProperties": false
               }
             }
@@ -13425,9 +12780,7 @@
                       "$ref": "#/components/schemas/EmployeeDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -13507,9 +12860,7 @@
     },
     "/employees/{id}": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "One employee. Admin and HR see the company, a Team Lead their direct reports, Staff only themselves. Login information (`account`) is shown to Admin and HR only",
         "description": "Required permission: `employees.read`",
         "parameters": [
@@ -13535,9 +12886,7 @@
                       "$ref": "#/components/schemas/EmployeeDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -13605,9 +12954,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Change employee fields (Admin, HR Manager). Send only the fields to change and the `version` you read. HR cannot change `employeeCode` or `email`; status, manager and role have their own flows",
         "description": "Required permission: `employees.update`",
         "parameters": [
@@ -13669,9 +13016,7 @@
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   }
                 },
-                "required": [
-                  "version"
-                ],
+                "required": ["version"],
                 "additionalProperties": false
               }
             }
@@ -13689,9 +13034,7 @@
                       "$ref": "#/components/schemas/EmployeeDetail"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -13781,9 +13124,7 @@
     },
     "/employees/{id}/documents": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "List employee document metadata",
         "description": "Required permission: `documents.read`",
         "parameters": [
@@ -13895,9 +13236,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -13965,9 +13304,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Upload an employee document via raw request body",
         "description": "Required permission: `documents.upload`",
         "parameters": [
@@ -14092,9 +13429,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14184,9 +13519,7 @@
     },
     "/employees/{id}/documents/{docId}/download-link": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Generate ephemeral signed download link for an employee document",
         "description": "Required permission: `documents.download`",
         "parameters": [
@@ -14227,15 +13560,10 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "url",
-                        "expiresAt"
-                      ]
+                      "required": ["url", "expiresAt"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14305,9 +13633,7 @@
     },
     "/employees/{id}/documents/{docId}": {
       "delete": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Soft delete an employee document",
         "description": "Required permission: `documents.delete`",
         "parameters": [
@@ -14419,9 +13745,7 @@
     },
     "/settings": {
       "get": {
-        "tags": [
-          "Settings"
-        ],
+        "tags": ["Settings"],
         "summary": "All company settings (Admin)",
         "description": "Required permission: `settings.read`",
         "responses": {
@@ -14436,9 +13760,7 @@
                       "$ref": "#/components/schemas/CompanySettings"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14496,9 +13818,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Settings"
-        ],
+        "tags": ["Settings"],
         "summary": "Change company settings (Admin; send only the fields to change; audited)",
         "description": "Required permission: `settings.update`",
         "requestBody": {
@@ -14545,10 +13865,7 @@
                         ]
                       }
                     },
-                    "required": [
-                      "start",
-                      "end"
-                    ],
+                    "required": ["start", "end"],
                     "additionalProperties": false
                   },
                   "integrations": {
@@ -14587,9 +13904,7 @@
                       "$ref": "#/components/schemas/CompanySettings"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14669,9 +13984,7 @@
     },
     "/settings/basic": {
       "get": {
-        "tags": [
-          "Settings"
-        ],
+        "tags": ["Settings"],
         "summary": "Company name, timezone and work week (every signed-in role)",
         "description": "Required permission: `settings.read_basic`",
         "responses": {
@@ -14686,9 +13999,7 @@
                       "$ref": "#/components/schemas/BasicSettings"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14748,19 +14059,14 @@
     },
     "/shifts": {
       "get": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "List shift definitions (every signed-in role)",
         "description": "Required permission: `shifts.list`",
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "isActive",
@@ -14782,9 +14088,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14842,9 +14146,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "Create a shift (Admin, HR Manager). Times are company-local HH:MM; an end not after the start means the shift runs past midnight and belongs to the date it starts",
         "description": "Required permission: `shifts.create`",
         "parameters": [
@@ -14891,12 +14193,7 @@
                     "default": 15
                   }
                 },
-                "required": [
-                  "code",
-                  "name",
-                  "startTime",
-                  "endTime"
-                ],
+                "required": ["code", "name", "startTime", "endTime"],
                 "additionalProperties": false
               }
             }
@@ -14914,9 +14211,7 @@
                       "$ref": "#/components/schemas/Shift"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -14996,9 +14291,7 @@
     },
     "/shifts/{id}": {
       "get": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "One shift",
         "description": "Required permission: `shifts.list`",
         "parameters": [
@@ -15024,9 +14317,7 @@
                       "$ref": "#/components/schemas/Shift"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -15094,9 +14385,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "Change a shift (Admin, HR Manager). The code never changes. A shift that is the policy default or has assignments in force cannot be deactivated",
         "description": "Required permission: `shifts.update`",
         "parameters": [
@@ -15156,9 +14445,7 @@
                       "$ref": "#/components/schemas/Shift"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -15248,9 +14535,7 @@
     },
     "/shifts/assignments/{employeeId}": {
       "get": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "The shift assignments of one employee, latest first. Admin and HR any employee, a Team Lead their team, anyone their own",
         "description": "Required permission: `shifts.read_assignment`",
         "parameters": [
@@ -15279,9 +14564,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -15351,9 +14634,7 @@
     },
     "/shifts/assignments": {
       "post": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "Give an employee a shift from a date (Admin, HR Manager). A new open-ended assignment ends the current open-ended one the day before; any other overlap is a 409",
         "description": "Required permission: `shifts.assign`",
         "parameters": [
@@ -15395,11 +14676,7 @@
                     "default": null
                   }
                 },
-                "required": [
-                  "employeeId",
-                  "shiftId",
-                  "effectiveFrom"
-                ],
+                "required": ["employeeId", "shiftId", "effectiveFrom"],
                 "additionalProperties": false
               }
             }
@@ -15417,9 +14694,7 @@
                       "$ref": "#/components/schemas/ShiftAssignment"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -15499,9 +14774,7 @@
     },
     "/attendance/policies": {
       "get": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "The attendance policy: full and half day minutes, the default shift, and the company timezone and work week it works in (every signed-in role)",
         "description": "Required permission: `attendance_policies.read`",
         "responses": {
@@ -15516,9 +14789,7 @@
                       "$ref": "#/components/schemas/AttendancePolicy"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -15576,9 +14847,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Shifts and attendance policy"
-        ],
+        "tags": ["Shifts and attendance policy"],
         "summary": "Change the attendance policy (Admin, HR Manager; audited). The timezone and work week are company settings and are changed there",
         "description": "Required permission: `attendance_policies.update`",
         "requestBody": {
@@ -15620,9 +14889,7 @@
                       "$ref": "#/components/schemas/AttendancePolicy"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -15702,9 +14969,7 @@
     },
     "/users": {
       "get": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "List sign-in accounts with their roles (search, role and status filters)",
         "description": "Required permission: `users.list`",
         "parameters": [
@@ -15742,12 +15007,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "admin",
-                "hr_manager",
-                "team_lead",
-                "staff"
-              ]
+              "enum": ["admin", "hr_manager", "team_lead", "staff"]
             },
             "required": false,
             "name": "role",
@@ -15756,10 +15016,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "isActive",
@@ -15768,12 +15025,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "name",
-                "email",
-                "createdAt",
-                "lastLoginAt"
-              ],
+              "enum": ["name", "email", "createdAt", "lastLoginAt"],
               "default": "name"
             },
             "required": false,
@@ -15783,10 +15035,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -15824,18 +15073,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -15893,9 +15134,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "Create a user account directly with assigned roles (Admin; audited)",
         "description": "Required permission: `users.create`",
         "requestBody": {
@@ -15924,12 +15163,7 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": [
-                        "admin",
-                        "hr_manager",
-                        "team_lead",
-                        "staff"
-                      ]
+                      "enum": ["admin", "hr_manager", "team_lead", "staff"]
                     },
                     "minItems": 1,
                     "maxItems": 4
@@ -15952,12 +15186,7 @@
                     "format": "uuid"
                   }
                 },
-                "required": [
-                  "firstName",
-                  "lastName",
-                  "email",
-                  "roles"
-                ],
+                "required": ["firstName", "lastName", "email", "roles"],
                 "additionalProperties": false
               }
             }
@@ -15981,14 +15210,10 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "temporaryPassword"
-                      ]
+                      "required": ["temporaryPassword"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16068,9 +15293,7 @@
     },
     "/users/{id}": {
       "get": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "One sign-in account with its roles",
         "description": "Required permission: `users.read`",
         "parameters": [
@@ -16096,9 +15319,7 @@
                       "$ref": "#/components/schemas/UserAccount"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16168,9 +15389,7 @@
     },
     "/users/{id}/roles": {
       "put": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "Set the complete role list of an account (Admin; audited). 422 when it would remove the last active Admin",
         "description": "Required permission: `users.assign_role`",
         "parameters": [
@@ -16195,20 +15414,13 @@
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "enum": [
-                        "admin",
-                        "hr_manager",
-                        "team_lead",
-                        "staff"
-                      ]
+                      "enum": ["admin", "hr_manager", "team_lead", "staff"]
                     },
                     "minItems": 1,
                     "maxItems": 4
                   }
                 },
-                "required": [
-                  "roles"
-                ],
+                "required": ["roles"],
                 "additionalProperties": false
               }
             }
@@ -16226,9 +15438,7 @@
                       "$ref": "#/components/schemas/UserAccount"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16318,9 +15528,7 @@
     },
     "/users/{id}/status": {
       "put": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "Activate or deactivate a user account (Admin; audited). Revokes active sessions on deactivation.",
         "description": "Required permission: `users.deactivate`",
         "parameters": [
@@ -16345,9 +15553,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "isActive"
-                ],
+                "required": ["isActive"],
                 "additionalProperties": false
               }
             }
@@ -16365,9 +15571,7 @@
                       "$ref": "#/components/schemas/UserAccount"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16457,9 +15661,7 @@
     },
     "/roles": {
       "get": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "The four system roles with the number of active accounts holding each (Admin)",
         "description": "Required permission: `roles.list`",
         "responses": {
@@ -16477,9 +15679,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16539,9 +15739,7 @@
     },
     "/permissions": {
       "get": {
-        "tags": [
-          "Users and roles"
-        ],
+        "tags": ["Users and roles"],
         "summary": "The permission catalog with the record scope each role holds (Admin; read only)",
         "description": "Required permission: `permissions.list`",
         "responses": {
@@ -16559,9 +15757,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16621,9 +15817,7 @@
     },
     "/departments": {
       "get": {
-        "tags": [
-          "Departments"
-        ],
+        "tags": ["Departments"],
         "summary": "List departments (paginated)",
         "description": "Required permission: `departments.list`",
         "parameters": [
@@ -16660,10 +15854,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -16683,10 +15874,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "isActive",
@@ -16723,18 +15911,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -16792,9 +15972,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Departments"
-        ],
+        "tags": ["Departments"],
         "summary": "Create a department (idempotent)",
         "description": "Required permission: `departments.create`",
         "parameters": [
@@ -16829,10 +16007,7 @@
                     "pattern": "^[A-Za-z0-9_-]+$"
                   }
                 },
-                "required": [
-                  "name",
-                  "code"
-                ],
+                "required": ["name", "code"],
                 "additionalProperties": false
               }
             }
@@ -16850,9 +16025,7 @@
                       "$ref": "#/components/schemas/Department"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -16932,9 +16105,7 @@
     },
     "/departments/{id}": {
       "get": {
-        "tags": [
-          "Departments"
-        ],
+        "tags": ["Departments"],
         "summary": "Get one department by ID",
         "description": "Required permission: `departments.list`",
         "parameters": [
@@ -16960,9 +16131,7 @@
                       "$ref": "#/components/schemas/Department"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -17030,9 +16199,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Departments"
-        ],
+        "tags": ["Departments"],
         "summary": "Update a department",
         "description": "Required permission: `departments.update`",
         "parameters": [
@@ -17082,9 +16249,7 @@
                       "$ref": "#/components/schemas/Department"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -17174,9 +16339,7 @@
     },
     "/departments/{id}/deactivate": {
       "post": {
-        "tags": [
-          "Departments"
-        ],
+        "tags": ["Departments"],
         "summary": "Soft-deactivate a department",
         "description": "Required permission: `departments.deactivate`",
         "parameters": [
@@ -17207,20 +16370,13 @@
                         },
                         "isActive": {
                           "type": "boolean",
-                          "enum": [
-                            false
-                          ]
+                          "enum": [false]
                         }
                       },
-                      "required": [
-                        "id",
-                        "isActive"
-                      ]
+                      "required": ["id", "isActive"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -17310,9 +16466,7 @@
     },
     "/designations": {
       "get": {
-        "tags": [
-          "Designations"
-        ],
+        "tags": ["Designations"],
         "summary": "List designations (paginated)",
         "description": "Required permission: `designations.list`",
         "parameters": [
@@ -17349,10 +16503,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -17381,10 +16532,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             },
             "required": false,
             "name": "isActive",
@@ -17421,18 +16569,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -17490,9 +16630,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Designations"
-        ],
+        "tags": ["Designations"],
         "summary": "Create a designation (idempotent)",
         "description": "Required permission: `designations.create`",
         "parameters": [
@@ -17525,10 +16663,7 @@
                     "maxLength": 255
                   }
                 },
-                "required": [
-                  "departmentId",
-                  "title"
-                ],
+                "required": ["departmentId", "title"],
                 "additionalProperties": false
               }
             }
@@ -17546,9 +16681,7 @@
                       "$ref": "#/components/schemas/Designation"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -17628,9 +16761,7 @@
     },
     "/designations/{id}": {
       "get": {
-        "tags": [
-          "Designations"
-        ],
+        "tags": ["Designations"],
         "summary": "Get one designation by ID",
         "description": "Required permission: `designations.list`",
         "parameters": [
@@ -17656,9 +16787,7 @@
                       "$ref": "#/components/schemas/Designation"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -17726,9 +16855,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Designations"
-        ],
+        "tags": ["Designations"],
         "summary": "Update a designation",
         "description": "Required permission: `designations.update`",
         "parameters": [
@@ -17776,9 +16903,7 @@
                       "$ref": "#/components/schemas/Designation"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -17868,9 +16993,7 @@
     },
     "/designations/{id}/deactivate": {
       "post": {
-        "tags": [
-          "Designations"
-        ],
+        "tags": ["Designations"],
         "summary": "Soft-deactivate a designation",
         "description": "Required permission: `designations.deactivate`",
         "parameters": [
@@ -17901,20 +17024,13 @@
                         },
                         "isActive": {
                           "type": "boolean",
-                          "enum": [
-                            false
-                          ]
+                          "enum": [false]
                         }
                       },
-                      "required": [
-                        "id",
-                        "isActive"
-                      ]
+                      "required": ["id", "isActive"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -18004,9 +17120,7 @@
     },
     "/onboarding": {
       "get": {
-        "tags": [
-          "Onboarding"
-        ],
+        "tags": ["Onboarding"],
         "summary": "List onboarding checklists with stage and progress (Admin, HR Manager, Team Lead)",
         "description": "Required permission: `onboarding.list`",
         "parameters": [
@@ -18034,10 +17148,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "in_progress",
-                "completed"
-              ]
+              "enum": ["in_progress", "completed"]
             },
             "required": false,
             "name": "status",
@@ -18046,13 +17157,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "hr",
-                "system",
-                "it_admin",
-                "employee",
-                "completed"
-              ]
+              "enum": ["hr", "system", "it_admin", "employee", "completed"]
             },
             "required": false,
             "name": "step",
@@ -18140,20 +17245,11 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "in_progress",
-                              "completed"
-                            ]
+                            "enum": ["in_progress", "completed"]
                           },
                           "currentStep": {
                             "type": "string",
-                            "enum": [
-                              "hr",
-                              "system",
-                              "it_admin",
-                              "employee",
-                              "completed"
-                            ]
+                            "enum": ["hr", "system", "it_admin", "employee", "completed"]
                           },
                           "completedAt": {
                             "type": "string",
@@ -18194,10 +17290,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "data",
-                    "total"
-                  ]
+                  "required": ["data", "total"]
                 }
               }
             }
@@ -18257,9 +17350,7 @@
     },
     "/onboarding/me": {
       "get": {
-        "tags": [
-          "Onboarding"
-        ],
+        "tags": ["Onboarding"],
         "summary": "Get onboarding checklist for the logged-in employee",
         "description": "Required permission: `onboarding.read_own`",
         "responses": {
@@ -18323,20 +17414,11 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "in_progress",
-                            "completed"
-                          ]
+                          "enum": ["in_progress", "completed"]
                         },
                         "currentStep": {
                           "type": "string",
-                          "enum": [
-                            "hr",
-                            "system",
-                            "it_admin",
-                            "employee",
-                            "completed"
-                          ]
+                          "enum": ["hr", "system", "it_admin", "employee", "completed"]
                         },
                         "completedAt": {
                           "type": "string",
@@ -18364,12 +17446,7 @@
                               },
                               "step": {
                                 "type": "string",
-                                "enum": [
-                                  "hr",
-                                  "system",
-                                  "it_admin",
-                                  "employee"
-                                ]
+                                "enum": ["hr", "system", "it_admin", "employee"]
                               },
                               "itemKey": {
                                 "type": "string"
@@ -18437,9 +17514,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -18499,9 +17574,7 @@
     },
     "/onboarding/{id}": {
       "get": {
-        "tags": [
-          "Onboarding"
-        ],
+        "tags": ["Onboarding"],
         "summary": "Get onboarding checklist detail by employee ID",
         "description": "Required permission: `onboarding.read`",
         "parameters": [
@@ -18576,20 +17649,11 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "in_progress",
-                            "completed"
-                          ]
+                          "enum": ["in_progress", "completed"]
                         },
                         "currentStep": {
                           "type": "string",
-                          "enum": [
-                            "hr",
-                            "system",
-                            "it_admin",
-                            "employee",
-                            "completed"
-                          ]
+                          "enum": ["hr", "system", "it_admin", "employee", "completed"]
                         },
                         "completedAt": {
                           "type": "string",
@@ -18617,12 +17681,7 @@
                               },
                               "step": {
                                 "type": "string",
-                                "enum": [
-                                  "hr",
-                                  "system",
-                                  "it_admin",
-                                  "employee"
-                                ]
+                                "enum": ["hr", "system", "it_admin", "employee"]
                               },
                               "itemKey": {
                                 "type": "string"
@@ -18690,9 +17749,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -18762,9 +17819,7 @@
     },
     "/onboarding/{id}/items/{itemKey}/verify": {
       "post": {
-        "tags": [
-          "Onboarding"
-        ],
+        "tags": ["Onboarding"],
         "summary": "Verify a specific onboarding checklist item",
         "description": "Required permission: `onboarding.verify_hr`",
         "requestBody": {
@@ -18844,20 +17899,11 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "in_progress",
-                            "completed"
-                          ]
+                          "enum": ["in_progress", "completed"]
                         },
                         "currentStep": {
                           "type": "string",
-                          "enum": [
-                            "hr",
-                            "system",
-                            "it_admin",
-                            "employee",
-                            "completed"
-                          ]
+                          "enum": ["hr", "system", "it_admin", "employee", "completed"]
                         },
                         "completedAt": {
                           "type": "string",
@@ -18885,12 +17931,7 @@
                               },
                               "step": {
                                 "type": "string",
-                                "enum": [
-                                  "hr",
-                                  "system",
-                                  "it_admin",
-                                  "employee"
-                                ]
+                                "enum": ["hr", "system", "it_admin", "employee"]
                               },
                               "itemKey": {
                                 "type": "string"
@@ -18958,9 +17999,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -19040,9 +18079,7 @@
     },
     "/onboarding/{id}/activate": {
       "post": {
-        "tags": [
-          "Onboarding"
-        ],
+        "tags": ["Onboarding"],
         "summary": "Activate employee account once all checklist items are verified",
         "description": "Required permission: `onboarding.activate`",
         "parameters": [
@@ -19117,20 +18154,11 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "in_progress",
-                            "completed"
-                          ]
+                          "enum": ["in_progress", "completed"]
                         },
                         "currentStep": {
                           "type": "string",
-                          "enum": [
-                            "hr",
-                            "system",
-                            "it_admin",
-                            "employee",
-                            "completed"
-                          ]
+                          "enum": ["hr", "system", "it_admin", "employee", "completed"]
                         },
                         "completedAt": {
                           "type": "string",
@@ -19158,12 +18186,7 @@
                               },
                               "step": {
                                 "type": "string",
-                                "enum": [
-                                  "hr",
-                                  "system",
-                                  "it_admin",
-                                  "employee"
-                                ]
+                                "enum": ["hr", "system", "it_admin", "employee"]
                               },
                               "itemKey": {
                                 "type": "string"
@@ -19231,9 +18254,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -19323,9 +18344,7 @@
     },
     "/onboarding/set-password": {
       "post": {
-        "tags": [
-          "Onboarding"
-        ],
+        "tags": ["Onboarding"],
         "summary": "Claim account and set initial password using 72h single-use token",
         "description": "Access: Public",
         "requestBody": {
@@ -19346,10 +18365,7 @@
                     "maxLength": 128
                   }
                 },
-                "required": [
-                  "token",
-                  "newPassword"
-                ]
+                "required": ["token", "newPassword"]
               }
             }
           }
@@ -19372,15 +18388,10 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "success",
-                        "employeeId"
-                      ]
+                      "required": ["success", "employeeId"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -19460,9 +18471,7 @@
     },
     "/expense-categories": {
       "get": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "List active expense categories",
         "description": "Required permission: `expenses.read_categories`",
         "responses": {
@@ -19510,9 +18519,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -19570,9 +18577,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Create expense category",
         "description": "Required permission: `expenses.manage_categories`",
         "requestBody": {
@@ -19593,9 +18598,7 @@
                     "maxLength": 500
                   }
                 },
-                "required": [
-                  "name"
-                ]
+                "required": ["name"]
               }
             }
           }
@@ -19642,9 +18645,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -19724,9 +18725,7 @@
     },
     "/expense-categories/{id}": {
       "put": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Update expense category",
         "description": "Required permission: `expenses.manage_categories`",
         "parameters": [
@@ -19807,9 +18806,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -19899,9 +18896,7 @@
     },
     "/expense-claims/mine": {
       "get": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "List own submitted expense claims",
         "description": "Required permission: `expenses.submit`",
         "parameters": [
@@ -19929,13 +18924,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "submitted",
-                "approved",
-                "rejected",
-                "reimbursed",
-                "cancelled"
-              ]
+              "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
             },
             "required": false,
             "name": "status",
@@ -20017,9 +19006,7 @@
                           },
                           "currency": {
                             "type": "string",
-                            "enum": [
-                              "INR"
-                            ]
+                            "enum": ["INR"]
                           },
                           "expenseDate": {
                             "type": "string"
@@ -20045,13 +19032,7 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "submitted",
-                              "approved",
-                              "rejected",
-                              "reimbursed",
-                              "cancelled"
-                            ]
+                            "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
                           },
                           "rejectionReason": {
                             "type": "string",
@@ -20114,18 +19095,10 @@
                           "type": "number"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "pageCount"
-                      ]
+                      "required": ["page", "pageSize", "total", "pageCount"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -20185,9 +19158,7 @@
     },
     "/expense-claims": {
       "get": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "List expense claims within caller scope",
         "description": "Required permission: `expenses.list`",
         "parameters": [
@@ -20215,13 +19186,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "submitted",
-                "approved",
-                "rejected",
-                "reimbursed",
-                "cancelled"
-              ]
+              "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
             },
             "required": false,
             "name": "status",
@@ -20303,9 +19268,7 @@
                           },
                           "currency": {
                             "type": "string",
-                            "enum": [
-                              "INR"
-                            ]
+                            "enum": ["INR"]
                           },
                           "expenseDate": {
                             "type": "string"
@@ -20331,13 +19294,7 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "submitted",
-                              "approved",
-                              "rejected",
-                              "reimbursed",
-                              "cancelled"
-                            ]
+                            "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
                           },
                           "rejectionReason": {
                             "type": "string",
@@ -20400,18 +19357,10 @@
                           "type": "number"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "pageCount"
-                      ]
+                      "required": ["page", "pageSize", "total", "pageCount"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -20469,9 +19418,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Submit expense claim with optional receipt",
         "description": "Required permission: `expenses.submit`",
         "requestBody": {
@@ -20515,19 +19462,10 @@
                         "minLength": 1
                       }
                     },
-                    "required": [
-                      "filename",
-                      "declaredType",
-                      "base64"
-                    ]
+                    "required": ["filename", "declaredType", "base64"]
                   }
                 },
-                "required": [
-                  "categoryId",
-                  "amountPaise",
-                  "expenseDate",
-                  "description"
-                ]
+                "required": ["categoryId", "amountPaise", "expenseDate", "description"]
               }
             }
           }
@@ -20569,9 +19507,7 @@
                         },
                         "currency": {
                           "type": "string",
-                          "enum": [
-                            "INR"
-                          ]
+                          "enum": ["INR"]
                         },
                         "expenseDate": {
                           "type": "string"
@@ -20597,13 +19533,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "submitted",
-                            "approved",
-                            "rejected",
-                            "reimbursed",
-                            "cancelled"
-                          ]
+                          "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
                         },
                         "rejectionReason": {
                           "type": "string",
@@ -20650,9 +19580,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -20732,9 +19660,7 @@
     },
     "/expense-claims/{id}": {
       "get": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Get expense claim details",
         "description": "Required permission: `expenses.read`",
         "parameters": [
@@ -20785,9 +19711,7 @@
                         },
                         "currency": {
                           "type": "string",
-                          "enum": [
-                            "INR"
-                          ]
+                          "enum": ["INR"]
                         },
                         "expenseDate": {
                           "type": "string"
@@ -20813,13 +19737,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "submitted",
-                            "approved",
-                            "rejected",
-                            "reimbursed",
-                            "cancelled"
-                          ]
+                          "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
                         },
                         "rejectionReason": {
                           "type": "string",
@@ -20866,9 +19784,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -20938,9 +19854,7 @@
     },
     "/expense-claims/{id}/cancel": {
       "post": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Cancel own submitted expense claim",
         "description": "Required permission: `expenses.cancel`",
         "parameters": [
@@ -20991,9 +19905,7 @@
                         },
                         "currency": {
                           "type": "string",
-                          "enum": [
-                            "INR"
-                          ]
+                          "enum": ["INR"]
                         },
                         "expenseDate": {
                           "type": "string"
@@ -21019,13 +19931,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "submitted",
-                            "approved",
-                            "rejected",
-                            "reimbursed",
-                            "cancelled"
-                          ]
+                          "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
                         },
                         "rejectionReason": {
                           "type": "string",
@@ -21072,9 +19978,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -21164,9 +20068,7 @@
     },
     "/expense-claims/{id}/reimburse": {
       "post": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Mark approved claim as reimbursed",
         "description": "Required permission: `expenses.reimburse`",
         "parameters": [
@@ -21217,9 +20119,7 @@
                         },
                         "currency": {
                           "type": "string",
-                          "enum": [
-                            "INR"
-                          ]
+                          "enum": ["INR"]
                         },
                         "expenseDate": {
                           "type": "string"
@@ -21245,13 +20145,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "submitted",
-                            "approved",
-                            "rejected",
-                            "reimbursed",
-                            "cancelled"
-                          ]
+                          "enum": ["submitted", "approved", "rejected", "reimbursed", "cancelled"]
                         },
                         "rejectionReason": {
                           "type": "string",
@@ -21298,9 +20192,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -21390,9 +20282,7 @@
     },
     "/expense-claims/{id}/receipt": {
       "get": {
-        "tags": [
-          "Expenses"
-        ],
+        "tags": ["Expenses"],
         "summary": "Generate signed download link for claim receipt",
         "description": "Required permission: `expenses.read`",
         "parameters": [
@@ -21424,15 +20314,10 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "url",
-                        "expiresAt"
-                      ]
+                      "required": ["url", "expiresAt"]
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -21502,9 +20387,7 @@
     },
     "/payslips/me": {
       "get": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "List own published payslips",
         "description": "Required permission: `payslips.read_own`",
         "parameters": [
@@ -21541,10 +20424,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -21593,10 +20473,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "draft",
-                "published"
-              ]
+              "enum": ["draft", "published"]
             },
             "required": false,
             "name": "status",
@@ -21633,18 +20510,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -21704,9 +20573,7 @@
     },
     "/payslips": {
       "get": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "List all employee payslips for HR/Admin management",
         "description": "Required permission: `payslips.read_all`",
         "parameters": [
@@ -21743,10 +20610,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "asc"
             },
             "required": false,
@@ -21795,10 +20659,7 @@
           {
             "schema": {
               "type": "string",
-              "enum": [
-                "draft",
-                "published"
-              ]
+              "enum": ["draft", "published"]
             },
             "required": false,
             "name": "status",
@@ -21835,18 +20696,10 @@
                           "type": "integer"
                         }
                       },
-                      "required": [
-                        "page",
-                        "pageSize",
-                        "total",
-                        "totalPages"
-                      ]
+                      "required": ["page", "pageSize", "total", "totalPages"]
                     }
                   },
-                  "required": [
-                    "data",
-                    "meta"
-                  ]
+                  "required": ["data", "meta"]
                 }
               }
             }
@@ -21904,9 +20757,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "Create an employee monthly payslip",
         "description": "Required permission: `payslips.manage`",
         "requestBody": {
@@ -21932,10 +20783,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "draft",
-                      "published"
-                    ]
+                    "enum": ["draft", "published"]
                   },
                   "designation": {
                     "type": "string",
@@ -22119,12 +20967,7 @@
                     "maximum": 100000000
                   }
                 },
-                "required": [
-                  "employeeId",
-                  "payMonth",
-                  "payYear",
-                  "basicSalary"
-                ],
+                "required": ["employeeId", "payMonth", "payYear", "basicSalary"],
                 "additionalProperties": false
               }
             }
@@ -22142,9 +20985,7 @@
                       "$ref": "#/components/schemas/PayslipRecord"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -22234,9 +21075,7 @@
     },
     "/payslips/{id}": {
       "get": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "Get a payslip record (own published, or any for HR/Admin)",
         "description": "Required permission: `payslips.read_own`",
         "parameters": [
@@ -22262,9 +21101,7 @@
                       "$ref": "#/components/schemas/PayslipRecord"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -22332,9 +21169,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "Update an employee payslip record",
         "description": "Required permission: `payslips.manage`",
         "parameters": [
@@ -22357,10 +21192,7 @@
                 "properties": {
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "draft",
-                      "published"
-                    ]
+                    "enum": ["draft", "published"]
                   },
                   "designation": {
                     "type": "string",
@@ -22561,9 +21393,7 @@
                       "$ref": "#/components/schemas/PayslipRecord"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -22653,9 +21483,7 @@
     },
     "/payslips/{id}/pdf": {
       "get": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "Download rendered A4 PDF for a payslip",
         "description": "Required permission: `payslips.read_own`",
         "parameters": [
@@ -22745,9 +21573,7 @@
     },
     "/payslips/{id}/publish": {
       "post": {
-        "tags": [
-          "Payslips"
-        ],
+        "tags": ["Payslips"],
         "summary": "Publish an employee payslip so the employee can view and download it",
         "description": "Required permission: `payslips.manage`",
         "parameters": [
@@ -22773,9 +21599,7 @@
                       "$ref": "#/components/schemas/PayslipRecord"
                     }
                   },
-                  "required": [
-                    "data"
-                  ]
+                  "required": ["data"]
                 }
               }
             }
@@ -22865,9 +21689,7 @@
     },
     "/files/download": {
       "get": {
-        "tags": [
-          "Files"
-        ],
+        "tags": ["Files"],
         "summary": "Download a file with a signed, short-lived link",
         "description": "Access: Signed link, issued after the module authorization check",
         "parameters": [
