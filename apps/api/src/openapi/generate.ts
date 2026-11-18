@@ -7,7 +7,7 @@ import { buildOpenApiDocument } from './build-spec';
 export const OPENAPI_OUTPUT = path.resolve(__dirname, '../../../../docs/architecture/openapi.json');
 
 export async function renderOpenApiJson(): Promise<string> {
-  return format(JSON.stringify(buildOpenApiDocument()), {
+  return format(JSON.stringify(buildOpenApiDocument(), null, 2), {
     ...(await resolveConfig(OPENAPI_OUTPUT)),
     parser: 'json',
     endOfLine: 'lf',
