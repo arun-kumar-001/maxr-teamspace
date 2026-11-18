@@ -16,11 +16,11 @@ const mockDesignations = [
   {
     id: 'desig-swe',
     title: 'Software Engineer',
-    code: 'SWE',
+
     departmentId: 'dept-eng',
     isActive: true,
   },
-  { id: 'desig-qa', title: 'QA Engineer', code: 'QA', departmentId: 'dept-eng', isActive: true },
+  { id: 'desig-qa', title: 'QA Engineer', departmentId: 'dept-eng', isActive: true },
 ];
 
 const mockManagers = [

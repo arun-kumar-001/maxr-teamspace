@@ -53,7 +53,6 @@ export function DepartmentsPage() {
       const created = await createDesignation({
         departmentId: designationDepartment.id,
         title: payload.title!,
-        code: payload.code!,
       });
       setDesignations((current) => [...current.filter((item) => item.id !== created.id), created]);
       setDesignationDepartment(null);

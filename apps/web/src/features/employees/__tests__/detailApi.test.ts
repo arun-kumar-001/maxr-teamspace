@@ -14,7 +14,7 @@ describe('Employee Detail API Client (Issue #21)', () => {
     email: 'jane.doe@example.com',
     phone: '+91 98765 43210',
     department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'desig-1', title: 'Software Engineer', code: 'SWE' },
+    designation: { id: 'desig-1', title: 'Software Engineer' },
     manager: { id: 'mgr-1', firstName: 'Kavita', lastName: 'Iyer', employeeCode: 'MGR-001' },
     status: 'active',
     joiningDate: '2026-01-15',

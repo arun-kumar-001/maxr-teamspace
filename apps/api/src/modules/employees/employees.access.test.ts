@@ -68,7 +68,6 @@ async function setup() {
   const initialDesig = await desigRepo.create({
     departmentId: initialDept.id,
     title: 'Initial Desig',
-    code: 'INIT_DESIG',
   });
 
   return { app, as, initialDept, initialDesig, deptRepo, desigRepo, dirRepo };
@@ -191,7 +190,6 @@ describe('Departments & Designations RBAC Access Matrix', () => {
         .post('/api/v1/designations', {
           departmentId: initialDept.id,
           title: `Desig by ${role}`,
-          code: `DSG_${role.toUpperCase()}`,
         })
         .set('Idempotency-Key', `desig-key-${role}-12345678`);
       expect(res.status).toBe(status);
@@ -228,7 +226,6 @@ describe('Departments & Designations RBAC Access Matrix', () => {
       const freshDesig = await desigRepo.create({
         departmentId: initialDept.id,
         title: 'To Deactivate',
-        code: `DEACT_DSG_${role}`,
       });
       const res = await as[role].post(`/api/v1/designations/${freshDesig.id}/deactivate`);
       expect(res.status).toBe(status);

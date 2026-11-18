@@ -28,7 +28,6 @@ interface EmployeeDirectoryRow {
   dept_code: string;
   desig_id: string;
   desig_title: string;
-  desig_code: string;
   manager_id: string | null;
   manager_first_name: string | null;
   manager_last_name: string | null;
@@ -50,7 +49,6 @@ const toEntity = (row: EmployeeDirectoryRow): EmployeeDirectoryItem => ({
   designation: {
     id: row.desig_id,
     title: row.desig_title,
-    code: row.desig_code,
   },
   manager: row.manager_id
     ? {
@@ -178,7 +176,6 @@ export class PgEmployeeDirectoryRepository implements IEmployeeDirectoryReposito
          d.code AS dept_code,
          des.id AS desig_id,
          des.title AS desig_title,
-         des.code AS desig_code,
          m.id AS manager_id,
          m.first_name AS manager_first_name,
          m.last_name AS manager_last_name,

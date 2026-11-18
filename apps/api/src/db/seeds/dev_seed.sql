@@ -36,11 +36,11 @@ ON CONFLICT (LOWER(code)) DO UPDATE SET
 
 
 -- 6. Designations
-INSERT INTO designations (id, department_id, title, code, is_active) VALUES
-  ('40000000-0000-0000-0000-000000000001', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'System Administrator', 'SYS-ADMIN', true),
-  ('40000000-0000-0000-0000-000000000002', (SELECT id FROM departments WHERE LOWER(code) = 'ai'), 'AI Intern', 'AI-INTERN', true),
-  ('40000000-0000-0000-0000-000000000003', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'HR Manager', 'HR-MGR', true)
-ON CONFLICT (LOWER(code)) DO UPDATE SET
+INSERT INTO designations (id, department_id, title, is_active) VALUES
+  ('40000000-0000-0000-0000-000000000001', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'System Administrator', true),
+  ('40000000-0000-0000-0000-000000000002', (SELECT id FROM departments WHERE LOWER(code) = 'ai'), 'AI Intern', true),
+  ('40000000-0000-0000-0000-000000000003', (SELECT id FROM departments WHERE LOWER(code) = 'hr'), 'HR Manager', true)
+ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
@@ -59,7 +59,7 @@ INSERT INTO employees (
     'admin@maxr.internal',
     NULL,
     (SELECT id FROM departments WHERE LOWER(code) = 'hr'),
-    (SELECT id FROM designations WHERE LOWER(code) = 'sys-admin'),
+    '40000000-0000-0000-0000-000000000001',
     NULL,
     'active',
     '2024-01-01'
@@ -72,7 +72,7 @@ INSERT INTO employees (
     'arunkumar@maxr.internal',
     NULL,
     (SELECT id FROM departments WHERE LOWER(code) = 'ai'),
-    (SELECT id FROM designations WHERE LOWER(code) = 'ai-intern'),
+    '40000000-0000-0000-0000-000000000002',
     '50000000-0000-0000-0000-000000000001',
     'active',
     CURRENT_DATE
@@ -85,7 +85,7 @@ INSERT INTO employees (
     'shajitha@maxr.internal',
     NULL,
     (SELECT id FROM departments WHERE LOWER(code) = 'hr'),
-    (SELECT id FROM designations WHERE LOWER(code) = 'hr-mgr'),
+    '40000000-0000-0000-0000-000000000003',
     '50000000-0000-0000-0000-000000000001',
     'active',
     CURRENT_DATE

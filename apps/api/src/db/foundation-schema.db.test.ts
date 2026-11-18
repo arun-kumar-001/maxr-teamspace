@@ -79,10 +79,10 @@ describe('Foundation Schema Constraints & Data Integrity (TL-04)', () => {
     });
 
     it('restricts deleting a designation that has active employees', async () => {
-      // SYS-ADMIN has EMP-0001 linked
-      await expect(pool.query("DELETE FROM designations WHERE code = 'SYS-ADMIN'")).rejects.toThrow(
-        /violates foreign key constraint/i,
-      );
+      // The seeded administrator designation has EMP-0001 linked
+      await expect(
+        pool.query("DELETE FROM designations WHERE id = '40000000-0000-0000-0000-000000000001'"),
+      ).rejects.toThrow(/violates foreign key constraint/i);
     });
   });
 

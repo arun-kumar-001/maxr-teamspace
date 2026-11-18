@@ -19,7 +19,7 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
     email: 'priya.sharma@example.com',
     phone: '+91 98765 00000',
     department: { id: 'dept-1', name: 'Product', code: 'PROD' },
-    designation: { id: 'desig-1', title: 'Product Specialist', code: 'PROD-SP' },
+    designation: { id: 'desig-1', title: 'Product Specialist' },
     manager: {
       id: 'mgr-001',
       firstName: 'Kavita',

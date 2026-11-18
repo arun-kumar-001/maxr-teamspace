@@ -92,8 +92,8 @@ describe('employee deactivation against PostgreSQL', () => {
     ids.desig =
       (
         await outer.query<{ id: string }>(
-          `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Leaver', $2) RETURNING id`,
-          [ids.dept, `DA-${run}`],
+          `INSERT INTO designations (department_id, title) VALUES ($1, 'Leaver') RETURNING id`,
+          [ids.dept],
         )
       ).rows[0]?.id ?? '';
     await person('boss', { roles: [ROLES.TEAM_LEAD] });
@@ -254,8 +254,8 @@ describe('employee deactivation: two Admins at once', () => {
     ).rows[0]?.id as string;
     ids.desig = (
       await pool.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Racer', $2) RETURNING id`,
-        [ids.dept, `RC-${run}`],
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Racer') RETURNING id`,
+        [ids.dept],
       )
     ).rows[0]?.id as string;
     for (const name of ['a', 'b'] as const) {
