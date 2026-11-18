@@ -63,12 +63,14 @@ export function DepartmentDetailModal({
                 {department.isActive ? 'Active' : 'Inactive'}
               </Badge>
             </div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-3.5 space-y-2">
               <KpiCard
+                size="sm"
+                layout="horizontal"
                 label="Active staff"
                 value={activeCount}
                 icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -78,13 +80,15 @@ export function DepartmentDetailModal({
                   </svg>
                 }
                 variant="emerald"
-                className="p-3"
+                className="py-2 px-3 min-h-[42px]"
               />
               <KpiCard
+                size="sm"
+                layout="horizontal"
                 label="Onboarding"
                 value={onboardingCount}
                 icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -94,13 +98,15 @@ export function DepartmentDetailModal({
                   </svg>
                 }
                 variant="amber"
-                className="p-3"
+                className="py-2 px-3 min-h-[42px]"
               />
               <KpiCard
+                size="sm"
+                layout="horizontal"
                 label="Designations"
                 value={designations.length}
                 icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -110,7 +116,7 @@ export function DepartmentDetailModal({
                   </svg>
                 }
                 variant="teal"
-                className="p-3"
+                className="py-2 px-3 min-h-[42px]"
               />
             </div>
           </section>
