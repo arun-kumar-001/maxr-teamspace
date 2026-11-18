@@ -158,7 +158,9 @@ export function KpiCard({
               </span>
               <span
                 className={`font-display ${
-                  isSmall ? 'text-lg sm:text-xl font-bold mt-0.5' : 'text-2xl sm:text-3xl font-extrabold mt-0.5'
+                  isSmall
+                    ? 'text-lg sm:text-xl font-bold mt-0.5'
+                    : 'text-2xl sm:text-3xl font-extrabold mt-0.5'
                 } text-text tracking-tight leading-tight block`}
               >
                 {value}
