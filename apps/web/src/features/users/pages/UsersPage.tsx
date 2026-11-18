@@ -478,7 +478,6 @@ function IconCopy({ className = 'w-4 h-4' }: { className?: string }) {
     </svg>
   );
 }
-
 export function UsersPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'accounts' | 'roles-permissions' | 'access-history'>(

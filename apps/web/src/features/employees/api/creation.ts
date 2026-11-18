@@ -244,7 +244,6 @@ export async function fetchDesignationsByDepartment(
       data?: Array<{
         id: string;
         title: string;
-        code?: string;
         departmentId: string;
         isActive?: boolean;
       }>;
@@ -256,7 +255,6 @@ export async function fetchDesignationsByDepartment(
       .map((d) => ({
         id: d.id,
         title: d.title,
-        code: d.code ?? '',
         departmentId: d.departmentId,
       }))
       .sort((a, b) => a.title.localeCompare(b.title));

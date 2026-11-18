@@ -1,8 +1,10 @@
 import React from 'react';
+import { useAuth } from '../../../auth/AuthContext';
+import { canDecideApproval } from '../approval-permissions';
 import { PageContainer } from '../../../components/ui/PageContainer';
 import { DataTable, type Column } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/Button';
-import { StatCard } from '../../../components/ui/StatCard';
+import { KpiCard } from '../../../components/ui/KpiCard';
 import { EmptyState, ErrorState } from '../../../components/ui/StateCards';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { ApprovalStatusBadge } from '../components/ApprovalStatusBadge';
@@ -15,6 +17,9 @@ import { useApprovals } from '../hooks/useApprovals';
 import type { Approval } from '../types';
 
 export const ApprovalsInboxPage: React.FC = () => {
+  const { user, role } = useAuth();
+  const mayDecide = (approval: Approval) =>
+    canDecideApproval(approval, user?.employeeId, user?.roles ?? (role ? [role] : []));
   const {
     approvals,
     meta,
@@ -106,7 +111,7 @@ export const ApprovalsInboxPage: React.FC = () => {
       key: 'actions',
       header: 'Actions',
       render: (row) => {
-        const isPending = row.status === 'pending';
+        const canDecide = mayDecide(row);
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -118,7 +123,7 @@ export const ApprovalsInboxPage: React.FC = () => {
             >
               Details
             </Button>
-            {isPending && (
+            {canDecide && (
               <>
                 <Button
                   type="button"
@@ -173,12 +178,68 @@ export const ApprovalsInboxPage: React.FC = () => {
           </Button>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Pending In View" value={pendingCount} caption="Awaiting action" />
-          <StatCard label="Total Results" value={meta.total} caption="Matching current filters" />
-          <StatCard label="Approved In View" value={approvedCount} caption="Completed approvals" />
-          <StatCard label="Rejected In View" value={rejectedCount} caption="Declined requests" />
+        {/* Metrics Grid (Universal KpiCard matching approved pattern) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          <KpiCard
+            label="Total Requests"
+            value={meta.total}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            }
+            variant="teal"
+          />
+          <KpiCard
+            label="Pending Requests"
+            value={pendingCount}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            }
+            variant="amber"
+          />
+          <KpiCard
+            label="Approved Requests"
+            value={approvedCount}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            }
+            variant="emerald"
+          />
+          <KpiCard
+            label="Rejected Requests"
+            value={rejectedCount}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            }
+            variant="rose"
+          />
         </div>
 
         {/* Filter Bar */}
@@ -227,6 +288,7 @@ export const ApprovalsInboxPage: React.FC = () => {
                 <ApprovalCard
                   key={approval.id}
                   approval={approval}
+                  canDecide={mayDecide(approval)}
                   onApprove={openApprove}
                   onReject={openReject}
                   onViewDetails={openDetails}
@@ -285,7 +347,7 @@ export const ApprovalsInboxPage: React.FC = () => {
           approval={selectedApproval}
           onApproveClick={openApprove}
           onRejectClick={openReject}
-          canDecide={true}
+          canDecide={selectedApproval ? mayDecide(selectedApproval) : false}
         />
       </div>
     </PageContainer>

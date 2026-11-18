@@ -60,6 +60,7 @@ export interface CreateEmployeeResponse {
 
 export interface CreateEmployeeFormState {
   employeeCode: string;
+  avatarUrl?: string;
   firstName: string;
   lastName: string;
   parentName?: string;
@@ -127,7 +128,6 @@ export interface DepartmentSelectOption {
 export interface DesignationSelectOption {
   id: string;
   title: string;
-  code: string;
   departmentId: string;
 }
 

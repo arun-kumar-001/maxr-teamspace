@@ -183,7 +183,7 @@ describe('DepartmentsPage Component', () => {
         id: 'designation-new',
         departmentId: 'dept-1',
         title: 'Lead Engineer',
-        code: 'LEAD-ENG',
+
         isActive: true,
         createdAt: '2025-01-01',
         updatedAt: '2025-01-01',
@@ -196,19 +196,16 @@ describe('DepartmentsPage Component', () => {
       );
       fireEvent.click(await screen.findByTestId('card-view-dept-dept-1'));
       fireEvent.click(screen.getByRole('button', { name: 'Add Designation' }));
+      expect(screen.queryByLabelText(/designation code/i)).toBeNull();
       expect(screen.getByTestId('designation-department-input')).toHaveValue('dept-1');
       fireEvent.change(screen.getByTestId('designation-title-input'), {
         target: { value: 'Lead Engineer' },
-      });
-      fireEvent.change(screen.getByTestId('designation-code-input'), {
-        target: { value: 'LEAD-ENG' },
       });
       fireEvent.click(screen.getByTestId('designation-modal-submit'));
       await waitFor(() =>
         expect(create).toHaveBeenCalledWith({
           departmentId: 'dept-1',
           title: 'Lead Engineer',
-          code: 'LEAD-ENG',
         }),
       );
       expect(await screen.findByRole('heading', { name: 'Department Details' })).toBeDefined();
@@ -219,7 +216,7 @@ describe('DepartmentsPage Component', () => {
 
   it('keeps the designation form open with its values after a rejected save', async () => {
     vi.spyOn(designationsApi, 'createDesignation').mockRejectedValue(
-      new Error('Designation code already exists'),
+      new Error('Could not save designation'),
     );
     render(
       <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
@@ -228,12 +225,12 @@ describe('DepartmentsPage Component', () => {
     );
     fireEvent.click(await screen.findByTestId('card-view-dept-dept-1'));
     fireEvent.click(screen.getByRole('button', { name: 'Add Designation' }));
+    expect(screen.queryByLabelText(/designation code/i)).toBeNull();
     fireEvent.change(screen.getByTestId('designation-title-input'), {
       target: { value: 'Engineer' },
     });
-    fireEvent.change(screen.getByTestId('designation-code-input'), { target: { value: 'ENG' } });
     fireEvent.click(screen.getByTestId('designation-modal-submit'));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Designation code already exists');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save designation');
     expect(screen.getByTestId('designation-title-input')).toHaveValue('Engineer');
     fireEvent.click(screen.getByTestId('designation-modal-cancel'));
     expect(await screen.findByRole('heading', { name: 'Department Details' })).toBeDefined();

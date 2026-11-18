@@ -16,11 +16,11 @@ const mockDesignations = [
   {
     id: 'desig-swe',
     title: 'Software Engineer',
-    code: 'SWE',
+
     departmentId: 'dept-eng',
     isActive: true,
   },
-  { id: 'desig-qa', title: 'QA Engineer', code: 'QA', departmentId: 'dept-eng', isActive: true },
+  { id: 'desig-qa', title: 'QA Engineer', departmentId: 'dept-eng', isActive: true },
 ];
 
 const mockManagers = [
@@ -97,13 +97,9 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
 
   it('shows department and designation names without their codes', async () => {
     renderWithRole(ROLES.ADMIN);
-    await waitFor(() =>
-      expect(screen.getByRole('option', { name: 'Engineering' })).toBeDefined(),
-    );
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Engineering' })).toBeDefined());
     fireEvent.change(screen.getByTestId('select-department'), { target: { value: 'dept-eng' } });
-    expect(
-      await screen.findByRole('option', { name: 'Software Engineer' }),
-    ).toBeDefined();
+    expect(await screen.findByRole('option', { name: 'Software Engineer' })).toBeDefined();
     expect(screen.queryByRole('option', { name: 'Engineering (ENG)' })).toBeNull();
     expect(screen.queryByRole('option', { name: 'Software Engineer (SWE)' })).toBeNull();
   });
@@ -406,5 +402,53 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
         screen.getAllByText('An employee with this code already exists').length,
       ).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  it('renders employee profile photo upload option in Personal Information and allows uploading and removing photo', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <CreateEmployeePage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('section-personal-details')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-photo-upload-section')).toBeInTheDocument();
+      expect(screen.getByTestId('btn-upload-employee-photo')).toBeInTheDocument();
+      expect(screen.getByTestId('employee-avatar-placeholder')).toBeInTheDocument();
+    });
+
+    const fileInput = screen.getByTestId('input-employee-photo');
+    const file = new File(['fake-image-bytes'], 'employee-avatar.png', { type: 'image/png' });
+
+    // Mock FileReader
+    const readAsDataURLSpy = vi
+      .spyOn(FileReader.prototype, 'readAsDataURL')
+      .mockImplementation(function (this: FileReader) {
+        Object.defineProperty(this, 'result', {
+          value: 'data:image/png;base64,fakeimagebase64',
+          configurable: true,
+        });
+        this.onload?.({} as ProgressEvent<FileReader>);
+      });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('employee-avatar-preview')).toBeInTheDocument();
+      expect(screen.getByTestId('btn-remove-employee-photo')).toBeInTheDocument();
+    });
+
+    // Remove photo
+    fireEvent.click(screen.getByTestId('btn-remove-employee-photo'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('employee-avatar-preview')).not.toBeInTheDocument();
+      expect(screen.getByTestId('employee-avatar-placeholder')).toBeInTheDocument();
+    });
+
+    readAsDataURLSpy.mockRestore();
   });
 });

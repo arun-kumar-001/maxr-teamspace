@@ -48,6 +48,7 @@ const mockApprovals: Approval[] = [
     subjectType: 'leave_request',
     subjectId: 'req-001',
     requesterEmployeeId: 'emp-staff-1',
+    requesterManagerId: 'emp-lead',
     requesterName: 'Alice Staff',
     stages: ['manager', 'hr'],
     currentStage: 0,

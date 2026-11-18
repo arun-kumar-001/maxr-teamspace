@@ -28,7 +28,7 @@ describe('approvals against PostgreSQL', () => {
   const { platform } = createTestPlatform({ logger: silent, auditStore: new SqlAuditStore(pool) });
   const service = new ApprovalsService(repo, platform);
   const handler: ApprovalHandler = {
-    subjectType: 'leave_request',
+    subjectType: 'attendance_correction',
     async apply(tx, approval, outcome) {
       // The module's own write, in the decision transaction.
       await tx.query(`UPDATE employees SET phone = $2 WHERE id = $1`, [
@@ -54,7 +54,7 @@ describe('approvals against PostgreSQL', () => {
   const open = (stages: Array<'manager' | 'hr'>, subjectId: string = randomUUID()) =>
     repo.transaction((tx) =>
       service.submit(tx, {
-        subjectType: 'leave_request',
+        subjectType: 'attendance_correction',
         subjectId,
         requesterEmployeeId: ids.requester,
         stages,
@@ -67,6 +67,67 @@ describe('approvals against PostgreSQL', () => {
       ])
     ).rows[0]?.phone;
 
+  it('routes HR to Admin and uses only an active Team Lead for manager mode', async () => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const [employeeId, role] of [
+        [ids.hr, ROLES.HR_MANAGER],
+        [ids.manager, ROLES.TEAM_LEAD],
+      ] as const) {
+        const result = await client.query<{ id: string }>(
+          'INSERT INTO users (employee_id, email, password_hash, is_active) VALUES ($1, $2, $3, true) RETURNING id',
+          [employeeId, `${role}-${run}@routing.test`, 'test-only-hash'],
+        );
+        await client.query(
+          'INSERT INTO user_roles (user_id, role_id) SELECT $1, id FROM roles WHERE key = $2',
+          [result.rows[0]?.id, role],
+        );
+      }
+      await client.query("UPDATE employees SET status = 'active' WHERE id = $1", [ids.manager]);
+      expect(await service.route(client, ids.hr, { leaveApprover: 'hr_manager' })).toEqual([
+        'admin',
+      ]);
+      expect(await service.route(client, ids.requester, { leaveApprover: 'team_lead' })).toEqual([
+        'manager',
+      ]);
+      await client.query('UPDATE users SET is_active = false WHERE employee_id = $1', [
+        ids.manager,
+      ]);
+      expect(await service.route(client, ids.requester, { leaveApprover: 'team_lead' })).toEqual([
+        'hr',
+      ]);
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  });
+
+  it('filters leave inboxes by HR, Admin and Team Lead stage permissions', async () => {
+    const approval = await repo.transaction((tx) =>
+      repo.insert(tx, {
+        subjectType: 'leave_request',
+        subjectId: randomUUID(),
+        requesterEmployeeId: ids.requester,
+        stages: ['hr'],
+      }),
+    );
+    try {
+      for (const role of [ROLES.HR_MANAGER, ROLES.ADMIN, ROLES.TEAM_LEAD]) {
+        const rows = await repo.findMany({
+          filter: { kind: 'all' },
+          subjectType: 'leave_request',
+          awaiting: { employeeId: ids.hr, roles: [role] },
+          offset: 0,
+          limit: 100,
+        });
+        expect(rows.items.some((row) => row.id === approval.id)).toBe(role === ROLES.HR_MANAGER);
+      }
+    } finally {
+      await pool.query('DELETE FROM approvals WHERE id = $1', [approval.id]);
+    }
+  });
+
   beforeAll(async () => {
     const dept = await pool.query<{ id: string }>(
       `INSERT INTO departments (name, code) VALUES ($1, $2) RETURNING id`,
@@ -74,8 +135,8 @@ describe('approvals against PostgreSQL', () => {
     );
     ids.dept = dept.rows[0]?.id ?? '';
     const desig = await pool.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Approver', $2) RETURNING id`,
-      [ids.dept, `AP-${run}`],
+      `INSERT INTO designations (department_id, title) VALUES ($1, 'Approver') RETURNING id`,
+      [ids.dept],
     );
     ids.desig = desig.rows[0]?.id ?? '';
     const add = async (name: string, managerId?: string) => {
@@ -133,7 +194,7 @@ describe('approvals against PostgreSQL', () => {
     await expect(
       repo.transaction(async (tx) => {
         await service.submit(tx, {
-          subjectType: 'leave_request',
+          subjectType: 'attendance_correction',
           subjectId,
           requesterEmployeeId: ids.requester,
           stages: ['manager'],
@@ -283,7 +344,7 @@ describe('approvals against PostgreSQL', () => {
   it('cancel withdraws a pending approval and refuses a decided one', async () => {
     const a = await open(['manager']);
     const cancelled = await repo.transaction((tx) =>
-      service.cancel(tx, 'leave_request', a.subjectId),
+      service.cancel(tx, 'attendance_correction', a.subjectId),
     );
     expect(cancelled?.status).toBe('cancelled');
     await expect(

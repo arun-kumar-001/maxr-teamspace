@@ -12,6 +12,21 @@ import {
 
 const tags = ['Leave'];
 const one = z.object({ data: leaveRequestSchema });
+registerRoute({
+  method: 'get',
+  path: '/leave-requests/approval-route',
+  tags,
+  summary:
+    'List the approver roles the signed-in employee may select for this leave request. HR leave is restricted to Admin; Team Lead requires an assigned active Team Lead.',
+  permission: 'leave.apply',
+  success: {
+    status: 200,
+    description: 'Available approver roles, without creating a request',
+    schema: z.object({
+      data: z.object({ approverRoles: z.array(z.enum(['hr_manager', 'team_lead', 'admin'])) }),
+    }),
+  },
+});
 const page = z.object({
   data: z.array(leaveRequestSchema),
   meta: z.object({
@@ -27,7 +42,7 @@ registerRoute({
   path: '/leave-requests',
   tags,
   summary:
-    'Apply for leave. Working days are counted (company week, holidays skipped); the balance must cover them, taking your other pending requests into account. Your manager decides, or HR when you have none, through /approvals',
+    'Apply for leave with an explicitly selected approverRole: hr_manager, team_lead or admin. HR leave must go to Admin. Team Lead requires an assigned active Team Lead; unavailable selections are rejected. Working days exclude holidays and must fit the available balance including pending requests.',
   permission: 'leave.apply',
   idempotent: true,
   body: applyForLeaveSchema,

@@ -24,8 +24,8 @@ describe('todos against PostgreSQL', () => {
 
     // 2. Designation
     const desig = await pool.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Todo Tester', $2) RETURNING id`,
-      [ids.dept, `TDD-${run}`],
+      `INSERT INTO designations (department_id, title) VALUES ($1, 'Todo Tester') RETURNING id`,
+      [ids.dept],
     );
     ids.desig = desig.rows[0]?.id ?? '';
 

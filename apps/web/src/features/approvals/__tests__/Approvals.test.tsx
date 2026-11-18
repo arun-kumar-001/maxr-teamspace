@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { ApprovalStatusBadge } from '../components/ApprovalStatusBadge';
@@ -10,6 +11,10 @@ import { ApprovalDetailsModal } from '../components/ApprovalDetailsModal';
 import { ApprovalsInboxPage } from '../pages/ApprovalsInboxPage';
 import * as approvalsApi from '../api/approvals';
 import type { Approval } from '../types';
+
+vi.mock('../../../auth/AuthContext', () => ({
+  useAuth: () => ({ user: { employeeId: 'emp-mgr-1', roles: ['team_lead'] }, role: 'team_lead' }),
+}));
 
 vi.mock('../api/approvals', () => ({
   fetchApprovals: vi.fn(),

@@ -37,7 +37,7 @@ describe('PgUsersRepository (PostgreSQL)', () => {
       `INSERT INTO departments (name, code) VALUES ('Users Test', 'USERS-T') RETURNING id`,
     );
     const desig = await outer.query<{ id: string }>(
-      `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Users Tester', 'USERS-T') RETURNING id`,
+      `INSERT INTO designations (department_id, title) VALUES ($1, 'Users Tester') RETURNING id`,
       [dept.rows[0]?.id],
     );
     const add = async (name: string, roles: string[], active = true) => {

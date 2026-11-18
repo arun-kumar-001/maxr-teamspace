@@ -8,6 +8,8 @@ export interface KpiCardProps {
   icon: React.ReactNode;
   badge?: React.ReactNode;
   variant?: KpiColorVariant;
+  size?: 'sm' | 'md';
+  layout?: 'stack' | 'horizontal';
   borderColor?: string;
   iconColor?: string;
   pillBg?: string;
@@ -73,7 +75,7 @@ const VARIANT_STYLES: Record<
 
 /**
  * Universal KPI summary card with themed border, icon, title, big stat, and pill badge.
- * Matches the approved design pattern from the Leave Requests KPI cards.
+ * Matches the approved design pattern: white background, themed outline, compact resize.
  */
 export function KpiCard({
   label,
@@ -81,6 +83,8 @@ export function KpiCard({
   icon,
   badge,
   variant = 'teal',
+  size = 'md',
+  layout = 'stack',
   borderColor,
   iconColor,
   pillBg,
@@ -96,31 +100,85 @@ export function KpiCard({
   const bgPill = pillBg || styles.pillBg;
   const textPill = pillText || styles.pillText;
 
+  const isSmall = size === 'sm';
+  const isHorizontal = layout === 'horizontal';
+
   return (
     <div
       onClick={onClick}
       style={style}
-      className={`relative p-4 sm:p-4.5 bg-white border ${border} rounded-card shadow-card flex items-center gap-3 min-w-0 transition-all duration-200 ${
-        onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : 'hover:shadow-card'
+      className={`relative bg-white border ${border} shadow-xs flex items-center justify-between min-w-0 transition-all duration-200 outline-none focus:outline-none focus:ring-0 ${
+        isSmall
+          ? 'py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-xl min-h-[50px] gap-2.5'
+          : 'p-3 sm:p-3.5 rounded-xl min-h-[64px] gap-3'
+      } ${
+        onClick ? 'cursor-pointer hover:shadow-card hover:-translate-y-0.5' : 'hover:shadow-xs'
       } ${isActive ? 'ring-2 ring-primary-strong/40' : ''} ${className}`}
     >
-      <div className={`${iconCls} flex items-center justify-center shrink-0`}>{icon}</div>
-      <div className="min-w-0 flex-1 pr-16 sm:pr-20">
-        <span className="text-[10.5px] sm:text-[11px] font-bold text-text-muted uppercase tracking-wider block truncate">
-          {label}
-        </span>
-        <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold text-text tracking-tight leading-tight block">
-          {value}
-        </span>
-      </div>
-      {badge && (
-        <div className="absolute bottom-2.5 right-3.5 shrink-0 pointer-events-none">
-          <span
-            className={`text-[10.5px] sm:text-[11px] font-semibold ${bgPill} ${textPill} px-2 py-0.5 rounded-full block whitespace-nowrap`}
-          >
-            {badge}
-          </span>
-        </div>
+      {isHorizontal ? (
+        <>
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className={`${iconCls} flex items-center justify-center shrink-0`}>{icon}</div>
+            <span
+              className={`${
+                isSmall ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'
+              } font-semibold text-text-muted tracking-tight truncate`}
+            >
+              {label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className={`font-display ${
+                isSmall ? 'text-sm sm:text-base font-bold' : 'text-lg sm:text-xl font-bold'
+              } text-text tracking-tight tabular-nums`}
+            >
+              {value}
+            </span>
+            {badge && (
+              <span
+                className={`text-[10px] sm:text-[10.5px] font-semibold ${bgPill} ${textPill} px-2 py-0.5 rounded-full block whitespace-nowrap`}
+              >
+                {badge}
+              </span>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className={`${iconCls} flex items-center justify-center shrink-0`}>{icon}</div>
+            <div className="min-w-0 flex-1">
+              <span
+                className={`${
+                  isSmall ? 'text-[10.5px] sm:text-[11px]' : 'text-[11px] sm:text-xs'
+                } font-semibold text-text-muted uppercase tracking-wider block truncate`}
+              >
+                {label}
+              </span>
+              <span
+                className={`font-display ${
+                  isSmall
+                    ? 'text-base sm:text-lg font-bold mt-0.5'
+                    : 'text-xl sm:text-2xl font-bold mt-0.5'
+                } text-text tracking-tight leading-tight block truncate`}
+              >
+                {value}
+              </span>
+            </div>
+          </div>
+          {badge && (
+            <div className="shrink-0 pointer-events-none self-end sm:self-center">
+              <span
+                className={`${
+                  isSmall ? 'text-[10px] px-1.5' : 'text-[10.5px] sm:text-[11px] px-2'
+                } font-semibold ${bgPill} ${textPill} py-0.5 rounded-full block whitespace-nowrap`}
+              >
+                {badge}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

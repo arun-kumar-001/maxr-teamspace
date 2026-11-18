@@ -595,7 +595,7 @@ export function EmployeeDirectoryPage() {
       `"${emp.firstName}"`,
       `"${emp.lastName}"`,
       `"${emp.email || ''}"`,
-      `"${emp.phone || ''}"`,
+      `"${emp.phone || 'Not provided'}"`,
       `"${emp.department?.name || ''}"`,
       `"${emp.designation?.title || ''}"`,
       `"${emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : ''}"`,
@@ -660,7 +660,7 @@ export function EmployeeDirectoryPage() {
 
   return (
     <div
-      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
+      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans"
       data-testid="employee-directory-page"
     >
       {/* Scoped CSS for Smooth Animations & Zero Hex Compliance */}
@@ -687,7 +687,7 @@ export function EmployeeDirectoryPage() {
       `}</style>
 
       {/* 1. Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 dir-fade-in">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 pb-2 dir-fade-in">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0 shadow-xs">
@@ -789,14 +789,14 @@ export function EmployeeDirectoryPage() {
             value={query.search || ''}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search employee by name, ID..."
-            className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-xl text-sm text-text placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary shadow-xs transition-colors"
+            className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-xl text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-strong focus:border-primary-strong shadow-xs transition-colors"
           />
           {query.search && (
             <button
               type="button"
               onClick={() => setSearch('')}
               aria-label="Clear search"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer"
+              className="min-w-[44px] absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer"
             >
               <IconX className="w-4 h-4" />
             </button>
@@ -809,9 +809,9 @@ export function EmployeeDirectoryPage() {
             type="button"
             onClick={() => setViewMode('list')}
             aria-label="List view"
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`min-h-[44px] min-w-[44px] p-1.5 rounded-lg transition-colors cursor-pointer ${
               viewMode === 'list'
-                ? 'bg-emerald-500/20 text-emerald-800'
+                ? 'bg-primary-soft text-primary-deep'
                 : 'text-text-muted hover:text-text hover:bg-surface-muted'
             }`}
           >
@@ -821,9 +821,9 @@ export function EmployeeDirectoryPage() {
             type="button"
             onClick={() => setViewMode('grid')}
             aria-label="Grid view"
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`min-h-[44px] min-w-[44px] p-1.5 rounded-lg transition-colors cursor-pointer ${
               viewMode === 'grid'
-                ? 'bg-emerald-500/20 text-emerald-800'
+                ? 'bg-primary-soft text-primary-deep'
                 : 'text-text-muted hover:text-text hover:bg-surface-muted'
             }`}
           >
@@ -832,7 +832,7 @@ export function EmployeeDirectoryPage() {
         </div>
       </div>
 
-      {/* 4. Filter Controls (Hidden from visual UI per user request, preserved for test contracts) */}
+      {/* 4. Filter Controls (Hidden from visual UI per design, preserved for test contracts) */}
       <div data-testid="employee-directory-filters" className="hidden" aria-hidden="true">
         <EmployeeFilters
           search={query.search}
@@ -951,14 +951,14 @@ export function EmployeeDirectoryPage() {
                 {/* Top Bar: Status Badge + 3-Dots Action Menu */}
                 <div className="flex items-center justify-between w-full">
                   {emp.status === 'active' ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-positive-soft text-positive-ink">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                       Active
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-muted text-text-muted">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                      Inactive
+                      {emp.status === 'pending' ? 'Pending' : 'Inactive'}
                     </span>
                   )}
 
@@ -969,7 +969,7 @@ export function EmployeeDirectoryPage() {
                       onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
                       aria-label={`Actions for ${emp.firstName} ${emp.lastName}`}
                       aria-expanded={openMenuId === emp.id}
-                      className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
+                      className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
                     >
                       <IconMoreVertical className="w-4 h-4" />
                     </button>
@@ -977,7 +977,11 @@ export function EmployeeDirectoryPage() {
                     {openMenuId === emp.id && (
                       <div
                         className="absolute right-0 top-8 z-30 w-44 bg-surface-raised border border-border rounded-xl shadow-lg py-1 animate-in fade-in zoom-in-95"
-                        role="menu"
+                        role="group"
+                        aria-label="Employee actions"
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') setOpenMenuId(null);
+                        }}
                       >
                         <button
                           type="button"
@@ -985,25 +989,25 @@ export function EmployeeDirectoryPage() {
                             setOpenMenuId(null);
                             navigate(`/employees/${emp.id}`);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
-                          role="menuitem"
+                          className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
                         >
                           <IconEye className="w-4 h-4 text-text-muted shrink-0" />
                           <span>View Details</span>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpenMenuId(null);
-                            navigate(`/employees/${emp.id}?edit=true`);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
-                          role="menuitem"
-                        >
-                          <IconEditPencil className="w-4 h-4 text-text-muted shrink-0" />
-                          <span>Edit Employee</span>
-                        </button>
+                        {canCreateEmployee && !isDeactivated && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              navigate(`/employees/${emp.id}`);
+                            }}
+                            className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
+                          >
+                            <IconEditPencil className="w-4 h-4 text-text-muted shrink-0" />
+                            <span>Edit Employee</span>
+                          </button>
+                        )}
 
                         {isAdmin && !isSelf && !isDeactivated && (
                           <button
@@ -1012,8 +1016,7 @@ export function EmployeeDirectoryPage() {
                               setOpenMenuId(null);
                               setDeactivatingEmployee(emp);
                             }}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-danger hover:bg-negative-soft transition-colors text-left border-t border-border/60 cursor-pointer"
-                            role="menuitem"
+                            className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-danger hover:bg-negative-soft transition-colors text-left border-t border-border/60 cursor-pointer"
                             data-testid={`deactivate-btn-table-${emp.id}`}
                           >
                             <IconPower className="w-4 h-4 text-danger shrink-0" />
@@ -1044,6 +1047,8 @@ export function EmployeeDirectoryPage() {
                   >
                     {emp.firstName} {emp.lastName}
                   </a>
+
+                  {isSelf && <span className="text-xs text-text-subtle">(Current User)</span>}
 
                   <p className="text-xs sm:text-sm text-text-muted font-normal mt-0.5 truncate max-w-[240px]">
                     {emp.designation?.title || 'Staff'}
@@ -1081,10 +1086,10 @@ export function EmployeeDirectoryPage() {
                       <span>Phone Number</span>
                     </span>
                     <a
-                      href={`tel:${emp.phone || '082174841226'}`}
+                      href={emp.phone ? `tel:${emp.phone}` : undefined}
                       className="font-semibold text-text tracking-tight truncate max-w-[150px] hover:text-primary-deep transition-colors"
                     >
-                      {emp.phone || '082174841226'}
+                      {emp.phone || 'Not provided'}
                     </a>
                   </div>
 
@@ -1345,7 +1350,7 @@ export function EmployeeDirectoryPage() {
                             type="button"
                             aria-label={`View ${emp.firstName} ${emp.lastName}`}
                             onClick={() => navigate(`/employees/${emp.id}`)}
-                            className="p-1.5 text-text-muted hover:text-primary-deep rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
+                            className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-primary-deep rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
                           >
                             <IconEye className="w-4 h-4" />
                           </button>
@@ -1354,7 +1359,7 @@ export function EmployeeDirectoryPage() {
                             type="button"
                             aria-label={`Edit ${emp.firstName} ${emp.lastName}`}
                             onClick={() => navigate(`/employees/${emp.id}`)}
-                            className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
+                            className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
                           >
                             <IconEditPencil className="w-4 h-4" />
                           </button>

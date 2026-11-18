@@ -616,7 +616,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="calendar" />,
           children: [
             { id: '/leave', label: 'My Leave', href: '/leave' },
-            { id: '/leave/approvals', label: 'Team Approvals', href: '/leave/approvals' },
+            { id: '/leave/approvals', label: 'Leave Approvals', href: '/leave/approvals' },
             { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
             { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
           ],
@@ -756,7 +756,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="calendar" />,
           children: [
             { id: '/leave', label: 'My Leave', href: '/leave' },
-            { id: '/leave/approvals', label: 'Team Approvals', href: '/leave/approvals' },
+            { id: '/leave/approvals', label: 'Leave Approvals', href: '/leave/approvals' },
             { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
             { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
           ],

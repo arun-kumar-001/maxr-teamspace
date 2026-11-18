@@ -51,11 +51,6 @@ export class DesignationService {
       throw unprocessable('Referenced department does not exist or is inactive');
     }
 
-    const existing = await this.repository.findByCode(dto.code);
-    if (existing) {
-      throw conflict(`Designation code '${dto.code}' already exists`);
-    }
-
     const audit = this.platform.audit.withContext(ctx);
     const events = new EventCollector();
 
@@ -73,7 +68,6 @@ export class DesignationService {
         payload: {
           id: created.id,
           title: created.title,
-          code: created.code,
           departmentId: created.departmentId,
         },
         actorId: ctx.actorId,
@@ -104,13 +98,6 @@ export class DesignationService {
       const isDeptActive = await this.repository.isDepartmentActive(dto.departmentId);
       if (!isDeptActive) {
         throw unprocessable('Referenced department does not exist or is inactive');
-      }
-    }
-
-    if (dto.code) {
-      const existing = await this.repository.findByCode(dto.code);
-      if (existing && existing.id !== id) {
-        throw conflict(`Designation code '${dto.code}' already exists`);
       }
     }
 

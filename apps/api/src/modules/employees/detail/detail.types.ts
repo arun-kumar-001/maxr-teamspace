@@ -21,7 +21,7 @@ export interface EmployeeDetail {
   email: string;
   phone: string | null;
   department: { id: string; name: string; code: string };
-  designation: { id: string; title: string; code: string };
+  designation: { id: string; title: string };
   manager: { id: string; firstName: string; lastName: string; employeeCode: string } | null;
   status: EmployeeStatus;
   joiningDate: string;

@@ -21,8 +21,6 @@ export interface DesignationModalProps {
   onSubmit: (payload: CreateDesignationPayload | UpdateDesignationPayload) => Promise<void>;
 }
 
-const CODE_REGEX = /^[A-Za-z0-9_-]+$/;
-
 export function DesignationModal({
   isOpen,
   designation,
@@ -35,22 +33,18 @@ export function DesignationModal({
   const isEdit = Boolean(designation);
 
   const [title, setTitle] = useState('');
-  const [code, setCode] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [errors, setErrors] = useState<{
     title?: string;
-    code?: string;
     departmentId?: string;
   }>({});
 
   useEffect(() => {
     if (designation) {
       setTitle(designation.title);
-      setCode(designation.code);
       setDepartmentId(designation.departmentId);
     } else {
       setTitle('');
-      setCode('');
       // Default to first active department if available
       const firstActive = departments.find((d) => d.isActive);
       setDepartmentId(firstActive ? firstActive.id : '');
@@ -61,7 +55,6 @@ export function DesignationModal({
   const validate = (): boolean => {
     const nextErrors: {
       title?: string;
-      code?: string;
       departmentId?: string;
     } = {};
 
@@ -70,16 +63,6 @@ export function DesignationModal({
       nextErrors.title = 'Designation title is required';
     } else if (trimmedTitle.length > 255) {
       nextErrors.title = 'Designation title cannot exceed 255 characters';
-    }
-
-    const trimmedCode = code.trim();
-    if (!trimmedCode) {
-      nextErrors.code = 'Designation code is required';
-    } else if (trimmedCode.length > 50) {
-      nextErrors.code = 'Designation code cannot exceed 50 characters';
-    } else if (!CODE_REGEX.test(trimmedCode)) {
-      nextErrors.code =
-        'Designation code must contain only letters, numbers, underscores, or hyphens';
     }
 
     if (!departmentId.trim()) {
@@ -96,7 +79,6 @@ export function DesignationModal({
 
     await onSubmit({
       title: title.trim(),
-      code: code.trim().toUpperCase(),
       departmentId: departmentId.trim(),
     });
   };
@@ -181,28 +163,6 @@ export function DesignationModal({
             disabled={isSubmitting}
             className="min-h-[44px]"
             data-testid="designation-title-input"
-          />
-        </FormField>
-
-        <FormField
-          label="Designation Code"
-          htmlFor="designation-code-input"
-          required
-          error={errors.code}
-          helperText="Unique uppercase identifier (letters, numbers, hyphens, underscores)"
-        >
-          <Input
-            id="designation-code-input"
-            name="code"
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value.toUpperCase());
-              if (errors.code) setErrors((prev) => ({ ...prev, code: undefined }));
-            }}
-            placeholder="Designation code"
-            disabled={isSubmitting}
-            className="min-h-[44px] font-mono"
-            data-testid="designation-code-input"
           />
         </FormField>
 

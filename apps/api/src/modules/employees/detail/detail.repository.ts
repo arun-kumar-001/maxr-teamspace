@@ -57,7 +57,6 @@ interface Row {
   dept_code: string;
   desig_id: string;
   desig_title: string;
-  desig_code: string;
   manager_id: string | null;
   manager_first_name: string | null;
   manager_last_name: string | null;
@@ -78,7 +77,7 @@ const toDetail = (row: Row, withAccount: boolean): EmployeeDetail => ({
   email: row.email,
   phone: row.phone,
   department: { id: row.dept_id, name: row.dept_name, code: row.dept_code },
-  designation: { id: row.desig_id, title: row.desig_title, code: row.desig_code },
+  designation: { id: row.desig_id, title: row.desig_title },
   manager: row.manager_id
     ? {
         id: row.manager_id,
@@ -124,7 +123,7 @@ const SELECT = `
          e.blood_group, e.pan_number, e.aadhaar_number,
          e.bank_account_holder, e.bank_name, e.bank_account_number, e.bank_ifsc_code, e.bank_branch,
          d.id AS dept_id, d.name AS dept_name, d.code AS dept_code,
-         g.id AS desig_id, g.title AS desig_title, g.code AS desig_code,
+         g.id AS desig_id, g.title AS desig_title,
          m.id AS manager_id, m.first_name AS manager_first_name,
          m.last_name AS manager_last_name, m.employee_code AS manager_code,
          u.id AS user_id, u.is_active AS user_active, u.last_login_at,

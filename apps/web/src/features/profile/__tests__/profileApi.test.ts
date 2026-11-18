@@ -17,7 +17,7 @@ describe('Profile API Client & Payload Security Suite (Issue #22)', () => {
     email: 'asha@example.com',
     phone: '+91 98765 43210',
     department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'desig-1', title: 'Senior Engineer', code: 'ENG-SR' },
+    designation: { id: 'desig-1', title: 'Senior Engineer' },
     manager: {
       id: 'emp-099',
       firstName: 'Rahul',

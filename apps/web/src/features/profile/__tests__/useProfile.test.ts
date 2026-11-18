@@ -14,7 +14,7 @@ describe('useProfile Hook Suite (Issue #22)', () => {
     email: 'vijay@example.com',
     phone: '+91 91234 56789',
     department: { id: 'dept-1', name: 'Design', code: 'DES' },
-    designation: { id: 'desig-1', title: 'Lead Designer', code: 'DES-LD' },
+    designation: { id: 'desig-1', title: 'Lead Designer' },
     manager: null,
     status: 'active',
     joiningDate: '2024-03-01',

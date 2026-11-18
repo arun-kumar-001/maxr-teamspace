@@ -16,7 +16,7 @@ const sampleDesignation: Designation = {
   id: 'desig-1',
   departmentId: 'dept-1',
   title: 'Principal Engineer',
-  code: 'PR_ENG',
+
   isActive: true,
   createdAt: '2025-01-01T00:00:00Z',
   updatedAt: '2025-01-01T00:00:00Z',

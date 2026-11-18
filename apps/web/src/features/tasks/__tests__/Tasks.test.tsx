@@ -146,7 +146,7 @@ describe('Tasks Feature (Issue #43)', () => {
           phone: null,
           status: 'active',
           department: { id: 'd1', name: 'Engineering', code: 'ENG' },
-          designation: { id: 'des1', title: 'Engineer', code: 'ENG' },
+          designation: { id: 'des1', title: 'Engineer' },
           manager: null,
           joiningDate: '2024-01-01',
           createdAt: '2024-01-01',

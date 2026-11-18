@@ -2,7 +2,7 @@ import { conflict, notFound, unprocessable } from '../../../http/errors';
 import type { PlatformServices } from '../../../platform';
 import { ILeavePoliciesRepository } from './policies.repository';
 import type { CreateLeavePolicyInput, UpdateLeavePolicyInput } from './policies.schemas';
-import { LeavePolicy, LeavePolicyValues } from './policies.types';
+import { LeaveApprovalSettings, LeavePolicy, LeavePolicyValues, LeaveTx } from './policies.types';
 
 type Deps = Pick<PlatformServices, 'audit'>;
 
@@ -32,6 +32,34 @@ export class LeavePoliciesService {
 
   list(): Promise<LeavePolicy[]> {
     return this.repository.list();
+  }
+
+  getApprovalSettings(tx?: LeaveTx): Promise<LeaveApprovalSettings> {
+    return this.repository.getApprovalSettings(tx);
+  }
+
+  async updateApprovalSettings(
+    input: LeaveApprovalSettings,
+    caller: PolicyCaller,
+  ): Promise<LeaveApprovalSettings> {
+    const audit = this.platform.audit.withContext(caller);
+    return this.repository.transaction(async (tx) => {
+      const current = await this.repository.lockApprovalSettings(tx);
+      if (current.version !== input.version)
+        throw conflict('Approval settings changed. Reload and try again');
+      if (current.approverRole === input.approverRole) return current;
+      const updated = await this.repository.updateApprovalSettings(tx, input.approverRole);
+      await audit.record(
+        {
+          action: 'leave_approval_settings.update',
+          outcome: 'success',
+          entityType: 'leave_approval_settings',
+          changes: { approverRole: { from: current.approverRole, to: updated.approverRole } },
+        },
+        { transaction: tx },
+      );
+      return updated;
+    });
   }
 
   /** One leave type with its policy, or null. The table is a handful of rows, so this reads the list. */

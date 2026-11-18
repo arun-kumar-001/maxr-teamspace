@@ -107,8 +107,8 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
     ).rows[0]?.id as string;
     ids.desig = (
       await outer.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Worker', $2) RETURNING id`,
-        [ids.dept, `LV-${run}`],
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Worker') RETURNING id`,
+        [ids.dept],
       )
     ).rows[0]?.id as string;
   });
@@ -125,6 +125,19 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
   });
 
   describe('the migration', () => {
+    it('persists a versioned leave approver setting and rejects stale updates', async () => {
+      const current = await policies.getApprovalSettings();
+      expect(current.approverRole).toBe('hr_manager');
+      const updated = await policies.updateApprovalSettings(
+        { ...current, approverRole: 'team_lead' },
+        caller,
+      );
+      expect(updated).toEqual({ approverRole: 'team_lead', version: current.version + 1 });
+      expect(await policies.getApprovalSettings()).toEqual(updated);
+      await expect(
+        policies.updateApprovalSettings({ ...current, approverRole: 'hr_manager' }, caller),
+      ).rejects.toMatchObject({ statusCode: 409 });
+    });
     it('seeds the types and policies of decision D-12', async () => {
       const list = Object.fromEntries((await policies.list()).map((p) => [p.code, p]));
       expect(list.ANNUAL).toMatchObject({ annualDays: 18, carryForwardMax: 5, hasBalance: true });

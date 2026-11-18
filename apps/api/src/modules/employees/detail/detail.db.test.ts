@@ -56,8 +56,8 @@ describe('employee detail against PostgreSQL', () => {
     const desig = async (department: string, code: string) =>
       (
         await outer.query<{ id: string }>(
-          `INSERT INTO designations (department_id, title, code) VALUES ($1, $2, $3) RETURNING id`,
-          [department, `Title ${code}`, `DT-${run}-${code}`],
+          `INSERT INTO designations (department_id, title) VALUES ($1, $2) RETURNING id`,
+          [department, `Title ${code}`],
         )
       ).rows[0]?.id ?? '';
     ids.deptA = await dept('A');
@@ -293,8 +293,8 @@ describe('employee detail: concurrent edits', () => {
     ).rows[0]?.id as string;
     ids.desig = (
       await pool.query<{ id: string }>(
-        `INSERT INTO designations (department_id, title, code) VALUES ($1, 'Racer', $2) RETURNING id`,
-        [ids.dept, `CC-${run}`],
+        `INSERT INTO designations (department_id, title) VALUES ($1, 'Racer') RETURNING id`,
+        [ids.dept],
       )
     ).rows[0]?.id as string;
     ids.employee = (

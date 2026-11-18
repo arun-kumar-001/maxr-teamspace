@@ -1,19 +1,44 @@
 import { randomUUID } from 'node:crypto';
 import { conflict } from '../../../http/errors';
 import { ILeavePoliciesRepository } from './policies.repository';
-import { LeavePolicy, LeavePolicyValues, LeaveTx, NewLeavePolicy } from './policies.types';
+import {
+  LeaveApprovalSettings,
+  LeavePolicy,
+  LeavePolicyValues,
+  LeaveTx,
+  NewLeavePolicy,
+} from './policies.types';
 
 /** In-memory leave policies for unit and HTTP tests (not shipped in the build). */
 export class MemoryLeavePoliciesRepository implements ILeavePoliciesRepository {
+  approvalSettings: LeaveApprovalSettings = { approverRole: 'hr_manager', version: 1 };
   constructor(public policies: LeavePolicy[] = []) {}
+
+  async getApprovalSettings(): Promise<LeaveApprovalSettings> {
+    return { ...this.approvalSettings };
+  }
+
+  async lockApprovalSettings(): Promise<LeaveApprovalSettings> {
+    return this.getApprovalSettings();
+  }
+
+  async updateApprovalSettings(
+    _tx: LeaveTx,
+    approverRole: LeaveApprovalSettings['approverRole'],
+  ): Promise<LeaveApprovalSettings> {
+    this.approvalSettings = { approverRole, version: this.approvalSettings.version + 1 };
+    return this.getApprovalSettings();
+  }
 
   /** Snapshot/restore stands in for a database rollback. */
   async transaction<T>(work: (tx: LeaveTx) => Promise<T>): Promise<T> {
     const snapshot = structuredClone(this.policies);
+    const settingsSnapshot = { ...this.approvalSettings };
     try {
       return await work({ query: async () => ({ rows: [] }) } as unknown as LeaveTx);
     } catch (err) {
       this.policies = snapshot;
+      this.approvalSettings = settingsSnapshot;
       throw err;
     }
   }

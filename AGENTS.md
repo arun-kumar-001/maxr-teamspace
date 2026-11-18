@@ -29,8 +29,8 @@ Identity documents, bank accounts and compensation need **explicit permission**.
 
 | Branch                             | Owner                                                       | Scope                                                                         |
 | ---------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `main`                             | Technical Lead (merges only)                                | Stable, reviewed releases                                                     |
-| `develop`                          | Technical Lead (merges only)                                | Integration branch; **every developer PR targets this**                       |
+| `main`                             | Shared (direct push allowed)                                | Production deployment branch; direct pushes & merges allowed                  |
+| `develop`                          | Shared (direct push allowed)                                | Active development & integration branch                                       |
 | `global/<issue>` (short-lived)     | Dev 1 `maxrindia29` (backend) / Dev 2 `maxrindia30-vb` (UI) | Foundation issues #3–#17, cut from `develop`                                  |
 | `feature/employee-management`      | Dev 1 `maxrindia29`                                         | Employee Management, user/role admin, settings, expenses (issues #18–#32)     |
 | `feature/attendance-collaboration` | Dev 2 `maxrindia30-vb`                                      | Attendance, leave, approvals, notifications, tasks, meetings (issues #33–#48) |
@@ -167,7 +167,7 @@ Rules:
 - App shell: drawer/bottom nav (phone) → icon rail (tablet) → full sidebar (desktop+), with sticky header; modals become full-screen sheets on phone.
 - Data views: DataTable must define a card layout for phone and column priority for tablet; charts resize without overflow.
 - Hover-only interactions are forbidden (touch + keyboard parity). Images/media responsive with intrinsic aspect ratios.
-- **Verification (part of Definition of Done):** every new page is checked at 360×640, 390×844, 768×1024, 1024×768, 1366×768, 1440×900, 1920×1080, 2560×1440 and 3440×1440; critical flows run in Playwright at a phone, tablet and desktop viewport; UI PRs include screenshots at phone and desktop widths.
+- **Responsive verification:** use the change-impact rules in §10. New pages and shared shell/layout changes cover all reference viewports before merge (360×640, 390×844, 768×1024, 1024×768, 1366×768, 1440×900, 1920×1080, 2560×1440 and 3440×1440). During iteration, check phone, tablet and desktop first. UI changes include phone and desktop screenshots in the PR when appearance changes.
 - Every data view implements **loading, empty, error and forbidden** states, and every form shows inline validation plus a submit-in-progress state.
 - Reuse components from `components/ui` (Button, Input, Select, DataTable, Modal, Badge, StatusPill, EmptyState, Toast, FormField, StatCard, MetricStrip, DeltaChip, SegmentedControl, IconButton, Sidebar, SidebarDrawer). Before creating a new component, search for an existing one. Do not add a second UI library.
 - Workflow state badges use one shared mapping: leave (Applied/Pending/Approved/Rejected/Cancelled), task (To Do/In Progress/In Review/Completed/Blocked).
@@ -183,29 +183,46 @@ Rules:
 
 ## 10. Testing and quality gates
 
-- **Targeted testing during development (MANDATORY):** When implementing or modifying a feature, run ONLY the test file(s) for that specific feature (e.g. `npx vitest run src/features/<feature>` or `src/dashboards`). DO NOT run the full project test suite (`npm test`) on routine feature edits to avoid wasting time.
-- **Full test suite timing:** Run the full project test suite ONLY when preparing a final PR, before deployment, or when explicitly requested by the user.
+### Local development
 
-Every PR must pass, and agents must run locally before declaring done:
+Choose verification from the actual diff and its consumers. Batch related edits into a coherent change, then run the applicable checks once before reporting completion. This section governs local verification timing, including where older development docs request the full CI sequence before every push.
 
-1. Typecheck, lint, format check.
-2. Unit tests for services/business rules (state transitions, balance math, scope filters).
-3. Integration tests for API endpoints against a real PostgreSQL (migrations applied), including **authorization tests per role** and **cross-scope denial** (Team Lead A cannot read Team B).
-4. Component tests for non-trivial UI; Playwright E2E for critical flows (login, check-in/out, leave apply/approve, employee create).
-5. Migration up (and down where supported) on a clean DB.
-6. No new high/critical dependency vulnerabilities; no secrets in diff.
+Before each verification command, check the task's existing results and identify the changed input or uncovered behavior that requires the command. Keep a compact task-local record of scope, command, code revision and result. A repeated command requires changed inputs, a failed check being investigated, or a documented environment difference. Use this record across follow-up requests to commit, push, create a PR and deploy.
 
-Bug fix = failing test first. Do not skip, disable or loosen tests to get green.
+| Change impact                                                        | Required local verification                                                                                                                                                                                          |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Documentation only                                                   | Review accuracy, links and diff. Check formatting on changed documents.                                                                                                                                              |
+| Static UI copy, placeholders, icons or styling                       | Changed-file lint/format and affected screen inspection. Run affected assertions when text, selectors or accessibility expectations change. Check phone and desktop for layout changes.                              |
+| React state, hooks, forms, routing or API-client behavior            | Affected component/hook/client tests and web workspace typecheck. Exercise the changed interaction.                                                                                                                  |
+| API validation or business logic                                     | Affected schema/service/HTTP tests and API workspace typecheck. Cover error paths and changed state transitions.                                                                                                     |
+| SQL, repositories or migrations                                      | Affected tests against real PostgreSQL and API typecheck. For migrations, verify a clean install, upgrade from the previous schema with representative data, repeat application, and rollback where supported.       |
+| Shared contracts, shared UI, tokens or configuration                 | Check affected consumers. Typecheck shared and consuming workspaces for contract changes, rebuilding shared output when needed. Run relevant contract, token, accessibility or build checks according to the change. |
+| Auth, RBAC, scope, sensitive data, concurrency or critical workflows | Affected role/cross-scope denial and integration tests. Exercise retries, duplicate writes or concurrent operations when relevant. Run targeted E2E when browser-to-API behavior changes.                            |
+
+- Run targeted test files with explicit paths, such as `npm run test --workspace=@maxr/web -- src/features/designations/__tests__/DesignationsPage.test.tsx`. Include callers and dependent features affected by the change.
+- Run `tsc --noEmit` through the affected workspace's typecheck script once per completed code change. Static copy/style-only and documentation changes use the checks in the table. Cross-workspace changes include every affected workspace.
+- Reuse successful results while the checked code, dependencies, configuration and relevant environment remain the same. After further edits, rerun checks whose inputs or behavior changed. Keep a brief record of commands, scope and results.
+- Run independent checks concurrently when safe. Keep builds and dependent checks ordered. Reuse existing dependencies and database services. Run clean installs when lockfile/dependency state or reproducibility requires them.
+- Use targeted E2E for changed critical flows (login, check-in/out, leave apply/approve, employee create). New pages, shared layout changes and responsive regressions receive phone/tablet/desktop checks. Complete the nine reference viewports before merge for new pages and shared shell/layout changes.
+- Bug fixes start with a reproducer. Add a failing regression test for behavior bugs, then verify the fix. Visual-only defects may use a reproducible screenshot/browser check. Add tests for new business rules and meaningful uncovered behavior.
+- Local full-suite runs require an explicit user request, unavailable CI at a required merge/release gate, or a concrete cross-feature dependency gap that targeted checks cannot cover. Identify that gap before starting the command. Use targeted local checks followed by CI for normal PR and release preparation.
+- Before invoking a root script, inspect its constituent commands. Select affected workspace commands and reuse completed prerequisites. Schedule CPU-heavy test suites and builds with bounded concurrency to avoid resource-contention timeouts.
+- Fix failures caused by the change. Report pre-existing failures and unavailable checks with their impact. Do not skip, disable or loosen tests to get green. Completion reports state what passed and what remains unverified.
+
+### PR and release gates
+
+Every PR must pass the required CI checks defined in `.github/workflows/ci.yml` and ADR D-09. CI provides full-workspace typecheck, lint/format, production builds, unit tests, PostgreSQL integration tests, migration/seed verification, dependency audit and secret scanning. PR evidence includes the relevant local checks and CI results. Run the required gates locally when CI is unavailable before merge or deployment.
+
+Full Playwright E2E runs belong to final deployment, not routine pushes or PRs (TL decision, 2026-11-18). `.github/workflows/e2e.yml` can run manually and is a required predecessor of the Deploy job. Use targeted local browser checks when a changed critical interaction or layout needs them; do not start the full E2E suite for routine integration or main merges.
+
+Before deployment, use the required CI results for the exact release revision as full-suite evidence. Check the commit and results before starting additional verification. Reuse successful checks for the same code and relevant environment. Run additional checks for documented deployment-specific gaps, including configuration and migration compatibility. Build required deployment artifacts, apply migrations and confirm deployment health with affected-flow smoke checks. Security, authorization, data integrity and responsive behavior remain acceptance requirements.
 
 ## 11. Git, commits and PRs
 
-- `main` = stable branch, `develop` = integration branch. **Never commit or push directly to `main` or `develop`.** Never force-push shared branches, rewrite others' history, or delete branches.
-- Flow: your branch → PR into `develop` → Technical Lead reviews and merges → Technical Lead raises `develop → main`. Developers never open PRs into `main`.
-- Work on your assigned branch (see §1), one PR per issue, linked with `Closes #<n>`. Merge `develop` into your branch before opening a PR (merge commits; do not rebase shared branches).
-- Agents: **do not commit, push, merge or deploy unless the user explicitly asks.** Do not open a PR unless asked.
+- `main` = production branch, `develop` = integration branch. Direct commits, merges, and pushes to `main` and `develop` are allowed for verified changes and rapid deployment. Never force-push shared branches, rewrite others' history, or delete branches without explicit consensus.
+- Workflow: Developers and AI agents can push verified work directly to `main` (or via fast-track merge from `develop` into `main`) to deploy directly to the live environment without blocking on formal PR reviews when fast progress is requested.
 - Commits: Conventional Commits (`feat(leave): ...`, `fix(auth): ...`), small and focused, one concern each.
-- PR must include: linked issue, summary, screenshots for UI, test evidence, migration/rollback notes, security impact, docs updated.
-- Include the Claude attribution trailer on agent-authored commits as configured by the harness.
+- Agents: Execute commits, merges, pushes, and deployments when instructed by the user.
 
 ## 12. Shared files: restricted
 
@@ -218,15 +235,15 @@ If a feature needs a change there, stop and flag it instead of editing it.
 
 **Before coding**
 
-1. Read this file, the linked issue, and the relevant `docs/requirements` + `docs/architecture` pages.
+1. Read this file, the linked issue when provided, and relevant `docs/requirements` + `docs/architecture` pages. Reuse context already read during the task and reread when it changes.
 2. Inspect existing code for reusable components/services; check `git status` and current branch.
 3. Confirm the task is in your module's scope and not in §1 out-of-scope. List assumptions; ask if a business rule is ambiguous.
 
 **After coding**
 
-1. Run the quality gates in §10 and paste results in the PR.
+1. Run the checks selected by §10 for the completed change. Include commands, results and outstanding checks in the PR when requested.
 2. Self-review the diff for: missing authz/scope check, unvalidated input, N+1 queries, missing states (loading/empty/error), hardcoded colors/secrets, leaked PII in logs.
-3. Update docs (`docs/project-status.md`, API docs) and `.env.example` if config changed.
+3. Update documentation when behavior, contracts, setup or project status changes. Update `.env.example` when environment configuration changes. Keep edits scoped to the task.
 4. Report honestly: what is done, verified, skipped or failing.
 
 ## 14. Open questions / spec discrepancies (do not silently resolve)

@@ -28,7 +28,7 @@ export interface INotificationsRepository {
   findRecipient(employeeId: string): Promise<Recipient | null>;
   findManagerOf(employeeId: string): Promise<Recipient | null>;
   /** Active HR Managers and Admins, except `excludeEmployeeId`. */
-  findHrApprovers(excludeEmployeeId: string): Promise<Recipient[]>;
+  findHrApprovers(excludeEmployeeId: string, role?: 'hr_manager' | 'admin'): Promise<Recipient[]>;
   /** Pending approvals whose current step has waited since before `cutoff`. */
   findStaleApprovals(cutoff: Date): Promise<StaleApproval[]>;
   /**
@@ -165,16 +165,19 @@ export class PgNotificationsRepository implements INotificationsRepository {
     return res.rows[0] ? { employeeId: res.rows[0].id, email: res.rows[0].email } : null;
   }
 
-  async findHrApprovers(excludeEmployeeId: string): Promise<Recipient[]> {
+  async findHrApprovers(
+    excludeEmployeeId: string,
+    role?: 'hr_manager' | 'admin',
+  ): Promise<Recipient[]> {
     const res = await this.getPool().query<{ id: string; email: string }>(
       `SELECT DISTINCT e.id, e.email
          FROM employees e
          JOIN users u ON u.employee_id = e.id AND u.is_active
          JOIN user_roles ur ON ur.user_id = u.id
-         JOIN roles r ON r.id = ur.role_id AND r.key IN ('hr_manager', 'admin')
+         JOIN roles r ON r.id = ur.role_id AND r.key = ANY($2::text[])
         WHERE e.status = 'active' AND e.id <> $1
         ORDER BY e.id`,
-      [excludeEmployeeId],
+      [excludeEmployeeId, role ? [role] : ['hr_manager', 'admin']],
     );
     return res.rows.map((row) => ({ employeeId: row.id, email: row.email }));
   }
@@ -209,7 +212,7 @@ export class PgNotificationsRepository implements INotificationsRepository {
       id: string;
       subject_type: string;
       requester_employee_id: string;
-      stage: 'manager' | 'hr';
+      stage: StaleApproval['stage'];
     }>(
       `SELECT a.id, a.subject_type, a.requester_employee_id, a.stages[a.current_stage + 1] AS stage
          FROM approvals a

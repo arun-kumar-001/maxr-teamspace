@@ -21,7 +21,7 @@ const sampleEmployees: EmployeeDirectoryItem[] = [
     email: 'eleanor@maxr.com',
     phone: '+1 555-0101',
     department: { id: 'dept-1', name: 'Engineering', code: 'ENG' },
-    designation: { id: 'desig-1', title: 'Principal Architect', code: 'PR_ARCH' },
+    designation: { id: 'desig-1', title: 'Principal Architect' },
     manager: null,
     status: 'active',
     joiningDate: '2023-01-10',
@@ -36,7 +36,7 @@ const sampleEmployees: EmployeeDirectoryItem[] = [
     email: 'marcus@maxr.com',
     phone: '+1 555-0102',
     department: { id: 'dept-2', name: 'Product', code: 'PROD' },
-    designation: { id: 'desig-2', title: 'Product Manager', code: 'PM' },
+    designation: { id: 'desig-2', title: 'Product Manager' },
     manager: {
       id: 'emp-1',
       firstName: 'Eleanor',
@@ -58,8 +58,8 @@ describe('EmployeeDirectoryPage Component', () => {
       { id: 'dept-2', name: 'Product', code: 'PROD' },
     ]);
     vi.spyOn(directoryApi, 'fetchDesignations').mockResolvedValue([
-      { id: 'desig-1', title: 'Principal Architect', code: 'PR_ARCH' },
-      { id: 'desig-2', title: 'Product Manager', code: 'PM' },
+      { id: 'desig-1', title: 'Principal Architect' },
+      { id: 'desig-2', title: 'Product Manager' },
     ]);
     vi.spyOn(directoryApi, 'fetchManagerOptions').mockResolvedValue([
       { id: 'emp-1', name: 'Eleanor Vance', employeeCode: 'MAX001' },
@@ -73,6 +73,22 @@ describe('EmployeeDirectoryPage Component', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+  });
+
+  it('shows the selected directory layout without inventing photos, phone numbers or employment types', async () => {
+    vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockResolvedValueOnce({
+      data: [{ ...sampleEmployees[0]!, phone: null }],
+      meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+    });
+    render(<EmployeeDirectoryPage />);
+    const card = await screen.findByTestId('employee-grid-card-emp-1');
+    expect(card).toHaveTextContent('Not provided');
+    expect(card.querySelector('a[href^="tel:"]')).toBeNull();
+    expect(card.querySelector('img')).toBeNull();
+    expect(card).not.toHaveTextContent(/Full-Time|Internship|Contract|082174841226/);
+    expect(
+      screen.getByRole('textbox', { name: 'Search employee by name or ID' }),
+    ).toBeInTheDocument();
   });
 
   it('renders loading skeletons on initial mount before data resolves', async () => {

@@ -1,8 +1,8 @@
 import type { Role } from '@maxr/shared';
 import type { PoolClient } from 'pg';
 
-/** A step of the route. `manager` is the requester's manager; `hr` is an HR Manager (or Admin). */
-export type ApprovalStage = 'manager' | 'hr';
+/** The stored approver stage. Leave assigns HR requests to Admin and other requests by policy. */
+export type ApprovalStage = 'manager' | 'hr' | 'admin';
 
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 export type ApprovalOutcome = 'approved' | 'rejected';
@@ -82,4 +82,5 @@ export interface ApprovalHandler {
 export interface RequesterContext {
   managerId: string | null;
   roles: Role[];
+  managerIsTeamLead?: boolean;
 }

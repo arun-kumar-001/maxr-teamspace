@@ -11,6 +11,7 @@ export interface ApprovalStagePillProps {
 const STAGE_LABELS: Record<ApprovalStage, string> = {
   manager: 'Manager Review',
   hr: 'HR Review',
+  admin: 'Admin Review',
 };
 
 export const ApprovalStagePill: React.FC<ApprovalStagePillProps> = ({

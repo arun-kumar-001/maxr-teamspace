@@ -1,4 +1,4 @@
-export type ApprovalStage = 'manager' | 'hr';
+export type ApprovalStage = 'manager' | 'hr' | 'admin';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 export type ApprovalOutcome = 'approved' | 'rejected';
 

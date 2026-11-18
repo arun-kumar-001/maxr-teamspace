@@ -11,6 +11,8 @@ import { LeaveManagementPage } from '../pages/LeaveManagementPage';
 import * as leaveApi from '../api/leave';
 
 vi.mock('../api/leave', () => ({
+  fetchLeaveApprovalSettings: vi.fn().mockResolvedValue({ approverRole: 'hr_manager', version: 1 }),
+  updateLeaveApprovalSettings: vi.fn(),
   fetchLeavePolicies: vi.fn(),
   createLeavePolicy: vi.fn(),
   updateLeavePolicy: vi.fn(),
