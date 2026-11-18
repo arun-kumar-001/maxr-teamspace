@@ -1,12 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   addProjectMember,
+  createProjectMilestone,
+  createProjectUpdate,
+  deleteProjectDocument,
   fetchProjectById,
+  fetchProjectDocumentDownloadLink,
   ProjectsApiError,
   removeProjectMember,
   updateProject,
+  updateProjectMilestone,
+  uploadProjectDocument,
 } from '../api/projectsApi';
-import type { ProjectDetail, UpdateProjectInput } from '../types';
+import type {
+  CreateMilestoneInput,
+  CreateProjectUpdateInput,
+  ProjectDetail,
+  ProjectDocumentCategory,
+  UpdateMilestoneInput,
+  UpdateProjectInput,
+} from '../types';
 
 export function useProjectDetail(projectId?: string) {
   const [project, setProject] = useState<ProjectDetail | null>(null);
@@ -89,6 +102,45 @@ export function useProjectDetail(projectId?: string) {
     return updated;
   };
 
+  const handleAddMilestone = async (input: CreateMilestoneInput) => {
+    if (!project) throw new Error('No project loaded');
+    await createProjectMilestone(project.id, input);
+    await loadProject();
+  };
+
+  const handleUpdateMilestone = async (milestoneId: string, input: UpdateMilestoneInput) => {
+    if (!project) throw new Error('No project loaded');
+    await updateProjectMilestone(project.id, milestoneId, input);
+    await loadProject();
+  };
+
+  const handlePostUpdate = async (input: CreateProjectUpdateInput) => {
+    if (!project) throw new Error('No project loaded');
+    await createProjectUpdate(project.id, input);
+    await loadProject();
+  };
+
+  const handleUploadDocument = async (
+    file: File,
+    category: ProjectDocumentCategory = 'general',
+  ) => {
+    if (!project) throw new Error('No project loaded');
+    await uploadProjectDocument(project.id, file, category);
+    await loadProject();
+  };
+
+  const handleDownloadDocument = async (documentId: string) => {
+    if (!project) throw new Error('No project loaded');
+    const link = await fetchProjectDocumentDownloadLink(project.id, documentId);
+    window.open(link.url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!project) throw new Error('No project loaded');
+    await deleteProjectDocument(project.id, documentId);
+    await loadProject();
+  };
+
   return {
     project,
     loading,
@@ -100,5 +152,11 @@ export function useProjectDetail(projectId?: string) {
     toggleArchive: handleToggleArchive,
     addMember: handleAddMember,
     removeMember: handleRemoveMember,
+    addMilestone: handleAddMilestone,
+    updateMilestone: handleUpdateMilestone,
+    postUpdate: handlePostUpdate,
+    uploadDocument: handleUploadDocument,
+    downloadDocument: handleDownloadDocument,
+    deleteDocument: handleDeleteDocument,
   };
 }

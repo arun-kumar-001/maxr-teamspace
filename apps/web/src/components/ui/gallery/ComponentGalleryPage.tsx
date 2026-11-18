@@ -325,7 +325,7 @@ export function ComponentGalleryPage() {
             <h2 className="text-lg font-semibold text-text mb-4">Form Controls & Validation</h2>
             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
               <FormField label="Full Name" htmlFor="fullName" required>
-                <Input id="fullName" placeholder="e.g. Jane Doe" />
+                <Input id="fullName" placeholder="Full name" />
               </FormField>
 
               <FormField

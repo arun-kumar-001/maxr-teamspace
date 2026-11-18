@@ -513,7 +513,7 @@ export function AttendanceWidget({
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center mt-1">
               <input
                 type="text"
-                placeholder="Optional check-in note (e.g. client visit, traffic delay)"
+                placeholder="Optional check-in note"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 maxLength={500}

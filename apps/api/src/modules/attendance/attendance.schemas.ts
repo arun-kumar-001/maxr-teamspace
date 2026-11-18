@@ -55,6 +55,7 @@ export const ATTENDANCE_SORTABLE_FIELDS = {
   createdAt: 'createdAt',
 } as const;
 
+// Accept standard 8-4-4-4-12 PostgreSQL UUIDs (including deterministic local dev seed IDs).
 const uuidInput = z
   .string()
   .regex(

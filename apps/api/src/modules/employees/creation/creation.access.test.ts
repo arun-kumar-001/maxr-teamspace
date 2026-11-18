@@ -148,7 +148,6 @@ describe('POST /employees: the response and the rules', () => {
   it.each([
     ['an unknown field', { status: 'active' }],
     ['isActive', { isActive: true }],
-    ['a password', { password: 'Secret-123' }],
     ['a user id', { userId: DEPT }],
     ['an unknown role', { role: 'owner' }],
     ['a missing first name', { firstName: undefined }],

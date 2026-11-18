@@ -187,7 +187,7 @@ export function TaskFormModal({
         <FormField label="Task Title" htmlFor="task-title" required error={errors.title}>
           <Input
             id="task-title"
-            placeholder="e.g. Implement user export CSV"
+            data-testid="task-title-input"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={submitting}
@@ -203,9 +203,9 @@ export function TaskFormModal({
         >
           <textarea
             id="task-description"
+            data-testid="task-description-input"
             rows={3}
             className="w-full px-3 py-2 text-sm text-text bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-strong disabled:bg-surface-muted"
-            placeholder="Provide context, acceptance criteria or links..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={submitting}
@@ -289,8 +289,7 @@ export function TaskFormModal({
           <div className="space-y-0.5">
             <span className="text-sm font-medium text-text block">Daily Recurring Task</span>
             <span className="text-xs text-text-muted block">
-              Repeats every day (e.g. social media posts, daily updates) and stays in your Today /
-              Daily Updates list.
+              Repeats every day and stays in your Today / Daily Updates list.
             </span>
           </div>
         </label>

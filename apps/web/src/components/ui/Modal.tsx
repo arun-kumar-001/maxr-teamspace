@@ -6,6 +6,7 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
+  headerIcon?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -17,6 +18,7 @@ export function Modal({
   onClose,
   title,
   subtitle,
+  headerIcon,
   children,
   footer,
   maxWidth = 'md',
@@ -70,12 +72,15 @@ export function Modal({
 
         {/* Header */}
         {title && (
-          <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-border shrink-0">
-            <div className="min-w-0">
-              <h2 id={titleId} className="text-base sm:text-lg font-semibold text-text truncate">
-                {title}
-              </h2>
-              {subtitle && <p className="text-xs text-text-muted mt-0.5 truncate">{subtitle}</p>}
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-border shrink-0 bg-surface-raised">
+            <div className="flex items-center gap-3 min-w-0">
+              {headerIcon}
+              <div className="min-w-0">
+                <h2 id={titleId} className="text-base sm:text-lg font-bold text-text truncate font-display">
+                  {title}
+                </h2>
+                {subtitle && <p className="text-xs text-text-subtle mt-0.5 truncate">{subtitle}</p>}
+              </div>
             </div>
             <button
               onClick={onClose}

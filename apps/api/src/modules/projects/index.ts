@@ -17,7 +17,7 @@ export interface ProjectsServices {
 }
 
 export function createProjects(options: {
-  platform: Pick<PlatformServices, 'audit'>;
+  platform: Pick<PlatformServices, 'audit' | 'storage'>;
   authenticate: RequestHandler;
   idempotencyStore: IdempotencyStore;
   repository?: IProjectsRepository;

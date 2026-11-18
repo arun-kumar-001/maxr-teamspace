@@ -227,7 +227,7 @@ export function AddUserModal({ isOpen, onClose, onCreated }: AddUserModalProps) 
                   setFirstName(e.target.value);
                   setFieldErrors((prev) => ({ ...prev, firstName: '' }));
                 }}
-                placeholder="e.g. Nadia"
+                placeholder="First name"
                 disabled={isSubmitting}
                 error={fieldErrors.firstName ? ' ' : undefined}
               />
@@ -246,7 +246,7 @@ export function AddUserModal({ isOpen, onClose, onCreated }: AddUserModalProps) 
                   setLastName(e.target.value);
                   setFieldErrors((prev) => ({ ...prev, lastName: '' }));
                 }}
-                placeholder="e.g. Roy"
+                placeholder="Last name"
                 disabled={isSubmitting}
                 error={fieldErrors.lastName ? ' ' : undefined}
               />

@@ -16,6 +16,7 @@ export interface CreateEmployeePayload {
   managerId?: string;
   joiningDate: string;
   role: Role;
+  password?: string;
   additionalEmails?: string[];
   additionalPhones?: string[];
   permanentAddress?: string;
@@ -49,6 +50,8 @@ export interface CreatedEmployee {
   role: Role;
   joiningDate: string;
   createdAt: string;
+  tempCredential?: string;
+  temporaryPassword?: string;
 }
 
 export interface CreateEmployeeResponse {
@@ -92,6 +95,8 @@ export interface CreateEmployeeFormState {
   bankAccountNumber: string;
   bankIfscCode: string;
   bankBranch: string;
+  passwordMode: 'auto' | 'custom';
+  password: string;
 }
 
 export interface CreateEmployeeValidationErrors {
@@ -111,6 +116,7 @@ export interface CreateEmployeeValidationErrors {
   managerId?: string;
   joiningDate?: string;
   role?: string;
+  password?: string;
 }
 
 export interface DepartmentSelectOption {

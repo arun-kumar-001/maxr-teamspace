@@ -32,26 +32,6 @@ export interface AttendanceRecord {
   updatedAt: string;
 }
 
-export interface CheckInDto {
-  location?: AttendanceLocation;
-  photoDataUrl?: string;
-  notes?: string;
-}
-
-export interface CheckOutDto {
-  location?: AttendanceLocation;
-  photoDataUrl?: string;
-  notes?: string;
-}
-
-export interface TodayAttendanceSummary {
-  workDate: string;
-  totalDurationMinutes: number;
-  sessionsCount: number;
-  activeSession: AttendanceRecord | null;
-  sessions: AttendanceRecord[];
-}
-
 export interface TeamCalendarEmployee {
   employeeId: string;
   employeeCode: string;
@@ -98,4 +78,24 @@ export interface TeamCalendarData {
   departments: TeamCalendarDepartment[];
   holidays: TeamCalendarHoliday[];
   entries: TeamCalendarEntry[];
+}
+
+export interface CheckInDto {
+  location?: AttendanceLocation;
+  photoDataUrl?: string;
+  notes?: string;
+}
+
+export interface CheckOutDto {
+  location?: AttendanceLocation;
+  photoDataUrl?: string;
+  notes?: string;
+}
+
+export interface TodayAttendanceSummary {
+  workDate: string;
+  totalDurationMinutes: number;
+  sessionsCount: number;
+  activeSession: AttendanceRecord | null;
+  sessions: AttendanceRecord[];
 }

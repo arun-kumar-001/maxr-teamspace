@@ -76,7 +76,7 @@ describe('projects API: access', () => {
   it('declares a permission on every route', async () => {
     const { app } = await setup();
     const routes = listRoutes(app).filter((r) => r.path.startsWith('/api/v1/projects'));
-    expect(routes).toHaveLength(6);
+    expect(routes).toHaveLength(12);
     for (const route of routes) expect(route.access, `${route.method} ${route.path}`).toBeDefined();
   });
 
@@ -421,5 +421,76 @@ describe('projects API: access', () => {
     expect(access).toMatchObject({ status: 'active', ownerEmployeeId: id('team_lead') });
     expect(access?.memberEmployeeIds.sort()).toEqual([id('staff'), id('team_lead')].sort());
     expect(await reader.access(MISSING)).toBeNull();
+  });
+
+  describe('employee workspace: milestones, updates & documents', () => {
+    it('lets assigned staff post progress updates & comments, blocks unassigned staff with 404, and restricts manager updates', async () => {
+      const { as, create, id, body } = await setup();
+      const assigned = await create(
+        'team_lead',
+        body({ memberIds: [id('staff')], priority: 'high', workflowStatus: 'in_progress' }),
+      );
+      const unassigned = await create('admin', body({ name: 'Secret Executive Project' }));
+      const assignedUrl = `/api/v1/projects/${assigned.body.data.id}`;
+      const secretUrl = `/api/v1/projects/${unassigned.body.data.id}`;
+
+      // Assigned staff sees summary counts and posts progress update + comment
+      const listRes = await as.staff.get('/api/v1/projects');
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.summary).toMatchObject({ totalAssigned: 1, inProgress: 1 });
+      expect(listRes.body.data).toHaveLength(1);
+
+      const progRes = await as.staff.post(`${assignedUrl}/updates`, {
+        updateType: 'progress_update',
+        content: 'Completed API integration and unit tests.',
+        progressPercent: 75,
+      });
+      expect(progRes.status).toBe(201);
+
+      const commentRes = await as.staff.post(`${assignedUrl}/updates`, {
+        updateType: 'comment',
+        content: 'Ready for code review tomorrow morning.',
+      });
+      expect(commentRes.status).toBe(201);
+
+      // Staff cannot impersonate a manager update
+      const deniedMgr = await as.staff.post(`${assignedUrl}/updates`, {
+        updateType: 'manager_update',
+        content: 'Fake approval',
+      });
+      expect(deniedMgr.status).toBe(403);
+
+      // Team lead owner can post manager update and manage milestones
+      const mgrUpdate = await as.team_lead.post(`${assignedUrl}/updates`, {
+        updateType: 'manager_update',
+        content: 'Approved sprint scope for milestone 2.',
+      });
+      expect(mgrUpdate.status).toBe(201);
+
+      const msRes = await as.team_lead.post(`${assignedUrl}/milestones`, {
+        title: 'API Integration',
+        startDate: '2026-11-01',
+        dueDate: '2026-11-15',
+        status: 'in_progress',
+        completionPercent: 60,
+      });
+      expect(msRes.status).toBe(201);
+
+      const detailRes = await as.staff.get(assignedUrl);
+      expect(detailRes.status).toBe(200);
+      expect(detailRes.body.data.progressPercent).toBe(75);
+      expect(detailRes.body.data.milestones).toHaveLength(1);
+      expect(detailRes.body.data.updates.length).toBeGreaterThanOrEqual(3);
+
+      // Unassigned project returns 404 for staff (zero existence leak)
+      expect(
+        (
+          await as.staff.post(`${secretUrl}/updates`, {
+            updateType: 'comment',
+            content: 'Probing',
+          })
+        ).status,
+      ).toBe(404);
+    });
   });
 });

@@ -149,7 +149,7 @@ export function DesignationModal({
           htmlFor="designation-title-input"
           required
           error={errors.title}
-          helperText="Official job title (e.g. Lead Engineer, HR Specialist)"
+          helperText="Official job title"
         >
           <Input
             id="designation-title-input"
@@ -159,7 +159,7 @@ export function DesignationModal({
               setTitle(e.target.value);
               if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
             }}
-            placeholder="e.g. Senior Software Engineer"
+            placeholder="Designation title"
             disabled={isSubmitting}
             className="min-h-[44px]"
             data-testid="designation-title-input"

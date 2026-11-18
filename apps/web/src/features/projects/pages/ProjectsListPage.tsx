@@ -15,6 +15,7 @@ import {
 import { ProjectDetailDrawer } from '../components/ProjectDetailDrawer';
 import { ProjectFilters } from '../components/ProjectFilters';
 import { ProjectFormModal } from '../components/ProjectFormModal';
+import { ProjectOverviewCards } from '../components/ProjectOverviewCards';
 import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
 import { useProjects } from '../hooks/useProjects';
 import type { CreateProjectInput } from '../types';
@@ -32,15 +33,22 @@ export function ProjectsListPage() {
 
   const {
     projects,
+    summary,
     loading,
     error,
     page,
     pageSize,
     total,
     status,
+    workflowStatus,
+    priority,
+    sort,
     search,
     setPage,
     setStatus,
+    setWorkflowStatus,
+    setPriority,
+    setSort,
     setSearch,
     refetch,
     createProject,
@@ -140,12 +148,21 @@ export function ProjectsListPage() {
         )}
       </div>
 
+      {/* Overview Cards */}
+      <ProjectOverviewCards summary={summary} loading={loading && projects.length === 0} />
+
       {/* Filters */}
       <ProjectFilters
         search={search}
         onSearchChange={setSearch}
         status={status}
         onStatusChange={setStatus}
+        workflowStatus={workflowStatus}
+        onWorkflowStatusChange={setWorkflowStatus}
+        priority={priority}
+        onPriorityChange={setPriority}
+        sort={sort}
+        onSortChange={setSort}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         counts={counts}
@@ -201,7 +218,7 @@ export function ProjectsListPage() {
           ) : (
             <div
               className="w-full overflow-x-auto border border-border rounded-card bg-surface shadow-card"
-              data-testid="projects-table"
+              data-testid="projects-list-view"
             >
               <table className="w-full text-left border-collapse min-w-[720px]">
                 <thead>

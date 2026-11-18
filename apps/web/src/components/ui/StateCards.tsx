@@ -21,6 +21,14 @@ export function EmptyState({
   return (
     <div
       className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-border rounded-card shadow-card ${className}`}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.68)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderColor: 'rgba(255, 255, 255, 0.65)',
+        boxShadow: '0 10px 30px rgba(85, 205, 179, 0.06), 0 2px 6px rgba(8, 11, 12, 0.03)',
+        borderRadius: '20px',
+      }}
       data-testid="empty-state"
     >
       <div className="w-12 h-12 mb-4 flex items-center justify-center rounded-full bg-primary-soft text-primary-strong">
@@ -67,6 +75,13 @@ export function ErrorState({
   return (
     <div
       className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-rose-200 rounded-card shadow-card ${className}`}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.68)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        boxShadow: '0 10px 30px rgba(85, 205, 179, 0.06), 0 2px 6px rgba(8, 11, 12, 0.03)',
+        borderRadius: '20px',
+      }}
       role="alert"
       data-testid="error-state"
     >
@@ -109,6 +124,14 @@ export function ForbiddenState({
   return (
     <div
       className={`flex flex-col items-center justify-center p-8 text-center bg-surface border border-border rounded-card shadow-card ${className}`}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.68)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderColor: 'rgba(255, 255, 255, 0.65)',
+        boxShadow: '0 10px 30px rgba(85, 205, 179, 0.06), 0 2px 6px rgba(8, 11, 12, 0.03)',
+        borderRadius: '20px',
+      }}
       role="alert"
       data-testid="forbidden-state"
     >

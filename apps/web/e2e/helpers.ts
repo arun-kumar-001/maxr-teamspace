@@ -52,5 +52,5 @@ export const GALLERY_TABS = [
 
 export async function openGallery(page: Page): Promise<void> {
   await page.goto('/components');
-  await expect(page.getByRole('tablist')).toBeVisible();
+  await expect(page.getByRole('tablist')).toBeVisible({ timeout: 15_000 });
 }

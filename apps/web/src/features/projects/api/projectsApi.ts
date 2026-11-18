@@ -1,115 +1,332 @@
 import { apiFetch } from '../../../api/client';
 import type {
+  CreateMilestoneInput,
   CreateProjectInput,
-  Project,
+  CreateProjectUpdateInput,
   ProjectDetail,
+  ProjectDocument,
+  ProjectDocumentCategory,
   ProjectListQuery,
   ProjectListResponse,
+  ProjectMilestone,
+  ProjectUpdate,
+  UpdateMilestoneInput,
   UpdateProjectInput,
 } from '../types';
+import {
+  mockAddProjectMember,
+  mockCreateProject,
+  mockCreateProjectMilestone,
+  mockCreateProjectUpdate,
+  mockDeleteProjectDocument,
+  mockFetchProjectById,
+  mockFetchProjects,
+  mockGetDocumentDownloadLink,
+  mockRemoveProjectMember,
+  mockUpdateProject,
+  mockUpdateProjectMilestone,
+  mockUploadProjectDocument,
+} from './mockProjects';
 
 export class ProjectsApiError extends Error {
   constructor(
     message: string,
-    public status?: number,
-    public code?: string,
+    public readonly status: number,
+    public readonly code?: string,
+    public readonly details?: unknown[],
   ) {
     super(message);
     this.name = 'ProjectsApiError';
   }
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    let errorMsg = `API request failed with status ${res.status}`;
-    let code: string | undefined;
-    try {
-      const errorData = await res.json();
-      if (errorData?.error?.message) {
-        errorMsg = errorData.error.message;
-        code = errorData.error.code;
-      }
-    } catch {
-      // response not JSON
-    }
-    throw new ProjectsApiError(errorMsg, res.status, code);
+function isDevMockFallbackCandidate(err: unknown): boolean {
+  const devMockEnabled =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_DEV_MOCK_AUTH === 'true' &&
+    import.meta.env.MODE !== 'test';
+  if (!devMockEnabled) return false;
+  if (err instanceof DOMException && err.name === 'AbortError') return false;
+  if (err instanceof ProjectsApiError) {
+    return err.status === 401 || err.status === 502 || err.status === 503 || err.status === 504;
   }
-  return res.json() as Promise<T>;
+  return err instanceof TypeError;
+}
+
+async function withDevMockFallback<T>(
+  requestFn: () => Promise<T>,
+  fallbackFn: () => T,
+): Promise<T> {
+  try {
+    return await requestFn();
+  } catch (err) {
+    if (isDevMockFallbackCandidate(err)) {
+      return fallbackFn();
+    }
+    throw err;
+  }
+}
+
+async function handleResponse<T>(res: Response): Promise<T> {
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const errObj = data?.error || {};
+    throw new ProjectsApiError(
+      errObj.message || `API request failed with status ${res.status}`,
+      res.status,
+      errObj.code,
+      errObj.details,
+    );
+  }
+  return data as T;
 }
 
 export async function fetchProjects(
-  query?: ProjectListQuery,
+  query: ProjectListQuery = {},
   signal?: AbortSignal,
 ): Promise<ProjectListResponse> {
-  const searchParams = new URLSearchParams();
-  if (query?.page) searchParams.set('page', String(query.page));
-  if (query?.pageSize) searchParams.set('pageSize', String(query.pageSize));
-  if (query?.status) searchParams.set('status', query.status);
-  if (query?.q?.trim()) searchParams.set('q', query.q.trim());
+  return withDevMockFallback(
+    async () => {
+      const params = new URLSearchParams();
+      if (query.page !== undefined) params.set('page', String(query.page));
+      if (query.pageSize !== undefined) params.set('pageSize', String(query.pageSize));
+      if (query.status) params.set('status', query.status);
+      if (query.workflowStatus) params.set('workflowStatus', query.workflowStatus);
+      if (query.priority) params.set('priority', query.priority);
+      if (query.sort) params.set('sort', query.sort);
+      if (query.q && query.q.trim()) params.set('q', query.q.trim());
 
-  const url = `/api/v1/projects${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-  const res = await apiFetch(url, signal ? { signal } : undefined);
-  return handleResponse<ProjectListResponse>(res);
+      const qs = params.toString();
+      const res = await apiFetch(
+        `/api/v1/projects${qs ? `?${qs}` : ''}`,
+        signal ? { signal } : undefined,
+      );
+      return handleResponse<ProjectListResponse>(res);
+    },
+    () => mockFetchProjects(query),
+  );
 }
 
 export async function fetchProjectById(id: string, signal?: AbortSignal): Promise<ProjectDetail> {
-  const res = await apiFetch(
-    `/api/v1/projects/${encodeURIComponent(id)}`,
-    signal ? { signal } : undefined,
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(
+        `/api/v1/projects/${encodeURIComponent(id)}`,
+        signal ? { signal } : undefined,
+      );
+      const data = await handleResponse<{ data: ProjectDetail }>(res);
+      return data.data;
+    },
+    () => {
+      const found = mockFetchProjectById(id);
+      if (!found) {
+        throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      }
+      return found;
+    },
   );
-  const data = await handleResponse<{ data: ProjectDetail }>(res);
-  return data.data;
 }
 
-export async function createProject(input: CreateProjectInput): Promise<Project> {
-  const idempotencyKey =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `idemp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-  const res = await apiFetch('/api/v1/projects', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Idempotency-Key': idempotencyKey,
+export async function createProject(input: CreateProjectInput): Promise<ProjectDetail> {
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch('/api/v1/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const data = await handleResponse<{ data: ProjectDetail }>(res);
+      return data.data;
     },
-    body: JSON.stringify(input),
-  });
-
-  const data = await handleResponse<{ data: Project }>(res);
-  return data.data;
+    () => mockCreateProject(input),
+  );
 }
 
 export async function updateProject(id: string, input: UpdateProjectInput): Promise<ProjectDetail> {
-  const res = await apiFetch(`/api/v1/projects/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-
-  const data = await handleResponse<{ data: ProjectDetail }>(res);
-  return data.data;
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(`/api/v1/projects/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const data = await handleResponse<{ data: ProjectDetail }>(res);
+      return data.data;
+    },
+    () => {
+      const updated = mockUpdateProject(id, input);
+      if (!updated) throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      return updated;
+    },
+  );
 }
 
 export async function addProjectMember(id: string, employeeId: string): Promise<ProjectDetail> {
-  const res = await apiFetch(`/api/v1/projects/${encodeURIComponent(id)}/members`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ employeeId }),
-  });
-
-  const data = await handleResponse<{ data: ProjectDetail }>(res);
-  return data.data;
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(`/api/v1/projects/${encodeURIComponent(id)}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employeeId }),
+      });
+      const data = await handleResponse<{ data: ProjectDetail }>(res);
+      return data.data;
+    },
+    () => {
+      const updated = mockAddProjectMember(id, employeeId);
+      if (!updated) throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      return updated;
+    },
+  );
 }
 
 export async function removeProjectMember(id: string, employeeId: string): Promise<ProjectDetail> {
-  const res = await apiFetch(
-    `/api/v1/projects/${encodeURIComponent(id)}/members/${encodeURIComponent(employeeId)}`,
-    {
-      method: 'DELETE',
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(
+        `/api/v1/projects/${encodeURIComponent(id)}/members/${encodeURIComponent(employeeId)}`,
+        { method: 'DELETE' },
+      );
+      const data = await handleResponse<{ data: ProjectDetail }>(res);
+      return data.data;
+    },
+    () => {
+      const updated = mockRemoveProjectMember(id, employeeId);
+      if (!updated) throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      return updated;
     },
   );
+}
 
-  const data = await handleResponse<{ data: ProjectDetail }>(res);
-  return data.data;
+export async function createProjectMilestone(
+  projectId: string,
+  input: CreateMilestoneInput,
+): Promise<ProjectMilestone> {
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/milestones`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const data = await handleResponse<{ data: ProjectMilestone }>(res);
+      return data.data;
+    },
+    () => {
+      const created = mockCreateProjectMilestone(projectId, input);
+      if (!created) throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      return created;
+    },
+  );
+}
+
+export async function updateProjectMilestone(
+  projectId: string,
+  milestoneId: string,
+  input: UpdateMilestoneInput,
+): Promise<ProjectMilestone> {
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(
+        `/api/v1/projects/${encodeURIComponent(projectId)}/milestones/${encodeURIComponent(milestoneId)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        },
+      );
+      const data = await handleResponse<{ data: ProjectMilestone }>(res);
+      return data.data;
+    },
+    () => {
+      const updated = mockUpdateProjectMilestone(projectId, milestoneId, input);
+      if (!updated) throw new ProjectsApiError('Milestone not found', 404, 'NOT_FOUND');
+      return updated;
+    },
+  );
+}
+
+export async function createProjectUpdate(
+  projectId: string,
+  input: CreateProjectUpdateInput,
+): Promise<ProjectUpdate> {
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/updates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const data = await handleResponse<{ data: ProjectUpdate }>(res);
+      return data.data;
+    },
+    () => {
+      const created = mockCreateProjectUpdate(projectId, input);
+      if (!created) throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      return created;
+    },
+  );
+}
+
+export async function uploadProjectDocument(
+  projectId: string,
+  file: File,
+  category: ProjectDocumentCategory = 'general',
+): Promise<ProjectDocument> {
+  return withDevMockFallback(
+    async () => {
+      const params = new URLSearchParams({ category });
+      const res = await apiFetch(
+        `/api/v1/projects/${encodeURIComponent(projectId)}/documents?${params.toString()}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+            'X-Filename': encodeURIComponent(file.name),
+          },
+          body: file,
+        },
+      );
+      const data = await handleResponse<{ data: ProjectDocument }>(res);
+      return data.data;
+    },
+    () => {
+      const created = mockUploadProjectDocument(projectId, file, category);
+      if (!created) throw new ProjectsApiError('Project not found', 404, 'NOT_FOUND');
+      return created;
+    },
+  );
+}
+
+export async function fetchProjectDocumentDownloadLink(
+  projectId: string,
+  documentId: string,
+): Promise<{ url: string; expiresAt: string }> {
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(
+        `/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/download-link`,
+      );
+      const data = await handleResponse<{ data: { url: string; expiresAt: string } }>(res);
+      return data.data;
+    },
+    () => mockGetDocumentDownloadLink(documentId),
+  );
+}
+
+export async function deleteProjectDocument(
+  projectId: string,
+  documentId: string,
+): Promise<{ removed: boolean }> {
+  return withDevMockFallback(
+    async () => {
+      const res = await apiFetch(
+        `/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}`,
+        { method: 'DELETE' },
+      );
+      const data = await handleResponse<{ data: { removed: boolean } }>(res);
+      return data.data;
+    },
+    () => ({ removed: mockDeleteProjectDocument(projectId, documentId) }),
+  );
 }

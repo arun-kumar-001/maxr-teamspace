@@ -51,7 +51,16 @@ export function DataTable<T extends Record<string, unknown>>({
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
-      <div className="w-full bg-surface border border-border rounded-card shadow-card p-4 space-y-3">
+      <div
+        className="w-full bg-surface border border-border rounded-card shadow-card p-4 space-y-3"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.68)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderColor: 'rgba(255, 255, 255, 0.65)',
+          borderRadius: '20px',
+        }}
+      >
         <Skeleton variant="rectangular" height={40} />
         <Skeleton variant="rectangular" height={50} />
         <Skeleton variant="rectangular" height={50} />
@@ -69,6 +78,14 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <div
       className={`w-full flex flex-col bg-surface border border-border rounded-card shadow-card overflow-hidden ${className}`}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.68)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderColor: 'rgba(255, 255, 255, 0.65)',
+        boxShadow: '0 10px 30px rgba(85, 205, 179, 0.06), 0 2px 6px rgba(8, 11, 12, 0.03)',
+        borderRadius: '20px',
+      }}
     >
       {/* Mobile Card Layout (Shown on phone: < 640px) */}
       <div className="block sm:hidden divide-y divide-border" data-testid="datatable-mobile-cards">

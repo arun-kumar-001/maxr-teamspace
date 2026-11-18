@@ -818,6 +818,38 @@ function AppRoutes() {
 
       {/* Staff Member Protected Routes */}
       <Route
+        path="/staff/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/payslips"
+        element={
+          <ShellLayout>
+            <PayslipsPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/staff/*"
         element={
           <ShellLayout>

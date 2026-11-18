@@ -11,6 +11,8 @@ export interface UserAccount extends Record<string, unknown> {
   roles: Role[];
   lastLoginAt: string | null;
   createdAt: string;
+  tempCredential?: string | null;
+  temporaryPassword?: string | null;
 }
 
 export interface UserFilters {

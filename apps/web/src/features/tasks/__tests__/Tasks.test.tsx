@@ -333,7 +333,7 @@ describe('Tasks Feature (Issue #43)', () => {
       expect(screen.getByRole('option', { name: /Alice Walker/i })).toBeInTheDocument();
     });
 
-    const titleInput = screen.getByPlaceholderText('e.g. Implement user export CSV');
+    const titleInput = screen.getByTestId('task-title-input');
     fireEvent.change(titleInput, { target: { value: 'Setup Redis Caching Gateway' } });
 
     // Select assignee

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
-import { checkInSchema, checkOutSchema } from './attendance.schemas';
+import { checkInSchema, checkOutSchema, teamCalendarQuerySchema } from './attendance.schemas';
 
 const tags = ['Attendance'];
 
@@ -12,6 +12,15 @@ const AttendanceRecordSchema = z
     checkInTime: z.string().datetime(),
     checkOutTime: z.string().datetime().nullable(),
     durationMinutes: z.number().int().nullable(),
+    breaks: z
+      .array(
+        z.object({
+          startTime: z.string().datetime(),
+          endTime: z.string().datetime().nullable(),
+        }),
+      )
+      .optional(),
+    breakMinutes: z.number().int().optional(),
     status: z.enum(['present', 'absent', 'half_day', 'late', 'on_leave', 'holiday', 'weekend']),
     location: z
       .object({
@@ -158,6 +167,58 @@ registerRoute({
         pageSize: z.number().int(),
         total: z.number().int(),
         totalPages: z.number().int(),
+      }),
+    }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/attendance/break-start',
+  tags,
+  summary: 'Start a break on the active attendance session',
+  permission: 'attendance.check_in',
+  extraResponses: {
+    400: 'Not checked in',
+    409: 'Break already in progress',
+  },
+  success: {
+    status: 200,
+    description: 'Attendance session updated with active break',
+    schema: z.object({ data: AttendanceRecordSchema }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/attendance/break-end',
+  tags,
+  summary: 'End the ongoing break on the active attendance session',
+  permission: 'attendance.check_in',
+  extraResponses: { 400: 'No active session or break found' },
+  success: {
+    status: 200,
+    description: 'Attendance session updated with completed break',
+    schema: z.object({ data: AttendanceRecordSchema }),
+  },
+});
+
+registerRoute({
+  method: 'get',
+  path: '/attendance/team-calendar',
+  tags,
+  summary: 'Get scoped team attendance, leave, and holiday calendar entries',
+  permission: 'attendance.read_own',
+  query: teamCalendarQuerySchema,
+  success: {
+    status: 200,
+    description: 'Team calendar payload',
+    schema: z.object({
+      data: z.object({
+        employees: z.array(z.any()),
+        departments: z.array(z.any()),
+        holidays: z.array(z.any()),
+        entries: z.array(z.any()),
       }),
     }),
   },

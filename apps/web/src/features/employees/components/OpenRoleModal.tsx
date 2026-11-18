@@ -114,7 +114,7 @@ export function OpenRoleModal({
 
         <FormField label="Role title" required>
           <Input
-            placeholder="e.g. Senior Frontend Engineer"
+            placeholder="Role title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required

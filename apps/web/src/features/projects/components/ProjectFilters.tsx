@@ -1,7 +1,13 @@
 import { PrimaryActionButton } from '../../../components/ui';
 import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
-import type { ProjectStatus } from '../types';
+import type {
+  ProjectPriority,
+  ProjectSortOption,
+  ProjectStatus,
+  ProjectWorkflowStatus,
+} from '../types';
 import type { ProjectLifecycleStage } from './ProjectCard';
 
 export type ProjectStageFilter = 'all' | ProjectLifecycleStage;
@@ -11,6 +17,12 @@ export interface ProjectFiltersProps {
   onSearchChange: (value: string) => void;
   status?: ProjectStatus;
   onStatusChange?: (status?: ProjectStatus) => void;
+  workflowStatus?: ProjectWorkflowStatus;
+  onWorkflowStatusChange?: (status?: ProjectWorkflowStatus) => void;
+  priority?: ProjectPriority;
+  onPriorityChange?: (priority?: ProjectPriority) => void;
+  sort?: ProjectSortOption;
+  onSortChange?: (sort: ProjectSortOption) => void;
   stage?: ProjectStageFilter;
   onStageChange?: (stage: ProjectStageFilter) => void;
   viewMode?: 'cards' | 'table';
@@ -33,6 +45,12 @@ export function ProjectFilters({
   onSearchChange,
   status,
   onStatusChange,
+  workflowStatus,
+  onWorkflowStatusChange,
+  priority,
+  onPriorityChange,
+  sort = 'name',
+  onSortChange,
   stage,
   onStageChange,
   viewMode = 'cards',
@@ -137,7 +155,7 @@ export function ProjectFilters({
               type="button"
               onClick={() => onViewModeChange('cards')}
               aria-pressed={viewMode === 'cards'}
-              data-testid="projects-view-cards"
+              data-testid="view-grid-btn"
               className={`px-3 py-1.5 text-xs font-semibold rounded-input transition-colors inline-flex items-center gap-1.5 min-h-[34px] ${
                 viewMode === 'cards'
                   ? 'bg-surface text-text shadow-card'
@@ -150,7 +168,7 @@ export function ProjectFilters({
               type="button"
               onClick={() => onViewModeChange('table')}
               aria-pressed={viewMode === 'table'}
-              data-testid="projects-view-table"
+              data-testid="view-list-btn"
               className={`px-3 py-1.5 text-xs font-semibold rounded-input transition-colors inline-flex items-center gap-1.5 min-h-[34px] ${
                 viewMode === 'table'
                   ? 'bg-surface text-text shadow-card'
@@ -174,6 +192,86 @@ export function ProjectFilters({
           </div>
         )}
       </div>
+
+      {/* Row 2: Workflow Status, Priority & Deadline Sort */}
+      {(onWorkflowStatusChange || onPriorityChange || onSortChange) && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-border/70">
+          {onWorkflowStatusChange && (
+            <div>
+              <label
+                htmlFor="filter-workflow-status"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-text-subtle mb-1"
+              >
+                Project Status
+              </label>
+              <Select
+                id="filter-workflow-status"
+                aria-label="Filter by project status"
+                value={workflowStatus ?? ''}
+                onChange={(e) =>
+                  onWorkflowStatusChange(
+                    e.target.value ? (e.target.value as ProjectWorkflowStatus) : undefined,
+                  )
+                }
+                options={[
+                  { value: '', label: 'All Statuses' },
+                  { value: 'not_started', label: 'Not Started' },
+                  { value: 'in_progress', label: 'In Progress' },
+                  { value: 'on_hold', label: 'On Hold' },
+                  { value: 'completed', label: 'Completed' },
+                ]}
+              />
+            </div>
+          )}
+
+          {onPriorityChange && (
+            <div>
+              <label
+                htmlFor="filter-priority"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-text-subtle mb-1"
+              >
+                Priority
+              </label>
+              <Select
+                id="filter-priority"
+                aria-label="Filter by priority"
+                value={priority ?? ''}
+                onChange={(e) =>
+                  onPriorityChange(e.target.value ? (e.target.value as ProjectPriority) : undefined)
+                }
+                options={[
+                  { value: '', label: 'All Priorities' },
+                  { value: 'high', label: 'High Priority' },
+                  { value: 'medium', label: 'Medium Priority' },
+                  { value: 'low', label: 'Low Priority' },
+                ]}
+              />
+            </div>
+          )}
+
+          {onSortChange && (
+            <div>
+              <label
+                htmlFor="filter-sort-deadline"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-text-subtle mb-1"
+              >
+                Sort Order
+              </label>
+              <Select
+                id="filter-sort-deadline"
+                aria-label="Sort projects"
+                value={sort}
+                onChange={(e) => onSortChange(e.target.value as ProjectSortOption)}
+                options={[
+                  { value: 'name', label: 'Name (A–Z)' },
+                  { value: 'deadline_asc', label: 'Deadline (Soonest first)' },
+                  { value: 'deadline_desc', label: 'Deadline (Latest first)' },
+                ]}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

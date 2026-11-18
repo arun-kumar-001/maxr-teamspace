@@ -160,7 +160,7 @@ export function UploadDocumentModal({
             id="document-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Passport Copy, Degree Certificate"
+            placeholder="Passport Copy, Degree Certificate"
             disabled={isSubmitting}
           />
         </FormField>

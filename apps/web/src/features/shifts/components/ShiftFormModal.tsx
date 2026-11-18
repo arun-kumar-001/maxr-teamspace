@@ -157,7 +157,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           helperText={
             isEditing
               ? 'Shift code is immutable once created.'
-              : 'Unique identifier, e.g. MORNING, NIGHT, ROTATIONAL.'
+              : 'Unique identifier.'
           }
         >
           <input
@@ -181,7 +181,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
             id="shift-name"
             data-testid="shift-name-input"
             type="text"
-            placeholder="e.g. Standard General Shift"
+            placeholder="Shift name"
             className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
             value={name}
             onChange={(e) => {

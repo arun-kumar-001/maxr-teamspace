@@ -85,6 +85,17 @@ interface AttendanceRow {
   updated_at: Date | string;
 }
 
+function normalizeBreaks(val: unknown): AttendanceBreak[] {
+  if (!Array.isArray(val)) return [];
+  return val
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item) => ({
+      startTime: String(item.startTime ?? ''),
+      endTime: item.endTime ? String(item.endTime) : null,
+    }))
+    .filter((b) => Boolean(b.startTime));
+}
+
 function formatDate(val: Date | string): string {
   if (val instanceof Date) {
     return val.toISOString().slice(0, 10);
@@ -106,7 +117,7 @@ function toRecord(row: AttendanceRow): AttendanceRecord {
     checkInTime: formatIso(row.check_in_time)!,
     checkOutTime: formatIso(row.check_out_time),
     durationMinutes: row.duration_minutes,
-    breaks: Array.isArray(row.breaks) ? (row.breaks as AttendanceBreak[]) : [],
+    breaks: normalizeBreaks(row.breaks),
     breakMinutes: row.break_minutes ?? 0,
     status: row.status as AttendanceStatus,
     location: (row.location as AttendanceLocation) ?? null,

@@ -132,7 +132,7 @@ export function AuditLogFilters({
           <Input
             id="audit-filter-entity-type"
             name="entityType"
-            placeholder="e.g. employee, user..."
+            placeholder="Resource type..."
             value={query.entityType || ''}
             onChange={(e) => onUpdateFilters({ entityType: e.target.value || undefined })}
             disabled={isLoading}
@@ -182,7 +182,7 @@ export function AuditLogFilters({
           <Input
             id="audit-filter-action"
             name="action"
-            placeholder="e.g. leave.approve"
+            placeholder="Action name..."
             value={query.action || ''}
             onChange={(e) => onUpdateFilters({ action: e.target.value || undefined })}
             disabled={isLoading}

@@ -373,6 +373,18 @@ function createInitialMockState() {
 async function setupEmployeeLifecycleMockRoutes(page: any) {
   const state = createInitialMockState();
 
+  // Generic fallback for any unmocked api routes to prevent hanging Vite proxy errors
+  await page.route('**/api/v1/**', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [],
+        meta: { page: 1, pageSize: 20, total: 0, unreadCount: 0 },
+      }),
+    });
+  });
+
   // Polling notifications route to prevent Vite proxy errors
   await page.route('**/api/v1/notifications*', async (route: any) => {
     await route.fulfill({

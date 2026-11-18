@@ -222,7 +222,7 @@ export const ExpenseClaimFormModal: React.FC<ExpenseClaimFormModalProps> = ({
               step="0.01"
               min="0.01"
               max="100000"
-              placeholder="e.g. 450.00"
+              placeholder="0.00"
               value={amountRupees}
               onChange={(e) => setAmountRupees(e.target.value)}
               disabled={isSubmitting}

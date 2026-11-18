@@ -182,7 +182,7 @@ export const LeavePolicyFormModal: React.FC<LeavePolicyFormModalProps> = ({
           helperText={
             isEditing
               ? 'Policy code is immutable once created.'
-              : 'Short uppercase code, e.g. SICK, CASUAL, PTO, MATERNITY.'
+              : 'Short uppercase code.'
           }
         >
           <input
@@ -192,7 +192,7 @@ export const LeavePolicyFormModal: React.FC<LeavePolicyFormModalProps> = ({
             disabled={isEditing || isSubmitting}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="e.g. SICK"
+            placeholder="Policy code"
             maxLength={30}
             className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text font-mono focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong disabled:bg-surface-muted disabled:text-text-muted h-11 min-h-[44px]"
             required={!isEditing}
@@ -213,7 +213,7 @@ export const LeavePolicyFormModal: React.FC<LeavePolicyFormModalProps> = ({
             disabled={isSubmitting}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Sick / Medical Leave"
+            placeholder="Policy name"
             maxLength={100}
             className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
             required

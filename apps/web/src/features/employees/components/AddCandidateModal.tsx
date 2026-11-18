@@ -92,7 +92,7 @@ export function AddCandidateModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField label="First name" required>
             <Input
-              placeholder="e.g. Ananya"
+              placeholder="First name"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
@@ -100,7 +100,7 @@ export function AddCandidateModal({
           </FormField>
           <FormField label="Last name" required>
             <Input
-              placeholder="e.g. Krishnan"
+              placeholder="Last name"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required

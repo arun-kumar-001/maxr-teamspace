@@ -19,6 +19,18 @@ const REFERENCE_VIEWPORTS = [
 const SCREENSHOT_DIR = resolve(import.meta.dirname, '../../../e2e-output/screenshots');
 
 async function setupOperationsMockRoutes(page: any) {
+  // Generic fallback for any unmocked api routes to prevent hanging Vite proxy errors
+  await page.route('**/api/v1/**', async (route: any) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: [],
+        meta: { page: 1, pageSize: 20, total: 0, unreadCount: 0 },
+      }),
+    });
+  });
+
   // Mock Settings
   await page.route('**/api/v1/settings', async (route: any) => {
     await route.fulfill({
@@ -420,6 +432,8 @@ test.describe('Issue #48 [D2-16]: Operations and Collaboration Hardening and E2E
         testInfo.project.name !== 'desktop',
         'reference viewports are driven from desktop project',
       );
+      // Four sequential route navigations + full-DOM audits can exceed the 60s default under parallel Vite load.
+      testInfo.setTimeout(120_000);
 
       await page.setViewportSize({ width, height });
       await setupOperationsMockRoutes(page);

@@ -117,7 +117,6 @@ export const AddHolidayModal: React.FC<AddHolidayModalProps> = ({
           label="Holiday Name"
           htmlFor="holiday-name"
           required
-          helperText="e.g. New Year's Day, Independence Day, Diwali"
         >
           <input
             id="holiday-name"
@@ -125,7 +124,7 @@ export const AddHolidayModal: React.FC<AddHolidayModalProps> = ({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Independence Day"
+            placeholder="Holiday name"
             maxLength={100}
             disabled={isSubmitting}
             className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"

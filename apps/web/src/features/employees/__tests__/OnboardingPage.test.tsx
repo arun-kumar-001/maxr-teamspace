@@ -125,8 +125,8 @@ describe('OnboardingPage Hiring & Onboarding Workspace', () => {
     fireEvent.click(screen.getByTestId('add-candidate-button'));
     expect(await screen.findByTestId('add-candidate-form')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText('e.g. Ananya'), { target: { value: 'Nithya' } });
-    fireEvent.change(screen.getByPlaceholderText('e.g. Krishnan'), { target: { value: 'Ramesh' } });
+    fireEvent.change(screen.getByPlaceholderText('First name'), { target: { value: 'Nithya' } });
+    fireEvent.change(screen.getByPlaceholderText('Last name'), { target: { value: 'Ramesh' } });
     fireEvent.change(screen.getByPlaceholderText('candidate@example.com'), {
       target: { value: 'nithya.ramesh@example.com' },
     });

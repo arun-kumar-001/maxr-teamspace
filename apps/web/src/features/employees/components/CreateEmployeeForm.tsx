@@ -72,7 +72,22 @@ export function CreateEmployeeForm({
   nextStep,
   prevStep,
   handleSubmit,
+  regeneratePassword,
 }: CreateEmployeeFormProps) {
+  // Local state for password view & copy
+  const [showPassword, setShowPassword] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+
+  const handleCopyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(formData.password);
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+
   // Local state for salary details
   const [salaryAmount, setSalaryAmount] = useState('6,00,000');
   const [salaryCurrency, setSalaryCurrency] = useState('INR');
@@ -1653,6 +1668,188 @@ export function CreateEmployeeForm({
           </div>
         </FormField>
 
+        {/* Sign-in Password Configuration */}
+        <div className="space-y-4 pt-4 border-t border-border/70" data-testid="password-config-section">
+          <div>
+            <label className="block text-xs font-bold text-text mb-1">
+              Initial Sign-in Password <span className="text-danger">*</span>
+            </label>
+            <p className="text-xs text-text-muted">
+              Configure initial credentials for the employee. Choose automatic generation or specify a custom password.
+            </p>
+          </div>
+
+          {/* Mode Selector: Automatic vs Custom / Edit */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setFieldValue('passwordMode', 'auto')}
+              className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                formData.passwordMode === 'auto'
+                  ? 'bg-primary-soft border-primary-strong ring-2 ring-primary/20 shadow-raised'
+                  : 'bg-surface border-border hover:bg-surface-muted'
+              }`}
+              data-testid="password-mode-auto"
+            >
+              <input
+                type="radio"
+                name="passwordMode"
+                checked={formData.passwordMode === 'auto'}
+                onChange={() => setFieldValue('passwordMode', 'auto')}
+                className="mt-0.5 h-4 w-4 text-primary-deep focus:ring-primary-strong"
+              />
+              <div>
+                <p className="text-xs font-bold text-text">Automatic Password</p>
+                <p className="text-[11px] text-text-muted mt-0.5">
+                  Generates a strong, random password automatically.
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFieldValue('passwordMode', 'custom')}
+              className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                formData.passwordMode === 'custom'
+                  ? 'bg-primary-soft border-primary-strong ring-2 ring-primary/20 shadow-raised'
+                  : 'bg-surface border-border hover:bg-surface-muted'
+              }`}
+              data-testid="password-mode-custom"
+            >
+              <input
+                type="radio"
+                name="passwordMode"
+                checked={formData.passwordMode === 'custom'}
+                onChange={() => setFieldValue('passwordMode', 'custom')}
+                className="mt-0.5 h-4 w-4 text-primary-deep focus:ring-primary-strong"
+              />
+              <div>
+                <p className="text-xs font-bold text-text">Edit / Custom Password</p>
+                <p className="text-[11px] text-text-muted mt-0.5">
+                  Set a specific initial password for this employee.
+                </p>
+              </div>
+            </button>
+          </div>
+
+          {/* Password Input Display */}
+          {formData.passwordMode === 'auto' ? (
+            <div className="p-4 rounded-xl bg-surface-muted border border-border space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-text uppercase tracking-wider">
+                  Generated Password
+                </span>
+                <button
+                  type="button"
+                  onClick={regeneratePassword}
+                  disabled={isSubmitting}
+                  className="text-xs font-semibold text-primary-deep hover:text-primary-ink flex items-center gap-1.5 transition-colors cursor-pointer"
+                  data-testid="regenerate-password-btn"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                  </svg>
+                  Regenerate
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    readOnly
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-surface border border-border rounded-xl text-xs sm:text-sm font-mono text-text select-all"
+                    data-testid="input-auto-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    data-testid="toggle-show-auto-password"
+                  >
+                    {showPassword ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyPassword}
+                  className="px-3.5 py-2.5 rounded-xl border border-border bg-surface hover:bg-surface-raised text-xs font-semibold text-text flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 shadow-2xs"
+                  data-testid="copy-auto-password-btn"
+                >
+                  {copiedPassword ? (
+                    <>
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span className="text-emerald-700">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-[11px] text-text-muted">
+                This password will be securely assigned to the user account. Administrators can view or copy it anytime from User Accounts.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <FormField label="Custom Password" htmlFor="create-emp-custom-password" required error={errors.password}>
+                <div className="relative">
+                  <Input
+                    id="create-emp-custom-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFieldValue('password', e.target.value)}
+                    placeholder="Enter at least 8 characters"
+                    disabled={isSubmitting}
+                    className="font-mono pr-10"
+                    data-testid="input-custom-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    data-testid="toggle-show-custom-password"
+                  >
+                    {showPassword ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </FormField>
+              <p className="text-[11px] text-text-muted">
+                Must be at least 8 characters. Recommended to include letters, numbers, and symbols.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Informative Notice on Pending Status */}
         <div
           className="p-4 sm:p-5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 space-y-1.5"
@@ -1674,9 +1871,9 @@ export function CreateEmployeeForm({
             Pending Account Activation Notice
           </div>
           <p className="text-amber-900/90 leading-relaxed text-xs">
-            The account will be created with status <StatusPill status="Pending" size="sm" />. An
-            automated onboarding email will be queued by the system to welcome the employee. No
-            sign-in password is set during creation.
+            The account will be created with status <StatusPill status="Pending" size="sm" />. The
+            initial password configured above will be provisioned for sign-in once the account is
+            activated.
           </p>
         </div>
       </div>
