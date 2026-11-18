@@ -1,16 +1,11 @@
 // @vitest-environment jsdom
-import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as profileApi from '../api/profileApi';
 import { MyProfilePage } from '../pages/MyProfilePage';
 import type { EmployeeProfile } from '../types';
 
 describe('MyProfilePage Component Suite (Issue #22)', () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   const mockStaffProfile: EmployeeProfile = {
     id: 'emp-001',
     employeeCode: 'EMP-001',

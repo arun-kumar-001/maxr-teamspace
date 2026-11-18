@@ -1,6 +1,6 @@
 import { Button, Badge, StatusPill, KpiCard } from '../components/ui';
 
-function UsersIcon({ className = 'w-6 h-6' }: { className?: string }) {
+function UsersIcon({ className = 'w-7 h-7' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -17,7 +17,7 @@ function UsersIcon({ className = 'w-6 h-6' }: { className?: string }) {
   );
 }
 
-function ClockIcon({ className = 'w-6 h-6' }: { className?: string }) {
+function ClockIcon({ className = 'w-7 h-7' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -32,7 +32,7 @@ function ClockIcon({ className = 'w-6 h-6' }: { className?: string }) {
   );
 }
 
-function VelocityIcon({ className = 'w-6 h-6' }: { className?: string }) {
+function VelocityIcon({ className = 'w-7 h-7' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -47,7 +47,7 @@ function VelocityIcon({ className = 'w-6 h-6' }: { className?: string }) {
   );
 }
 
-function AlertIcon({ className = 'w-6 h-6' }: { className?: string }) {
+function AlertIcon({ className = 'w-7 h-7' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -95,10 +95,16 @@ export function TeamLeadDashboard() {
           label="Team Size"
           value="12"
           icon={<UsersIcon />}
-          badge="10 present"
+          badge="10 present today"
           variant="teal"
         />
-        <KpiCard label="Pending Approvals" value="2" icon={<ClockIcon />} variant="amber" />
+        <KpiCard
+          label="Pending Approvals"
+          value="2"
+          icon={<ClockIcon />}
+          badge="Awaiting action"
+          variant="amber"
+        />
         <KpiCard
           label="Sprint Velocity"
           value="88%"
@@ -106,7 +112,13 @@ export function TeamLeadDashboard() {
           badge="On track"
           variant="emerald"
         />
-        <KpiCard label="Blocked Issues" value="1" icon={<AlertIcon />} variant="rose" />
+        <KpiCard
+          label="Blocked Issues"
+          value="1"
+          icon={<AlertIcon />}
+          badge="Needs clearance"
+          variant="rose"
+        />
       </div>
 
       {/* Two Column Layout */}

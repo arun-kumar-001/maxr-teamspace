@@ -268,8 +268,8 @@ export function HRDashboard() {
         <KpiCard
           label="Total Headcount"
           value="124"
-          icon={<UsersIcon className="w-6 h-6" />}
-          badge="+4"
+          icon={<UsersIcon className="w-7 h-7" />}
+          badge="+4 new this month"
           variant="teal"
         />
 
@@ -277,8 +277,8 @@ export function HRDashboard() {
         <KpiCard
           label="Today's Attendance"
           value="114"
-          icon={<ClockCheckIcon className="w-6 h-6" />}
-          badge="91.9%"
+          icon={<ClockCheckIcon className="w-7 h-7" />}
+          badge="91.9% Present"
           variant="emerald"
         />
 
@@ -286,7 +286,8 @@ export function HRDashboard() {
         <KpiCard
           label="Onboarding Pipeline"
           value="3"
-          icon={<UserPlusIcon className="w-6 h-6" />}
+          icon={<UserPlusIcon className="w-7 h-7" />}
+          badge="3 in review"
           variant="amber"
         />
 
@@ -294,7 +295,8 @@ export function HRDashboard() {
         <KpiCard
           label="Pending Actions"
           value="7"
-          icon={<AlertCircleIcon className="w-6 h-6" />}
+          icon={<AlertCircleIcon className="w-7 h-7" />}
+          badge="7 require review"
           variant="rose"
         />
       </div>

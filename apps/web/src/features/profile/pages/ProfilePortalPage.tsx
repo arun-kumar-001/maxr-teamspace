@@ -1,35 +1,148 @@
-import { useContext, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useState, useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_DISPLAY_NAMES, ROLES } from '@maxr/shared';
-import { AuthContext, useAuth } from '../../../auth/AuthContext';
-import { DonutChart, type DonutChartSegment } from '../../../components/ui';
-import { PersonalChecklistWidget } from '../../../dashboards/PersonalChecklistWidget';
+import { useAuth } from '../../../auth/AuthContext';
 import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
-import type { PayslipRecord } from '../../payslips/types';
-import { isPayslipEnabledForStaff } from '../../../shell/navigation';
 import { fetchMyTasks } from '../../tasks/api/tasksApi';
-import type { Task } from '../../tasks/types';
-import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../../tasks/utils/todoStats';
+import { fetchProjects } from '../../projects/api/projectsApi';
+import type { PayslipRecord } from '../../payslips/types';
+
+interface OnboardingChecklistItem {
+  id: number;
+  title: string;
+  date: string;
+  completed: boolean;
+  icon: ReactNode;
+}
+
+const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
+  {
+    id: 1,
+    title: 'Complete profile checklist',
+    date: 'Today, 09:00',
+    completed: true,
+    icon: (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth="1.8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 2,
+    title: 'Review project documents',
+    date: 'Today, 10:30',
+    completed: true,
+    icon: (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth="1.8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 3,
+    title: 'Update sprint tasks',
+    date: 'Today, 13:00',
+    completed: false,
+    icon: (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth="1.8"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+  },
+  {
+    id: 4,
+    title: 'Submit weekly report',
+    date: 'Today, 14:45',
+    completed: false,
+    icon: (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth="1.8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: 5,
+    title: 'Team policy review',
+    date: 'Today, 16:30',
+    completed: false,
+    icon: (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth="1.8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+        />
+      </svg>
+    ),
+  },
+];
 
 const WEEKLY_PROGRESS_BARS = [
   { day: 'S', height: 0, active: false },
-  { day: 'M', height: 60, active: false },
-  { day: 'T', height: 42, active: false },
-  { day: 'W', height: 72, active: false },
-  { day: 'T', height: 85, active: false },
-  { day: 'F', height: 100, active: true },
+  { day: 'M', height: 0, active: false },
+  { day: 'T', height: 0, active: false },
+  { day: 'W', height: 0, active: false },
+  { day: 'T', height: 0, active: false },
+  { day: 'F', height: 0, active: true },
   { day: 'S', height: 0, active: false },
 ];
 
+/**
+ * Shared My Profile portal view available across Admin, HR Manager, Team Lead, and Staff portals.
+ */
 export function ProfilePortalPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
-  const [realTasks, setRealTasks] = useState<Task[]>([]);
-  const [todoStats, setTodoStats] = useState(() => getSidebarTodoStats());
-  const [hoveredTask, setHoveredTask] = useState<string | null>(null);
+  const [onboardingTasks, setOnboardingTasks] =
+    useState<OnboardingChecklistItem[]>(INITIAL_ONBOARDING_TASKS);
+  const [activeTasksCount, setActiveTasksCount] = useState(0);
+  const [totalProjectsCount, setTotalProjectsCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -39,114 +152,78 @@ export function ProfilePortalPage() {
           setRecentPayslips(res.data.slice(0, 3));
         }
       })
-      .catch(() => {
-        // Offline/test fallback preserves static preview cards
-      });
+      .catch(() => {});
 
-    void fetchMyTasks({ pageSize: 50 })
+    void fetchMyTasks({ pageSize: 1 })
       .then((res) => {
-        if (active && res.data) {
-          setRealTasks(res.data);
+        if (active && typeof res.meta?.total === 'number') {
+          setActiveTasksCount(res.meta.total);
         }
       })
-      .catch(() => {
-        // Offline fallback
-      });
+      .catch(() => {});
+
+    void fetchProjects({ pageSize: 1 })
+      .then((res) => {
+        if (active && typeof res.meta?.total === 'number') {
+          setTotalProjectsCount(res.meta.total);
+        }
+      })
+      .catch(() => {});
 
     return () => {
       active = false;
     };
   }, []);
 
-  const displayName = user?.name ?? 'Lora Piterson';
-  const firstName = displayName.split(' ')[0] || 'Nixtio';
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '') || 'User';
+  const firstPart = displayName.split(' ')[0];
+  const firstName = firstPart || 'User';
   const displayRole = user?.role ? ROLE_DISPLAY_NAMES[user.role] : 'Staff Member';
   const leaveRoute = user?.role === ROLES.STAFF ? '/staff/leave' : '/leave';
   const attendanceRoute = user?.role === ROLES.STAFF ? '/staff/attendance' : '/attendance';
 
-  const auth = useContext(AuthContext);
-  const updateUserAvatar = auth?.updateUserAvatar;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const payslipEnabled = user?.role === ROLES.STAFF ? isPayslipEnabledForStaff() : true;
-
-  const handleChoosePhoto = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return;
-    if (file.size > 5 * 1024 * 1024) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        updateUserAvatar?.(reader.result);
+  const initials = useMemo(() => {
+    const parts = displayName.trim().split(/\s+/);
+    if (parts.length >= 2 && parts[0] && parts[parts.length - 1]) {
+      const p1 = parts[0];
+      const p2 = parts[parts.length - 1];
+      if (p1 && p2 && p1[0] && p2[0]) {
+        return (p1[0] + p2[0]).toUpperCase();
       }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
+    }
+    return displayName.slice(0, 2).toUpperCase();
+  }, [displayName]);
 
-  useEffect(() => {
-    const handleUpdate = () => {
-      setTodoStats(getSidebarTodoStats());
-    };
-    window.addEventListener(TODOS_UPDATED_EVENT, handleUpdate);
-    return () => window.removeEventListener(TODOS_UPDATED_EVENT, handleUpdate);
+  const { prevMonth, currentMonth, nextMonth } = useMemo(() => {
+    const now = new Date();
+    const curr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prev = prevDate.toLocaleDateString('en-US', { month: 'long' });
+    const nextDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const next = nextDate.toLocaleDateString('en-US', { month: 'long' });
+    return { prevMonth: prev, currentMonth: curr, nextMonth: next };
   }, []);
 
-  const hasRealTasks = realTasks.length > 0;
-  const realCompleted = realTasks.filter((t) => t.status === 'completed').length;
-  const realInProgress = realTasks.filter(
-    (t) => t.status === 'in_progress' || t.status === 'in_review',
-  ).length;
-  const realOverdue = realTasks.filter(
-    (t) => t.status !== 'completed' && Boolean(t.isOverdue),
-  ).length;
-  const realTotal = realTasks.length;
+  const calendarDays = useMemo(() => {
+    const list: Array<{ day: string; date: number }> = [];
+    const curr = new Date();
+    const dayOfWeek = (curr.getDay() + 6) % 7;
+    const monday = new Date(curr.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(monday.getTime() + i * 24 * 60 * 60 * 1000);
+      list.push({ day: dayNames[i]!, date: d.getDate() });
+    }
+    return list;
+  }, []);
 
-  const totalCompleted = hasRealTasks ? realCompleted : todoStats.completed;
-  const totalPending = hasRealTasks ? realInProgress : todoStats.pending;
-  const totalOverdue = hasRealTasks ? realOverdue : 0;
-  const combinedTotal = hasRealTasks ? realTotal : todoStats.total;
-  const combinedPct = combinedTotal > 0 ? Math.round((totalCompleted / combinedTotal) * 100) : 0;
-  const activeTasksCount = totalPending;
+  const toggleTask = (id: number) => {
+    setOnboardingTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    );
+  };
 
-  interface TaskChartSegment extends DonutChartSegment {
-    inkColor: string;
-    pct: number;
-    pillClass: string;
-  }
-
-  const taskChartData: TaskChartSegment[] = [
-    {
-      label: 'Completed',
-      value: totalCompleted,
-      color: 'var(--primary-strong)',
-      inkColor: 'var(--primary-ink)',
-      pct: combinedPct,
-      pillClass: 'bg-primary-soft text-primary-deep',
-    },
-    {
-      label: 'In Progress',
-      value: totalPending,
-      color: 'var(--chart-5)',
-      inkColor: 'var(--chart-ink-5)',
-      pct: combinedTotal > 0 ? Math.round((totalPending / combinedTotal) * 100) : 0,
-      pillClass: 'bg-amber-50 text-amber-800',
-    },
-    {
-      label: 'Overdue',
-      value: totalOverdue,
-      color: 'var(--chart-7)',
-      inkColor: 'var(--chart-ink-7)',
-      pct: 0,
-      pillClass: 'bg-rose-50 text-rose-800',
-    },
-  ];
-  const activeTask = taskChartData.find((s) => s.label === hoveredTask);
+  const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
 
   return (
     <div
@@ -260,7 +337,7 @@ export function ProfilePortalPage() {
                   className="text-2xl sm:text-3xl font-light font-display leading-none"
                   style={{ color: 'rgb(8, 11, 12)' }}
                 >
-                  1
+                  {totalProjectsCount}
                 </p>
                 <p className="text-[11px] leading-tight" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
                   Total Projects
@@ -271,132 +348,109 @@ export function ProfilePortalPage() {
         </div>
       </div>
 
-      {/* Header Metrics Badges Row */}
-      <div className="flex flex-wrap items-center gap-3 sm:gap-5 mb-6 pb-2">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
-            Attendance
+      {/* Header Status Badges Row */}
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 mb-6 pb-2">
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
+          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
+        >
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'rgb(16, 185, 129)' }} />
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Status:
           </span>
-          <span
-            className="text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-xs"
-            style={{
-              backgroundColor: 'rgb(8, 11, 12)',
-              color: 'rgb(255, 255, 255)',
-            }}
-          >
-            15%
+          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+            Active Account
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
-            Leave
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
+          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
+        >
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Role:
           </span>
-          <span
-            className="text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-xs"
-            style={{
-              backgroundColor: 'rgb(85, 205, 179)',
-              color: 'rgb(8, 11, 12)',
-            }}
-          >
-            15%
+          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+            {displayRole}
+          </span>
+        </div>
+
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
+          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
+        >
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Shift:
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+            General (09:00 - 18:00)
+          </span>
+        </div>
+
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
+          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
+        >
+          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
+            Workspace:
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'rgb(13, 148, 136)' }}>
+            MAXR Teamspace
           </span>
         </div>
       </div>
 
       {/* Row 1: Four Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
-        {/* Card 1: Portrait Profile Card */}
+        {/* Card 1: Executive Monogram Profile Card */}
         <div
-          onClick={handleChoosePhoto}
-          className="relative rounded-[26px] overflow-hidden shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72 w-full group cursor-pointer"
+          className="relative rounded-[26px] overflow-hidden shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72 w-full flex flex-col justify-between p-5"
           style={{
-            backgroundColor: 'rgb(244, 247, 246)',
-            border: '1px solid rgba(8, 11, 12, 0.08)',
+            background:
+              'linear-gradient(135deg, rgb(14, 40, 38) 0%, rgb(18, 56, 53) 50%, rgb(10, 30, 28) 100%)',
+            border: '1px solid rgba(85, 205, 179, 0.2)',
           }}
-          title="Click to upload or update profile photo"
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            onChange={handleFileChange}
-            className="hidden"
-            aria-label="Upload profile photo"
+          <div
+            className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-10 pointer-events-none"
+            style={{ backgroundColor: 'rgb(85, 205, 179)', filter: 'blur(20px)' }}
+          />
+          <div
+            className="absolute -left-6 -bottom-6 w-28 h-28 rounded-full opacity-10 pointer-events-none"
+            style={{ backgroundColor: 'rgb(85, 205, 179)', filter: 'blur(20px)' }}
           />
 
-          {user?.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt={`${displayName} - ${displayRole}`}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              style={{ objectPosition: 'center 20%' }}
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-primary-soft via-surface to-primary-soft/40 text-center">
-              <div className="w-20 h-20 rounded-full bg-primary-soft border-2 border-primary-strong/30 flex items-center justify-center font-display font-bold text-2xl text-primary-ink shadow-sm mb-3">
-                {user?.avatarInitials || displayName.slice(0, 2).toUpperCase()}
-              </div>
-              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-surface border border-border shadow-xs text-text flex items-center gap-1.5 group-hover:bg-primary-soft group-hover:text-primary-deep transition-colors">
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                Upload Photo
-              </span>
-            </div>
-          )}
-
-          <div
-            className="absolute bottom-0 inset-x-0 p-4 flex items-end justify-between z-10"
-            style={{
-              background:
-                'linear-gradient(to top, rgba(8, 11, 12, 0.92) 0%, rgba(8, 11, 12, 0.45) 60%, transparent 100%)',
-            }}
-          >
-            <div>
-              <h2 className="text-base font-bold font-display text-white leading-tight drop-shadow-sm">
-                {displayName}
-              </h2>
-              <p className="text-xs text-white/80 drop-shadow-sm">{displayRole}</p>
-            </div>
+          <div className="relative z-10 flex items-start justify-between">
             <div
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-white/20 backdrop-blur-xs text-white"
-              title="Change photo"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl shadow-md border"
+              style={{
+                backgroundColor: 'rgba(85, 205, 179, 0.2)',
+                color: 'rgb(85, 205, 179)',
+                borderColor: 'rgba(85, 205, 179, 0.4)',
+              }}
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+              {initials}
             </div>
+            <span
+              className="text-[10px] font-semibold px-2.5 py-1 rounded-full border tracking-wide uppercase shadow-xs"
+              style={{
+                backgroundColor: 'rgba(85, 205, 179, 0.15)',
+                color: 'rgb(85, 205, 179)',
+                borderColor: 'rgba(85, 205, 179, 0.3)',
+              }}
+            >
+              Active Profile
+            </span>
+          </div>
+
+          <div className="relative z-10">
+            <h2 className="text-lg font-bold font-display text-white leading-tight drop-shadow-xs">
+              {displayName}
+            </h2>
+            <p className="text-xs font-medium text-emerald-200/80 mt-0.5">{displayRole}</p>
+            <p className="text-[11px] text-white/50 truncate mt-1">
+              {user?.email || 'admin@maxr.internal'}
+            </p>
           </div>
         </div>
 
@@ -453,26 +507,28 @@ export function ProfilePortalPage() {
           </div>
 
           <div className="mt-2">
+            <div className="flex justify-end pr-6 mb-1">
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs"
+                style={{
+                  backgroundColor: 'rgba(85, 205, 179, 0.25)',
+                  color: 'rgb(8, 11, 12)',
+                }}
+              >
+                Standard: 40h/wk
+              </span>
+            </div>
+
             <div className="flex items-end justify-between h-24 px-2 gap-2">
               {WEEKLY_PROGRESS_BARS.map((item, idx) => (
                 <div
                   key={`${item.day}-${idx}`}
                   className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer"
                 >
-                  {item.height > 0 ? (
-                    <div
-                      className="w-2 sm:w-2.5 rounded-full transition-all group-hover:scale-y-110 origin-bottom duration-200"
-                      style={{
-                        height: `${item.height}%`,
-                        backgroundColor: item.active ? 'rgb(85, 205, 179)' : 'rgb(8, 11, 12)',
-                      }}
-                    />
-                  ) : (
-                    <div
-                      className="w-1.5 h-1.5 rounded-full mb-1 transition-transform group-hover:scale-150"
-                      style={{ backgroundColor: 'rgba(8, 11, 12, 0.15)' }}
-                    />
-                  )}
+                  <div
+                    className="w-1.5 h-1.5 rounded-full mb-1 transition-transform group-hover:scale-150"
+                    style={{ backgroundColor: 'rgba(8, 11, 12, 0.15)' }}
+                  />
                   <div
                     className="w-1.5 h-1.5 rounded-full transition-transform group-hover:scale-150"
                     style={{
@@ -498,128 +554,64 @@ export function ProfilePortalPage() {
           className="h-64 sm:h-72"
         />
 
-        {/* Card 4: Task Completion Progress (Matching Admin Dashboard Task Overview Card) */}
+        {/* Card 4: Task Completion Process Card */}
         <div
-          onClick={() => navigate(user?.role === ROLES.STAFF ? '/staff/tasks' : '/tasks')}
-          className="rounded-[26px] p-5 bg-white border border-border/80 shadow-xs hover:shadow-card hover:-translate-y-0.5 flex flex-col justify-between h-64 sm:h-72 min-w-0 transition-all duration-200 cursor-pointer group active:scale-[0.99]"
-          data-testid="task-overview-card"
+          className="rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72"
+          style={{
+            backgroundColor: 'rgb(255, 255, 255)',
+            border: '1px solid rgba(8, 11, 12, 0.08)',
+          }}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 11 12 14 22 4" />
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                </svg>
-              </span>
-              <h2 className="text-sm font-bold text-text truncate">Task Completion Progress</h2>
-            </div>
-            <svg
-              className="w-4 h-4 text-text-muted transition-transform duration-200 group-hover:translate-x-1 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="flex items-start justify-between">
+            <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+              Task Completion Process
+            </span>
+            <span className="text-3xl font-light font-display" style={{ color: 'rgb(8, 11, 12)' }}>
+              {activeTasksCount > 0
+                ? `${Math.round((completedTasksCount / Math.max(activeTasksCount, 1)) * 100)}%`
+                : '0%'}
+            </span>
+          </div>
+
+          <div className="my-auto space-y-2">
+            <div
+              className="flex items-center gap-1.5 text-xs font-medium"
+              style={{ color: 'rgba(8, 11, 12, 0.65)' }}
             >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </div>
-
-          {/* Interactive Segmented Donut Chart & Matched Legend */}
-          <div className="flex items-center justify-between gap-3 my-auto py-1 min-w-0">
-            <DonutChart
-              data={taskChartData}
-              size={112}
-              strokeWidth={8}
-              segmentGap={4}
-              showInnerRing={true}
-              animationDuration={0.8}
-              highlightOnHover={true}
-              hoveredLabel={hoveredTask}
-              onSegmentHover={(seg) => setHoveredTask(seg?.label ?? null)}
-              centerContent={
-                <div className="flex flex-col items-center justify-center text-center leading-none">
-                  <span className="font-display text-lg sm:text-xl font-extrabold text-text tracking-tight">
-                    {activeTask ? `${activeTask.pct}%` : `${taskChartData[0]?.pct ?? 0}%`}
-                  </span>
-                  <span
-                    className="text-[10px] mt-1 font-bold truncate max-w-[68px]"
-                    style={{ color: activeTask ? activeTask.inkColor : 'var(--primary-ink)' }}
-                  >
-                    {activeTask ? activeTask.label : 'Completed'}
-                  </span>
-                </div>
-              }
-              aria-label="Task completion breakdown"
-              className="shrink-0"
-            />
-
-            {/* Matched Legend Stats */}
-            <div className="flex-1 min-w-0 space-y-1 text-xs">
-              {taskChartData.map((segment) => {
-                const isHovered = hoveredTask === segment.label;
-                return (
-                  <div
-                    key={segment.label}
-                    onMouseEnter={() => setHoveredTask(segment.label)}
-                    onMouseLeave={() => setHoveredTask(null)}
-                    className={`flex items-center justify-between gap-1 px-2 py-0.5 rounded-lg transition-all min-w-0 ${
-                      isHovered ? segment.pillClass : 'hover:bg-surface-muted'
-                    }`}
-                  >
-                    <span
-                      className="flex items-center gap-1.5 font-semibold truncate text-[11px] transition-colors"
-                      style={{ color: segment.inkColor }}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: segment.color }}
-                      />
-                      {segment.label}
-                    </span>
-                    <span
-                      className="font-bold font-mono text-[11px] whitespace-nowrap shrink-0"
-                      style={{ color: isHovered ? segment.inkColor : 'var(--text)' }}
-                    >
-                      {segment.value}
-                    </span>
-                  </div>
-                );
-              })}
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: 'rgb(85, 205, 179)' }}
+              />
+              <span>{activeTasksCount} active tasks</span>
             </div>
-          </div>
 
-          {/* Bottom Progress Bar */}
-          <div className="pt-2 border-t border-border/80 flex items-center justify-between gap-2 text-xs">
-            <div className="flex-1 h-2 rounded-full bg-surface-muted overflow-hidden">
+            <div
+              className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border"
+              style={{ borderColor: 'rgba(8, 11, 12, 0.08)' }}
+            >
               <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
-                style={{ width: `${taskChartData[0]?.pct ?? 0}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${activeTasksCount > 0 ? Math.min(100, Math.round((completedTasksCount / activeTasksCount) * 100)) : 0}%`,
+                  backgroundColor: 'rgb(85, 205, 179)',
+                }}
               />
             </div>
-            <span className="font-semibold text-text font-mono shrink-0 whitespace-nowrap text-[11px]">
-              {totalCompleted} / {combinedTotal} Tasks
+          </div>
+
+          <div className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.5)' }}>
+            <span>
+              {activeTasksCount > 0 ? 'Assigned tasks in current cycle' : 'No tasks assigned'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Row 2: Two Columns (Recent Payslips, Personal Checklist Widget) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      {/* Row 2: Three Columns (Payslips, Calendar Timeline, My Tasks Checklist) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* Left Column: Recent Payslips */}
         <div
-          className="lg:col-span-6 rounded-[26px] p-5 shadow-xs hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-out flex flex-col justify-between"
+          className="lg:col-span-4 rounded-[26px] p-5 shadow-xs hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-out flex flex-col justify-between"
           style={{
             backgroundColor: 'rgb(255, 255, 255)',
             border: '1px solid rgba(8, 11, 12, 0.08)',
@@ -656,14 +648,10 @@ export function ProfilePortalPage() {
             </div>
 
             <div className="space-y-2.5">
-              {!payslipEnabled ? (
-                <div className="py-6 text-center text-xs text-text-muted">
-                  Payslips navigation is currently disabled by Administrator.
-                </div>
-              ) : recentPayslips.length > 0 ? (
+              {recentPayslips.length > 0 ? (
                 recentPayslips.map((slip) => (
                   <div
-                    key={slip.periodLabel}
+                    key={slip.id}
                     className="rounded-full px-3.5 py-2.5 flex items-center justify-between shadow-xs transition-all hover:scale-[1.01]"
                     style={{
                       backgroundColor: 'rgba(233, 248, 246, 0.65)',
@@ -733,16 +721,167 @@ export function ProfilePortalPage() {
                   </div>
                 ))
               ) : (
-                <div className="py-6 text-center text-xs text-text-muted">
-                  No published payslips yet.
+                <div
+                  className="rounded-2xl p-6 text-center border border-dashed flex flex-col items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: 'rgba(244, 247, 246, 0.5)',
+                    borderColor: 'rgba(8, 11, 12, 0.1)',
+                  }}
+                >
+                  <p className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
+                    No published payslips found
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.45)' }}>
+                    Payslips will appear here once generated by HR/Admin.
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Personal Checklist Widget */}
-        <PersonalChecklistWidget className="lg:col-span-6 rounded-[26px] h-full" />
+        {/* Middle Column: Calendar Timeline */}
+        <div
+          className="lg:col-span-5 rounded-[26px] p-5 shadow-xs hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-out flex flex-col justify-between"
+          style={{
+            backgroundColor: 'rgb(255, 255, 255)',
+            border: '1px solid rgba(8, 11, 12, 0.08)',
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.45)' }}>
+              {prevMonth}
+            </span>
+            <span className="text-xs sm:text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+              {currentMonth}
+            </span>
+            <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.45)' }}>
+              {nextMonth}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-6 gap-1 text-center mb-4">
+            {calendarDays.map((d) => {
+              const isSelected = selectedDay === d.date;
+              return (
+                <button
+                  key={d.date}
+                  type="button"
+                  onClick={() => setSelectedDay(d.date)}
+                  className="py-1.5 rounded-xl text-xs flex flex-col items-center transition-all shadow-xs"
+                  style={{
+                    backgroundColor: isSelected ? 'rgba(85, 205, 179, 0.25)' : 'transparent',
+                    color: isSelected ? 'rgb(8, 11, 12)' : 'rgba(8, 11, 12, 0.65)',
+                    fontWeight: isSelected ? 700 : 500,
+                  }}
+                >
+                  <span
+                    className="text-[10px] uppercase"
+                    style={{ color: isSelected ? 'rgb(8, 11, 12)' : 'rgba(8, 11, 12, 0.45)' }}
+                  >
+                    {d.day}
+                  </span>
+                  <span className="text-xs font-semibold">{d.date}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div
+            className="rounded-2xl p-6 text-center border border-dashed flex flex-col items-center justify-center gap-1.5 my-auto"
+            style={{
+              backgroundColor: 'rgba(244, 247, 246, 0.5)',
+              borderColor: 'rgba(8, 11, 12, 0.1)',
+            }}
+          >
+            <p className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+              Work Schedule: 09:00 - 18:00
+            </p>
+            <p className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.55)' }}>
+              General Shift active for selected date.
+            </p>
+          </div>
+        </div>
+
+        {/* Right Column: Dark Tasks Checklist */}
+        <div
+          className="lg:col-span-3 rounded-[26px] p-5 shadow-md hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 ease-out flex flex-col justify-between"
+          style={{
+            backgroundColor: 'rgb(8, 11, 12)',
+            color: 'rgb(255, 255, 255)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 12px 30px rgba(8, 11, 12, 0.25)',
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-semibold text-white">My Tasks</span>
+            <span className="text-xl font-light font-display text-white">
+              {completedTasksCount}/8
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {onboardingTasks.map((task) => (
+              <button
+                key={task.id}
+                type="button"
+                onClick={() => toggleTask(task.id)}
+                className="w-full flex items-center justify-between gap-2 text-xs text-left select-none group transition-transform active:scale-95 duration-150"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      color: 'rgb(85, 205, 179)',
+                    }}
+                  >
+                    {task.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <p
+                      className={`text-xs font-medium truncate transition-colors ${
+                        task.completed ? 'text-white' : 'text-stone-300 group-hover:text-white'
+                      }`}
+                    >
+                      {task.title}
+                    </p>
+                    <p className="text-[10px] text-white/50">{task.date}</p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {task.completed ? (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
+                      style={{
+                        backgroundColor: 'rgb(85, 205, 179)',
+                        color: 'rgb(8, 11, 12)',
+                      }}
+                    >
+                      ✓
+                    </div>
+                  ) : (
+                    <div
+                      className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
+                      style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
+                    />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="pt-3 mt-3 border-t text-[10px] flex items-center justify-between"
+            style={{
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+              color: 'rgba(255, 255, 255, 0.5)',
+            }}
+          >
+            <span>Completed {completedTasksCount} of 8 tasks</span>
+          </div>
+        </div>
       </div>
     </div>
   );
