@@ -58,6 +58,7 @@ export class MemoryEmployeeCreationRepository implements IEmployeeCreationReposi
     _tx: CreationTx,
     dto: CreateEmployeeDto,
     passwordHash: string,
+    temporaryPassword?: string,
   ): Promise<CreatedEmployee> {
     const created: CreatedEmployee = {
       id: randomUUID(),
@@ -74,6 +75,7 @@ export class MemoryEmployeeCreationRepository implements IEmployeeCreationReposi
       role: dto.role,
       joiningDate: dto.joiningDate,
       createdAt: new Date().toISOString(),
+      tempCredential: temporaryPassword,
     };
     this.employees.push(created);
     this.passwordHashes.push(passwordHash);

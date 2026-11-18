@@ -15,6 +15,7 @@ export interface IEmployeeCreationRepository {
     tx: CreationTx,
     dto: CreateEmployeeDto,
     passwordHash: string,
+    temporaryPassword?: string,
   ): Promise<CreatedEmployee>;
 }
 
@@ -69,6 +70,7 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
     tx: CreationTx,
     dto: CreateEmployeeDto,
     passwordHash: string,
+    temporaryPassword?: string,
   ): Promise<CreatedEmployee> {
     const employee = await tx.query<InsertedRow>(
       `INSERT INTO employees
@@ -104,11 +106,11 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
       ],
     );
     const row = employee.rows[0] as InsertedRow;
-    // Inactive until onboarding activates the account (D-20); the hash can never match a password.
+    // Inactive until onboarding activates the account (D-20); temporary_password recorded for admin visibility.
     const user = await tx.query<{ id: string }>(
-      `INSERT INTO users (employee_id, email, password_hash, is_active)
-       VALUES ($1, $2, $3, false) RETURNING id`,
-      [row.id, dto.email, passwordHash],
+      `INSERT INTO users (employee_id, email, password_hash, is_active, temporary_password)
+       VALUES ($1, $2, $3, false, $4) RETURNING id`,
+      [row.id, dto.email, passwordHash, temporaryPassword ?? null],
     );
     const userId = (user.rows[0] as { id: string }).id;
     const role = await tx.query(
@@ -133,6 +135,7 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
       role: dto.role as Role,
       joiningDate: toDateOnly(row.joining_date),
       createdAt: new Date(row.created_at).toISOString(),
+      tempCredential: temporaryPassword,
     };
   }
 }

@@ -119,6 +119,10 @@ export async function createEmployee(
     cleanBody.bankBranch = payload.bankBranch.trim();
   }
 
+  if (payload.password && payload.password.trim()) {
+    cleanBody.password = payload.password.trim();
+  }
+
   const res = await apiFetch('/api/v1/employees', {
     method: 'POST',
     headers: {

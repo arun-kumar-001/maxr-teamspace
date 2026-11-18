@@ -17,6 +17,7 @@ export interface CreateEmployeeDto {
   /** `YYYY-MM-DD`. */
   joiningDate: string;
   role: Role;
+  password?: string;
   additionalEmails?: string[];
   additionalPhones?: string[];
   permanentAddress?: string;
@@ -48,6 +49,7 @@ export interface CreatedEmployee {
   role: Role;
   joiningDate: string;
   createdAt: string;
+  tempCredential?: string;
 }
 
 export type { ReferenceRows } from '../references';

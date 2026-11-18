@@ -47,7 +47,9 @@ export class EmployeeCreationService {
     });
     const events = new EventCollector();
     // Outside the transaction: hashing is slow and needs no database.
-    const unusableHash = await this.hasher.hash(randomBytes(32).toString('base64url'));
+    const rawPassword =
+      dto.password?.trim() || `Maxr#${randomBytes(6).toString('base64url')}1!`;
+    const passwordHash = await this.hasher.hash(rawPassword);
     try {
       const created = await this.repository.transaction(async (tx) => {
         const problems = referenceProblems(dto, await this.repository.lockReferences(tx, dto));
@@ -58,7 +60,7 @@ export class EmployeeCreationService {
         if (existing.employeeCode) throw conflict('An employee with this code already exists');
         if (existing.email) throw conflict('An employee or account with this email already exists');
 
-        const account = await this.repository.insertAccount(tx, dto, unusableHash);
+        const account = await this.repository.insertAccount(tx, dto, passwordHash, rawPassword);
         await this.afterCreate?.(tx, account);
         // Ids and the code only: names and email are personal data and stay out of the trail.
         await audit.record(

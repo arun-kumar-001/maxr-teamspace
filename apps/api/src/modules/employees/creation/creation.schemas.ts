@@ -38,6 +38,7 @@ export const createEmployeeSchema = z
     managerId: uuidString.optional(),
     joiningDate: isoDate,
     role: roleKey.default(ROLES.STAFF),
+    password: z.string().min(8).max(128).optional(),
     additionalEmails: z.array(z.string().trim().toLowerCase().email().max(255)).max(5).optional(),
     additionalPhones: z
       .array(
@@ -95,5 +96,6 @@ export const createdEmployeeSchema = z
     role: roleKey,
     joiningDate: z.string(),
     createdAt: z.string().datetime(),
+    tempCredential: z.string().optional(),
   })
   .meta({ id: 'CreatedEmployee' });

@@ -24,6 +24,13 @@ export interface RoleOption {
   description: string;
 }
 
+export function generateAutoPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let rand = '';
+  for (let i = 0; i < 8; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  return `Maxr#${rand}1!`;
+}
+
 const ALL_ROLE_OPTIONS: RoleOption[] = [
   {
     value: ROLES.STAFF,
@@ -104,6 +111,8 @@ export function useCreateEmployee({
     managerId: initialPrefill?.managerId ?? '',
     joiningDate: initialPrefill?.joiningDate ?? getInitialDate(),
     role: initialPrefill?.role ?? ROLES.STAFF,
+    passwordMode: initialPrefill?.passwordMode ?? 'auto',
+    password: initialPrefill?.password ?? generateAutoPassword(),
   });
 
   const [errors, setErrors] = useState<CreateEmployeeValidationErrors>({});
@@ -421,6 +430,15 @@ export function useCreateEmployee({
         }
         return undefined;
       }
+      case 'password': {
+        if (formData.passwordMode === 'custom') {
+          const trimmed = value.trim();
+          if (!trimmed) return 'Password is required.';
+          if (trimmed.length < 8) return 'Password must be at least 8 characters long.';
+          if (trimmed.length > 128) return 'Password cannot exceed 128 characters.';
+        }
+        return undefined;
+      }
       default:
         return undefined;
     }
@@ -483,6 +501,10 @@ export function useCreateEmployee({
     } else if (stepNumber === 3) {
       const roleErr = validateField('role', formData.role);
       if (roleErr) newErrors.role = roleErr;
+      if (formData.passwordMode === 'custom') {
+        const passErr = validateField('password', formData.password);
+        if (passErr) newErrors.password = passErr;
+      }
     }
 
     setErrors((prev) => ({ ...prev, ...newErrors }));
@@ -505,6 +527,7 @@ export function useCreateEmployee({
       'designationId',
       'joiningDate',
       'role',
+      'password',
     ] as const;
 
     for (const f of fields) {
@@ -595,6 +618,7 @@ export function useCreateEmployee({
       designationId: formData.designationId,
       joiningDate: formData.joiningDate,
       role: formData.role,
+      password: formData.password.trim(),
     };
 
     if (formData.phone.trim()) {
@@ -720,12 +744,23 @@ export function useCreateEmployee({
       managerId: '',
       joiningDate: getInitialDate(),
       role: ROLES.STAFF,
+      passwordMode: 'auto',
+      password: generateAutoPassword(),
     });
     setErrors({});
     setCurrentStep(1);
     setSubmitError(null);
     setCreatedEmployee(null);
   };
+
+  const regeneratePassword = useCallback(() => {
+    idempotencyKeyRef.current = generateIdempotencyKey();
+    const newPass = generateAutoPassword();
+    setFormData((prev) => ({
+      ...prev,
+      password: newPass,
+    }));
+  }, []);
 
   return {
     formData,
@@ -761,5 +796,6 @@ export function useCreateEmployee({
     validateAll,
     handleSubmit,
     resetForm,
+    regeneratePassword,
   };
 }
