@@ -1,7 +1,44 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { Button, FormField, Input, Select, StatusPill } from '../../../components/ui';
 import { CreateEmployeeStepper } from './CreateEmployeeStepper';
 import type { useCreateEmployee } from '../hooks/useCreateEmployee';
+
+function IconUpload({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+
+function IconTrash({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7c-1 0-2-1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
 
 export type CreateEmployeeFormProps = ReturnType<typeof useCreateEmployee> & {
   onCancel?: () => void;
@@ -40,6 +77,43 @@ export function CreateEmployeeForm({
   const [salaryAmount, setSalaryAmount] = useState('6,00,000');
   const [salaryCurrency, setSalaryCurrency] = useState('INR');
   const [salaryFrequency, setSalaryFrequency] = useState('Annual');
+
+  // Profile picture upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setPhotoError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Please select a valid image file (PNG, JPG, or WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('Image size exceeds 5MB limit.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        setFieldValue('avatarUrl', result);
+      }
+    };
+    reader.onerror = () => {
+      setPhotoError('Failed to read image file.');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Local state for currently working / relieving date
+  const [isCurrentlyWorking, setIsCurrentlyWorking] = useState(true);
+  const [relievingDate, setRelievingDate] = useState('');
 
   // Local state for declaration checklist
   const [appointmentLetterSigned, setAppointmentLetterSigned] = useState(true);
@@ -352,6 +426,76 @@ export function CreateEmployeeForm({
           <p className="text-sm text-text-muted mt-1">
             Enter the employee’s personal details and contact information.
           </p>
+        </div>
+
+        {/* Profile Picture Upload Section */}
+        <div
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-4 rounded-xl bg-surface-muted/60 border border-border"
+          data-testid="employee-photo-upload-section"
+        >
+          <div className="relative shrink-0">
+            {formData.avatarUrl ? (
+              <img
+                src={formData.avatarUrl}
+                alt="Employee avatar preview"
+                className="w-20 h-20 rounded-full object-cover border-2 border-primary-strong shadow-card"
+                data-testid="employee-avatar-preview"
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-full bg-primary-soft text-primary-deep flex items-center justify-center font-display font-bold text-xl border-2 border-border-strong select-none"
+                data-testid="employee-avatar-placeholder"
+              >
+                {formData.firstName || formData.lastName
+                  ? `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase()
+                  : 'EMP'}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 space-y-1.5">
+            <h3 className="text-sm font-semibold text-text">Employee Profile Picture</h3>
+            <p className="text-xs text-text-muted">
+              Upload a professional portrait or passport-size photo (PNG, JPG, or WEBP, max 5MB).
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                className="hidden"
+                data-testid="input-employee-photo"
+                onChange={handlePhotoChange}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSubmitting}
+                data-testid="btn-upload-employee-photo"
+                className="gap-1.5 text-xs"
+              >
+                <IconUpload className="w-3.5 h-3.5 text-text-muted" />
+                <span>{formData.avatarUrl ? 'Change Photo' : 'Upload Photo'}</span>
+              </Button>
+              {formData.avatarUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFieldValue('avatarUrl', '')}
+                  disabled={isSubmitting}
+                  data-testid="btn-remove-employee-photo"
+                  className="gap-1.5 text-xs text-danger hover:bg-rose-50"
+                >
+                  <IconTrash className="w-3.5 h-3.5" />
+                  <span>Remove</span>
+                </Button>
+              )}
+            </div>
+            {photoError && <p className="text-xs text-danger font-medium pt-1">{photoError}</p>}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 sm:gap-y-7">
@@ -891,6 +1035,63 @@ export function CreateEmployeeForm({
               data-testid="select-manager"
             />
           </FormField>
+
+          {/* Employment Service Status: Currently Working or Relieving Date */}
+          <div className="md:col-span-2 pt-2 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-border bg-surface-muted/40">
+              <label className="flex items-start sm:items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isCurrentlyWorking}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsCurrentlyWorking(checked);
+                    if (checked) setRelievingDate('');
+                  }}
+                  disabled={isSubmitting}
+                  data-testid="checkbox-currently-working"
+                  className="mt-0.5 sm:mt-0 rounded border-border text-primary-deep focus:ring-primary h-4 w-4"
+                />
+                <div>
+                  <span className="font-semibold text-text text-sm block">
+                    Currently working in this company
+                  </span>
+                  <span className="text-xs text-text-muted mt-0.5 block">
+                    Check if employee is active; uncheck if contract ended or relieving date applies
+                  </span>
+                </div>
+              </label>
+
+              <span
+                className={`px-3 py-1 text-xs font-semibold rounded-full border self-start sm:self-auto ${
+                  isCurrentlyWorking
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}
+              >
+                {isCurrentlyWorking ? 'Active Employee' : 'Leaving / Resigned'}
+              </span>
+            </div>
+
+            {!isCurrentlyWorking && (
+              <div className="animate-crm-fade-up max-w-sm">
+                <FormField
+                  label="Relieving / Exit Date"
+                  htmlFor="create-emp-relieving-date"
+                  required
+                >
+                  <Input
+                    id="create-emp-relieving-date"
+                    type="date"
+                    value={relievingDate}
+                    onChange={(e) => setRelievingDate(e.target.value)}
+                    disabled={isSubmitting}
+                    data-testid="input-relieving-date"
+                  />
+                </FormField>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Salary Details Subsection (per user requirement) */}
