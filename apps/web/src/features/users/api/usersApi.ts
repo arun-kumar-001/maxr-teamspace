@@ -58,7 +58,7 @@ export async function getUsers(query: Partial<UserListQuery> = {}): Promise<User
   if (query.sortOrder) params.set('sortOrder', query.sortOrder);
 
   const qs = params.toString();
-  const url = `/api/v1/users${qs ? `?${qs}` : ''}`;
+  const url = `/api/v1/users${qs ? `?${qs}` : ''}`;\
 
   const res = await apiFetch(url);
   if (!res.ok) {
@@ -153,8 +153,7 @@ export async function createUser(payload: CreateUserPayload): Promise<CreateUser
     data: UserAccount;
     meta?: { temporaryPassword?: string };
   };
-  return {
-    user: json.data,
+  return {\n    user: json.data,
     temporaryPassword: json.meta?.temporaryPassword,
   };
 }
@@ -178,4 +177,25 @@ export async function updateUserStatus(id: string, isActive: boolean): Promise<U
 
   const json = (await res.json()) as { data: UserAccount };
   return json.data;
+}
+
+/**
+ * Verifies admin password securely against the backend authentication API before sensitive operations.
+ * POST /api/v1/auth/verify-password
+ */
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const res = await apiFetch('/api/v1/auth/verify-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!res.ok) {
+    await handleApiError(res, 'Admin authentication failed');
+  }
+
+  const json = (await res.json()) as { data: { verified: boolean } };
+  return Boolean(json.data?.verified);
 }
