@@ -15,14 +15,30 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [, setNavRevision] = useState(0);
+  const [customLogo, setCustomLogo] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('maxr_company_logo');
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
-    const handleNavChange = () => setNavRevision((r) => r + 1);
+    const handleNavChange = () => {
+      setNavRevision((r) => r + 1);
+      try {
+        setCustomLogo(localStorage.getItem('maxr_company_logo'));
+      } catch {
+        // storage unavailable
+      }
+    };
     window.addEventListener('storage', handleNavChange);
     window.addEventListener('maxr:staff-payslips-change', handleNavChange);
+    window.addEventListener('maxr:company-config-updated', handleNavChange);
     return () => {
       window.removeEventListener('storage', handleNavChange);
       window.removeEventListener('maxr:staff-payslips-change', handleNavChange);
+      window.removeEventListener('maxr:company-config-updated', handleNavChange);
     };
   }, []);
 
@@ -38,7 +54,13 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       </span>
     ),
     subtitle: 'Staff Management',
-    logo: (
+    logo: customLogo ? (
+      <img
+        src={customLogo}
+        alt="Company Logo"
+        className="w-9 h-9 rounded-lg object-contain select-none bg-white/10 p-0.5 shadow-sm"
+      />
+    ) : (
       <img
         src="/maxr-symbol.png"
         alt="MAXR"
