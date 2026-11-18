@@ -11,4 +11,5 @@ export * from './components/TaskFormModal';
 export * from './components/TaskDetailModal';
 export * from './components/TaskCommentsThread';
 export * from './components/TaskAttachmentsList';
+export * from './components/TaskTodoListSidebar';
 export * from './pages/TasksPage';

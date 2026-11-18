@@ -57,6 +57,7 @@ export interface CreateEmployeeResponse {
 
 export interface CreateEmployeeFormState {
   employeeCode: string;
+  avatarUrl?: string;
   firstName: string;
   lastName: string;
   parentName?: string;

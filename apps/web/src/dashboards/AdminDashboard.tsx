@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
 import { DonutChart, type DonutChartSegment, KpiCard, PrimaryActionButton } from '../components/ui';
 import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
+import { getSidebarTodoStats, TODOS_UPDATED_EVENT } from '../features/tasks/utils/todoStats';
+import { PersonalChecklistWidget } from './PersonalChecklistWidget';
 import { cn } from '../lib/utils';
 
 // --- Shared Code-Based Modern Duotone SVG Icons ---
@@ -262,6 +264,26 @@ export function AdminDashboard() {
     pending: 0,
     overdue: 0,
   });
+  const crmTaskCountsRef = useRef({ completed: 0, pending: 0, overdue: 0 });
+
+  // Listen for real-time updates from the right-side To-Do panel
+  useEffect(() => {
+    const onTodosChange = () => {
+      const todoStats = getSidebarTodoStats();
+      const crm = crmTaskCountsRef.current;
+      setTaskCounts({
+        completed: crm.completed + todoStats.completed,
+        pending: crm.pending + todoStats.pending,
+        overdue: crm.overdue,
+      });
+      setMetrics((prev) => ({
+        ...prev,
+        openTasks: crm.pending + crm.overdue + todoStats.pending,
+      }));
+    };
+    window.addEventListener(TODOS_UPDATED_EVENT, onTodosChange);
+    return () => window.removeEventListener(TODOS_UPDATED_EVENT, onTodosChange);
+  }, []);
 
   // Fetch live metrics gracefully from API if available
   useEffect(() => {
@@ -362,19 +384,32 @@ export function AdminDashboard() {
 
       if (tasksRes.status === 'fulfilled') {
         const list = tasksRes.value.data ?? [];
-        if (typeof tasksRes.value.meta?.total === 'number') {
-          setMetrics((prev) => ({ ...prev, openTasks: tasksRes.value.meta.total }));
-        }
+        const todoStats = getSidebarTodoStats();
         const todayMs = Date.now();
-        let completed = 0;
-        let overdue = 0;
-        let pending = 0;
+        let crmCompleted = 0;
+        let crmOverdue = 0;
+        let crmPending = 0;
         for (const t of list) {
-          if (t.status === 'completed') completed += 1;
-          else if (t.dueDate && new Date(t.dueDate).getTime() < todayMs) overdue += 1;
-          else pending += 1;
+          if (t.status === 'completed') crmCompleted += 1;
+          else if (t.dueDate && new Date(t.dueDate).getTime() < todayMs) crmOverdue += 1;
+          else crmPending += 1;
         }
-        setTaskCounts({ completed, pending, overdue });
+        crmTaskCountsRef.current = {
+          completed: crmCompleted,
+          pending: crmPending,
+          overdue: crmOverdue,
+        };
+
+        const baseOpen =
+          typeof tasksRes.value.meta?.total === 'number'
+            ? tasksRes.value.meta.total
+            : crmPending + crmOverdue;
+        setMetrics((prev) => ({ ...prev, openTasks: baseOpen + todoStats.pending }));
+        setTaskCounts({
+          completed: crmCompleted + todoStats.completed,
+          pending: crmPending + todoStats.pending,
+          overdue: crmOverdue,
+        });
         setPriorityTasks(
           list.slice(0, 4).map((t) => ({
             title: t.title,
@@ -599,8 +634,7 @@ export function AdminDashboard() {
         <KpiCard
           label="Team Members"
           value={metrics.teamMembers}
-          icon={<IconUsers className="w-7 h-7" />}
-          badge={metrics.teamMembers > 0 ? '100% active' : '0 active'}
+          icon={<IconUsers className="w-6 h-6" />}
           variant="emerald"
           style={{ animationDelay: '50ms' }}
           className="maxr-card-entrance"
@@ -610,8 +644,7 @@ export function AdminDashboard() {
         <KpiCard
           label="Present Today"
           value={metrics.presentToday}
-          icon={<IconClock className="w-7 h-7" />}
-          badge={`${Math.max(0, metrics.teamMembers - metrics.presentToday)} not checked in`}
+          icon={<IconClock className="w-6 h-6" />}
           variant="purple"
           style={{ animationDelay: '100ms' }}
           className="maxr-card-entrance"
@@ -621,8 +654,7 @@ export function AdminDashboard() {
         <KpiCard
           label="Leave Requests"
           value={metrics.leaveRequests}
-          icon={<IconCalendar className="w-7 h-7" />}
-          badge={`${metrics.leaveRequests} pending review`}
+          icon={<IconCalendar className="w-6 h-6" />}
           variant="teal"
           style={{ animationDelay: '150ms' }}
           className="maxr-card-entrance"
@@ -632,8 +664,8 @@ export function AdminDashboard() {
         <KpiCard
           label="Open Tasks"
           value={metrics.openTasks}
-          icon={<IconCheckSquare className="w-7 h-7" />}
-          badge={`${taskCounts.overdue} overdue`}
+          icon={<IconCheckSquare className="w-6 h-6" />}
+          badge={taskCounts.overdue > 0 ? `${taskCounts.overdue} overdue` : undefined}
           variant="rose"
           style={{ animationDelay: '200ms' }}
           className="maxr-card-entrance"
@@ -875,8 +907,8 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      {/* 4. Bottom Section: 2 Cards (Pending Approvals, Priority Tasks) */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 items-stretch">
+      {/* 4. Bottom Section: 3 Cards (Pending Approvals, Priority Tasks, Personal Checklist) */}
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 items-stretch">
         {/* Card 1: Pending Approvals */}
         <div
           style={{ animationDelay: '400ms' }}
@@ -1034,6 +1066,8 @@ export function AdminDashboard() {
             </button>
           </div>
         </div>
+        {/* Card 3: Personal Checklist Routine Widget */}
+        <PersonalChecklistWidget className="maxr-card-entrance" />
       </section>
 
       {/* Hidden Accessible Anchors ensuring strict 100% test compatibility with dashboards.test.tsx */}

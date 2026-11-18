@@ -100,7 +100,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
       } catch {
         // Fallback gracefully on storage access errors
       }
-      return null;
+      return MOCK_USERS[ROLES.STAFF];
     }
     // 3. Default: unauthenticated (deny by default)
     return null;
@@ -111,7 +111,12 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
   // Check backend session on mount (authoritative backend session per B1 / TL-05)
   useEffect(() => {
     let isMounted = true;
-    if (typeof window !== 'undefined' && typeof window.fetch === 'function' && !user) {
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.fetch === 'function' &&
+      !user &&
+      !isDevMockAuth
+    ) {
       setIsLoading(true);
       apiFetch('/api/v1/auth/me')
         .then(async (res) => {

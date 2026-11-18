@@ -91,6 +91,7 @@ export function TimesheetsTab({
   const [detailedEntry, setDetailedEntry] = useState<TimesheetEntry | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
+  const [hoveredChartDay, setHoveredChartDay] = useState<string | null>(null);
 
   // Derive timesheets by aggregating records per employee
   const [timesheetList, setTimesheetList] = useState<TimesheetEntry[]>(() => {
@@ -230,7 +231,6 @@ export function TimesheetsTab({
       'Department',
       'Planned Hours',
       'Worked Hours',
-      'Overtime',
       'Break Duration',
       'Status',
     ];
@@ -240,7 +240,6 @@ export function TimesheetsTab({
       `"${ts.departmentName}"`,
       `"${ts.plannedHours}h"`,
       `"${ts.workedHours}h"`,
-      `"${ts.overtimeHours}h"`,
       `"${ts.breakDuration}"`,
       `"${ts.status}"`,
     ]);
@@ -279,64 +278,106 @@ export function TimesheetsTab({
         </div>
       )}
 
-      {/* 1. Four Top KPI Cards (Solid Vibrant Pastels from Reference Image) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Hours worked (Soft Peach / Terracotta) */}
-        <div className="p-5 bg-[#faebe6] border border-[#f2d4cb] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <IconClock className="w-4 h-4 text-slate-600" />
-            <span>Hours worked</span>
+      {/* 1. Four Top KPI Cards (Clean White Background with Themed Outlines) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: Hours worked (Themed Sky/Teal Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-sky-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+            <IconClock className="w-5 h-5 text-sky-600" />
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
-            {Number(totalHoursWorked).toLocaleString()}h
-          </div>
-          <div className="text-xs text-slate-600 font-medium">
-            {timesheetList.length} timesheets
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              Hours Worked
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {Number(totalHoursWorked).toLocaleString()}h
+            </span>
           </div>
         </div>
 
-        {/* Card 2: Overtime (Soft Mint Green) */}
-        <div className="p-5 bg-[#e4f5ed] border border-[#c6eadb] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <span className="text-sm">⚡</span>
-            <span>Overtime</span>
+        {/* Card 2: Overtime (Themed Amber/Yellow Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-amber-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
-            {totalOvertime}h
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              Overtime
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {totalOvertime}h
+            </span>
           </div>
-          <div className="text-xs text-slate-600 font-medium">at time and a half</div>
         </div>
 
-        {/* Card 3: To approve (Soft Sky Blue) */}
-        <div className="p-5 bg-[#e5effb] border border-[#ccdef4] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <span className="text-sm">📥</span>
-            <span>To approve</span>
+        {/* Card 3: To approve (Themed Emerald/Green Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-emerald-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
-            {pendingCount}
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              To Approve
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {pendingCount}
+            </span>
           </div>
-          <div className="text-xs text-slate-600 font-medium">submitted, not yet signed off</div>
         </div>
 
-        {/* Card 4: Flagged (Soft Butter Yellow) */}
-        <div className="p-5 bg-[#fef4d8] border border-[#fae6b4] rounded-3xl shadow-xs flex flex-col justify-between min-h-[128px] hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-            <span className="text-sm">🚩</span>
-            <span>Flagged</span>
+        {/* Card 4: Flagged (Themed Rose/Red Outline) */}
+        <div className="p-3.5 sm:p-4 bg-white border border-rose-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 font-display tracking-tight my-1">
-            {flaggedCount}
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
+              Flagged
+            </span>
+            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
+              {flaggedCount}
+            </span>
           </div>
-          <div className="text-xs text-slate-600 font-medium">short of their contract</div>
         </div>
       </div>
 
-      {/* 2. Main Layout (8 cols Table & Bulk Actions, 4 cols Panels) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left 8 cols: Filters, Table, Bulk Actions */}
-        <div className="lg:col-span-8 space-y-4">
-          {/* Controls Bar (Matches Reference Image Filter Pills and Approve Button) */}
+      {/* 2. Main Layout (Table & Hours by Day Panel) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        {/* Left: Filters, Table, Bulk Actions */}
+        <div className="xl:col-span-9 space-y-4">
+          {/* Controls Bar (Filter Pills, Search, Export, and Approve Button) */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               {/* Status Filter Pills with Counts */}
@@ -351,7 +392,7 @@ export function TimesheetsTab({
                       onClick={() => setStatusTab(tab)}
                       className={`px-3 py-1.5 text-xs font-bold rounded-xl capitalize transition-all flex items-center gap-1.5 ${
                         isActive
-                          ? 'bg-[#13222d] text-white shadow-xs'
+                          ? 'bg-sidebar text-white shadow-xs'
                           : 'bg-surface border border-border/80 text-text hover:bg-surface-muted'
                       }`}
                     >
@@ -410,8 +451,8 @@ export function TimesheetsTab({
                   disabled={selectedIds.size === 0}
                   className={`min-h-[36px] px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs ${
                     selectedIds.size > 0
-                      ? 'bg-[#78b3bd] hover:bg-[#68a3ad] text-white cursor-pointer'
-                      : 'bg-[#78b3bd]/60 text-white cursor-not-allowed opacity-80'
+                      ? 'bg-primary-deep hover:bg-primary-strong text-white cursor-pointer'
+                      : 'bg-primary-deep/60 text-white cursor-not-allowed opacity-80'
                   }`}
                 >
                   <IconCheck className="w-3.5 h-3.5" />
@@ -425,7 +466,7 @@ export function TimesheetsTab({
           <div className="bg-surface rounded-2xl border border-border/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table
-                className="w-full text-left text-xs border-collapse min-w-[620px]"
+                className="w-full text-left text-xs border-collapse"
                 aria-label="Timesheets Table"
               >
                 <thead className="bg-surface-muted/60 border-b border-border/80 text-xs font-bold text-text-muted">
@@ -444,7 +485,7 @@ export function TimesheetsTab({
                     </th>
                     <th
                       scope="col"
-                      className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[160px]"
+                      className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[150px]"
                     >
                       Person
                     </th>
@@ -459,12 +500,6 @@ export function TimesheetsTab({
                       className="px-3 py-3 text-center whitespace-nowrap min-w-[75px]"
                     >
                       Worked
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
-                    >
-                      Overtime
                     </th>
                     <th
                       scope="col"
@@ -489,7 +524,7 @@ export function TimesheetsTab({
                 <tbody className="divide-y divide-border/60 text-text">
                   {filteredTimesheets.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-10 text-center text-xs text-text-muted">
+                      <td colSpan={7} className="px-4 py-10 text-center text-xs text-text-muted">
                         No timesheets found matching filters.
                       </td>
                     </tr>
@@ -502,11 +537,11 @@ export function TimesheetsTab({
                           key={ts.id}
                           className={`transition-colors ${
                             isFlagged
-                              ? 'bg-[#fff8f7] hover:bg-[#ffefed]'
+                              ? 'bg-rose-50/40 hover:bg-rose-50/70'
                               : 'hover:bg-surface-muted/30'
                           }`}
                         >
-                          <td className="w-8 px-4 py-3.5 align-middle">
+                          <td className="w-8 px-3.5 py-3 align-middle">
                             <input
                               type="checkbox"
                               aria-label={`Select ${ts.name}`}
@@ -517,9 +552,9 @@ export function TimesheetsTab({
                           </td>
 
                           {/* Person: Avatar + Name + Subtitle */}
-                          <td className="px-4 py-3.5 align-middle">
+                          <td className="px-3.5 py-3 align-middle">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0 border border-border/60">
+                              <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/60">
                                 {ts.name
                                   .split(' ')
                                   .map((n) => n[0])
@@ -537,12 +572,12 @@ export function TimesheetsTab({
                             </div>
                           </td>
 
-                          <td className="px-4 py-3.5 text-center text-xs text-text-muted align-middle">
+                          <td className="px-3 py-3 text-center text-xs text-text-muted align-middle">
                             {ts.plannedHours}h
                           </td>
 
                           {/* Worked with Colored Variance Tag */}
-                          <td className="px-4 py-3.5 text-center align-middle font-bold text-text text-xs sm:text-sm">
+                          <td className="px-3 py-3 text-center align-middle font-bold text-text text-xs sm:text-sm">
                             <span>{ts.workedHours}h</span>
                             {variance < 0 && (
                               <span className="ml-1.5 text-rose-600 font-extrabold text-[11px]">
@@ -556,39 +591,28 @@ export function TimesheetsTab({
                             )}
                           </td>
 
-                          {/* Overtime (Proper em dash, no \u2014) */}
-                          <td className="px-4 py-3.5 text-center align-middle">
-                            {ts.overtimeHours > 0 ? (
-                              <span className="font-bold text-amber-600 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg text-xs">
-                                +{ts.overtimeHours}h
-                              </span>
-                            ) : (
-                              <span className="text-text-muted">—</span>
-                            )}
-                          </td>
-
-                          <td className="px-4 py-3.5 text-center text-xs text-text-muted align-middle">
+                          <td className="px-3 py-3 text-center text-xs text-text-muted align-middle">
                             {ts.breakDuration || '1.0h'}
                           </td>
 
                           {/* Status Badge with Colored Dot */}
-                          <td className="px-4 py-3.5 text-center align-middle">
+                          <td className="px-3 py-3 text-center align-middle">
                             <span
                               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                                 ts.status === 'approved'
-                                  ? 'bg-[#e6f7ef] text-[#1b7a4b] border border-[#cbece0]'
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                   : ts.status === 'flagged'
-                                    ? 'bg-[#fdeeed] text-[#d63f3a] border border-[#fbd6d4]'
-                                    : 'bg-[#fef6e7] text-[#c07d1a] border border-[#fae7c8]'
+                                    ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                                    : 'bg-amber-50 text-amber-800 border border-amber-200'
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full ${
                                   ts.status === 'approved'
-                                    ? 'bg-[#1b7a4b]'
+                                    ? 'bg-emerald-600'
                                     : ts.status === 'flagged'
-                                      ? 'bg-[#d63f3a]'
-                                      : 'bg-[#c07d1a]'
+                                      ? 'bg-rose-600'
+                                      : 'bg-amber-600'
                                 }`}
                               />
                               {ts.status === 'approved'
@@ -600,7 +624,7 @@ export function TimesheetsTab({
                           </td>
 
                           {/* Action Button: Checkmark button & Details */}
-                          <td className="px-4 py-3.5 text-right align-middle">
+                          <td className="px-3.5 py-3 text-right align-middle">
                             <div className="flex items-center justify-end gap-1.5">
                               {ts.status !== 'approved' && canApproveTimesheets && (
                                 <button
@@ -632,53 +656,67 @@ export function TimesheetsTab({
           </div>
         </div>
 
-        {/* Right 4 cols: Hours by Day & Overtime Claims */}
-        <div className="lg:col-span-4 space-y-4">
-          {/* Hours by day Card (Matches reference design in media_1794554581559_b350b711.png) */}
-          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
-            <div>
-              <h3 className="text-base sm:text-lg font-extrabold text-text font-display tracking-tight leading-tight">
-                Hours by day
-              </h3>
-              <p className="text-xs text-text-muted font-normal mt-0.5">
-                Every timesheet, last week
-              </p>
+        {/* Right: Hours by Day Interactive Chart */}
+        <div className="xl:col-span-3 space-y-4">
+          {/* Hours by day Card (Interactive Chart) */}
+          <div className="p-4 sm:p-5 bg-surface rounded-2xl border border-border/80 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold text-text font-display tracking-tight leading-tight">
+                  Hours by day
+                </h3>
+                <p className="text-[11px] text-text-muted font-normal mt-0.5">
+                  Every timesheet, last week
+                </p>
+              </div>
+              {selectedChartDay && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedChartDay(null)}
+                  className="text-[10px] font-semibold text-primary-deep hover:underline cursor-pointer"
+                >
+                  Reset
+                </button>
+              )}
             </div>
 
-            {/* Vertical Bar Chart with 4 Dashed Grid Lines */}
-            <div className="relative pt-6 pb-2">
-              {/* 4 Dashed Horizontal Grid Lines */}
-              <div className="absolute inset-x-0 top-6 bottom-8 flex flex-col justify-between pointer-events-none">
-                <div className="w-full border-b border-dashed border-border/70" />
+            {/* Vertical Bar Chart with 3 Dashed Grid Lines */}
+            <div className="relative pt-6 pb-1">
+              {/* 3 Dashed Horizontal Grid Lines */}
+              <div className="absolute inset-x-0 top-6 bottom-6 flex flex-col justify-between pointer-events-none">
                 <div className="w-full border-b border-dashed border-border/70" />
                 <div className="w-full border-b border-dashed border-border/70" />
                 <div className="w-full border-b border-dashed border-border/70" />
               </div>
 
               {/* Bars and Day Labels */}
-              <div className="relative z-10 flex items-end justify-between gap-1.5 sm:gap-2 h-44 px-2">
+              <div className="relative z-10 flex items-end justify-between gap-1.5 sm:gap-2 h-32 px-1">
                 {hoursByDay.map((d) => {
                   const isSelected = selectedChartDay === d.day;
+                  const isHovered = hoveredChartDay === d.day;
+                  const isActive = isSelected || isHovered;
                   return (
                     <div
                       key={d.day}
+                      onMouseEnter={() => setHoveredChartDay(d.day)}
+                      onMouseLeave={() => setHoveredChartDay(null)}
                       onClick={() => setSelectedChartDay((prev) => (prev === d.day ? null : d.day))}
                       className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer group relative"
                     >
-                      {/* Floating Percentage / Hours badge on click */}
-                      {isSelected && (
-                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-[#0c6b75] text-white text-[10px] font-bold shadow-md whitespace-nowrap animate-in fade-in zoom-in-95 pointer-events-none z-20">
-                          {d.percent}% ({d.hours}h)
+                      {/* Floating Percentage / Hours badge on hover or click */}
+                      {isActive && (
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md bg-primary-deep text-white text-[10px] font-bold shadow-md whitespace-nowrap animate-in fade-in zoom-in-95 pointer-events-none z-20">
+                          {d.hours}h · {d.percent}%
                         </div>
                       )}
 
                       {/* Bar */}
-                      <div className="w-full max-w-[38px] flex items-end justify-center h-full pb-1">
+                      <div className="w-full max-w-[32px] flex items-end justify-center h-full pb-1">
                         <div
-                          className={`w-full rounded-t-xl transition-all duration-300 ${
-                            isSelected
-                              ? 'bg-[#0c6b75] shadow-xs scale-y-[1.02] origin-bottom'
-                              : 'bg-[#74a8b5] group-hover:bg-[#5f97a5] opacity-90 group-hover:opacity-100 group-hover:scale-y-[1.02] origin-bottom'
+                          className={`w-full rounded-t-lg transition-all duration-200 ${
+                            isActive
+                              ? 'bg-primary-deep shadow-xs scale-y-[1.04] origin-bottom'
+                              : 'bg-primary/70 group-hover:bg-primary opacity-85 group-hover:opacity-100 group-hover:scale-y-[1.02] origin-bottom'
                           }`}
                           style={{ height: `${d.percent}%` }}
                         />
@@ -686,9 +724,9 @@ export function TimesheetsTab({
 
                       {/* Day Label */}
                       <span
-                        className={`text-xs mt-2 transition-colors ${
-                          isSelected
-                            ? 'font-extrabold text-[#0c6b75]'
+                        className={`text-[11px] mt-1.5 transition-colors ${
+                          isActive
+                            ? 'font-extrabold text-primary-deep'
                             : 'font-medium text-text-muted group-hover:text-text'
                         }`}
                       >
@@ -699,26 +737,23 @@ export function TimesheetsTab({
                 })}
               </div>
             </div>
-          </div>
 
-          {/* Overtime Claims Card (Matches Reference Image media_1794555317041_658c6c57.jpg) */}
-          <div className="p-6 bg-surface rounded-3xl border border-border/80 shadow-xs space-y-4">
-            <div>
-              <h3 className="text-base sm:text-lg font-extrabold text-text font-display tracking-tight leading-tight">
-                Overtime claims
-              </h3>
-              <p className="text-xs text-text-muted font-normal mt-0.5">None waiting</p>
-            </div>
-
-            {/* Decided State with Center Checkmark Box */}
-            <div className="py-8 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 rounded-2xl bg-surface-muted/90 border border-border/70 flex items-center justify-center mb-3 shadow-2xs text-slate-700">
-                <IconCheck className="w-6 h-6" />
-              </div>
-              <span className="text-xs font-extrabold text-text block">
-                All claimed hours decided
-              </span>
-            </div>
+            {/* Interactive Stats Footer */}
+            {(() => {
+              const activeDay = hoursByDay.find(
+                (d) => d.day === (hoveredChartDay || selectedChartDay),
+              );
+              return (
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+                  <span className="text-text-muted text-[11px] font-medium">
+                    {activeDay ? `${activeDay.day} selected` : 'Avg / day'}
+                  </span>
+                  <span className="font-bold text-primary-deep font-mono text-xs">
+                    {activeDay ? `${activeDay.hours} hrs (${activeDay.percent}%)` : '39.8 hrs'}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -731,7 +766,7 @@ export function TimesheetsTab({
           title={`Timesheet Details: ${detailedEntry.name} (${detailedEntry.employeeCode})`}
         >
           <div className="space-y-4 pt-2 text-xs">
-            <div className="grid grid-cols-3 gap-3 p-3 bg-surface-muted rounded-xl">
+            <div className="grid grid-cols-2 gap-3 p-3 bg-surface-muted rounded-xl">
               <div>
                 <span className="text-text-muted block">Planned</span>
                 <span className="font-bold text-text text-sm">{detailedEntry.plannedHours}h</span>
@@ -739,12 +774,6 @@ export function TimesheetsTab({
               <div>
                 <span className="text-text-muted block">Worked</span>
                 <span className="font-bold text-text text-sm">{detailedEntry.workedHours}h</span>
-              </div>
-              <div>
-                <span className="text-text-muted block">Overtime</span>
-                <span className="font-bold text-emerald-600 text-sm">
-                  +{detailedEntry.overtimeHours}h
-                </span>
               </div>
             </div>
 
