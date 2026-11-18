@@ -1,4 +1,5 @@
 import { Button } from '../../../components/ui/Button';
+import { KpiCard } from '../../../components/ui/KpiCard';
 import { Modal } from '../../../components/ui/Modal';
 import { Badge } from '../../../components/ui/StatusPill';
 import { getAvatarTone, getInitials } from '../../employees/components/hiringUtils';
@@ -62,18 +63,56 @@ export function DepartmentDetailModal({
                 {department.isActive ? 'Active' : 'Inactive'}
               </Badge>
             </div>
-            <dl className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-              {[
-                { label: 'Active staff', value: activeCount },
-                { label: 'Onboarding', value: onboardingCount },
-                { label: 'Designations', value: designations.length },
-              ].map((stat) => (
-                <div key={stat.label} className="min-w-0">
-                  <dd className="text-sm font-semibold tabular-nums text-text">{stat.value}</dd>
-                  <dt className="text-xs text-text-muted break-words">{stat.label}</dt>
-                </div>
-              ))}
-            </dl>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <KpiCard
+                label="Active staff"
+                value={activeCount}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                }
+                variant="emerald"
+                className="p-3"
+              />
+              <KpiCard
+                label="Onboarding"
+                value={onboardingCount}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                    />
+                  </svg>
+                }
+                variant="amber"
+                className="p-3"
+              />
+              <KpiCard
+                label="Designations"
+                value={designations.length}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                    />
+                  </svg>
+                }
+                variant="teal"
+                className="p-3"
+              />
+            </div>
           </section>
 
           <section

@@ -424,18 +424,29 @@ function getAvatarColors(name: string) {
 }
 
 const AVATAR_SEEDS: Record<string, string> = {
-  'E-002': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-  'EMP-0001': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-  'E008': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
-  'E-011': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-  'E-015': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
-  'E-016': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
-  MAX001: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-  MAX002: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-  MAX003: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
-  MAX004: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-  MAX005: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
-  MAX006: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+  'E-002':
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'EMP-0001':
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+  E008: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+  'E-011':
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'E-015':
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  'E-016':
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+  MAX001:
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  MAX002:
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+  MAX003:
+    'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80',
+  MAX004:
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  MAX005:
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  MAX006:
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
 };
 
 const DEFAULT_AVATARS = [
@@ -457,8 +468,11 @@ function getEmployeePhoto(emp: EmployeeDirectoryItem): string {
 }
 
 function getEmploymentType(emp: EmployeeDirectoryItem): 'Full-Time' | 'Contract' | 'Internship' {
-  if ((emp as unknown as { employmentType?: 'Full-Time' | 'Contract' | 'Internship' }).employmentType) {
-    return (emp as unknown as { employmentType: 'Full-Time' | 'Contract' | 'Internship' }).employmentType;
+  if (
+    (emp as unknown as { employmentType?: 'Full-Time' | 'Contract' | 'Internship' }).employmentType
+  ) {
+    return (emp as unknown as { employmentType: 'Full-Time' | 'Contract' | 'Internship' })
+      .employmentType;
   }
   if (emp.employeeCode === 'E-011' || emp.firstName === 'Yovtri') return 'Contract';
   const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);

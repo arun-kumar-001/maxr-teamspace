@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Button, Modal } from '../../../components/ui';
+import { Button, KpiCard, Modal } from '../../../components/ui';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 import type { AttendanceRecord } from '../types';
 
@@ -278,28 +278,23 @@ export function TimesheetsTab({
         </div>
       )}
 
-      {/* 1. Four Top KPI Cards (Clean White Background with Themed Outlines) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Card 1: Hours worked (Themed Sky/Teal Outline) */}
-        <div className="p-3.5 sm:p-4 bg-white border border-sky-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-            <IconClock className="w-5 h-5 text-sky-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
-              Hours Worked
-            </span>
-            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
-              {Number(totalHoursWorked).toLocaleString()}h
-            </span>
-          </div>
-        </div>
+      {/* 1. Four Top KPI Cards (Universal KpiCard) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        {/* Card 1: Hours Worked */}
+        <KpiCard
+          label="Hours Worked"
+          value={`${Number(totalHoursWorked).toLocaleString()}h`}
+          icon={<IconClock className="w-6 h-6" />}
+          variant="blue"
+        />
 
-        {/* Card 2: Overtime (Themed Amber/Yellow Outline) */}
-        <div className="p-3.5 sm:p-4 bg-white border border-amber-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        {/* Card 2: Overtime */}
+        <KpiCard
+          label="Overtime"
+          value={`${totalOvertime}h`}
+          icon={
             <svg
-              className="w-5 h-5"
+              className="w-6 h-6"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -307,22 +302,17 @@ export function TimesheetsTab({
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
-              Overtime
-            </span>
-            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
-              {totalOvertime}h
-            </span>
-          </div>
-        </div>
+          }
+          variant="amber"
+        />
 
-        {/* Card 3: To approve (Themed Emerald/Green Outline) */}
-        <div className="p-3.5 sm:p-4 bg-white border border-emerald-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        {/* Card 3: To Approve */}
+        <KpiCard
+          label="To Approve"
+          value={pendingCount}
+          icon={
             <svg
-              className="w-5 h-5"
+              className="w-6 h-6"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -334,22 +324,17 @@ export function TimesheetsTab({
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
-              To Approve
-            </span>
-            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
-              {pendingCount}
-            </span>
-          </div>
-        </div>
+          }
+          variant="emerald"
+        />
 
-        {/* Card 4: Flagged (Themed Rose/Red Outline) */}
-        <div className="p-3.5 sm:p-4 bg-white border border-rose-300 rounded-2xl shadow-xs flex items-center gap-3 min-h-[76px] hover:-translate-y-0.5 hover:shadow-card transition-all">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+        {/* Card 4: Flagged */}
+        <KpiCard
+          label="Flagged"
+          value={flaggedCount}
+          icon={
             <svg
-              className="w-5 h-5"
+              className="w-6 h-6"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -361,16 +346,9 @@ export function TimesheetsTab({
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-[11px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider block truncate">
-              Flagged
-            </span>
-            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-text font-display tracking-tight leading-tight block mt-0.5">
-              {flaggedCount}
-            </span>
-          </div>
-        </div>
+          }
+          variant="rose"
+        />
       </div>
 
       {/* 2. Main Layout (Table & Hours by Day Panel) */}
