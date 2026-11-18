@@ -501,6 +501,40 @@ describe('audit trail and logs', () => {
   });
 });
 
+describe('POST /auth/verify-password', () => {
+  it('requires an authenticated session', async () => {
+    const { app } = makeApp();
+    const res = await request(app)
+      .post('/api/v1/auth/verify-password')
+      .send({ password: 'Password#1234' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects an incorrect password with 401', async () => {
+    const { app } = makeApp();
+    const s = await signIn(app, 'admin@maxr.test');
+    const res = await request(app)
+      .post('/api/v1/auth/verify-password')
+      .set('Cookie', s.cookie)
+      .set('X-CSRF-Token', s.csrf)
+      .send({ password: 'wrong-password-999' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.message).toMatch(/Invalid admin password/i);
+  });
+
+  it('verifies the correct password with 200 { data: { verified: true } }', async () => {
+    const { app } = makeApp();
+    const s = await signIn(app, 'admin@maxr.test');
+    const res = await request(app)
+      .post('/api/v1/auth/verify-password')
+      .set('Cookie', s.cookie)
+      .set('X-CSRF-Token', s.csrf)
+      .send({ password: TEST_PASSWORD });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ verified: true });
+  });
+});
+
 describe('configuration', () => {
   it('refuses an insecure cookie in production', async () => {
     const { loadAuthConfig } = await import('./auth-config');

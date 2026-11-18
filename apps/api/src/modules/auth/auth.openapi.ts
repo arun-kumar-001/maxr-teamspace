@@ -1,5 +1,6 @@
+import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
-import { changePasswordSchema, loginSchema, sessionResponseSchema } from './auth.schemas';
+import { changePasswordSchema, loginSchema, sessionResponseSchema, verifyPasswordSchema } from './auth.schemas';
 
 const tags = ['Auth'];
 
@@ -51,4 +52,21 @@ registerRoute({
     422: 'The new password does not meet the rules',
   },
   success: { status: 204, description: 'Password changed' },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/auth/verify-password',
+  tags,
+  summary: 'Verify current admin/user password for sensitive operations',
+  access: 'Any signed-in user',
+  body: verifyPasswordSchema,
+  extraResponses: {
+    401: 'Invalid password',
+  },
+  success: {
+    status: 200,
+    description: 'Password verified successfully',
+    schema: z.object({ data: z.object({ verified: z.boolean() }) }),
+  },
 });

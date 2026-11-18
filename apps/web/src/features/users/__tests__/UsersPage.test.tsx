@@ -236,11 +236,12 @@ describe('UsersPage Component Suite (Issue #27)', () => {
     expect(screen.queryByTestId('add-user-modal')).toBeNull();
   });
 
-  it('toggles another user account status and disables self-deactivation', async () => {
+  it('toggles another user account status with admin password verification and disables self-deactivation', async () => {
     setupAuth('admin');
     vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);
     vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
     vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
+    const verifySpy = vi.spyOn(usersApi, 'verifyAdminPassword').mockResolvedValue(true);
     const statusSpy = vi.spyOn(usersApi, 'updateUserStatus').mockResolvedValue({
       ...mockUsers[1]!,
       isActive: true,
@@ -257,12 +258,67 @@ describe('UsersPage Component Suite (Issue #27)', () => {
       expect(screen.getByTestId('toggle-status-btn-table-u-2')).not.toBeDisabled();
     });
 
+    // 1. Click 3-dot actions menu on inactive user u-2
     fireEvent.click(screen.getByTestId('toggle-status-btn-table-u-2'));
+    const activateBtn = await screen.findByTestId('activate-action-item-u-2');
+    expect(activateBtn).toBeInTheDocument();
+    fireEvent.click(activateBtn);
+
+    // 2. Confirmation modal appears
+    expect(await screen.findByTestId('user-status-modal')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Activate Account' })).toBeInTheDocument();
+
+    // 3. Submitting without password displays error
+    fireEvent.click(screen.getByTestId('confirm-status-toggle-btn'));
+    expect(await screen.findByTestId('user-status-error')).toHaveTextContent(
+      'Please enter your admin password',
+    );
+
+    // 4. Enter admin password and confirm
+    fireEvent.change(screen.getByTestId('admin-password-input'), {
+      target: { value: 'AdminPassword#1234' },
+    });
+    fireEvent.click(screen.getByTestId('confirm-status-toggle-btn'));
+
+    await waitFor(() => {
+      expect(verifySpy).toHaveBeenCalledWith('AdminPassword#1234');
+      expect(statusSpy).toHaveBeenCalledWith('u-2', true);
+    });
+  });
+
+  it('shows inline error and keeps modal open when admin password verification fails', async () => {
+    setupAuth('admin');
+    vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);
+    vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
+    vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
+    const verifySpy = vi
+      .spyOn(usersApi, 'verifyAdminPassword')
+      .mockRejectedValue(new usersApi.UsersApiError(401, 'Invalid admin password. Authentication failed.'));
+
+    render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('toggle-status-btn-table-u-2')).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByTestId('toggle-status-btn-table-u-2'));
+    fireEvent.click(await screen.findByTestId('activate-action-item-u-2'));
+
     expect(await screen.findByTestId('user-status-modal')).toBeInTheDocument();
 
+    fireEvent.change(screen.getByTestId('admin-password-input'), {
+      target: { value: 'WrongPassword#999' },
+    });
     fireEvent.click(screen.getByTestId('confirm-status-toggle-btn'));
+
     await waitFor(() => {
-      expect(statusSpy).toHaveBeenCalledWith('u-2', true);
+      expect(verifySpy).toHaveBeenCalledWith('WrongPassword#999');
+      expect(screen.getByTestId('user-status-error')).toHaveTextContent(/Invalid admin password/i);
+      expect(screen.getByTestId('user-status-modal')).toBeInTheDocument();
     });
   });
 
