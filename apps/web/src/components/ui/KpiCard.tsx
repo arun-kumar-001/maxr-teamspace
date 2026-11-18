@@ -107,10 +107,10 @@ export function KpiCard({
     <div
       onClick={onClick}
       style={style}
-      className={`relative bg-white border ${border} shadow-xs flex items-center justify-between min-w-0 transition-all duration-200 ${
+      className={`relative bg-white border ${border} shadow-xs flex items-center justify-between min-w-0 transition-all duration-200 outline-none focus:outline-none focus:ring-0 ${
         isSmall
           ? 'py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-xl min-h-[50px] gap-2.5'
-          : 'p-3.5 sm:p-4 rounded-2xl min-h-[76px] gap-3'
+          : 'p-3 sm:p-3.5 rounded-xl min-h-[64px] gap-3'
       } ${
         onClick ? 'cursor-pointer hover:shadow-card hover:-translate-y-0.5' : 'hover:shadow-xs'
       } ${isActive ? 'ring-2 ring-primary-strong/40' : ''} ${className}`}
@@ -130,7 +130,7 @@ export function KpiCard({
           <div className="flex items-center gap-2 shrink-0">
             <span
               className={`font-display ${
-                isSmall ? 'text-base sm:text-lg font-bold' : 'text-xl sm:text-2xl font-extrabold'
+                isSmall ? 'text-sm sm:text-base font-bold' : 'text-lg sm:text-xl font-bold'
               } text-text tracking-tight tabular-nums`}
             >
               {value}
@@ -159,9 +159,9 @@ export function KpiCard({
               <span
                 className={`font-display ${
                   isSmall
-                    ? 'text-lg sm:text-xl font-bold mt-0.5'
-                    : 'text-2xl sm:text-3xl font-extrabold mt-0.5'
-                } text-text tracking-tight leading-tight block`}
+                    ? 'text-base sm:text-lg font-bold mt-0.5'
+                    : 'text-xl sm:text-2xl font-bold mt-0.5'
+                } text-text tracking-tight leading-tight block truncate`}
               >
                 {value}
               </span>

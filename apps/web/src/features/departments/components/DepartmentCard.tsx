@@ -58,7 +58,7 @@ export function DepartmentCard({
       role="button"
       tabIndex={0}
       style={{ animationDelay: `${Math.min(animationIndex, 8) * 55}ms` }}
-      className="group animate-crm-fade-up relative overflow-hidden p-4 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between gap-3.5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-raised hover:border-primary-strong/40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong"
+      className="group animate-crm-fade-up relative overflow-hidden p-4 bg-surface border border-border rounded-card shadow-card flex flex-col justify-between gap-3.5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-raised hover:border-primary-strong/40 cursor-pointer focus:outline-none focus:ring-0 outline-none"
       data-testid={`department-card-${department.id}`}
     >
       {/* Top Interactive Accent Strip */}
