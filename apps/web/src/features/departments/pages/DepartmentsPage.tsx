@@ -145,22 +145,6 @@ export function DepartmentsPage() {
     return map;
   }, [designations]);
 
-  const overviewStats = useMemo(() => {
-    const activeDepts = departments.filter((d) => d.isActive).length;
-    const totalStaff = employees.length;
-    const onboardingCount = employees.filter((e) => e.status === 'pending').length;
-    let topDept: Department | null = null;
-    let topCount = -1;
-    for (const d of departments) {
-      const cnt = (membersByDept.get(d.id) ?? []).length;
-      if (cnt > topCount) {
-        topCount = cnt;
-        topDept = d;
-      }
-    }
-    return { activeDepts, totalStaff, onboardingCount, topDept, topCount: Math.max(0, topCount) };
-  }, [departments, employees, membersByDept]);
-
   if (isForbidden) {
     return (
       <PageContainer maxWidth="dashboard">
@@ -353,71 +337,6 @@ export function DepartmentsPage() {
           )}
         </div>
       </div>
-
-      {/* Interactive Division Overview Strip */}
-      {!isLoading && !error && departments.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card transition-all duration-300 hover:border-primary-strong/40">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-              Active Divisions
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-text">{overviewStats.activeDepts}</span>
-              <span className="text-xs text-text-muted">of {departments.length} shown</span>
-            </div>
-          </div>
-
-          <div
-            className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card transition-all duration-300 hover:border-primary-strong/40"
-            style={{ animationDelay: '50ms' }}
-          >
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-              Workforce Aligned
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-text">{overviewStats.totalStaff}</span>
-              <span className="text-xs text-text-muted">
-                {overviewStats.onboardingCount > 0
-                  ? `${overviewStats.onboardingCount} onboarding`
-                  : 'employees'}
-              </span>
-            </div>
-          </div>
-
-          <div
-            className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card transition-all duration-300 hover:border-primary-strong/40"
-            style={{ animationDelay: '100ms' }}
-          >
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-              Mapped Designations
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-text">{designations.length}</span>
-              <span className="text-xs text-text-muted">role tiers</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => overviewStats.topDept && openDetail(overviewStats.topDept)}
-            disabled={!overviewStats.topDept}
-            style={{ animationDelay: '150ms' }}
-            className="animate-crm-fade-up p-3.5 rounded-card bg-surface border border-border shadow-card text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-primary-strong/40 hover:shadow-raised cursor-pointer"
-          >
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
-              Largest Division
-            </div>
-            <div className="mt-1 flex items-baseline justify-between gap-2">
-              <span className="text-base font-bold text-primary-deep truncate">
-                {overviewStats.topDept?.name ?? '—'}
-              </span>
-              <span className="text-xs font-semibold text-text-muted shrink-0">
-                {overviewStats.topCount} staff &rarr;
-              </span>
-            </div>
-          </button>
-        </div>
-      )}
 
       {/* Filter Controls */}
       <DepartmentFilters

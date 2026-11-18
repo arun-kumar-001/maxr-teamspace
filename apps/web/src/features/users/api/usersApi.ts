@@ -58,7 +58,7 @@ export async function getUsers(query: Partial<UserListQuery> = {}): Promise<User
   if (query.sortOrder) params.set('sortOrder', query.sortOrder);
 
   const qs = params.toString();
-  const url = `/api/v1/users${qs ? `?${qs}` : ''}`;\
+  const url = `/api/v1/users${qs ? `?${qs}` : ''}`;
 
   const res = await apiFetch(url);
   if (!res.ok) {
@@ -153,7 +153,8 @@ export async function createUser(payload: CreateUserPayload): Promise<CreateUser
     data: UserAccount;
     meta?: { temporaryPassword?: string };
   };
-  return {\n    user: json.data,
+  return {
+    user: json.data,
     temporaryPassword: json.meta?.temporaryPassword,
   };
 }
