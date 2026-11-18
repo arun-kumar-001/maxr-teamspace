@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
-import { ROLES } from '@maxr/shared';
+import { canDecideApproval as mayDecideApproval } from '../../approvals/approval-permissions';
 import { Button, DataTable, type Column, Badge } from '../../../components/ui';
 import { fetchApprovals, approveRequest, rejectRequest } from '../../approvals/api/approvals';
 import type { Approval, ApprovalStatus, ApprovalOutcome } from '../../approvals/types';
@@ -119,21 +119,8 @@ export const LeaveApprovalsTab: React.FC<LeaveApprovalsTabProps> = ({ onDecision
   // Calculate status counts
   const pendingCount = approvals.filter((a) => a.status === 'pending').length;
 
-  const canDecideApproval = (approval: Approval): boolean => {
-    if (approval.status !== 'pending') return false;
-    // Disallow self-approval
-    if (user?.employeeId && approval.requesterEmployeeId === user.employeeId) {
-      return false;
-    }
-    const currentStageName = approval.stages[approval.currentStage];
-    if (currentStageName === 'manager' && (role === ROLES.TEAM_LEAD || role === ROLES.ADMIN)) {
-      return true;
-    }
-    if (currentStageName === 'hr' && (role === ROLES.HR_MANAGER || role === ROLES.ADMIN)) {
-      return true;
-    }
-    return false;
-  };
+  const canDecideApproval = (approval: Approval): boolean =>
+    mayDecideApproval(approval, user?.employeeId, user?.roles ?? (role ? [role] : []));
 
   const columns: Column<Approval>[] = [
     {

@@ -98,6 +98,7 @@ async function setup(options: { appUrl?: string } = {}) {
       email: `${role}@maxr.internal`,
       managerId: role === 'staff' ? id('team_lead') : null,
       isHrApprover: role === 'hr_manager' || role === 'admin',
+      roles: [role],
       active: true,
     };
   }
@@ -125,6 +126,7 @@ async function setup(options: { appUrl?: string } = {}) {
   const apply = (who: Role, startDate = '2026-11-02', endDate = '2026-11-03') =>
     as[who]
       .post('/api/v1/leave-requests', {
+        approverRole: who === 'hr_manager' ? 'admin' : 'hr_manager',
         leaveTypeId: ANNUAL,
         startDate,
         endDate,
@@ -152,10 +154,10 @@ async function setup(options: { appUrl?: string } = {}) {
 }
 
 describe('notifications from events', () => {
-  it('tells the requester’s manager, and only the manager, that a request waits', async () => {
+  it('tells HR that a leave request waits', async () => {
     const { apply, inbox, emails } = await setup({ appUrl: APP_URL });
     await apply('staff');
-    const lead = await inbox('team_lead');
+    const lead = await inbox('hr_manager');
     expect(lead.data).toHaveLength(1);
     expect(lead.data[0]).toMatchObject({
       type: 'approval.requested',
@@ -164,12 +166,12 @@ describe('notifications from events', () => {
     });
     expect(lead.data[0].link).toMatch(/^\/approvals\/[0-9a-f-]{36}$/);
     expect(lead.meta.unread).toBe(1);
-    for (const other of ['staff', 'hr_manager', 'admin'] as Role[]) {
+    for (const other of ['staff', 'team_lead', 'admin'] as Role[]) {
       expect((await inbox(other)).data, other).toHaveLength(0);
     }
     const queued = await emails();
     expect(queued).toHaveLength(1);
-    expect(queued[0]?.payload.to).toEqual(['team_lead@maxr.internal']);
+    expect(queued[0]?.payload.to).toEqual(['hr_manager@maxr.internal']);
   });
 
   it('emails carry no sensitive data: no reason, dates, days or names', async () => {
@@ -193,9 +195,9 @@ describe('notifications from events', () => {
   it('tells the requester when the request is approved or rejected', async () => {
     const { as, apply, inbox, approvalOf, emails } = await setup();
     await apply('staff', '2026-11-02', '2026-11-03');
-    await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+    await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/approve`);
     await apply('staff', '2026-11-09', '2026-11-10');
-    await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/reject`, {
+    await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/reject`, {
       comment: 'A secret reason for saying no',
     });
     const staff = await inbox('staff');
@@ -220,7 +222,7 @@ describe('notifications from events', () => {
     );
     expect((await inbox('hr_manager')).data).toHaveLength(0);
     await as.team_lead.post(`/api/v1/approvals/${approval.id}/approve`);
-    for (const who of ['hr_manager', 'admin'] as Role[]) {
+    for (const who of ['hr_manager'] as Role[]) {
       const notices = (await inbox(who)).data;
       expect(notices, who).toHaveLength(1);
       expect(notices[0]).toMatchObject({
@@ -231,7 +233,7 @@ describe('notifications from events', () => {
     expect((await inbox('staff')).data).toHaveLength(0);
   });
 
-  it('sends HR requests to HR and Admin but never to the requester', async () => {
+  it('sends HR leave to Admin and excludes the requester', async () => {
     const { apply, inbox } = await setup();
     await apply('hr_manager');
     expect((await inbox('admin')).data).toHaveLength(1);
@@ -242,7 +244,7 @@ describe('notifications from events', () => {
   it('tells the owner when HR cancels approved leave, but not when the owner cancels their own', async () => {
     const { as, apply, inbox, approvalOf } = await setup();
     const first = await apply('staff', '2026-11-02', '2026-11-03');
-    await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+    await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/approve`);
     await as.staff.post(`/api/v1/leave-requests/${first.body.data.id}/cancel`);
     const own = (await inbox('staff')).data.filter(
       (n: { type: string }) => n.type === 'leave.cancelled',
@@ -250,7 +252,7 @@ describe('notifications from events', () => {
     expect(own).toHaveLength(0);
 
     const second = await apply('staff', '2026-11-09', '2026-11-10');
-    await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+    await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/approve`);
     await as.hr_manager.post(`/api/v1/leave-requests/${second.body.data.id}/cancel`);
     const notices = (await inbox('staff')).data.filter(
       (n: { type: string }) => n.type === 'leave.cancelled',
@@ -266,10 +268,10 @@ describe('notifications from events', () => {
     expect(await emails()).toHaveLength(0);
   });
 
-  it('a manager who is no longer active receives nothing', async () => {
+  it('an HR approver who is no longer active receives nothing', async () => {
     const { apply, notifRepo, emails } = await setup();
     const manager = Object.values(notifRepo.employees).find(
-      (e) => e.email === 'team_lead@maxr.internal',
+      (e) => e.email === 'hr_manager@maxr.internal',
     );
     if (manager) manager.active = false;
     await apply('staff');
@@ -283,7 +285,7 @@ describe('notifications from events', () => {
       throw new Error('outbox down');
     };
     expect((await apply('staff')).status).toBe(201);
-    expect((await inbox('team_lead')).data).toHaveLength(1);
+    expect((await inbox('hr_manager')).data).toHaveLength(1);
   });
 });
 
@@ -424,12 +426,12 @@ describe('reminders and retention', () => {
     });
     expect(await emails()).toHaveLength(1);
 
-    // The same approval moves on to HR: that step is reminded in its turn, HR and Admin both.
+    // The HR stage sends its reminder to HR.
     notifRepo.stale = stale('hr');
-    expect(await notifications.service.sendApprovalReminders(NOW)).toBe(2);
+    expect(await notifications.service.sendApprovalReminders(NOW)).toBe(1);
     expect(await notifications.service.sendApprovalReminders(NOW)).toBe(0);
     expect((await inbox('hr_manager')).data).toHaveLength(1);
-    expect((await inbox('admin')).data).toHaveLength(1);
+    expect((await inbox('admin')).data).toHaveLength(0);
     expect((await inbox('staff')).data).toHaveLength(0);
   });
 
@@ -509,7 +511,7 @@ describe('reminders and retention', () => {
         approvalId: A1,
         subjectType: 'leave_request',
         requesterEmployeeId: id('hr_manager'),
-        stage: 'hr',
+        stage: 'admin',
       },
     ];
     expect(await notifications.service.sendApprovalReminders(NOW)).toBe(1);

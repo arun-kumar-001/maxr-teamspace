@@ -2,6 +2,11 @@ import type { Pool, PoolClient } from 'pg';
 
 export type LeaveTx = Pick<PoolClient, 'query'>;
 
+export interface LeaveApprovalSettings {
+  approverRole: 'hr_manager' | 'team_lead';
+  version: number;
+}
+
 /** A leave type with its policy. `id` is the leave type id; that is what the routes address. */
 export interface LeavePolicy {
   id: string;

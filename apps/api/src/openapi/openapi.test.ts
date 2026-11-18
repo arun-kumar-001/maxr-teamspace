@@ -50,8 +50,8 @@ describe('OpenAPI (TC-9-18)', () => {
     expect(at(pageSize, 'schema', 'default')).toBe(20);
   });
 
-  it('the committed docs/architecture/openapi.json is up to date (run `npm run openapi:generate`)', () => {
-    expect(fs.readFileSync(OPENAPI_OUTPUT, 'utf-8')).toBe(renderOpenApiJson());
+  it('the committed docs/architecture/openapi.json is up to date (run `npm run openapi:generate`)', async () => {
+    expect(fs.readFileSync(OPENAPI_OUTPUT, 'utf-8')).toBe(await renderOpenApiJson());
   });
 
   it('is served at /api/v1/openapi.json outside production', async () => {

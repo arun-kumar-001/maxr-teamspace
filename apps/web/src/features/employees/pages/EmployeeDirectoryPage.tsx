@@ -188,6 +188,98 @@ function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
+function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="5" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="19" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconIdBadge({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="16" x2="12" y2="16" />
+    </svg>
+  );
+}
+
+function IconPhone({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function IconMail({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
+
+function IconPower({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+      <line x1="12" y1="2" x2="12" y2="12" />
+    </svg>
+  );
+}
+
 function IconList({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
@@ -230,20 +322,38 @@ function IconGrid({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconAward({ className = 'w-4 h-4' }: { className?: string }) {
+function IconSearch({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <circle cx="12" cy="8" r="7" />
-      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function IconX({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
 }
@@ -313,6 +423,36 @@ function getAvatarColors(name: string) {
   return colorSets[hash % colorSets.length];
 }
 
+function DirectoryEmployeePhoto({
+  name,
+  initials,
+  photoUrl,
+}: {
+  name: string;
+  initials: string;
+  photoUrl?: string;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  return (
+    <div className="w-20 h-20 rounded-full overflow-hidden mx-auto bg-surface-muted border-2 border-surface-raised shadow-xs shrink-0 flex items-center justify-center relative">
+      {!imgFailed && photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={name}
+          onError={() => setImgFailed(true)}
+          className="w-full h-full object-cover rounded-full"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center">
+          {initials}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function EmployeeDirectoryPage() {
   const {
     employees,
@@ -357,11 +497,9 @@ export function EmployeeDirectoryPage() {
   const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState<'all' | 'department' | 'designation' | 'hierarchy'>(
-    'all',
-  );
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Workforce Calculated Metrics
   const totalEmployees = meta.total || employees.length || 0;
@@ -414,7 +552,7 @@ export function EmployeeDirectoryPage() {
       `"${emp.firstName}"`,
       `"${emp.lastName}"`,
       `"${emp.email || ''}"`,
-      `"${emp.phone || ''}"`,
+      `"${emp.phone || 'Not provided'}"`,
       `"${emp.department?.name || ''}"`,
       `"${emp.designation?.title || ''}"`,
       `"${emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : ''}"`,
@@ -479,7 +617,7 @@ export function EmployeeDirectoryPage() {
 
   return (
     <div
-      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
+      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans"
       data-testid="employee-directory-page"
     >
       {/* Scoped CSS for Smooth Animations & Zero Hex Compliance */}
@@ -506,7 +644,7 @@ export function EmployeeDirectoryPage() {
       `}</style>
 
       {/* 1. Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 dir-fade-in">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 pb-2 dir-fade-in">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0 shadow-xs">
@@ -595,130 +733,69 @@ export function EmployeeDirectoryPage() {
         />
       </div>
 
-      {/* 3. Directory Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 dir-fade-in">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('all');
-            setDepartmentId(undefined);
-            setDesignationId(undefined);
-          }}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'all'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconUsers className="w-4 h-4" />
-          All Employees
-        </button>
+      {/* 3. Search Bar and View Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 dir-fade-in">
+        {/* Search Employee by Name or ID */}
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
+            <IconSearch className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            aria-label="Search employee by name or ID"
+            value={query.search || ''}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search employee by name, ID..."
+            className="w-full pl-10 pr-10 py-2.5 bg-surface border border-border rounded-xl text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-strong focus:border-primary-strong shadow-xs transition-colors"
+          />
+          {query.search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="min-w-[44px] absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer"
+            >
+              <IconX className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('department')}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'department'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconBuilding className="w-4 h-4" />
-          By Department
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('designation')}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'designation'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconAward className="w-4 h-4" />
-          By Designation
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/employees/org-chart')}
-          className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all ${
-            activeTab === 'hierarchy'
-              ? 'bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 shadow-xs'
-              : 'bg-surface/80 text-text-muted hover:text-text hover:bg-surface border border-border/80'
-          }`}
-        >
-          <IconNetwork className="w-4 h-4" />
-          Reporting Hierarchy
-        </button>
+        {/* View Switcher Toggle (matching Image 2) */}
+        <div className="flex items-center gap-1 bg-surface-raised border border-border/80 rounded-xl p-0.5 shadow-xs shrink-0 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            aria-label="List view"
+            className={`min-h-[44px] min-w-[44px] p-1.5 rounded-lg transition-colors cursor-pointer ${
+              viewMode === 'list'
+                ? 'bg-primary-soft text-primary-deep'
+                : 'text-text-muted hover:text-text hover:bg-surface-muted'
+            }`}
+          >
+            <IconList className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            aria-label="Grid view"
+            className={`min-h-[44px] min-w-[44px] p-1.5 rounded-lg transition-colors cursor-pointer ${
+              viewMode === 'grid'
+                ? 'bg-primary-soft text-primary-deep'
+                : 'text-text-muted hover:text-text hover:bg-surface-muted'
+            }`}
+          >
+            <IconGrid className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Quick Filter Bar for Department or Designation tabs */}
-      {activeTab === 'department' && (
-        <div className="flex items-center gap-2 overflow-x-auto p-2 bg-surface/80 border border-border/70 rounded-xl dir-fade-in">
-          <span className="text-xs font-bold text-text-muted px-2">Departments:</span>
-          <button
-            type="button"
-            onClick={() => setDepartmentId(undefined)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-              !query.departmentId
-                ? 'bg-primary-deep text-white'
-                : 'bg-surface text-text-muted hover:bg-surface-muted'
-            }`}
-          >
-            All
-          </button>
-          {departments.map((dept) => (
-            <button
-              key={dept.id}
-              type="button"
-              onClick={() => setDepartmentId(dept.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-                query.departmentId === dept.id
-                  ? 'bg-primary-deep text-white'
-                  : 'bg-surface text-text-muted hover:bg-surface-muted border border-border/60'
-              }`}
-            >
-              {dept.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'designation' && (
-        <div className="flex items-center gap-2 overflow-x-auto p-2 bg-surface/80 border border-border/70 rounded-xl dir-fade-in">
-          <span className="text-xs font-bold text-text-muted px-2">Designations:</span>
-          <button
-            type="button"
-            onClick={() => setDesignationId(undefined)}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-              !query.designationId
-                ? 'bg-primary-deep text-white'
-                : 'bg-surface text-text-muted hover:bg-surface-muted'
-            }`}
-          >
-            All
-          </button>
-          {designations.map((desig) => (
-            <button
-              key={desig.id}
-              type="button"
-              onClick={() => setDesignationId(desig.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors ${
-                query.designationId === desig.id
-                  ? 'bg-primary-deep text-white'
-                  : 'bg-surface text-text-muted hover:bg-surface-muted border border-border/60'
-              }`}
-            >
-              {desig.title}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* 4. Filter Controls with View Switcher */}
-      <div data-testid="employee-directory-filters" className="relative dir-fade-in">
+      <details
+        data-testid="employee-directory-filters"
+        className="rounded-control border border-border bg-surface p-3"
+      >
+        <summary className="min-h-[44px] flex items-center cursor-pointer text-sm font-medium text-text">
+          Filters
+        </summary>
         <EmployeeFilters
           search={query.search}
           status={query.status}
@@ -735,35 +812,7 @@ export function EmployeeDirectoryPage() {
           onManagerChange={setManagerId}
           onReset={resetFilters}
         />
-
-        {/* Floating View Switcher Toggle on Tablet/Desktop */}
-        <div className="hidden sm:flex items-center gap-1 absolute top-4 right-4 z-10 bg-surface border border-border/80 rounded-xl p-0.5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => setViewMode('list')}
-            aria-label="List view"
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'list'
-                ? 'bg-emerald-500/20 text-emerald-800'
-                : 'text-text-muted hover:text-text'
-            }`}
-          >
-            <IconList className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('grid')}
-            aria-label="Grid view"
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-emerald-500/20 text-emerald-800'
-                : 'text-text-muted hover:text-text'
-            }`}
-          >
-            <IconGrid className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      </details>
 
       {/* 5. Loading Skeleton */}
       {isLoading && (
@@ -847,173 +896,182 @@ export function EmployeeDirectoryPage() {
         </div>
       )}
 
-      {/* 8. Desktop & Tablet Views (>=640px) matching Image 2 Template */}
+      {/* 8. Desktop & Tablet Views (>=640px) Card Grid matching Image 2 */}
       {!isLoading && employees.length > 0 && viewMode === 'grid' && (
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 dir-fade-in">
+        <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 dir-fade-in relative">
           {employees.map((emp) => {
             const initials = `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
-            const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const percentages = [100, 82, 66, 100, 33, 48, 75, 90];
-            const progressPercent =
-              emp.status === 'active' ? (percentages[hash % percentages.length] ?? 82) : 33;
-            const activeSegments = progressPercent >= 100 ? 3 : progressPercent >= 66 ? 2 : 1;
             const isSelf = emp.id === user?.employeeId;
             const isDeactivated = emp.status === 'deactivated';
 
             return (
               <div
                 key={emp.id}
-                className="p-5 bg-surface border border-border/80 rounded-card shadow-card hover:shadow-lg transition-all duration-200 flex flex-col justify-between relative group"
+                className="p-6 bg-surface-raised border border-border/80 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative group"
                 data-testid={`employee-grid-card-${emp.id}`}
               >
-                {/* Top Bar: Status Badge + 3-Dots Quick Actions */}
-                <div className="flex items-center justify-between w-full mb-1">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                      emp.status === 'active'
-                        ? 'bg-emerald-500/10 text-emerald-700'
-                        : emp.status === 'pending'
-                          ? 'bg-amber-500/10 text-amber-700'
-                          : 'bg-rose-500/10 text-rose-700'
-                    }`}
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        emp.status === 'active'
-                          ? 'bg-emerald-500'
-                          : emp.status === 'pending'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                      }`}
-                    />
-                    {emp.status === 'active'
-                      ? 'Active'
-                      : emp.status === 'pending'
-                        ? 'Pending'
-                        : 'Deactivated'}
-                  </span>
+                {/* Top Bar: Status Badge + 3-Dots Action Menu */}
+                <div className="flex items-center justify-between w-full">
+                  {emp.status === 'active' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-positive-soft text-positive-ink">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-muted text-text-muted">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      {emp.status === 'pending' ? 'Pending' : 'Inactive'}
+                    </span>
+                  )}
 
-                  <div className="flex items-center gap-1">
+                  {/* Three-dot Action Menu */}
+                  <div className="relative">
                     <button
                       type="button"
-                      aria-label="View Details"
-                      onClick={() => navigate(`/employees/${emp.id}`)}
-                      className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
+                      onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
+                      aria-label={`Actions for ${emp.firstName} ${emp.lastName}`}
+                      aria-expanded={openMenuId === emp.id}
+                      className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
                     >
-                      <IconEye className="w-4 h-4" />
+                      <IconMoreVertical className="w-4 h-4" />
                     </button>
-                    {isAdmin && (
-                      <>
-                        {isSelf ? (
-                          <span className="text-xs text-text-subtle font-medium">
-                            (Current User)
-                          </span>
-                        ) : isDeactivated ? (
-                          <span className="text-xs text-text-subtle font-mono">Deactivated</span>
-                        ) : (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => setDeactivatingEmployee(emp)}
-                            data-testid={`deactivate-btn-table-${emp.id}`}
-                            className="min-h-[32px] text-[11px] px-2 py-0.5 ml-1"
+
+                    {openMenuId === emp.id && (
+                      <div
+                        className="absolute right-0 top-8 z-30 w-44 bg-surface-raised border border-border rounded-xl shadow-lg py-1 animate-in fade-in zoom-in-95"
+                        role="group"
+                        aria-label="Employee actions"
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') setOpenMenuId(null);
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenMenuId(null);
+                            navigate(`/employees/${emp.id}`);
+                          }}
+                          className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
+                        >
+                          <IconEye className="w-4 h-4 text-text-muted shrink-0" />
+                          <span>View Details</span>
+                        </button>
+
+                        {canCreateEmployee && !isDeactivated && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              navigate(`/employees/${emp.id}`);
+                            }}
+                            className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
                           >
-                            Deactivate
-                          </Button>
+                            <IconEditPencil className="w-4 h-4 text-text-muted shrink-0" />
+                            <span>Edit Employee</span>
+                          </button>
                         )}
-                      </>
+
+                        {isAdmin && !isSelf && !isDeactivated && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              setDeactivatingEmployee(emp);
+                            }}
+                            className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-danger hover:bg-negative-soft transition-colors text-left border-t border-border/60 cursor-pointer"
+                            data-testid={`deactivate-btn-table-${emp.id}`}
+                          >
+                            <IconPower className="w-4 h-4 text-danger shrink-0" />
+                            <span>Deactivate</span>
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Centered Avatar with Status Indicator Ring (Image 2 Reference) */}
-                <div className="flex flex-col items-center text-center mt-2">
-                  <div className="relative">
-                    <div
-                      className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center border-2 border-primary-strong/20 shadow-xs overflow-hidden"
-                      aria-hidden="true"
-                    >
-                      {initials}
-                    </div>
+                {/* Employee identity uses server-provided details and initials. */}
+                <div className="flex flex-col items-center text-center mt-3">
+                  <DirectoryEmployeePhoto
+                    name={`${emp.firstName} ${emp.lastName}`}
+                    initials={initials}
+                  />
 
-                    {/* Status Ring / Dot */}
-                    <span
-                      className={`absolute top-0 right-0 w-3.5 h-3.5 rounded-full ring-2 ring-surface ${
-                        emp.status === 'active'
-                          ? 'bg-emerald-500'
-                          : emp.status === 'pending'
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Centered Name */}
                   <a
                     href={`/employees/${emp.id}`}
                     onClick={(e) => {
                       e.preventDefault();
                       navigate(`/employees/${emp.id}`);
                     }}
-                    className="text-base font-bold font-display text-text hover:text-primary-deep hover:underline truncate max-w-[200px] mt-3 block"
                     data-testid={`employee-link-${emp.id}`}
+                    className="font-bold text-base sm:text-lg text-text hover:text-primary-deep transition-colors mt-3 block truncate max-w-[240px]"
                   >
                     {emp.firstName} {emp.lastName}
                   </a>
 
-                  {/* Centered Email */}
-                  <p className="text-xs text-text-muted truncate max-w-[220px] mt-0.5">
-                    {emp.email || '—'}
+                  <p className="text-xs sm:text-sm text-text-muted font-normal mt-0.5 truncate max-w-[240px]">
+                    {emp.designation?.title || 'Staff'}
                   </p>
 
-                  <span className="text-[11px] font-mono text-text-subtle mt-0.5">
-                    {emp.employeeCode}
-                  </span>
-
-                  {/* Centered Segmented Progress / Activity Bar (Image 2 Reference) */}
-                  <div className="flex items-center gap-2 mt-4 px-3 py-1 bg-surface-muted/50 rounded-full border border-border/50">
-                    <div className="w-3.5 h-3.5 rounded-full border border-primary-strong/60 flex items-center justify-center shrink-0">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary-strong" />
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          activeSegments >= 1 ? 'bg-primary-deep' : 'bg-border-strong'
-                        }`}
-                      />
-                      <span
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          activeSegments >= 2 ? 'bg-primary-deep' : 'bg-border-strong'
-                        }`}
-                      />
-                      <span
-                        className={`h-1.5 w-6 rounded-full transition-colors ${
-                          activeSegments >= 3 ? 'bg-primary-deep' : 'bg-border-strong'
-                        }`}
-                      />
-                    </div>
-
-                    <span className="text-[11px] font-semibold text-text-muted ml-0.5">
-                      {progressPercent}%
-                    </span>
-                  </div>
+                  <p className="text-xs text-text-subtle font-normal mt-0.5 truncate max-w-[240px]">
+                    {emp.department?.name || 'MAXR Team'}
+                  </p>
                 </div>
 
-                {/* Bottom Full-Width Strip: Uppercase Designation & Department (Image 2 Reference) */}
-                <div className="pt-3 mt-4 border-t border-border/70 text-center">
-                  <span className="text-[11px] font-bold tracking-widest text-text-subtle uppercase block truncate">
-                    {emp.designation?.title || 'STAFF'}
-                  </span>
-                  {emp.department?.name && (
-                    <span className="text-[11px] text-text-muted block truncate mt-0.5">
-                      {emp.department.name}
+                {/* Thin Horizontal Divider */}
+                <div className="border-t border-border/80 my-4 w-full" />
+
+                {/* 3 Key-Value Meta Rows */}
+                <div className="space-y-2.5 w-full text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-text-muted">
+                      <IconIdBadge className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <span>Employee ID</span>
                     </span>
-                  )}
+                    <span className="font-semibold text-text tracking-tight truncate max-w-[150px]">
+                      {emp.employeeCode}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-text-muted">
+                      <IconPhone className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <span>Phone Number</span>
+                    </span>
+                    <a
+                      href={emp.phone ? `tel:${emp.phone}` : undefined}
+                      className="font-semibold text-text tracking-tight truncate max-w-[150px] hover:text-primary-deep transition-colors"
+                    >
+                      {emp.phone || 'Not provided'}
+                    </a>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-text-muted">
+                      <IconMail className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <span>Email</span>
+                    </span>
+                    <a
+                      href={`mailto:${emp.email}`}
+                      className="font-medium text-text truncate max-w-[150px] sm:max-w-[170px] hover:text-primary-deep transition-colors"
+                      title={emp.email}
+                    >
+                      {emp.email}
+                    </a>
+                  </div>
                 </div>
               </div>
             );
           })}
+
+          {/* Click outside to close open three-dot menu */}
+          {openMenuId && (
+            <div
+              className="fixed inset-0 z-20 cursor-default"
+              onClick={() => setOpenMenuId(null)}
+              aria-hidden="true"
+            />
+          )}
         </div>
       )}
 
@@ -1245,7 +1303,7 @@ export function EmployeeDirectoryPage() {
                             type="button"
                             aria-label={`View ${emp.firstName} ${emp.lastName}`}
                             onClick={() => navigate(`/employees/${emp.id}`)}
-                            className="p-1.5 text-text-muted hover:text-primary-deep rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
+                            className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-primary-deep rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
                           >
                             <IconEye className="w-4 h-4" />
                           </button>
@@ -1254,7 +1312,7 @@ export function EmployeeDirectoryPage() {
                             type="button"
                             aria-label={`Edit ${emp.firstName} ${emp.lastName}`}
                             onClick={() => navigate(`/employees/${emp.id}`)}
-                            className="p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
+                            className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
                           >
                             <IconEditPencil className="w-4 h-4" />
                           </button>

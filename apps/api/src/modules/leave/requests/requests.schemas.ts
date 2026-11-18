@@ -20,6 +20,7 @@ export const leaveRequestIdParamsSchema = z.object({ id: z.string().uuid() }).st
 export const applyForLeaveSchema = z
   .object({
     leaveTypeId: z.string().uuid(),
+    approverRole: z.enum(['hr_manager', 'team_lead', 'admin']).optional(),
     startDate: calendarDate,
     endDate: calendarDate,
     halfDay: z.boolean().default(false),

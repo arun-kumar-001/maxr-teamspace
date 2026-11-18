@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const leaveApprovalSettingsSchema = z
+  .object({
+    approverRole: z.enum(['hr_manager', 'team_lead']),
+    version: z.number().int().min(1),
+  })
+  .strict();
+
 /** Days come in whole or half steps, as the database CHECKs require. */
 const days = z
   .number()

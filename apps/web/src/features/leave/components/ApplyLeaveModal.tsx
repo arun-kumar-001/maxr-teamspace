@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
-import { Modal, Button, FormField } from '../../../components/ui';
+import { Modal, Button, FormField, Select } from '../../../components/ui';
+import { fetchLeaveApprovalRoute } from '../api/leave';
+import type { LeaveApprovalRoute } from '../types';
 
 export interface ApplyLeaveModalProps {
   isOpen: boolean;
@@ -112,6 +114,27 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [approvalRoute, setApprovalRoute] = useState<LeaveApprovalRoute | null>(null);
+  const [approverRole, setApproverRole] = useState<'hr_manager' | 'team_lead' | 'admin' | ''>('');
+  const [routeError, setRouteError] = useState(false);
+  const [routeRetry, setRouteRetry] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    setApprovalRoute(null);
+    setApproverRole('');
+    setRouteError(false);
+    void fetchLeaveApprovalRoute(controller.signal).then(
+      (route) => {
+        if (!controller.signal.aborted) setApprovalRoute(route);
+      },
+      () => {
+        if (!controller.signal.aborted) setRouteError(true);
+      },
+    );
+    return () => controller.abort();
+  }, [isOpen, routeRetry]);
 
   // Set default selected policy and reset inputs when modal opens
   useEffect(() => {
@@ -299,7 +322,12 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     try {
       setIsSubmitting(true);
       setError(null);
+      if (!approverRole || !approvalRoute?.approverRoles?.includes(approverRole)) {
+        setError('Select who should approve your leave request.');
+        return;
+      }
       await onSubmit({
+        approverRole,
         leaveTypeId,
         startDate,
         endDate,
@@ -406,7 +434,9 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
             type="button"
             variant="primary"
             onClick={handleSubmit}
-            disabled={isSubmitting || estimatedDays === 0}
+            disabled={
+              isSubmitting || estimatedDays === 0 || !approverRole || routeError || !approvalRoute
+            }
             data-testid="submit-leave-request-btn"
             className="min-h-[44px]"
           >
@@ -416,6 +446,46 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4 py-2" data-testid="apply-leave-form">
+        <div
+          className="rounded-control border border-border bg-surface-muted p-3"
+          aria-live="polite"
+        >
+          <FormField htmlFor="leave-approver" label="Send request to" required>
+            <Select
+              id="leave-approver"
+              value={approverRole}
+              required
+              placeholder={!approvalRoute && !routeError ? 'Loading approvers…' : 'Select approver'}
+              options={(approvalRoute?.approverRoles ?? []).map((role) => ({
+                value: role,
+                label: { hr_manager: 'HR Manager', team_lead: 'Team Lead', admin: 'Admin' }[role],
+              }))}
+              disabled={isSubmitting || !approvalRoute || routeError}
+              onChange={(event) => {
+                setApproverRole(event.target.value as typeof approverRole);
+                setError(null);
+              }}
+            />
+          </FormField>
+          {routeError ? (
+            <div>
+              <p role="alert" className="text-sm text-danger">
+                Could not load your approver.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRouteRetry((value) => value + 1)}
+              >
+                Retry approver
+              </Button>
+            </div>
+          ) : null}
+          <p className="mt-1 text-xs text-text-subtle">
+            Choose who should approve this leave request. Team Lead is available when an active Team
+            Lead is assigned. HR leave goes to Admin.
+          </p>
+        </div>
         {error && (
           <div
             className="p-3 rounded-control bg-rose-50 border border-rose-200 text-xs text-rose-800"
