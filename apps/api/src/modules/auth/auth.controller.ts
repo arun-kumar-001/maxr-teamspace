@@ -3,7 +3,7 @@ import { unauthorized } from '../../http/errors';
 import { validated } from '../../http/validate';
 import { AuthConfig } from './auth-config';
 import { LoginLockedError, AuthService } from './auth.service';
-import { changePasswordSchema, loginSchema } from './auth.schemas';
+import { changePasswordSchema, loginSchema, verifyPasswordSchema } from './auth.schemas';
 import { RequestMeta } from './auth.types';
 import { sessionCookieOptions } from './authenticate';
 
@@ -60,5 +60,12 @@ export class AuthController {
     const { actor, session } = this.current(req);
     await this.service.changePassword(actor.id, session.tokenHash, body, this.meta(req));
     res.status(204).end();
+  };
+
+  verifyPassword = async (req: Request, res: Response): Promise<void> => {
+    const { body } = validated(req, { body: verifyPasswordSchema });
+    const { actor } = this.current(req);
+    await this.service.verifyPassword(actor.id, body.password, this.meta(req));
+    res.status(200).json({ data: { verified: true } });
   };
 }

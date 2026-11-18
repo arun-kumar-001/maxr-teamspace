@@ -17,6 +17,12 @@ export const changePasswordSchema = z
   })
   .strict();
 
+export const verifyPasswordSchema = z
+  .object({
+    password: z.string().min(1).max(AUTH_MAX_PASSWORD),
+  })
+  .strict();
+
 const role = z.enum(['admin', 'hr_manager', 'team_lead', 'staff']);
 
 export const profileSchema = z
