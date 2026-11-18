@@ -34,7 +34,7 @@ export interface StaleApproval {
   approvalId: string;
   subjectType: string;
   requesterEmployeeId: string;
-  stage: 'manager' | 'hr';
+  stage: 'manager' | 'hr' | 'admin';
 }
 
 /** An open task that is due within the reminder window or recently overdue. */

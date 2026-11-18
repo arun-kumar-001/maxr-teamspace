@@ -16,6 +16,7 @@ import { LeaveManagementPage } from '../pages/LeaveManagementPage';
 import * as leaveApi from '../api/leave';
 
 vi.mock('../api/leave', () => ({
+  fetchLeaveApprovalRoute: vi.fn(),
   fetchLeavePolicies: vi.fn(),
   createLeavePolicy: vi.fn(),
   updateLeavePolicy: vi.fn(),
@@ -155,6 +156,9 @@ const mockCalendarEntries: LeaveCalendarEntry[] = [
 describe('Leave Application & Management Suite (Issue #39)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(leaveApi.fetchLeaveApprovalRoute).mockResolvedValue({
+      approverRoles: ['hr_manager', 'team_lead', 'admin'],
+    });
   });
 
   afterEach(() => {
@@ -162,6 +166,52 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
   });
 
   describe('ApplyLeaveModal', () => {
+    it.each([
+      ['hr_manager', 'HR Manager'],
+      ['team_lead', 'Team Lead'],
+      ['admin', 'Admin'],
+    ] as const)('submits the manually selected %s approver', async (stage, label) => {
+      vi.mocked(leaveApi.fetchLeaveApprovalRoute).mockResolvedValue({ approverRoles: [stage] });
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      render(
+        <ApplyLeaveModal
+          isOpen
+          onClose={vi.fn()}
+          policies={mockPolicies}
+          balances={mockBalances}
+          holidays={mockHolidays}
+          onSubmit={onSubmit}
+        />,
+      );
+      const select = screen.getByRole('combobox', { name: 'Send request to' });
+      await screen.findByRole('option', { name: label });
+      expect(select).toHaveValue('');
+      expect(screen.getByTestId('submit-leave-request-btn')).toBeDisabled();
+      fireEvent.change(select, { target: { value: stage } });
+      fireEvent.click(screen.getByTestId('submit-leave-request-btn'));
+      await waitFor(() =>
+        expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ approverRole: stage })),
+      );
+    });
+
+    it('shows an approver error and lets the employee retry', async () => {
+      vi.mocked(leaveApi.fetchLeaveApprovalRoute).mockRejectedValueOnce(new Error('Network error'));
+      render(
+        <ApplyLeaveModal
+          isOpen
+          onClose={vi.fn()}
+          policies={mockPolicies}
+          balances={mockBalances}
+          holidays={mockHolidays}
+          onSubmit={vi.fn()}
+        />,
+      );
+      expect(await screen.findByText('Could not load your approver.')).toBeInTheDocument();
+      expect(screen.queryByText('HR Manager')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Retry approver' }));
+      expect(await screen.findByText('HR Manager')).toBeInTheDocument();
+    });
+
     it('validates dates, insufficient balance, and submits valid leave application', async () => {
       const onSubmit = vi.fn().mockResolvedValue(undefined);
       const onClose = vi.fn();
@@ -178,6 +228,10 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       );
 
       expect(screen.getByText('Apply for Leave')).toBeInTheDocument();
+      await screen.findByRole('option', { name: 'HR Manager' });
+      fireEvent.change(screen.getByRole('combobox', { name: 'Send request to' }), {
+        target: { value: 'hr_manager' },
+      });
 
       // Check balance limit: Select SICK which has 2 days remaining
       const policySelect = screen.getByLabelText('Select Leave Type');
@@ -209,6 +263,7 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
 
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledWith({
+          approverRole: 'hr_manager',
           leaveTypeId: 'pol-001',
           startDate: '2026-11-16',
           endDate: '2026-11-20',
@@ -234,6 +289,10 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
         />,
       );
 
+      await screen.findByRole('option', { name: 'HR Manager' });
+      fireEvent.change(screen.getByRole('combobox', { name: 'Send request to' }), {
+        target: { value: 'hr_manager' },
+      });
       const halfDayToggle = screen.getByTestId('apply-half-day-toggle');
       fireEvent.click(halfDayToggle);
 
@@ -248,6 +307,7 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
 
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledWith({
+          approverRole: 'hr_manager',
           leaveTypeId: 'pol-001',
           startDate: '2026-11-17',
           endDate: '2026-11-17',

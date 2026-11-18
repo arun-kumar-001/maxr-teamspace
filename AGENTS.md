@@ -187,6 +187,8 @@ Rules:
 
 Choose verification from the actual diff and its consumers. Batch related edits into a coherent change, then run the applicable checks once before reporting completion. This section governs local verification timing, including where older development docs request the full CI sequence before every push.
 
+Before each verification command, check the task's existing results and identify the changed input or uncovered behavior that requires the command. Keep a compact task-local record of scope, command, code revision and result. A repeated command requires changed inputs, a failed check being investigated, or a documented environment difference. Use this record across follow-up requests to commit, push, create a PR and deploy.
+
 | Change impact                                                        | Required local verification                                                                                                                                                                                          |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Documentation only                                                   | Review accuracy, links and diff. Check formatting on changed documents.                                                                                                                                              |
@@ -203,14 +205,17 @@ Choose verification from the actual diff and its consumers. Batch related edits 
 - Run independent checks concurrently when safe. Keep builds and dependent checks ordered. Reuse existing dependencies and database services. Run clean installs when lockfile/dependency state or reproducibility requires them.
 - Use targeted E2E for changed critical flows (login, check-in/out, leave apply/approve, employee create). New pages, shared layout changes and responsive regressions receive phone/tablet/desktop checks. Complete the nine reference viewports before merge for new pages and shared shell/layout changes.
 - Bug fixes start with a reproducer. Add a failing regression test for behavior bugs, then verify the fix. Visual-only defects may use a reproducible screenshot/browser check. Add tests for new business rules and meaningful uncovered behavior.
-- Run the full project suite locally when preparing a release/deployment, when explicitly requested, or when a broad change has dependencies that targeted checks cannot adequately cover. During routine development, use the applicable checks above.
+- Local full-suite runs require an explicit user request, unavailable CI at a required merge/release gate, or a concrete cross-feature dependency gap that targeted checks cannot cover. Identify that gap before starting the command. Use targeted local checks followed by CI for normal PR and release preparation.
+- Before invoking a root script, inspect its constituent commands. Select affected workspace commands and reuse completed prerequisites. Schedule CPU-heavy test suites and builds with bounded concurrency to avoid resource-contention timeouts.
 - Fix failures caused by the change. Report pre-existing failures and unavailable checks with their impact. Do not skip, disable or loosen tests to get green. Completion reports state what passed and what remains unverified.
 
 ### PR and release gates
 
 Every PR must pass the required CI checks defined in `.github/workflows/ci.yml` and ADR D-09. CI provides full-workspace typecheck, lint/format, production builds, unit tests, PostgreSQL integration tests, migration/seed verification, dependency audit and secret scanning. PR evidence includes the relevant local checks and CI results. Run the required gates locally when CI is unavailable before merge or deployment.
 
-Before deployment, verify the release candidate's full suite and required CI results, plus changed critical flows and migrations. Successful checks may be reused for the exact same code and relevant environment. Confirm deployment health and smoke-test affected flows after deployment. Security, authorization, data integrity and responsive behavior remain acceptance requirements.
+Full Playwright E2E runs belong to final deployment, not routine pushes or PRs (TL decision, 2026-11-18). `.github/workflows/e2e.yml` can run manually and is a required predecessor of the Deploy job. Use targeted local browser checks when a changed critical interaction or layout needs them; do not start the full E2E suite for routine integration or main merges.
+
+Before deployment, use the required CI results for the exact release revision as full-suite evidence. Check the commit and results before starting additional verification. Reuse successful checks for the same code and relevant environment. Run additional checks for documented deployment-specific gaps, including configuration and migration compatibility. Build required deployment artifacts, apply migrations and confirm deployment health with affected-flow smoke checks. Security, authorization, data integrity and responsive behavior remain acceptance requirements.
 
 ## 11. Git, commits and PRs
 

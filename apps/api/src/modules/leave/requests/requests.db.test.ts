@@ -7,7 +7,6 @@ import { createTestPlatform } from '../../../platform';
 import { SqlAuditStore } from '../../../platform/audit/sql-audit-store';
 import { PgApprovalsRepository } from '../../approvals/approvals.repository';
 import { ApprovalCaller, ApprovalsService } from '../../approvals/approvals.service';
-import { toScopeFilter } from '../../rbac';
 import { PgHolidaysRepository } from '../holidays/holidays.repository';
 import { HolidaysService } from '../holidays/holidays.service';
 import { PgLeavePoliciesRepository } from '../policies/policies.repository';
@@ -17,8 +16,8 @@ import { PgLeaveRequestsRepository } from './requests.repository';
 import { LeaveCaller, LeaveRequestsService } from './requests.service';
 import type { LeaveRequestStatus } from './requests.types';
 
-const ANNUAL = '71000000-0000-4000-8000-000000000001';
-const UNPAID = '71000000-0000-4000-8000-000000000004';
+const ANNUAL = randomUUID();
+const UNPAID = randomUUID();
 const YEAR = 2090;
 
 /**
@@ -30,7 +29,18 @@ const YEAR = 2090;
 describe('leave requests against PostgreSQL', () => {
   const pool = getPool();
   const run = randomUUID().slice(0, 8);
-  const ids = { dept: '', desig: '', manager: '', requester: '', hr: '', user: '' };
+  const ids: Record<
+    'dept' | 'desig' | 'manager' | 'requester' | 'hr' | 'user' | 'managerUser',
+    string
+  > = {
+    dept: randomUUID(),
+    desig: randomUUID(),
+    manager: randomUUID(),
+    requester: randomUUID(),
+    hr: randomUUID(),
+    user: randomUUID(),
+    managerUser: randomUUID(),
+  };
   let failAfterDeduct = false;
   let failOnCancel = false;
 
@@ -83,19 +93,25 @@ describe('leave requests against PostgreSQL', () => {
   const hrScope = { kind: 'all' } as const;
 
   const requesterCaller = (): LeaveCaller => ({ actorId: randomUUID(), employeeId: ids.requester });
-  const managerCaller = (): ApprovalCaller => ({
+  const hrCaller = (): ApprovalCaller => ({
     actorId: randomUUID(),
-    employeeId: ids.manager,
-    roles: [ROLES.TEAM_LEAD],
+    employeeId: ids.hr,
+    roles: [ROLES.HR_MANAGER],
   });
-  const teamFilter = () => toScopeFilter('team', { employeeId: ids.manager });
   const approve = (approvalId: string) =>
-    approvals.decide(approvalId, 'approved', undefined, managerCaller(), teamFilter());
+    approvals.decide(approvalId, 'approved', undefined, hrCaller(), hrScope);
   const reject = (approvalId: string) =>
-    approvals.decide(approvalId, 'rejected', 'No', managerCaller(), teamFilter());
+    approvals.decide(approvalId, 'rejected', 'No', hrCaller(), hrScope);
   const apply = (startDate: string, endDate: string, extra: object = {}) =>
     service.request(
-      { leaveTypeId: ANNUAL, startDate, endDate, halfDay: false, ...extra },
+      {
+        approverRole: 'hr_manager',
+        leaveTypeId: ANNUAL,
+        startDate,
+        endDate,
+        halfDay: false,
+        ...extra,
+      },
       requesterCaller(),
     );
 
@@ -120,6 +136,19 @@ describe('leave requests against PostgreSQL', () => {
     );
 
   beforeAll(async () => {
+    for (const [id, code, hasBalance] of [
+      [ANNUAL, 'ANNUAL', true],
+      [UNPAID, 'UNPAID', false],
+    ] as const) {
+      await pool.query(
+        `INSERT INTO leave_types (id, code, name, has_balance) VALUES ($1, $2, $3, $4)`,
+        [id, `LR_${run.toUpperCase()}_${code}`, `Leave request test ${run} ${code}`, hasBalance],
+      );
+      await pool.query(
+        `INSERT INTO leave_policies (leave_type_id, annual_days, carry_forward_max, allow_half_day, max_backdate_days) VALUES ($1, $2, 0, true, 0)`,
+        [id, hasBalance ? 18 : 0],
+      );
+    }
     const dept = await pool.query<{ id: string }>(
       `INSERT INTO departments (name, code) VALUES ($1, $2) RETURNING id`,
       [`LeaveReq ${run}`, `LR-${run}`],
@@ -148,6 +177,15 @@ describe('leave requests against PostgreSQL', () => {
     ids.manager = await add('manager');
     ids.hr = await add('hr');
     ids.requester = await add('requester', ids.manager);
+    const managerUser = await pool.query<{ id: string }>(
+      `INSERT INTO users (employee_id, email, password_hash) VALUES ($1, $2, 'x') RETURNING id`,
+      [ids.manager, `manager-${run}@leavereq.test`],
+    );
+    ids.managerUser = managerUser.rows[0]?.id ?? '';
+    await pool.query(
+      `INSERT INTO user_roles (user_id, role_id) SELECT $1, id FROM roles WHERE key = $2`,
+      [ids.managerUser, ROLES.TEAM_LEAD],
+    );
     const user = await pool.query<{ id: string }>(
       `INSERT INTO users (employee_id, email, password_hash) VALUES ($1, $2, 'x') RETURNING id`,
       [ids.requester, `requester-${run}@leavereq.test`],
@@ -166,6 +204,7 @@ describe('leave requests against PostgreSQL', () => {
   beforeEach(async () => {
     failAfterDeduct = false;
     failOnCancel = false;
+    await pool.query(`UPDATE users SET is_active = true WHERE id = $1`, [ids.managerUser]);
     await pool.query(`DELETE FROM approvals WHERE requester_employee_id = $1`, [ids.requester]);
     await pool.query(`DELETE FROM leave_requests WHERE employee_id = $1`, [ids.requester]);
     await pool.query(`DELETE FROM leave_balances WHERE employee_id = $1`, [ids.requester]);
@@ -180,12 +219,16 @@ describe('leave requests against PostgreSQL', () => {
     await pool.query(`DELETE FROM leave_requests WHERE employee_id = $1`, [ids.requester]);
     await pool.query(`DELETE FROM leave_balances WHERE employee_id = $1`, [ids.requester]);
     await pool.query(`DELETE FROM holidays WHERE holiday_date = '2090-01-10'`);
-    await pool.query(`DELETE FROM users WHERE id = $1`, [ids.user]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1::uuid[])`, [[ids.user, ids.managerUser]]);
     await pool.query(`DELETE FROM employees WHERE id = ANY($1::uuid[])`, [
       [ids.requester, ids.manager, ids.hr],
     ]);
     await pool.query(`DELETE FROM designations WHERE id = $1`, [ids.desig]);
     await pool.query(`DELETE FROM departments WHERE id = $1`, [ids.dept]);
+    await pool.query(`DELETE FROM leave_policies WHERE leave_type_id = ANY($1::uuid[])`, [
+      [ANNUAL, UNPAID],
+    ]);
+    await pool.query(`DELETE FROM leave_types WHERE id = ANY($1::uuid[])`, [[ANNUAL, UNPAID]]);
     await closePool();
   });
 
@@ -196,6 +239,53 @@ describe('leave requests against PostgreSQL', () => {
     expect(created.approvalId).toEqual(expect.any(String));
     expect(await statusOf(created.id)).toBe('pending');
     expect(Number((await balance())?.used)).toBe(0); // nothing is deducted before approval
+  });
+
+  it.each(['hr_manager', 'admin', 'team_lead'] as const)(
+    'persists the selected %s route in PostgreSQL',
+    async (approverRole) => {
+      const created = await apply('2090-01-02', '2090-01-03', { approverRole });
+      const result = await pool.query<{ stages: string[] }>(
+        `SELECT stages FROM approvals WHERE id = $1`,
+        [created.approvalId],
+      );
+      expect(result.rows[0]?.stages).toEqual([
+        { hr_manager: 'hr', team_lead: 'manager', admin: 'admin' }[approverRole],
+      ]);
+      if (approverRole === 'team_lead') {
+        await approvals.decide(
+          created.approvalId as string,
+          'approved',
+          undefined,
+          { actorId: ids.managerUser, employeeId: ids.manager, roles: [ROLES.TEAM_LEAD] },
+          { kind: 'team', managerId: ids.manager },
+        );
+        expect(await statusOf(created.id)).toBe('approved');
+        expect(Number((await balance())?.used)).toBe(2);
+      }
+    },
+  );
+
+  it('rejects a stale TL choice after its user is deactivated and rolls back all writes', async () => {
+    expect((await service.approvalRoute(requesterCaller())).approverRoles).toContain('team_lead');
+    await pool.query(`UPDATE users SET is_active = false WHERE id = $1`, [ids.managerUser]);
+    expect((await service.approvalRoute(requesterCaller())).approverRoles).not.toContain(
+      'team_lead',
+    );
+    await expect(
+      apply('2090-01-02', '2090-01-03', { approverRole: 'team_lead' }),
+    ).rejects.toMatchObject({ statusCode: 422 });
+    expect(
+      (await pool.query(`SELECT id FROM leave_requests WHERE employee_id = $1`, [ids.requester]))
+        .rowCount,
+    ).toBe(0);
+    expect(
+      (
+        await pool.query(`SELECT id FROM approvals WHERE requester_employee_id = $1`, [
+          ids.requester,
+        ])
+      ).rowCount,
+    ).toBe(0);
   });
 
   it('approval deducts in the same transaction, once, with a before/after audit entry', async () => {
@@ -329,7 +419,13 @@ describe('leave requests against PostgreSQL', () => {
 
   it('a type without a balance needs no balance row and deducts nothing', async () => {
     const created = await service.request(
-      { leaveTypeId: UNPAID, startDate: '2090-01-02', endDate: '2090-01-06', halfDay: false },
+      {
+        approverRole: 'hr_manager',
+        leaveTypeId: UNPAID,
+        startDate: '2090-01-02',
+        endDate: '2090-01-06',
+        halfDay: false,
+      },
       requesterCaller(),
     );
     expect(created.days).toBe(5);
@@ -354,7 +450,13 @@ describe('leave requests against PostgreSQL', () => {
     expect(await insert('2090-01-02', '2090-01-02', 0.5, true)).toBeNull();
     await expect(
       service.request(
-        { leaveTypeId: ANNUAL, startDate: '2091-01-05', endDate: '2091-01-05', halfDay: false },
+        {
+          approverRole: 'hr_manager',
+          leaveTypeId: ANNUAL,
+          startDate: '2091-01-05',
+          endDate: '2091-01-05',
+          halfDay: false,
+        },
         requesterCaller(),
       ),
     ).rejects.toMatchObject({ statusCode: 422 });

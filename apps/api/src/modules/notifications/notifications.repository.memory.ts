@@ -18,6 +18,7 @@ export interface MemoryEmployee {
   email: string;
   managerId: string | null;
   isHrApprover: boolean;
+  roles?: readonly string[];
   active: boolean;
 }
 
@@ -131,9 +132,18 @@ export class MemoryNotificationsRepository implements INotificationsRepository {
     return managerId ? this.recipient(managerId) : null;
   }
 
-  async findHrApprovers(excludeEmployeeId: string): Promise<Recipient[]> {
+  async findHrApprovers(
+    excludeEmployeeId: string,
+    role?: 'hr_manager' | 'admin',
+  ): Promise<Recipient[]> {
     return Object.entries(this.employees)
-      .filter(([id, e]) => e.isHrApprover && e.active && id !== excludeEmployeeId)
+      .filter(
+        ([id, e]) =>
+          e.isHrApprover &&
+          e.active &&
+          id !== excludeEmployeeId &&
+          (!role || (e.roles ?? ['hr_manager']).includes(role)),
+      )
       .map(([id, e]) => ({ employeeId: id, email: e.email }));
   }
 

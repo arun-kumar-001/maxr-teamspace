@@ -48,7 +48,7 @@ function build() {
     });
   }
   const handler: ApprovalHandler & { fail?: Error } = {
-    subjectType: 'leave_request',
+    subjectType: 'attendance_correction',
     async apply(_tx, approval, outcome, decider) {
       if (handler.fail) throw handler.fail;
       applied.push({ outcome, by: decider.employeeId, subjectId: approval.subjectId });
@@ -65,7 +65,7 @@ async function submit(
 ): Promise<Approval> {
   return ctx.repo.transaction((tx) =>
     ctx.service.submit(tx, {
-      subjectType: 'leave_request',
+      subjectType: 'attendance_correction',
       subjectId,
       requesterEmployeeId: E.staff,
       stages,
@@ -105,7 +105,7 @@ describe('defaultRoute (D-12, D-17)', () => {
 describe('who may decide the current step', () => {
   const base: Approval = {
     id: 'a',
-    subjectType: 'leave_request',
+    subjectType: 'attendance_correction',
     subjectId: 's',
     requesterEmployeeId: E.staff,
     requesterName: 'Sam',
@@ -176,7 +176,7 @@ describe('ApprovalsService.decide', () => {
       entityId: a.id,
       actorId: lead.actorId,
       changes: { status: { from: 'pending', to: 'approved' }, stage: 0 },
-      metadata: { subjectType: 'leave_request', commentProvided: true },
+      metadata: { subjectType: 'attendance_correction', commentProvided: true },
     });
     expect(JSON.stringify(entry)).not.toContain('"ok"');
   });
@@ -317,7 +317,7 @@ describe('ApprovalsService.submit and cancel', () => {
   it('refuses a second handler for the same subject type', () => {
     const ctx = build();
     expect(() =>
-      ctx.service.registerHandler({ subjectType: 'leave_request', apply: async () => {} }),
+      ctx.service.registerHandler({ subjectType: 'attendance_correction', apply: async () => {} }),
     ).toThrow(/already registered/);
   });
 
@@ -333,7 +333,7 @@ describe('ApprovalsService.submit and cancel', () => {
     const ctx = build();
     const a = await submit(ctx, ['manager']);
     const cancelled = await ctx.repo.transaction((tx) =>
-      ctx.service.cancel(tx, 'leave_request', a.subjectId),
+      ctx.service.cancel(tx, 'attendance_correction', a.subjectId),
     );
     expect(cancelled?.status).toBe('cancelled');
     await expect(
@@ -341,13 +341,15 @@ describe('ApprovalsService.submit and cancel', () => {
     ).rejects.toMatchObject({ statusCode: 409 });
 
     expect(
-      await ctx.repo.transaction((tx) => ctx.service.cancel(tx, 'leave_request', 'no-such')),
+      await ctx.repo.transaction((tx) =>
+        ctx.service.cancel(tx, 'attendance_correction', 'no-such'),
+      ),
     ).toBeNull();
 
     const b = await submit(ctx, ['manager'], '00000000-0000-4000-8000-000000000002');
     await ctx.service.decide(b.id, 'approved', undefined, lead, teamOf(lead));
     await expect(
-      ctx.repo.transaction((tx) => ctx.service.cancel(tx, 'leave_request', b.subjectId)),
+      ctx.repo.transaction((tx) => ctx.service.cancel(tx, 'attendance_correction', b.subjectId)),
     ).rejects.toMatchObject({ statusCode: 409 });
   });
 });

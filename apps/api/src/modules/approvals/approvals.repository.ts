@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
+import { ROLES, type Role } from '@maxr/shared';
 import { ScopeFilter, scopeToSql } from '../rbac';
 import {
   Approval,
@@ -16,7 +17,7 @@ export interface FindApprovalsParams {
   status?: ApprovalStatus;
   subjectType?: string;
   /** Set for `awaitingMyDecision`: the caller and whether they may decide the `hr` stage. */
-  awaiting?: { employeeId: string; hr: boolean };
+  awaiting?: { employeeId: string; roles: readonly Role[] };
   offset: number;
   limit: number;
 }
@@ -118,8 +119,15 @@ export class PgApprovalsRepository implements IApprovalsRepository {
   }
 
   async getRequesterContext(tx: ApprovalTx, employeeId: string) {
-    const res = await tx.query<{ manager_id: string | null; roles: string[] }>(
+    const res = await tx.query<{
+      manager_id: string | null;
+      roles: string[];
+      manager_is_team_lead: boolean;
+    }>(
       `SELECT e.manager_id,
+              EXISTS (SELECT 1 FROM employees m JOIN users mu ON mu.employee_id = m.id AND mu.is_active
+                JOIN user_roles mur ON mur.user_id = mu.id JOIN roles mr ON mr.id = mur.role_id
+                WHERE m.id = e.manager_id AND m.status = 'active' AND mr.key = 'team_lead') AS manager_is_team_lead,
               COALESCE(array_agg(ro.key) FILTER (WHERE ro.key IS NOT NULL), '{}') AS roles
          FROM employees e
          LEFT JOIN users u ON u.employee_id = e.id
@@ -131,7 +139,11 @@ export class PgApprovalsRepository implements IApprovalsRepository {
     );
     const row = res.rows[0];
     return row
-      ? { managerId: row.manager_id, roles: row.roles as RequesterContext['roles'] }
+      ? {
+          managerId: row.manager_id,
+          roles: row.roles as RequesterContext['roles'],
+          managerIsTeamLead: row.manager_is_team_lead,
+        }
       : null;
   }
 
@@ -168,13 +180,18 @@ export class PgApprovalsRepository implements IApprovalsRepository {
     if (params.subjectType) conditions.push(`a.subject_type = ${param(params.subjectType)}`);
     if (params.awaiting) {
       const me = param(params.awaiting.employeeId);
-      const hr = param(params.awaiting.hr);
+      const hr = param(params.awaiting.roles.includes(ROLES.HR_MANAGER));
+      const admin = param(params.awaiting.roles.includes(ROLES.ADMIN));
+      const lead = param(params.awaiting.roles.includes(ROLES.TEAM_LEAD));
       conditions.push(
         `a.status = 'pending' AND a.requester_employee_id <> ${me}
          AND NOT EXISTS (SELECT 1 FROM approval_decisions d
                           WHERE d.approval_id = a.id AND d.decided_by_employee_id = ${me})
-         AND ((a.stages[a.current_stage + 1] = 'manager' AND r.manager_id = ${me})
-           OR (a.stages[a.current_stage + 1] = 'hr' AND ${hr}::boolean))`,
+         AND ((a.stages[a.current_stage + 1] = 'manager' AND r.manager_id = ${me}
+                AND (a.subject_type <> 'leave_request' OR ${lead}::boolean))
+           OR (a.stages[a.current_stage + 1] = 'hr' AND
+                (${hr}::boolean OR (a.subject_type <> 'leave_request' AND ${admin}::boolean)))
+           OR (a.stages[a.current_stage + 1] = 'admin' AND ${admin}::boolean))`,
       );
     }
     const where = `WHERE ${conditions.join(' AND ')}`;

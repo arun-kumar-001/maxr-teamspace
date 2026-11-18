@@ -6,21 +6,22 @@ Issue #37 (backend; the inbox UI is Dev 2's). One engine decides requests for ev
 
 An approval belongs to one subject (`subject_type` + `subject_id`, unique) and has a **route**: an ordered list of stages, fixed when it is opened.
 
-| Stage     | Who decides it                                                                 |
-| --------- | ------------------------------------------------------------------------------ |
-| `manager` | The requester's manager (`employees.manager_id`) only                          |
-| `hr`      | An HR Manager or an Admin (the catalog grants Admin `approvals.decide`)         |
+| Stage     | Who decides it                                                |
+| --------- | ------------------------------------------------------------- |
+| `manager` | The requester's manager (`employees.manager_id`) only         |
+| `hr`      | HR Manager for leave. HR Manager or Admin for other subjects. |
+| `admin`   | An Admin, used for HR employees' leave.                       |
 
 Status: `pending → approved | rejected | cancelled`. The three end states are final (`APPROVAL_TRANSITIONS`). Each decision is a row in `approval_decisions` (one per stage, with the decider and an optional comment of up to 500 characters).
 
 ## API
 
-| Route                            | Permission         | Notes                                                                                                           |
-| -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `GET /approvals`                 | `approvals.list`   | Scope: Admin and HR all, Team Lead direct reports, Staff their own. Oldest first. `status`, `subjectType`, `awaitingMyDecision=true` (what waits for you) |
-| `GET /approvals/{id}`            | `approvals.read`   | 404 outside the scope, identical to a missing id                                                                |
-| `POST /approvals/{id}/approve`   | `approvals.decide` | Body `{ comment? }`. Approving a middle stage moves to the next; the last stage applies the decision            |
-| `POST /approvals/{id}/reject`    | `approvals.decide` | Body `{ comment }` (required). Ends the request at any stage                                                    |
+| Route                          | Permission         | Notes                                                                                                                                                     |
+| ------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /approvals`               | `approvals.list`   | Scope: Admin and HR all, Team Lead direct reports, Staff their own. Oldest first. `status`, `subjectType`, `awaitingMyDecision=true` (what waits for you) |
+| `GET /approvals/{id}`          | `approvals.read`   | 404 outside the scope, identical to a missing id                                                                                                          |
+| `POST /approvals/{id}/approve` | `approvals.decide` | Body `{ comment? }`. Approving a middle stage moves to the next; the last stage applies the decision                                                      |
+| `POST /approvals/{id}/reject`  | `approvals.decide` | Body `{ comment }` (required). Ends the request at any stage                                                                                              |
 
 There is **no route that creates an approval**. Only the module that owns a subject opens one, in the transaction that stores the subject, so either both exist or neither does. (`approvals.create` stays in the catalog for now and no route uses it.)
 
@@ -49,8 +50,12 @@ approvals.service.registerHandler({
 });
 
 // when the subject is created, in the same transaction
-const stages = await approvals.service.route(tx, employeeId, { twoStep: false });
-await approvals.service.submit(tx, { subjectType: 'leave_request', subjectId, requesterEmployeeId: employeeId, stages }, events);
+const stages = await approvals.service.route(tx, employeeId, { leaveApprover: 'hr_manager' });
+await approvals.service.submit(
+  tx,
+  { subjectType: 'leave_request', subjectId, requesterEmployeeId: employeeId, stages },
+  events,
+);
 
 // when the requester cancels the subject
 await approvals.service.cancel(tx, 'leave_request', subjectId);
@@ -65,3 +70,9 @@ await approvals.service.cancel(tx, 'leave_request', subjectId);
 The leave and correction state machines and balances (#38 to #40, #36), expense claims (#29), notification templates and the reminder for approvals pending over 24 hours (#41), and an HR override of a missing manager (a deactivated manager leaves a `manager` stage undecidable until HR re-routes it; not implemented).
 
 Migration `20261030000012_approvals.sql` creates `approvals` and `approval_decisions` with the route, status and decision-time rules as CHECK constraints.
+
+## Configurable leave routing (D-38)
+
+Leave supplies the configured `leaveApprover` to `route`. Its default is HR. HR employees route to the Admin stage in both modes. Team Lead mode uses an active assigned Team Lead and falls back to HR. The API enforces the stage role and own-request denial, and awaiting-decision filters use the same rules. Notifications and reminders go to that stage's eligible role. Other subject types use `defaultRoute`.
+
+Migration `20261117000003_leave_approval_routing.sql` adds the Admin stage and the singleton versioned leave approval setting. Pending leave moves to HR, or Admin for HR employees. Completed stages and recorded decisions retain their history. Later setting changes apply to new requests.

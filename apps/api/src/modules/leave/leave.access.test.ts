@@ -108,6 +108,8 @@ describe('leave setup API: access', () => {
     for (const [method, path] of [
       ['get', '/api/v1/leave-policies'],
       ['post', '/api/v1/leave-policies'],
+      ['get', '/api/v1/leave-policies/approval-settings'],
+      ['put', '/api/v1/leave-policies/approval-settings'],
       ['put', `/api/v1/leave-policies/${ANNUAL}`],
       ['get', '/api/v1/holidays'],
       ['post', '/api/v1/holidays'],
@@ -125,7 +127,7 @@ describe('leave setup API: access', () => {
     const routes = listRoutes(app).filter((r) =>
       /^\/api\/v1\/(leave-policies|holidays|leave-balances)/.test(r.path),
     );
-    expect(routes).toHaveLength(9);
+    expect(routes).toHaveLength(11);
     for (const route of routes) expect(route.access, `${route.method} ${route.path}`).toBeDefined();
   });
 

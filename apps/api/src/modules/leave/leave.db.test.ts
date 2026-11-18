@@ -125,6 +125,19 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
   });
 
   describe('the migration', () => {
+    it('persists a versioned leave approver setting and rejects stale updates', async () => {
+      const current = await policies.getApprovalSettings();
+      expect(current.approverRole).toBe('hr_manager');
+      const updated = await policies.updateApprovalSettings(
+        { ...current, approverRole: 'team_lead' },
+        caller,
+      );
+      expect(updated).toEqual({ approverRole: 'team_lead', version: current.version + 1 });
+      expect(await policies.getApprovalSettings()).toEqual(updated);
+      await expect(
+        policies.updateApprovalSettings({ ...current, approverRole: 'hr_manager' }, caller),
+      ).rejects.toMatchObject({ statusCode: 409 });
+    });
     it('seeds the types and policies of decision D-12', async () => {
       const list = Object.fromEntries((await policies.list()).map((p) => [p.code, p]));
       expect(list.ANNUAL).toMatchObject({ annualDays: 18, carryForwardMax: 5, hasBalance: true });

@@ -46,7 +46,7 @@ const policy = (id: string, code: string, patch: Partial<LeavePolicy> = {}): Lea
   ...patch,
 });
 
-async function setup() {
+async function setup(approverRole: 'hr_manager' | 'team_lead' = 'hr_manager') {
   const silent = createLogger({ level: 'silent', write: () => undefined });
   const { platform, auditStore } = createTestPlatform({ logger: silent });
   const kit = createTestAuth(platform.audit);
@@ -59,7 +59,12 @@ async function setup() {
     authenticate: kit.auth.authenticate,
     repository: approvalsRepo,
   });
-  approvalsRepo.requesters[staff] = { name: 'Sam Staff', managerId: lead, roles: [ROLES.STAFF] };
+  approvalsRepo.requesters[staff] = {
+    name: 'Sam Staff',
+    managerId: lead,
+    managerIsTeamLead: true,
+    roles: [ROLES.STAFF],
+  };
   for (const role of ALL_ROLES) {
     if (role === ROLES.STAFF) continue;
     approvalsRepo.requesters[kit.users[role].employeeId] = {
@@ -84,6 +89,14 @@ async function setup() {
   const holidaysRepo = new MemoryHolidaysRepository([
     { id: 'h1', date: '2026-11-04', name: 'Midweek holiday' },
   ]);
+  const policiesRepo = new MemoryLeavePoliciesRepository([
+    policy(ANNUAL, 'ANNUAL'),
+    policy(CASUAL, 'CASUAL', { allowHalfDay: false }),
+    policy(SICK, 'SICK', { maxBackdateDays: 7 }),
+    policy(UNPAID, 'UNPAID', { hasBalance: false, annualDays: 0 }),
+    policy(RETIRED, 'RETIRED', { isActive: false }),
+  ]);
+  policiesRepo.approvalSettings.approverRole = approverRole;
   const leave = createLeaveSetup({
     platform,
     approvals: approvals.service,
@@ -100,13 +113,7 @@ async function setup() {
         },
       }),
     },
-    policiesRepository: new MemoryLeavePoliciesRepository([
-      policy(ANNUAL, 'ANNUAL'),
-      policy(CASUAL, 'CASUAL', { allowHalfDay: false }),
-      policy(SICK, 'SICK', { maxBackdateDays: 7 }),
-      policy(UNPAID, 'UNPAID', { hasBalance: false, annualDays: 0 }),
-      policy(RETIRED, 'RETIRED', { isActive: false }),
-    ]),
+    policiesRepository: policiesRepo,
     holidaysRepository: holidaysRepo,
     requestsRepository: requestsRepo,
     // Saturday 31 October 2026, 15:30 in Asia/Kolkata.
@@ -118,6 +125,7 @@ async function setup() {
   app.use(express.json());
   app.use('/api/v1/auth', kit.auth.router);
   app.use('/api/v1/leave-requests', leave.requestsRouter);
+  app.use('/api/v1/leave-policies', leave.policiesRouter);
   app.use('/api/v1/approvals', approvals.router);
   app.use(notFoundHandler);
   app.use(createErrorHandler(silent));
@@ -127,7 +135,10 @@ async function setup() {
   let n = 0;
   const apply = (who: Role, body: object) =>
     as[who]
-      .post('/api/v1/leave-requests', body)
+      .post('/api/v1/leave-requests', {
+        approverRole: who === 'hr_manager' ? 'admin' : approverRole,
+        ...body,
+      })
       .set('Idempotency-Key', `leave-${who}-${++n}-abcdefgh`);
   const week = (extra: object = {}) => ({
     leaveTypeId: ANNUAL,
@@ -139,16 +150,100 @@ async function setup() {
     requestsRepo.balances.find((b) => b.employeeId === employeeId && b.leaveTypeId === id)?.used;
   const approvalOf = async (who: Role) =>
     (await as[who].get('/api/v1/approvals?awaitingMyDecision=true')).body.data[0].id as string;
-  return { app, as, kit, auditStore, requestsRepo, approvalsRepo, apply, week, used, approvalOf };
+  return {
+    app,
+    as,
+    kit,
+    policiesRepo,
+    auditStore,
+    requestsRepo,
+    approvalsRepo,
+    apply,
+    week,
+    used,
+    approvalOf,
+  };
 }
 
 describe('leave requests API: access', () => {
+  it('lists only the caller’s available manual approvers, independently of legacy settings', async () => {
+    const { as, approvalsRepo, kit, policiesRepo } = await setup();
+    const preview = () => as.staff.get('/api/v1/leave-requests/approval-route');
+    const response = await preview();
+    expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.body.data.approverRoles).toEqual(['hr_manager', 'admin', 'team_lead']);
+    expect(
+      (await as.hr_manager.get('/api/v1/leave-requests/approval-route')).body.data.approverRoles,
+    ).toEqual(['admin']);
+    policiesRepo.approvalSettings.approverRole = 'team_lead';
+    expect((await preview()).body.data.approverRoles).toEqual(response.body.data.approverRoles);
+    const requester = approvalsRepo.requesters[kit.users.staff.employeeId];
+    if (!requester) throw new Error('Missing staff fixture');
+    const manager = approvalsRepo.requesters[kit.users.team_lead.employeeId];
+    if (!manager) throw new Error('Missing manager fixture');
+    manager.roles = [ROLES.STAFF];
+    expect((await preview()).body.data.approverRoles).toEqual(['hr_manager', 'admin']);
+    manager.roles = [ROLES.TEAM_LEAD];
+    requester.managerId = kit.users.staff.employeeId;
+    expect((await preview()).body.data.approverRoles).toEqual(['hr_manager', 'admin']);
+    requester.managerId = null;
+    expect((await preview()).body.data.approverRoles).toEqual(['hr_manager', 'admin']);
+    expect(approvalsRepo.approvals).toHaveLength(0);
+  });
+
+  it.each(['hr_manager', 'team_lead', 'admin'] as const)(
+    'routes a staff request to the manually selected %s only',
+    async (approverRole) => {
+      const { as, apply, week, approvalOf } = await setup();
+      expect((await apply('staff', week({ approverRole }))).status).toBe(201);
+      const id = await approvalOf(approverRole);
+      const stage = { hr_manager: 'hr', team_lead: 'manager', admin: 'admin' }[approverRole];
+      expect((await as[approverRole].get(`/api/v1/approvals/${id}`)).body.data.stages).toEqual([
+        stage,
+      ]);
+      for (const other of ['hr_manager', 'team_lead', 'admin'] as const) {
+        if (other === approverRole) continue;
+        expect(
+          (await as[other].get('/api/v1/approvals?awaitingMyDecision=true')).body.data,
+        ).toEqual([]);
+        expect((await as[other].post(`/api/v1/approvals/${id}/approve`)).status).toBe(403);
+      }
+      expect((await as[approverRole].post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
+    },
+  );
+
+  it('rejects missing and invalid choices and unavailable TL without writing a request', async () => {
+    const { apply, week, approvalsRepo, requestsRepo, kit } = await setup();
+    expect((await apply('staff', week({ approverRole: undefined }))).status).toBe(422);
+    expect((await apply('staff', week({ approverRole: 'staff' }))).status).toBe(400);
+    expect((await apply('hr_manager', week({ approverRole: 'hr_manager' }))).status).toBe(422);
+    expect((await apply('hr_manager', week({ approverRole: 'team_lead' }))).status).toBe(422);
+    const requester = approvalsRepo.requesters[kit.users.staff.employeeId];
+    if (!requester) throw new Error('Missing staff fixture');
+    const manager = approvalsRepo.requesters[kit.users.team_lead.employeeId];
+    if (!manager) throw new Error('Missing manager fixture');
+    manager.roles = [ROLES.STAFF];
+    expect((await apply('staff', week({ approverRole: 'team_lead' }))).status).toBe(422);
+    expect(requestsRepo.requests).toHaveLength(0);
+    expect(approvalsRepo.approvals).toHaveLength(0);
+  });
+
+  it('blocks an Admin from approving their own Admin-routed leave', async () => {
+    const { as, apply, week, approvalsRepo } = await setup();
+    expect((await apply('admin', week({ approverRole: 'admin' }))).status).toBe(201);
+    const id = approvalsRepo.approvals[0]?.id;
+    expect(id).toBeDefined();
+    expect((await as.admin.post(`/api/v1/approvals/${id}/approve`)).status).toBe(403);
+  });
+
   it('every route answers 401 without a session', async () => {
     const { app } = await setup();
     for (const [method, path] of [
       ['post', '/api/v1/leave-requests'],
       ['get', '/api/v1/leave-requests'],
       ['get', '/api/v1/leave-requests/me'],
+      ['get', '/api/v1/leave-requests/approval-route'],
       ['get', `/api/v1/leave-requests/${MISSING}`],
       ['get', '/api/v1/leave-requests/calendar'],
       ['post', `/api/v1/leave-requests/${MISSING}/cancel`],
@@ -160,7 +255,7 @@ describe('leave requests API: access', () => {
   it('declares a permission on every route', async () => {
     const { app } = await setup();
     const routes = listRoutes(app).filter((r) => r.path.startsWith('/api/v1/leave-requests'));
-    expect(routes).toHaveLength(6);
+    expect(routes).toHaveLength(7);
     for (const route of routes) expect(route.access, `${route.method} ${route.path}`).toBeDefined();
   });
 
@@ -202,10 +297,13 @@ describe('leave requests API: access', () => {
 
     it('needs an Idempotency-Key, and a retry with the same key files nothing twice', async () => {
       const { as, week, requestsRepo } = await setup();
-      expect((await as.staff.post('/api/v1/leave-requests', week())).status).toBe(400);
+      expect(
+        (await as.staff.post('/api/v1/leave-requests', week({ approverRole: 'hr_manager' })))
+          .status,
+      ).toBe(400);
       const send = () =>
         as.staff
-          .post('/api/v1/leave-requests', week())
+          .post('/api/v1/leave-requests', week({ approverRole: 'hr_manager' }))
           .set('Idempotency-Key', 'retry-key-123456789');
       const first = await send();
       const second = await send();
@@ -293,8 +391,8 @@ describe('leave requests API: access', () => {
       // Another person's dates are their own business.
       expect((await apply('team_lead', week())).status).toBe(201);
       // After a rejection the dates are free again.
-      const id = await approvalOf('team_lead');
-      await as.team_lead.post(`/api/v1/approvals/${id}/reject`, { comment: 'Busy week' });
+      const id = await approvalOf('hr_manager');
+      await as.hr_manager.post(`/api/v1/approvals/${id}/reject`, { comment: 'Busy week' });
       expect((await apply('staff', week())).status).toBe(201);
     });
 
@@ -317,20 +415,94 @@ describe('leave requests API: access', () => {
   });
 
   describe('deciding (through /approvals)', () => {
+    it('uses the selected HR role and excludes Team Lead and Admin from a staff decision', async () => {
+      const { as, apply, week, approvalOf } = await setup();
+      await apply('staff', week());
+      const id = await approvalOf('hr_manager');
+      expect((await as.hr_manager.get(`/api/v1/approvals/${id}`)).body.data.stages).toEqual(['hr']);
+      for (const role of ['team_lead', 'admin'] as const) {
+        expect((await as[role].get('/api/v1/approvals?awaitingMyDecision=true')).body.data).toEqual(
+          [],
+        );
+        expect((await as[role].post(`/api/v1/approvals/${id}/approve`)).status).toBe(403);
+      }
+    });
+
+    it('sends HR leave to Admin and blocks HR self-approval', async () => {
+      const { as, apply, week, approvalOf } = await setup();
+      await apply('hr_manager', week());
+      const id = await approvalOf('admin');
+      expect((await as.admin.get(`/api/v1/approvals/${id}`)).body.data.stages).toEqual(['admin']);
+      expect((await as.hr_manager.post(`/api/v1/approvals/${id}/approve`)).status).toBe(403);
+      expect((await as.admin.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
+    });
+
+    it('keeps existing routes fixed when the employee selects a different approver on a later request', async () => {
+      const { as, apply, week, approvalOf } = await setup();
+      await apply('staff', week());
+      const oldId = await approvalOf('hr_manager');
+      const settings = await as.hr_manager.get('/api/v1/leave-policies/approval-settings');
+      expect(settings.body.data).toEqual({ approverRole: 'hr_manager', version: 1 });
+      expect(
+        (
+          await as.hr_manager.put('/api/v1/leave-policies/approval-settings', {
+            approverRole: 'team_lead',
+            version: 1,
+          })
+        ).status,
+      ).toBe(200);
+      expect(
+        (
+          await as.admin.put('/api/v1/leave-policies/approval-settings', {
+            approverRole: 'hr_manager',
+            version: 1,
+          })
+        ).status,
+      ).toBe(409);
+      await apply(
+        'staff',
+        week({ approverRole: 'team_lead', startDate: '2026-11-09', endDate: '2026-11-10' }),
+      );
+      const newId = await approvalOf('team_lead');
+      expect((await as.team_lead.get(`/api/v1/approvals/${newId}`)).body.data.stages).toEqual([
+        'manager',
+      ]);
+      expect((await as.hr_manager.get(`/api/v1/approvals/${oldId}`)).body.data.stages).toEqual([
+        'hr',
+      ]);
+      expect((await as.team_lead.post(`/api/v1/approvals/${newId}/approve`)).status).toBe(200);
+    });
+
+    it.each(['staff', 'team_lead'] as const)(
+      '%s cannot read or change approval settings',
+      async (role) => {
+        const { as } = await setup();
+        expect((await as[role].get('/api/v1/leave-policies/approval-settings')).status).toBe(403);
+        expect(
+          (
+            await as[role].put('/api/v1/leave-policies/approval-settings', {
+              approverRole: 'team_lead',
+              version: 1,
+            })
+          ).status,
+        ).toBe(403);
+      },
+    );
+
     it('approval deducts the days once; repeating it, and the requester deciding, change nothing', async () => {
       const { as, apply, week, used, approvalOf, requestsRepo, auditStore, kit } = await setup();
       const staff = kit.users.staff.employeeId;
       await apply('staff', week());
-      const id = await approvalOf('team_lead');
+      const id = await approvalOf('hr_manager');
 
       expect((await as.staff.post(`/api/v1/approvals/${id}/approve`)).status).toBe(403);
       expect(used(staff)).toBe(0);
 
-      expect((await as.team_lead.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
+      expect((await as.hr_manager.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
       expect(used(staff)).toBe(4);
       expect(requestsRepo.requests[0]?.status).toBe('approved');
 
-      expect((await as.team_lead.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
+      expect((await as.hr_manager.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
       expect(used(staff)).toBe(4);
       const approved = auditStore.find((e) => e.action === 'leave.approve');
       expect(approved).toHaveLength(1);
@@ -340,9 +512,9 @@ describe('leave requests API: access', () => {
     it('a rejection closes the request and deducts nothing', async () => {
       const { as, apply, week, used, approvalOf, requestsRepo, kit } = await setup();
       await apply('staff', week());
-      const id = await approvalOf('team_lead');
+      const id = await approvalOf('hr_manager');
       expect(
-        (await as.team_lead.post(`/api/v1/approvals/${id}/reject`, { comment: 'No' })).status,
+        (await as.hr_manager.post(`/api/v1/approvals/${id}/reject`, { comment: 'No' })).status,
       ).toBe(200);
       expect(requestsRepo.requests[0]?.status).toBe('rejected');
       expect(used(kit.users.staff.employeeId)).toBe(0);
@@ -351,8 +523,8 @@ describe('leave requests API: access', () => {
     it('approving a type without a balance changes no balance', async () => {
       const { as, apply, approvalOf, requestsRepo } = await setup();
       await apply('staff', { leaveTypeId: UNPAID, startDate: '2026-11-02', endDate: '2026-11-03' });
-      const id = await approvalOf('team_lead');
-      expect((await as.team_lead.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
+      const id = await approvalOf('hr_manager');
+      expect((await as.hr_manager.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
       expect(requestsRepo.requests[0]?.status).toBe('approved');
     });
 
@@ -365,13 +537,13 @@ describe('leave requests API: access', () => {
         (b) => b.employeeId === staff && b.leaveTypeId === ANNUAL,
       );
       if (balance) balance.used = 16;
-      const id = await approvalOf('team_lead');
-      expect((await as.team_lead.post(`/api/v1/approvals/${id}/approve`)).status).toBe(409);
+      const id = await approvalOf('hr_manager');
+      expect((await as.hr_manager.post(`/api/v1/approvals/${id}/approve`)).status).toBe(409);
       expect(used(staff)).toBe(16);
       expect(requestsRepo.requests[0]?.status).toBe('pending');
       expect((await as.team_lead.get(`/api/v1/approvals/${id}`)).body.data.status).toBe('pending');
       expect(
-        (await as.team_lead.post(`/api/v1/approvals/${id}/reject`, { comment: 'No balance' }))
+        (await as.hr_manager.post(`/api/v1/approvals/${id}/reject`, { comment: 'No balance' }))
           .status,
       ).toBe(200);
       expect(requestsRepo.requests[0]?.status).toBe('rejected');
@@ -470,21 +642,23 @@ describe('leave requests API: access', () => {
     it('the owner cancels a pending request: no balance change, the approval is withdrawn, the dates are free again', async () => {
       const { as, apply, week, used, approvalOf, requestsRepo, kit } = await setup();
       const created = await apply('staff', week());
-      const approvalId = await approvalOf('team_lead');
+      const approvalId = await approvalOf('hr_manager');
       const res = await cancel(as.staff, created.body.data.id);
       expect(res.status).toBe(200);
       expect(res.body.data.status).toBe('cancelled');
       expect(requestsRepo.requests[0]?.status).toBe('cancelled');
       expect(used(kit.users.staff.employeeId)).toBe(0);
       // The approver can no longer decide it.
-      expect((await as.team_lead.post(`/api/v1/approvals/${approvalId}/approve`)).status).toBe(409);
+      expect((await as.hr_manager.post(`/api/v1/approvals/${approvalId}/approve`)).status).toBe(
+        409,
+      );
       expect((await apply('staff', week())).status).toBe(201);
     });
 
     it('cancelling approved leave before it starts gives the days back, and is audited', async () => {
       const { as, apply, week, used, approvalOf, auditStore, kit } = await setup();
       const created = await apply('staff', week());
-      await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+      await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/approve`);
       expect(used(kit.users.staff.employeeId)).toBe(4);
       const res = await cancel(as.staff, created.body.data.id);
       expect(res.status).toBe(200);
@@ -504,7 +678,7 @@ describe('leave requests API: access', () => {
         startDate: '2026-11-02',
         endDate: '2026-11-03',
       });
-      await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/approve`);
+      await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/approve`);
       expect((await cancel(as.staff, created.body.data.id)).status).toBe(200);
       expect(requestsRepo.requests[0]?.status).toBe('cancelled');
     });
@@ -517,8 +691,8 @@ describe('leave requests API: access', () => {
           'staff',
           ctx.week({ startDate: '2026-10-31', endDate: '2026-11-02' }),
         );
-        await ctx.as.team_lead.post(
-          `/api/v1/approvals/${await ctx.approvalOf('team_lead')}/approve`,
+        await ctx.as.hr_manager.post(
+          `/api/v1/approvals/${await ctx.approvalOf('hr_manager')}/approve`,
         );
         return { ...ctx, id: created.body.data.id as string };
       };
@@ -568,7 +742,7 @@ describe('leave requests API: access', () => {
     it('a rejected or cancelled request is final (409)', async () => {
       const { as, apply, week, approvalOf } = await setup();
       const first = await apply('staff', week());
-      await as.team_lead.post(`/api/v1/approvals/${await approvalOf('team_lead')}/reject`, {
+      await as.hr_manager.post(`/api/v1/approvals/${await approvalOf('hr_manager')}/reject`, {
         comment: 'No',
       });
       expect((await cancel(as.staff, first.body.data.id)).status).toBe(409);

@@ -1,5 +1,5 @@
 import { ROLES } from '@maxr/shared';
-import { Approval, ApprovalStage, Decider } from './approvals.types';
+import { Approval, ApprovalStage, Decider, RequesterContext } from './approvals.types';
 
 export type DenialReason = 'not_pending' | 'own_request' | 'not_your_stage' | 'already_decided';
 
@@ -12,7 +12,7 @@ const isHr = (decider: Decider): boolean =>
 /**
  * Whether `decider` may decide the approval's current stage right now, and why not.
  * Nobody decides their own request (D-12), and nobody decides two stages of one route (four eyes).
- * The `manager` stage belongs to the requester's manager only; the `hr` stage to an HR Manager or Admin.
+ * Leave decisions follow the configured role. Other subjects allow HR or Admin at the HR stage.
  */
 export function denialReason(approval: Approval, decider: Decider): DenialReason | null {
   if (approval.status !== 'pending') return 'not_pending';
@@ -21,6 +21,11 @@ export function denialReason(approval: Approval, decider: Decider): DenialReason
     return 'already_decided';
   }
   const stage = currentStageOf(approval);
+  if (stage === 'admin') return decider.roles.includes(ROLES.ADMIN) ? null : 'not_your_stage';
+  if (approval.subjectType === 'leave_request') {
+    if (stage === 'hr') return decider.roles.includes(ROLES.HR_MANAGER) ? null : 'not_your_stage';
+    if (!decider.roles.includes(ROLES.TEAM_LEAD)) return 'not_your_stage';
+  }
   const allowed =
     stage === 'manager'
       ? approval.requesterManagerId === decider.employeeId
@@ -28,6 +33,16 @@ export function denialReason(approval: Approval, decider: Decider): DenialReason
         ? isHr(decider)
         : false;
   return allowed ? null : 'not_your_stage';
+}
+
+export function leaveRoute(
+  context: RequesterContext,
+  approverRole: 'hr_manager' | 'team_lead',
+): ApprovalStage[] {
+  if (context.roles.includes(ROLES.HR_MANAGER)) return ['admin'];
+  if (approverRole === 'team_lead' && context.managerId && context.managerIsTeamLead)
+    return ['manager'];
+  return ['hr'];
 }
 
 /**

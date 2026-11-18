@@ -28,7 +28,14 @@ export class MemoryApprovalsRepository implements IApprovalsRepository {
   }
 
   async getRequesterContext(_tx: ApprovalTx, employeeId: string) {
-    return this.requesters[employeeId] ?? null;
+    const context = this.requesters[employeeId];
+    if (!context) return null;
+    return {
+      ...context,
+      managerIsTeamLead: Boolean(
+        context.managerId && this.requesters[context.managerId]?.roles.includes('team_lead'),
+      ),
+    };
   }
 
   async insert(_tx: ApprovalTx, input: SubmitApprovalInput): Promise<Approval> {
@@ -75,7 +82,7 @@ export class MemoryApprovalsRepository implements IApprovalsRepository {
           (!p.awaiting ||
             denialReason(a, {
               employeeId: p.awaiting.employeeId,
-              roles: p.awaiting.hr ? ['hr_manager'] : [],
+              roles: p.awaiting.roles,
             }) === null),
       )
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));

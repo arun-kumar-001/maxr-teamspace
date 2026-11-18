@@ -5,6 +5,7 @@ import { validate, validated } from '../../../http/validate';
 import { requirePermission } from '../../rbac';
 import {
   createLeavePolicySchema,
+  leaveApprovalSettingsSchema,
   leavePolicyIdParamsSchema,
   updateLeavePolicySchema,
 } from './policies.schemas';
@@ -25,6 +26,23 @@ export function createLeavePoliciesRouter(options: {
   const { service } = options;
   const router = Router();
   router.use(options.authenticate);
+
+  router.get(
+    '/approval-settings',
+    requirePermission('leave_policies.manage'),
+    asyncHandler(async (_req: Request, res: Response) => {
+      res.json({ data: await service.getApprovalSettings() });
+    }),
+  );
+  router.put(
+    '/approval-settings',
+    requirePermission('leave_policies.manage'),
+    validate({ body: leaveApprovalSettingsSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { body } = validated(req, { body: leaveApprovalSettingsSchema });
+      res.json({ data: await service.updateApprovalSettings(body, caller(req)) });
+    }),
+  );
 
   router.get(
     '/',
