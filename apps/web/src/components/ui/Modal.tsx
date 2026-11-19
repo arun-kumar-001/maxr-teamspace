@@ -1,4 +1,5 @@
 import React, { useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useDialogFocus } from './use-dialog-focus.js';
 
 export interface ModalProps {
@@ -8,7 +9,7 @@ export interface ModalProps {
   subtitle?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
   position?: 'center' | 'drawer';
 }
 
@@ -34,16 +35,19 @@ export function Modal({
     lg: 'sm:max-w-lg',
     xl: 'sm:max-w-xl',
     '2xl': 'sm:max-w-2xl',
+    '3xl': 'sm:max-w-3xl',
+    '4xl': 'sm:max-w-4xl',
+    '5xl': 'sm:max-w-5xl',
   };
 
   const isDrawer = position === 'drawer';
 
-  return (
+  const modalContent = (
     <div
-      className={`fixed inset-0 z-50 flex bg-overlay backdrop-blur-sm transition-opacity ${
+      className={`fixed inset-0 z-[100] flex bg-overlay backdrop-blur-sm transition-opacity ${
         isDrawer
           ? 'justify-end items-stretch p-0'
-          : 'items-end sm:items-center justify-center p-0 sm:p-4'
+          : 'items-center justify-center p-4'
       }`}
       role="dialog"
       aria-modal="true"
@@ -59,7 +63,7 @@ export function Modal({
         className={
           isDrawer
             ? `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-t-none sm:rounded-l-card shadow-raised overflow-hidden flex flex-col h-[92dvh] sm:h-full mt-auto sm:mt-0 z-10 border-t sm:border-t-0 sm:border-l border-border`
-            : `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-card shadow-xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`
+            : `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-card shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`
         }
       >
         {/* Mobile handle indicator */}
@@ -79,7 +83,7 @@ export function Modal({
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 cursor-pointer"
               aria-label="Close modal"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
@@ -98,11 +102,17 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-surface-muted border-t border-border flex justify-end gap-3">
+          <div className="px-6 py-4 bg-surface border-t border-border flex justify-end gap-3">
             {footer}
           </div>
         )}
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 }

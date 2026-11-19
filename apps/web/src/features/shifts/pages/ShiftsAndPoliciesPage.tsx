@@ -1,5 +1,4 @@
 import React from 'react';
-import { PageContainer } from '../../../components/ui/PageContainer';
 import { DataTable, type Column } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/Button';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -99,8 +98,7 @@ export const ShiftsAndPoliciesPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer>
-      <div className="space-y-8" data-testid="shifts-policies-page">
+    <div className="space-y-8 w-full min-w-0" data-testid="shifts-policies-page">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
           <div>
@@ -191,6 +189,5 @@ export const ShiftsAndPoliciesPage: React.FC = () => {
           onSubmit={handleSaveShift}
         />
       </div>
-    </PageContainer>
-  );
-};
+    );
+  };

@@ -69,8 +69,8 @@ describe('CompanySettingsPage Component Suite (Issue #30)', () => {
     await waitFor(() => {
       expect(screen.getByTestId('company-profile-section')).toBeInTheDocument();
       expect(screen.getByTestId('work-week-section')).toBeInTheDocument();
-      expect(screen.getByTestId('integrations-section')).toBeInTheDocument();
-      expect(screen.getByTestId('security-settings-section')).toBeInTheDocument();
+      expect(screen.getByTestId('attendance-setup-section')).toBeInTheDocument();
+      expect(screen.getByTestId('leave-setup-section')).toBeInTheDocument();
     });
 
     // Check company name input value
@@ -119,11 +119,9 @@ describe('CompanySettingsPage Component Suite (Issue #30)', () => {
     const nameInput = screen.getByTestId('company-name-input');
     fireEvent.change(nameInput, { target: { value: 'MAXR Flow Corp' } });
 
-    // Save and Discard should now be enabled
+    // Save should now be enabled and highlighted
     const saveBtn = screen.getByTestId('save-settings-btn');
-    const discardBtn = screen.getByTestId('discard-changes-btn');
     expect(saveBtn).not.toBeDisabled();
-    expect(discardBtn).not.toBeDisabled();
 
     // Click save
     fireEvent.click(saveBtn);
@@ -166,13 +164,9 @@ describe('CompanySettingsPage Component Suite (Issue #30)', () => {
     expect(saveBtn).toBeDisabled();
   });
 
-  it('allows toggling integrations', async () => {
+  it('allows switching tabs and viewing leave setup', async () => {
     setupAuth('admin');
     vi.spyOn(settingsApi, 'getSettings').mockResolvedValue(mockSettings);
-    const updateSpy = vi.spyOn(settingsApi, 'updateSettings').mockResolvedValue({
-      ...mockSettings,
-      integrations: { ...mockSettings.integrations, sms: true },
-    });
 
     render(
       <MemoryRouter>
@@ -181,21 +175,52 @@ describe('CompanySettingsPage Component Suite (Issue #30)', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('toggle-sms')).toBeInTheDocument();
+      expect(screen.getByText('Leave Setup')).toBeInTheDocument();
     });
 
-    const smsToggle = screen.getByTestId('toggle-sms');
-    fireEvent.click(smsToggle);
+    const leaveTabBtn = screen.getByText('Leave Setup');
+    fireEvent.click(leaveTabBtn);
 
-    const saveBtn = screen.getByTestId('save-settings-btn');
-    expect(saveBtn).not.toBeDisabled();
+    expect(screen.getByTestId('leave-setup-section')).toBeInTheDocument();
+  });
 
-    fireEvent.click(saveBtn);
+  it('prompts confirmation modal when navigating away with unsaved changes', async () => {
+    setupAuth('admin');
+    vi.spyOn(settingsApi, 'getSettings').mockResolvedValue(mockSettings);
+
+    render(
+      <MemoryRouter>
+        <div>
+          <a href="/employees" data-testid="test-nav-link">Employees</a>
+          <CompanySettingsPage />
+        </div>
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
-      expect(updateSpy).toHaveBeenCalledWith({
-        integrations: { sms: true },
-      });
+      expect(screen.getByTestId('company-name-input')).toBeInTheDocument();
+    });
+
+    // Make a change
+    const nameInput = screen.getByTestId('company-name-input');
+    fireEvent.change(nameInput, { target: { value: 'Modified Company Name' } });
+
+    // Try to click another link
+    const navLink = screen.getByTestId('test-nav-link');
+    fireEvent.click(navLink);
+
+    // Modal appears
+    await waitFor(() => {
+      expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
+      expect(screen.getByTestId('modal-discard-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('modal-save-btn')).toBeInTheDocument();
+      expect(screen.getByTestId('modal-stay-btn')).toBeInTheDocument();
+    });
+
+    // Click stay on page
+    fireEvent.click(screen.getByTestId('modal-stay-btn'));
+    await waitFor(() => {
+      expect(screen.queryByText('Unsaved Changes')).not.toBeInTheDocument();
     });
   });
 });

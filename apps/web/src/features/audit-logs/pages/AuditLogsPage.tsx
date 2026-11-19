@@ -25,7 +25,7 @@ export function AuditLogsPage() {
   // Role Gate: Only Admin is authorized
   if (!authLoading && role !== ROLES.ADMIN) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="space-y-6 w-full min-w-0" data-testid="audit-logs-forbidden">
         <ForbiddenState
           title="Access Denied"
           message="You do not have permission to view the audit trail. Only Administrators can inspect system audit logs."
@@ -131,7 +131,7 @@ export function AuditLogsPage() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6 w-full min-w-0" data-testid="audit-logs-page">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

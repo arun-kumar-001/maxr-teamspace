@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
-import { Button, PageContainer } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 import { AnnouncementModal } from '../components/AnnouncementModal';
 import { formatRelativeTime, getNotificationTypeStyle } from '../components/notificationHelpers';
 import { useNotifications } from '../hooks/useNotifications';
@@ -55,8 +55,7 @@ export function NotificationsInboxPage() {
   };
 
   return (
-    <PageContainer>
-      <div className="space-y-6 max-w-5xl mx-auto py-2">
+    <div className="space-y-6 w-full min-w-0" data-testid="notifications-inbox-page">
         {/* Header Strip */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -316,7 +315,6 @@ export function NotificationsInboxPage() {
             </Button>
           </div>
         )}
-      </div>
 
       {/* Admin Announcement Modal */}
       {canAnnounce && (
@@ -326,6 +324,6 @@ export function NotificationsInboxPage() {
           onSend={sendAnnouncement}
         />
       )}
-    </PageContainer>
+    </div>
   );
 }

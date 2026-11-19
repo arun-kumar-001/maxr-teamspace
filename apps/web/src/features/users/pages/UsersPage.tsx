@@ -14,7 +14,7 @@ import {
 import { useAuth } from '../../../auth/AuthContext';
 import { useUsers } from '../hooks/useUsers';
 import { useRolesAndPermissions } from '../hooks/useRolesAndPermissions';
-import { updateUserStatus, UsersApiError } from '../api/usersApi';
+import { updateUserStatus, verifyAdminPassword, UsersApiError } from '../api/usersApi';
 import { getAuditLogs } from '../../audit-logs/api/auditLogsApi';
 import type { AuditLogItem } from '../../audit-logs/types';
 import { UserCard } from '../components/UserCard';
@@ -333,6 +333,134 @@ function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
+function IconLock({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconEyeOff({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function IconAlertCircle({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function IconIdBadge({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="16" x2="12" y2="16" />
+    </svg>
+  );
+}
+
+function IconPower({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+      <line x1="12" y1="2" x2="12" y2="12" />
+    </svg>
+  );
+}
+
+function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export function UsersPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'accounts' | 'roles-permissions' | 'access-history'>(
@@ -342,6 +470,9 @@ export function UsersPage() {
   const [statusTarget, setStatusTarget] = useState<UserAccount | null>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     variant: 'success' | 'danger' | 'info';
     title: string;
@@ -350,6 +481,14 @@ export function UsersPage() {
   const [accessLogs, setAccessLogs] = useState<AuditLogItem[]>([]);
   const [isAccessLogsLoading, setIsAccessLogsLoading] = useState(false);
   const [accessLogsError, setAccessLogsError] = useState<string | null>(null);
+
+  // Close 3-dot actions dropdown menu on outside click
+  useEffect(() => {
+    if (!openMenuUserId) return;
+    const handleClickOutside = () => setOpenMenuUserId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [openMenuUserId]);
 
   // Safe auth hook handling
   let role: Role | null = null;
@@ -414,10 +553,66 @@ export function UsersPage() {
     refetch: refetchRoles,
   } = useRolesAndPermissions();
 
+  const handleConfirmStatusToggle = useCallback(async () => {
+    if (!statusTarget) return;
+    if (!adminPassword.trim()) {
+      setStatusError('Please enter your admin password to authorize this action.');
+      return;
+    }
+
+    setIsUpdatingStatus(true);
+    setStatusError(null);
+
+    try {
+      // 1. Verify admin password securely through backend auth API
+      try {
+        await verifyAdminPassword(adminPassword);
+      } catch (authErr) {
+        const msg =
+          authErr instanceof UsersApiError || authErr instanceof Error
+            ? authErr.message
+            : 'Invalid admin password. Authentication failed.';
+        setStatusError(
+          msg.toLowerCase().includes('password')
+            ? msg
+            : 'Invalid admin password. Authentication failed.',
+        );
+        setIsUpdatingStatus(false);
+        return;
+      }
+
+      // 2. Perform employee account activation/deactivation
+      const nextActive = !statusTarget.isActive;
+      const updated = await updateUserStatus(statusTarget.id, nextActive);
+
+      // 3. Clear sensitive state, close modal, refresh lists, and show toast
+      setStatusTarget(null);
+      setAdminPassword('');
+      setShowPassword(false);
+      void refetchUsers();
+      void refetchRoles();
+      setToast({
+        variant: 'success',
+        title: updated.isActive ? 'Account Activated' : 'Account Deactivated',
+        message: `${updated.name} has been successfully ${
+          updated.isActive ? 'activated' : 'deactivated'
+        }.`,
+      });
+    } catch (err) {
+      setStatusError(
+        err instanceof UsersApiError || err instanceof Error
+          ? err.message
+          : 'Failed to update account status.',
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }, [statusTarget, adminPassword, refetchUsers, refetchRoles]);
+
   // Role Gate: Admin and HR Manager only
   if (!hasAccess && role !== null) {
     return (
-      <div className="max-w-dashboard mx-auto p-4 sm:p-6" data-testid="users-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="users-forbidden">
         <ForbiddenState
           title="Access Denied"
           message="You do not have permission to view User and Role Administration. Only System Administrators and HR Managers have access to this module."
@@ -483,7 +678,7 @@ export function UsersPage() {
 
   return (
     <div
-      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
+      className="space-y-6 w-full min-w-0 font-sans select-none"
       data-testid="users-page"
     >
       {/* Scoped Keyframes for smooth animations - Zero Hex compliant */}
@@ -878,28 +1073,77 @@ export function UsersPage() {
                                 </button>
                               )}
                               {isAdmin && (
-                                <button
-                                  type="button"
-                                  disabled={u.isActive && u.id === currentUserId}
-                                  onClick={() => {
-                                    setStatusError(null);
-                                    setStatusTarget(u);
-                                  }}
-                                  data-testid={`toggle-status-btn-table-${u.id}`}
-                                  title={
-                                    u.isActive && u.id === currentUserId
-                                      ? 'You cannot deactivate your own account'
-                                      : u.isActive
-                                        ? 'Deactivate Account'
-                                        : 'Activate Account'
-                                  }
-                                  className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-raised disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-2xs active:scale-95"
-                                >
-                                  <IconMoreVertical className="w-3.5 h-3.5" />
-                                  <span className="sr-only">
-                                    {u.isActive ? 'Deactivate Account' : 'Activate Account'}
-                                  </span>
-                                </button>
+                                <div className="relative inline-block text-left">
+                                  <button
+                                    type="button"
+                                    disabled={u.isActive && u.id === currentUserId}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenMenuUserId((prev) => (prev === u.id ? null : u.id));
+                                    }}
+                                    data-testid={`toggle-status-btn-table-${u.id}`}
+                                    title={
+                                      u.isActive && u.id === currentUserId
+                                        ? 'You cannot deactivate your own account'
+                                        : 'Actions'
+                                    }
+                                    className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-raised disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-2xs active:scale-95 cursor-pointer"
+                                  >
+                                    <IconMoreVertical className="w-3.5 h-3.5" />
+                                    <span className="sr-only">
+                                      {u.isActive ? 'Deactivate Account' : 'Activate Account'}
+                                    </span>
+                                  </button>
+
+                                  {/* 3-Dot Actions Menu Dropdown */}
+                                  {openMenuUserId === u.id && (
+                                    <div
+                                      className="absolute right-0 top-full mt-1.5 w-44 bg-surface-raised border border-border rounded-xl shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100"
+                                      data-testid={`actions-dropdown-${u.id}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {u.isActive ? (
+                                        <button
+                                          type="button"
+                                          disabled={u.id === currentUserId}
+                                          onClick={() => {
+                                            setOpenMenuUserId(null);
+                                            setStatusError(null);
+                                            setAdminPassword('');
+                                            setShowPassword(false);
+                                            setStatusTarget(u);
+                                          }}
+                                          data-testid={`deactivate-action-item-${u.id}`}
+                                          title={
+                                            u.id === currentUserId
+                                              ? 'You cannot deactivate your own account'
+                                              : 'Deactivate Account'
+                                          }
+                                          className="w-full text-left px-3.5 py-2 text-xs font-medium flex items-center gap-2 text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                                        >
+                                          <IconPower className="w-3.5 h-3.5 text-rose-600" />
+                                          <span>Deactivate</span>
+                                        </button>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setOpenMenuUserId(null);
+                                            setStatusError(null);
+                                            setAdminPassword('');
+                                            setShowPassword(false);
+                                            setStatusTarget(u);
+                                          }}
+                                          data-testid={`activate-action-item-${u.id}`}
+                                          className="w-full text-left px-3.5 py-2 text-xs font-medium flex items-center gap-2 text-emerald-700 hover:bg-emerald-50 cursor-pointer transition-colors"
+                                        >
+                                          <IconCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                          <span>Activate</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>
@@ -1197,7 +1441,7 @@ export function UsersPage() {
         </div>
       )}
 
-      {/* Account Activation / Deactivation Modal */}
+      {/* Account Activation / Deactivation Modal with Admin Password Verification */}
       {statusTarget && (
         <Modal
           isOpen={true}
@@ -1205,34 +1449,114 @@ export function UsersPage() {
             if (!isUpdatingStatus) {
               setStatusTarget(null);
               setStatusError(null);
+              setAdminPassword('');
+              setShowPassword(false);
             }
           }}
           title={statusTarget.isActive ? 'Deactivate Account' : 'Activate Account'}
           maxWidth="sm"
         >
           <div className="p-4 sm:p-6 space-y-4" data-testid="user-status-modal">
-            <div className="p-3 rounded-tile bg-surface-muted border border-border space-y-1">
-              <div className="text-sm font-semibold text-text">{statusTarget.name}</div>
+            {/* Selected Employee Details Card */}
+            <div className="p-3.5 rounded-tile bg-surface-muted border border-border space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-text">{statusTarget.name}</div>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                    statusTarget.isActive
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      statusTarget.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                    }`}
+                  />
+                  {statusTarget.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
               <div className="text-xs text-text-muted">{statusTarget.email}</div>
+              {statusTarget.employeeCode && (
+                <div className="flex items-center gap-1.5 text-xs font-mono text-text-subtle pt-0.5">
+                  <IconIdBadge className="w-3.5 h-3.5 text-text-muted" />
+                  <span>Employee ID: {statusTarget.employeeCode}</span>
+                </div>
+              )}
             </div>
 
-            {statusError && (
-              <div
-                className="p-3 rounded-tile bg-rose-50 border border-rose-200 text-xs text-rose-800"
-                role="alert"
-                data-testid="user-status-error"
-              >
-                {statusError}
-              </div>
-            )}
-
+            {/* Helper Description */}
             <p className="text-xs text-text-muted leading-relaxed">
               {statusTarget.isActive
                 ? 'Deactivating this account immediately ends all active login sessions and prevents future sign-ins until reactivated.'
-                : 'Activating this account allows the employee to sign in again with their assigned roles.'}
+                : 'Activating this account restores employee login access and re-enables their assigned roles across MAXR Teamspace.'}
             </p>
 
-            <div className="pt-2 border-t border-border flex items-center justify-end gap-3">
+            {/* Inline Error Message */}
+            {statusError && (
+              <div
+                className="p-3 rounded-tile bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2"
+                role="alert"
+                data-testid="user-status-error"
+              >
+                <IconAlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span className="leading-snug">{statusError}</span>
+              </div>
+            )}
+
+            {/* Admin Password Verification Field */}
+            <div className="space-y-1.5 pt-1">
+              <label
+                htmlFor="admin-password-input"
+                className="block text-xs font-semibold text-text uppercase tracking-wider"
+              >
+                Admin Password <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                  <IconLock className="w-4 h-4" />
+                </div>
+                <input
+                  id="admin-password-input"
+                  data-testid="admin-password-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={adminPassword}
+                  onChange={(e) => {
+                    setAdminPassword(e.target.value);
+                    if (statusError) setStatusError(null);
+                  }}
+                  disabled={isUpdatingStatus}
+                  placeholder="Enter your admin password"
+                  className="w-full pl-9 pr-10 py-2.5 bg-surface border border-border rounded-xl text-xs sm:text-sm text-text placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary shadow-xs transition-colors"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isUpdatingStatus && adminPassword.trim()) {
+                      e.preventDefault();
+                      void handleConfirmStatusToggle();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer transition-colors"
+                >
+                  {showPassword ? (
+                    <IconEyeOff className="w-4 h-4" />
+                  ) : (
+                    <IconEye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[11px] text-text-subtle">
+                Confirm with your administrator credentials to authorize this account change.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-border flex items-center justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -1241,6 +1565,8 @@ export function UsersPage() {
                 onClick={() => {
                   setStatusTarget(null);
                   setStatusError(null);
+                  setAdminPassword('');
+                  setShowPassword(false);
                 }}
               >
                 Cancel
@@ -1251,33 +1577,10 @@ export function UsersPage() {
                 size="md"
                 disabled={isUpdatingStatus}
                 data-testid="confirm-status-toggle-btn"
-                onClick={async () => {
-                  const nextActive = !statusTarget.isActive;
-                  setIsUpdatingStatus(true);
-                  setStatusError(null);
-                  try {
-                    const updated = await updateUserStatus(statusTarget.id, nextActive);
-                    setStatusTarget(null);
-                    void refetchUsers();
-                    void refetchRoles();
-                    setToast({
-                      variant: 'success',
-                      title: updated.isActive ? 'Account Activated' : 'Account Deactivated',
-                      message: `${updated.name} is now ${updated.isActive ? 'active' : 'inactive'}.`,
-                    });
-                  } catch (err) {
-                    setStatusError(
-                      err instanceof UsersApiError || err instanceof Error
-                        ? err.message
-                        : 'Failed to update account status.',
-                    );
-                  } finally {
-                    setIsUpdatingStatus(false);
-                  }
-                }}
+                onClick={handleConfirmStatusToggle}
               >
                 {isUpdatingStatus
-                  ? 'Updating...'
+                  ? 'Verifying...'
                   : statusTarget.isActive
                     ? 'Confirm Deactivate'
                     : 'Confirm Activate'}

@@ -3,7 +3,6 @@ import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { Column, DataTable } from '../../../components/ui/DataTable';
-import { PageContainer } from '../../../components/ui/PageContainer';
 import { StatCard } from '../../../components/ui/StatCard';
 import { ErrorState } from '../../../components/ui/StateCards';
 import { Tabs } from '../../../components/ui/Tabs';
@@ -155,8 +154,7 @@ export const ExpensesPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer>
-      <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0" data-testid="expenses-page">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -274,6 +272,5 @@ export const ExpensesPage: React.FC = () => {
           onClaimUpdated={handleClaimUpdated}
         />
       </div>
-    </PageContainer>
-  );
+    );
 };

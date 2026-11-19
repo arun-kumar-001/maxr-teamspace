@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { canDecideApproval } from '../approval-permissions';
-import { PageContainer } from '../../../components/ui/PageContainer';
 import { DataTable, type Column } from '../../../components/ui/DataTable';
 import { Button } from '../../../components/ui/Button';
 import { StatCard } from '../../../components/ui/StatCard';
@@ -153,8 +152,7 @@ export const ApprovalsInboxPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer>
-      <div className="space-y-6" data-testid="approvals-inbox-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="approvals-inbox-page">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -294,6 +292,5 @@ export const ApprovalsInboxPage: React.FC = () => {
           canDecide={selectedApproval ? mayDecide(selectedApproval) : false}
         />
       </div>
-    </PageContainer>
-  );
-};
+    );
+  };

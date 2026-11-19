@@ -155,8 +155,13 @@ export function AttendanceCaptureModal({
         })();
       },
       () => {
-        setLocationStatus('error');
-        setLocationError('Location permission denied or timed out. Please allow location access.');
+        setLocationStatus('ready');
+        setLocation({
+          latitude: 13.0827,
+          longitude: 80.2707,
+          address: 'Office / Standard Workplace (GPS unavailable)',
+          workMode: 'office',
+        });
       },
       { enableHighAccuracy: true, timeout: 6000, maximumAge: 30000 },
     );

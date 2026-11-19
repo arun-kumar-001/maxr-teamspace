@@ -108,7 +108,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
 
   return (
     <div
-      className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6"
+      className="space-y-6 w-full min-w-0"
       data-testid="leave-management-page"
     >
       {/* Page Header */}

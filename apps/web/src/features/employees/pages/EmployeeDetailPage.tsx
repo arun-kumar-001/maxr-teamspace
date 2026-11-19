@@ -109,7 +109,7 @@ export function EmployeeDetailPage() {
   if (isLoading) {
     return (
       <div
-        className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6"
+        className="space-y-6 w-full min-w-0"
         data-testid="employee-detail-loading"
       >
         <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ export function EmployeeDetailPage() {
 
   if (isForbidden) {
     return (
-      <div className="p-4 sm:p-6 max-w-dashboard mx-auto" data-testid="employee-detail-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-forbidden">
         <ForbiddenState
           title="Access Restricted"
           message="You do not have permission to view this employee record."
@@ -146,7 +146,7 @@ export function EmployeeDetailPage() {
 
   if (isNotFound || !employee) {
     return (
-      <div className="p-4 sm:p-6 max-w-dashboard mx-auto" data-testid="employee-detail-not-found">
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-not-found">
         <ErrorState
           title="Employee Not Found"
           message={
@@ -179,7 +179,7 @@ export function EmployeeDetailPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-dashboard mx-auto" data-testid="employee-detail-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-page">
       {/* Toast Notification */}
       {toastMessage && (
         <div

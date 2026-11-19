@@ -111,7 +111,7 @@ export function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6 p-4 sm:p-6 max-w-5xl mx-auto w-full">
+      <div className="flex flex-col gap-6 w-full min-w-0">
         <div className="h-8 w-40 bg-surface-muted rounded animate-pulse" />
         <div className="h-64 rounded-card bg-surface-muted border border-border animate-pulse" />
       </div>
@@ -120,7 +120,7 @@ export function ProjectDetailPage() {
 
   if (statusCode === 404 || (!loading && !project && !error)) {
     return (
-      <div className="p-4 sm:p-6 max-w-2xl mx-auto w-full">
+      <div className="w-full min-w-0">
         <EmptyState
           title="Project Not Found"
           description="The requested project does not exist, or you do not have permission to view it."
@@ -133,7 +133,7 @@ export function ProjectDetailPage() {
 
   if (error || !project) {
     return (
-      <div className="p-4 sm:p-6 max-w-2xl mx-auto w-full">
+      <div className="w-full min-w-0">
         <ErrorState
           title="Error Loading Project"
           message={error || 'Project data could not be retrieved.'}
@@ -147,7 +147,7 @@ export function ProjectDetailPage() {
 
   return (
     <div
-      className="flex flex-col gap-6 p-4 sm:p-6 max-w-5xl mx-auto w-full"
+      className="flex flex-col gap-6 w-full min-w-0"
       data-testid="project-detail-view"
     >
       {/* Top Navigation & Breadcrumb */}

@@ -218,7 +218,7 @@ export function HRDashboard() {
   ];
 
   return (
-    <div className="space-y-6 max-w-[1536px] mx-auto pb-10" data-testid="hr-dashboard">
+    <div className="space-y-6 w-full min-w-0 pb-10" data-testid="hr-dashboard">
       {/* Top Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1.5">

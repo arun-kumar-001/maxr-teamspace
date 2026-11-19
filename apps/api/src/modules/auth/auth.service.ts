@@ -133,6 +133,37 @@ export class AuthService {
     return this.profileOf(user);
   }
 
+  async verifyPassword(userId: string, password: string, meta: RequestMeta): Promise<boolean> {
+    const user = await this.repo.findUserById(userId);
+    if (!user || !this.isUsable(user)) throw unauthorized();
+    const audit = this.audit.withContext({
+      requestId: meta.requestId,
+      actorId: user.id,
+      actorRole: toRoles(user.roles)[0],
+    });
+
+    const isMatch = await this.hasher.verify(user.passwordHash, password);
+    if (!isMatch) {
+      await audit.record({
+        action: 'auth.verify_password_failed',
+        outcome: 'failure',
+        entityType: 'user',
+        entityId: user.id,
+        metadata: { ip: meta.ip },
+      });
+      throw unauthorized('Invalid admin password');
+    }
+
+    await audit.record({
+      action: 'auth.verify_password',
+      outcome: 'success',
+      entityType: 'user',
+      entityId: user.id,
+      metadata: { ip: meta.ip },
+    });
+    return true;
+  }
+
   async changePassword(
     userId: string,
     currentTokenHash: string,

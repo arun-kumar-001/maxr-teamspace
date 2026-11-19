@@ -2,7 +2,7 @@ import { RequestHandler, Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
 import { validate } from '../../http/validate';
 import { AuthController } from './auth.controller';
-import { changePasswordSchema, loginSchema } from './auth.schemas';
+import { changePasswordSchema, loginSchema, verifyPasswordSchema } from './auth.schemas';
 import { authenticatedOnly, publicRoute, requirePermission } from '../rbac';
 import { requireSameOrigin } from './authenticate';
 import { AuthConfig } from './auth-config';
@@ -45,6 +45,13 @@ export function createAuthRouter({
     authenticatedOnly(),
     validate({ body: changePasswordSchema }),
     asyncHandler(controller.changePassword),
+  );
+  router.post(
+    '/verify-password',
+    authenticate,
+    authenticatedOnly(),
+    validate({ body: verifyPasswordSchema }),
+    asyncHandler(controller.verifyPassword),
   );
 
   return router;

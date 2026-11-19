@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { checkIn, checkOut, fetchTodayAttendance } from '../api/attendance';
+import { checkIn, checkOut, endBreak, fetchTodayAttendance, startBreak } from '../api/attendance';
 import type { AttendanceLocation } from '../types';
 import { AttendanceCaptureModal } from './AttendanceCaptureModal';
 
@@ -60,7 +60,10 @@ export function TimeTrackerCard({
         );
         setSecondsElapsed(activeElapsedSecs);
         setIsCheckedIn(true);
-        setTimeTrackerRunning(true);
+        const isOnBreak = Boolean(
+          summary.activeSession.breakStartTime && !summary.activeSession.breakEndTime,
+        );
+        setTimeTrackerRunning(!isOnBreak);
       } else {
         // Industry-standard reset: once checked out, active session timer resets to 00:00:00
         setSecondsElapsed(0);
@@ -75,6 +78,11 @@ export function TimeTrackerCard({
 
   useEffect(() => {
     void loadFromServer();
+    const handleSync = () => {
+      void loadFromServer();
+    };
+    window.addEventListener('maxr:attendance-updated', handleSync);
+    return () => window.removeEventListener('maxr:attendance-updated', handleSync);
   }, []);
 
   useEffect(() => {
@@ -115,6 +123,8 @@ export function TimeTrackerCard({
       } else {
         await checkOut();
       }
+      window.dispatchEvent(new Event('maxr:attendance-updated'));
+      window.dispatchEvent(new Event('storage'));
     } catch {
       // Keep optimistic UI state when offline/in unit tests
     } finally {
@@ -170,6 +180,8 @@ export function TimeTrackerCard({
         setTimeTrackerRunning(false);
       }
       await loadFromServer();
+      window.dispatchEvent(new Event('maxr:attendance-updated'));
+      window.dispatchEvent(new Event('storage'));
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -179,14 +191,26 @@ export function TimeTrackerCard({
   const handlePausePlay = async () => {
     // Cannot start timer without official active check-in
     if (busy || !isCheckedIn) return;
-    const nextRunning = !timeTrackerRunning;
-    setTimeTrackerRunning(nextRunning);
+    const isPausing = timeTrackerRunning;
+    setTimeTrackerRunning(!isPausing);
     setBusy(true);
     try {
-      if (!nextRunning && isCheckedIn) {
-        await checkOut({ notes: 'Break' });
-        setIsCheckedIn(false);
+      if (isPausing) {
+        try {
+          await startBreak();
+        } catch {
+          // Keep optimistic pause
+        }
+      } else {
+        try {
+          await endBreak();
+        } catch {
+          // Keep optimistic resume
+        }
       }
+      await loadFromServer();
+      window.dispatchEvent(new Event('maxr:attendance-updated'));
+      window.dispatchEvent(new Event('storage'));
     } catch {
       // Keep optimistic pause/resume state
     } finally {

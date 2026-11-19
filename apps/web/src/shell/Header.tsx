@@ -60,8 +60,9 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
   const title = getPageTitle(activePath);
 
   return (
-    <header className="flex h-16 w-full items-center justify-between bg-transparent px-4 sm:px-6 lg:px-8 shrink-0">
-      {/* Left: Mobile Toggle & Page Title */}
+    <header className="h-16 w-full bg-bg/95 border-b border-border/60 px-4 sm:px-6 lg:px-8 shrink-0 z-20">
+      <div className="w-full h-full mx-auto max-w-dashboard flex items-center justify-between">
+        {/* Left: Mobile Toggle & Page Title */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -194,6 +195,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           </div>
         )}
       </div>
-    </header>
+    </div>
+  </header>
   );
 }

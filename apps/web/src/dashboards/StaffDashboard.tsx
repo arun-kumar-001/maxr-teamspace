@@ -3,7 +3,7 @@ import { AttendanceWidget } from '../features/attendance';
 
 export function StaffDashboard() {
   return (
-    <div className="space-y-6" data-testid="staff-dashboard">
+    <div className="space-y-6 w-full min-w-0" data-testid="staff-dashboard">
       {/* Top Welcome Banner with Sample Data Badge (B2 Fix) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1">

@@ -5,6 +5,7 @@ import {
   DropdownSelect,
   EmptyState,
   ErrorState,
+  KpiCard,
   Modal,
   Skeleton,
 } from '../../../components/ui';
@@ -348,33 +349,56 @@ export const PayslipsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Summary Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-card bg-surface border border-border p-4 shadow-card">
-          <p className="text-xs font-medium text-text-muted">Latest Net Pay</p>
-          <p className="text-2xl font-bold font-display text-text mt-1">
-            {latestSlip ? formatInr(latestSlip.netPay) : '—'}
-          </p>
-          <p className="text-xs text-text-subtle mt-1">
-            {latestSlip ? latestSlip.periodLabel : 'No published payslips yet'}
-          </p>
-        </div>
-        <div className="rounded-card bg-surface border border-border p-4 shadow-card">
-          <p className="text-xs font-medium text-text-muted">Latest Gross Earnings</p>
-          <p className="text-2xl font-bold font-display text-text mt-1">
-            {latestSlip ? formatInr(latestSlip.totalEarnings) : '—'}
-          </p>
-          <p className="text-xs text-text-subtle mt-1">
-            {latestSlip ? `${latestSlip.daysPaid} days paid` : 'Awaiting payroll release'}
-          </p>
-        </div>
-        <div className="rounded-card bg-surface border border-border p-4 shadow-card">
-          <p className="text-xs font-medium text-text-muted">Published Statements</p>
-          <p className="text-2xl font-bold font-display text-primary-ink mt-1">
-            {myPayslips.length}
-          </p>
-          <p className="text-xs text-text-subtle mt-1">Read-only verified statements</p>
-        </div>
+      {/* Summary Strip (Universal KpiCard) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+        <KpiCard
+          label="Latest Net Pay"
+          value={latestSlip ? formatInr(latestSlip.netPay) : '0'}
+          badge={latestSlip?.periodLabel}
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          }
+          variant="emerald"
+        />
+        <KpiCard
+          label="Latest Gross Earnings"
+          value={latestSlip ? formatInr(latestSlip.totalEarnings) : '0'}
+          badge={latestSlip ? `${latestSlip.daysPaid}d paid` : undefined}
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          }
+          variant="teal"
+        />
+        <KpiCard
+          label="Published Statements"
+          value={myPayslips.length}
+          badge="Verified"
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          }
+          variant="purple"
+        />
       </div>
 
       {/* Period Filters */}
