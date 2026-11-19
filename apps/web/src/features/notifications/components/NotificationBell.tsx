@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
+import type { AppNotification } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
-import { formatRelativeTime, getNotificationTypeStyle } from './notificationHelpers';
+import {
+  formatRelativeTime,
+  getNotificationTypeStyle,
+  resolveNotificationLink,
+} from './notificationHelpers';
 
 export interface NotificationBellProps {
   onNavigate?: (path: string) => void;
@@ -67,21 +72,18 @@ function NotificationBellContent({
     setIsOpen((prev) => !prev);
   };
 
-  const handleNotificationClick = async (
-    id: string,
-    readAt: string | null,
-    link: string | null,
-  ) => {
-    if (!readAt) {
+  const handleNotificationClick = async (item: AppNotification) => {
+    if (!item.readAt) {
       try {
-        await markAsRead(id);
+        await markAsRead(item.id);
       } catch {
         // Continue navigation even if marking read fails
       }
     }
     setIsOpen(false);
-    if (link) {
-      navigate(link);
+    const targetLink = resolveNotificationLink(item);
+    if (targetLink) {
+      navigate(targetLink);
     }
   };
 
@@ -222,7 +224,7 @@ function NotificationBellContent({
                 return (
                   <div
                     key={item.id}
-                    onClick={() => handleNotificationClick(item.id, item.readAt, item.link)}
+                    onClick={() => handleNotificationClick(item)}
                     className={`group flex items-start gap-3 p-3 transition-colors cursor-pointer ${
                       isUnread
                         ? 'bg-primary-soft/30 hover:bg-primary-soft/50'
