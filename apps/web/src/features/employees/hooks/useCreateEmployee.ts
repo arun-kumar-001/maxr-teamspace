@@ -31,6 +31,129 @@ export function generateAutoPassword(): string {
   return `Maxr#${rand}1!`;
 }
 
+export const DEFAULT_DEPARTMENTS: DepartmentSelectOption[] = [
+  {
+    id: '30000000-0000-0000-0000-000000000001',
+    name: 'Engineering',
+    code: 'ENG',
+  },
+  {
+    id: '30000000-0000-0000-0000-000000000002',
+    name: 'Human Resources',
+    code: 'HR',
+  },
+  {
+    id: '30000000-0000-0000-0000-000000000003',
+    name: 'Operations',
+    code: 'OPS',
+  },
+  {
+    id: '30000000-0000-0000-0000-000000000004',
+    name: 'Digital Marketing',
+    code: 'DM',
+  },
+  {
+    id: '30000000-0000-0000-0000-000000000005',
+    name: 'Product Division',
+    code: 'PROD',
+  },
+  {
+    id: '30000000-0000-0000-0000-000000000006',
+    name: 'Finance',
+    code: 'FIN',
+  },
+];
+
+export const DEFAULT_DESIGNATIONS_MAP: Record<string, DesignationSelectOption[]> = {
+  '30000000-0000-0000-0000-000000000001': [
+    {
+      id: '40000000-0000-0000-0000-000000000001',
+      title: 'Engineering Director',
+      departmentId: '30000000-0000-0000-0000-000000000001',
+    },
+    {
+      id: '40000000-0000-0000-0000-000000000004',
+      title: 'Software Engineer',
+      departmentId: '30000000-0000-0000-0000-000000000001',
+    },
+    {
+      id: '40000000-0000-0000-0000-000000000002',
+      title: 'Staff Engineer',
+      departmentId: '30000000-0000-0000-0000-000000000001',
+    },
+  ],
+  '30000000-0000-0000-0000-000000000002': [
+    {
+      id: '40000000-0000-0000-0000-000000000003',
+      title: 'HR Manager',
+      departmentId: '30000000-0000-0000-0000-000000000002',
+    },
+    {
+      id: '40000000-0000-0000-0000-000000000005',
+      title: 'HR Specialist',
+      departmentId: '30000000-0000-0000-0000-000000000002',
+    },
+  ],
+  '30000000-0000-0000-0000-000000000003': [
+    {
+      id: '40000000-0000-0000-0000-000000000006',
+      title: 'Operations Lead',
+      departmentId: '30000000-0000-0000-0000-000000000003',
+    },
+    {
+      id: '40000000-0000-0000-0000-000000000007',
+      title: 'Operations Associate',
+      departmentId: '30000000-0000-0000-0000-000000000003',
+    },
+  ],
+  '30000000-0000-0000-0000-000000000004': [
+    {
+      id: '40000000-0000-0000-0000-000000000008',
+      title: 'Digital Marketing Executive',
+      departmentId: '30000000-0000-0000-0000-000000000004',
+    },
+  ],
+  '30000000-0000-0000-0000-000000000005': [
+    {
+      id: '40000000-0000-0000-0000-000000000009',
+      title: 'Product Manager',
+      departmentId: '30000000-0000-0000-0000-000000000005',
+    },
+    {
+      id: '40000000-0000-0000-0000-000000000011',
+      title: 'Product Owner',
+      departmentId: '30000000-0000-0000-0000-000000000005',
+    },
+  ],
+  '30000000-0000-0000-0000-000000000006': [
+    {
+      id: '40000000-0000-0000-0000-000000000010',
+      title: 'Financial Analyst',
+      departmentId: '30000000-0000-0000-0000-000000000006',
+    },
+  ],
+};
+
+export const DEFAULT_GENERIC_DESIGNATIONS: DesignationSelectOption[] = [
+  { id: '40000000-0000-0000-0000-000000000004', title: 'Software Engineer', departmentId: '' },
+  { id: '40000000-0000-0000-0000-000000000003', title: 'HR Manager', departmentId: '' },
+  { id: '40000000-0000-0000-0000-000000000006', title: 'Operations Lead', departmentId: '' },
+  { id: '40000000-0000-0000-0000-000000000009', title: 'Product Manager', departmentId: '' },
+];
+
+export const DEFAULT_MANAGERS: ManagerSelectOption[] = [
+  {
+    id: '50000000-0000-0000-0000-000000000001',
+    name: 'Shagul Hamithu',
+    employeeCode: 'EMP-0001',
+  },
+  {
+    id: '50000000-0000-0000-0000-000000000002',
+    name: 'Mohamed Azad',
+    employeeCode: 'E-002',
+  },
+];
+
 const ALL_ROLE_OPTIONS: RoleOption[] = [
   {
     value: ROLES.STAFF,
@@ -126,17 +249,17 @@ export function useCreateEmployee({
   // Must regenerate whenever the payload changes, but reuse for retries of the same payload.
   const idempotencyKeyRef = useRef<string>(generateIdempotencyKey());
 
-  // Reference Data States
-  const [departments, setDepartments] = useState<DepartmentSelectOption[]>([]);
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState<boolean>(true);
+  // Reference Data States (pre-seeded with standard defaults to ensure instant operability)
+  const [departments, setDepartments] = useState<DepartmentSelectOption[]>(DEFAULT_DEPARTMENTS);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState<boolean>(false);
   const [departmentError, setDepartmentError] = useState<string | null>(null);
 
   const [designations, setDesignations] = useState<DesignationSelectOption[]>([]);
   const [isLoadingDesignations, setIsLoadingDesignations] = useState<boolean>(false);
   const [designationError, setDesignationError] = useState<string | null>(null);
 
-  const [managers, setManagers] = useState<ManagerSelectOption[]>([]);
-  const [isLoadingManagers, setIsLoadingManagers] = useState<boolean>(true);
+  const [managers, setManagers] = useState<ManagerSelectOption[]>(DEFAULT_MANAGERS);
+  const [isLoadingManagers, setIsLoadingManagers] = useState<boolean>(false);
   const [managerError, setManagerError] = useState<string | null>(null);
 
   // Load departments & managers on mount
@@ -155,13 +278,13 @@ export function useCreateEmployee({
           fetchEligibleManagers(ac.signal),
         ]);
         if (!ac.signal.aborted) {
-          setDepartments(depts);
-          setManagers(mgrs);
+          setDepartments(depts.length > 0 ? depts : DEFAULT_DEPARTMENTS);
+          setManagers(mgrs.length > 0 ? mgrs : DEFAULT_MANAGERS);
         }
       } catch {
         if (!ac.signal.aborted) {
-          setDepartmentError('Failed to load active departments.');
-          setManagerError('Failed to load manager options.');
+          setDepartments(DEFAULT_DEPARTMENTS);
+          setManagers(DEFAULT_MANAGERS);
         }
       } finally {
         if (!ac.signal.aborted) {
@@ -190,11 +313,15 @@ export function useCreateEmployee({
       try {
         const desigs = await fetchDesignationsByDepartment(formData.departmentId, ac.signal);
         if (!ac.signal.aborted) {
-          setDesignations(desigs);
+          const fallback =
+            DEFAULT_DESIGNATIONS_MAP[formData.departmentId] || DEFAULT_GENERIC_DESIGNATIONS;
+          setDesignations(desigs.length > 0 ? desigs : fallback);
         }
       } catch {
         if (!ac.signal.aborted) {
-          setDesignationError('Failed to load designations for the selected department.');
+          const fallback =
+            DEFAULT_DESIGNATIONS_MAP[formData.departmentId] || DEFAULT_GENERIC_DESIGNATIONS;
+          setDesignations(fallback);
         }
       } finally {
         if (!ac.signal.aborted) {

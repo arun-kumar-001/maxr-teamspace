@@ -985,8 +985,8 @@ export function CreateEmployeeForm({
               id="create-emp-department"
               value={formData.departmentId}
               onChange={(e) => setFieldValue('departmentId', e.target.value)}
-              disabled={isSubmitting || isLoadingDepartments}
-              placeholder={isLoadingDepartments ? 'Loading departments...' : 'Select department'}
+              disabled={isSubmitting || (isLoadingDepartments && departmentOptions.length === 0)}
+              placeholder={isLoadingDepartments && departmentOptions.length === 0 ? 'Loading departments...' : 'Select department'}
               options={departmentOptions}
               data-testid="select-department"
             />
