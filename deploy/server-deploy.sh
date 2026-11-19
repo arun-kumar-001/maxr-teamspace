@@ -12,6 +12,7 @@ echo "[1/6] Repository directory: $REPO_ROOT"
 
 # 2. Check and configure deploy/.env.production
 ENV_FILE="$REPO_ROOT/deploy/.env.production"
+ROOT_ENV="$REPO_ROOT/.env.production"
 CERT_DIR="$REPO_ROOT/deploy/certs"
 
 if [ ! -f "$ENV_FILE" ]; then
@@ -51,7 +52,23 @@ EOF
   echo "      Generated $ENV_FILE with secure credentials."
 else
   echo "[2/6] Found existing $ENV_FILE"
+  # Ensure mandatory keys are present and not empty
+  if ! grep -q "^SESSION_SECRET=" "$ENV_FILE" || grep -q "^SESSION_SECRET=$" "$ENV_FILE"; then
+    SESSION_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
+    sed -i "s/^SESSION_SECRET=.*/SESSION_SECRET=${SESSION_SEC}/" "$ENV_FILE" || echo "SESSION_SECRET=${SESSION_SEC}" >> "$ENV_FILE"
+  fi
+  if ! grep -q "^STORAGE_SIGNING_SECRET=" "$ENV_FILE" || grep -q "^STORAGE_SIGNING_SECRET=$" "$ENV_FILE"; then
+    STORAGE_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
+    sed -i "s/^STORAGE_SIGNING_SECRET=.*/STORAGE_SIGNING_SECRET=${STORAGE_SEC}/" "$ENV_FILE" || echo "STORAGE_SIGNING_SECRET=${STORAGE_SEC}" >> "$ENV_FILE"
+  fi
+  if ! grep -q "^CORS_ORIGIN=" "$ENV_FILE" || grep -q "^CORS_ORIGIN=$" "$ENV_FILE"; then
+    echo "CORS_ORIGIN=https://localhost" >> "$ENV_FILE"
+  fi
 fi
+
+# Mirror to root .env.production as well
+cp -f "$ENV_FILE" "$ROOT_ENV"
+chmod 600 "$ROOT_ENV"
 
 # 3. Ensure TLS certificates exist
 TLS_DIR=$(grep -E '^TLS_CERT_DIR=' "$ENV_FILE" | cut -d '=' -f2- | tr -d '"' | tr -d "'" || echo "")
@@ -90,7 +107,13 @@ docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" run --rm
 
 # 6. Build and start full stack (API & Web)
 echo "[6/6] Building and starting all containers (Web & API)..."
-docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" up -d --build
+if ! docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" up -d --build; then
+  echo "========================================="
+  echo "Container start failed! Dumping API logs:"
+  echo "========================================="
+  docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" logs --tail 50 api || true
+  exit 1
+fi
 
 echo "========================================="
 echo "   Deployment completed successfully!    "

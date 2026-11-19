@@ -55,6 +55,14 @@ services:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       STORAGE_LOCAL_PATH: /data/uploads
+      SESSION_SECRET: ${SESSION_SECRET}
+      STORAGE_SIGNING_SECRET: ${STORAGE_SIGNING_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://localhost}
+      EMAIL_DRIVER: ${EMAIL_DRIVER:-smtp}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@maxr.internal}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
     volumes:
       - uploads_data:/data/uploads
     read_only: true
