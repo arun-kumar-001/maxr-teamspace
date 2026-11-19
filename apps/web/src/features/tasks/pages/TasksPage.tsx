@@ -199,7 +199,7 @@ function TasksPageContent({
 
   return (
     <div
-      className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl mx-auto w-full"
+      className="flex flex-col gap-5 w-full min-w-0"
       data-testid="tasks-page"
     >
       {/* Page Header */}

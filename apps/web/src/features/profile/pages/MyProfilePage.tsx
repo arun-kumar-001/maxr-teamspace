@@ -26,7 +26,7 @@ export function MyProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-6" data-testid="profile-loading-skeleton">
+      <div className="space-y-6 w-full min-w-0" data-testid="profile-loading-skeleton">
         {/* Header Skeleton */}
         <div className="bg-surface border border-border rounded-card p-6 shadow-card">
           <div className="flex items-center gap-5">
@@ -60,7 +60,7 @@ export function MyProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="max-w-5xl mx-auto py-8">
+      <div className="space-y-6 w-full min-w-0 py-8">
         <ErrorState
           title="Unable to load profile"
           message={error || 'An unexpected error occurred while loading your profile.'}
@@ -73,7 +73,7 @@ export function MyProfilePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6" data-testid="my-profile-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="my-profile-page">
       {/* Success Notification Toast */}
       {successMessage && (
         <div className="fixed top-20 right-4 z-50 max-w-md w-full animate-in fade-in slide-in-from-top-2">

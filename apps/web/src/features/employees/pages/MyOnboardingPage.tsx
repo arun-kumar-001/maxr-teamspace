@@ -11,7 +11,7 @@ export function MyOnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6" data-testid="my-onboarding-loading">
+      <div className="space-y-6 w-full min-w-0" data-testid="my-onboarding-loading">
         <Skeleton height={32} width="40%" />
         <Skeleton height={100} variant="rectangular" />
         <Skeleton height={200} variant="rectangular" />
@@ -21,7 +21,7 @@ export function MyOnboardingPage() {
 
   if (statusCode === 403) {
     return (
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto" data-testid="my-onboarding-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="my-onboarding-forbidden">
         <ForbiddenState
           title="Access Denied"
           message="You do not have permission to view onboarding records."
@@ -32,7 +32,7 @@ export function MyOnboardingPage() {
 
   if (error || !detail) {
     return (
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto" data-testid="my-onboarding-error">
+      <div className="space-y-6 w-full min-w-0" data-testid="my-onboarding-error">
         <ErrorState
           title="Onboarding Record Not Found"
           message={error || 'No onboarding checklist was found for your employee profile.'}
@@ -43,7 +43,7 @@ export function MyOnboardingPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6" data-testid="my-onboarding-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="my-onboarding-page">
       <OnboardingChecklistDetail
         employeeId={detail.employeeId}
         onBack={() => navigate('/dashboard')}

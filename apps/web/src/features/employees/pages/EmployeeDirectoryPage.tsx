@@ -637,7 +637,7 @@ export function EmployeeDirectoryPage() {
   if (isForbidden || statusCode === 403) {
     return (
       <div
-        className="p-4 sm:p-6 space-y-6 max-w-dashboard mx-auto"
+        className="space-y-6 max-w-dashboard w-full min-w-0"
         data-testid="employee-directory-page"
       >
         <div data-testid="directory-forbidden-view">
@@ -653,7 +653,7 @@ export function EmployeeDirectoryPage() {
   if (error && !isLoading && employees.length === 0) {
     return (
       <div
-        className="p-4 sm:p-6 space-y-6 max-w-dashboard mx-auto"
+        className="space-y-6 max-w-dashboard w-full min-w-0"
         data-testid="employee-directory-page"
       >
         <div data-testid="directory-error-view">
@@ -669,7 +669,7 @@ export function EmployeeDirectoryPage() {
 
   return (
     <div
-      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans"
+      className="space-y-6 max-w-dashboard w-full min-w-0 font-sans"
       data-testid="employee-directory-page"
     >
       {/* Scoped CSS for Smooth Animations & Zero Hex Compliance */}

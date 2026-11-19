@@ -3,7 +3,6 @@ import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button, PrimaryActionButton } from '../../../components/ui';
 import { DataTable, type Column, type SortDirection } from '../../../components/ui/DataTable';
-import { PageContainer } from '../../../components/ui/PageContainer';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { EmptyState, ErrorState, ForbiddenState } from '../../../components/ui/StateCards';
 import { Badge } from '../../../components/ui/StatusPill';
@@ -147,14 +146,12 @@ export function DepartmentsPage() {
 
   if (isForbidden) {
     return (
-      <PageContainer maxWidth="dashboard">
-        <div data-testid="department-forbidden-view">
-          <ForbiddenState
-            title="Access Restricted"
-            message="You do not have permission to manage organizational departments."
-          />
-        </div>
-      </PageContainer>
+      <div className="space-y-6 w-full min-w-0" data-testid="department-forbidden-view">
+        <ForbiddenState
+          title="Access Restricted"
+          message="You do not have permission to manage organizational departments."
+        />
+      </div>
     );
   }
 
@@ -268,7 +265,7 @@ export function DepartmentsPage() {
   ];
 
   return (
-    <PageContainer maxWidth="dashboard" className="space-y-6">
+    <div className="space-y-6 w-full min-w-0" data-testid="departments-page">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed top-4 right-4 z-50 max-w-sm w-full">
@@ -516,7 +513,7 @@ export function DepartmentsPage() {
         onClose={closeDeactivate}
         onConfirm={confirmDeactivate}
       />
-    </PageContainer>
+    </div>
   );
 }
 

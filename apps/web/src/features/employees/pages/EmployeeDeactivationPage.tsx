@@ -73,7 +73,7 @@ export function EmployeeDeactivationPage() {
 
   if (!isAdmin) {
     return (
-      <div className="p-4 sm:p-6" data-testid="deactivation-page-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="deactivation-page-forbidden">
         <ForbiddenState
           title="Access Restricted"
           message="Only System Administrators have permission to deactivate employee accounts."
@@ -84,7 +84,7 @@ export function EmployeeDeactivationPage() {
 
   if (isSelf) {
     return (
-      <div className="p-4 sm:p-6" data-testid="deactivation-page-self">
+      <div className="space-y-6 w-full min-w-0" data-testid="deactivation-page-self">
         <ForbiddenState
           title="Self-Deactivation Not Permitted"
           message="You cannot deactivate your own account. Ask another Administrator to perform this action if necessary."
@@ -96,7 +96,7 @@ export function EmployeeDeactivationPage() {
   if (isLoading) {
     return (
       <div
-        className="p-4 sm:p-6 space-y-4 max-w-2xl mx-auto"
+        className="space-y-4 max-w-2xl mx-auto w-full min-w-0"
         data-testid="deactivation-page-loading"
       >
         <Skeleton height={32} width="50%" />
@@ -107,7 +107,7 @@ export function EmployeeDeactivationPage() {
 
   if (error || !employee) {
     return (
-      <div className="p-4 sm:p-6 max-w-2xl mx-auto" data-testid="deactivation-page-error">
+      <div className="max-w-2xl mx-auto w-full min-w-0" data-testid="deactivation-page-error">
         <ErrorState
           title="Cannot Access Deactivation"
           message={error || 'Employee record not found'}
@@ -122,7 +122,7 @@ export function EmployeeDeactivationPage() {
 
   return (
     <div
-      className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6"
+      className="max-w-2xl mx-auto w-full min-w-0 space-y-6"
       data-testid="employee-deactivation-page"
     >
       <div className="flex items-center gap-2">

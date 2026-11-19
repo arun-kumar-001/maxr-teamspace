@@ -460,8 +460,14 @@ export function AdminDashboard() {
 
     loadData().catch(() => {});
 
+    const handleAttendanceUpdate = () => {
+      loadData().catch(() => {});
+    };
+    window.addEventListener('maxr:attendance-updated', handleAttendanceUpdate);
+
     return () => {
       mounted = false;
+      window.removeEventListener('maxr:attendance-updated', handleAttendanceUpdate);
     };
   }, []);
 

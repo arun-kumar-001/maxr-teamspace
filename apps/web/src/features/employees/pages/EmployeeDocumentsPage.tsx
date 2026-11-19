@@ -17,7 +17,7 @@ export function EmployeeDocumentsPage() {
 
   if (!activeEmployeeId) {
     return (
-      <div className="p-4 sm:p-6" data-testid="documents-page-no-employee">
+      <div className="space-y-6 w-full min-w-0" data-testid="documents-page-no-employee">
         <ForbiddenState
           title="Profile Not Found"
           message="No associated employee profile was found for this user account."
@@ -29,7 +29,7 @@ export function EmployeeDocumentsPage() {
   // Deny Team Lead or Staff trying to view another's documents
   if (!isAdminOrHR && (!isStaff || !isOwnRecord)) {
     return (
-      <div className="p-4 sm:p-6" data-testid="documents-page-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="documents-page-forbidden">
         <ForbiddenState
           title="Access Restricted"
           message="You do not have permission to view employee personal documents."
@@ -39,7 +39,7 @@ export function EmployeeDocumentsPage() {
   }
 
   return (
-    <div className="space-y-6" data-testid="employee-documents-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="employee-documents-page">
       {/* Back button when accessed via employee detail */}
       {params.id && (
         <div className="flex items-center gap-2">

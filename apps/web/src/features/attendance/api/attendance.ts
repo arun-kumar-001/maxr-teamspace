@@ -113,6 +113,30 @@ export async function checkOut(data?: CheckOutRequest): Promise<AttendanceRecord
 }
 
 /**
+ * Start a break for the active session.
+ */
+export async function startBreak(): Promise<AttendanceRecord> {
+  const res = await apiFetch('/api/v1/attendance/break-start', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  const body = await handleResponse<{ data: AttendanceRecord }>(res);
+  return body.data;
+}
+
+/**
+ * End an ongoing break for the active session.
+ */
+export async function endBreak(): Promise<AttendanceRecord> {
+  const res = await apiFetch('/api/v1/attendance/break-end', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+  const body = await handleResponse<{ data: AttendanceRecord }>(res);
+  return body.data;
+}
+
+/**
  * Fetch personal attendance history for the authenticated employee.
  */
 export async function fetchMyAttendanceHistory(
@@ -181,24 +205,6 @@ export async function cancelCorrection(id: string): Promise<AttendanceCorrection
     method: 'POST',
   });
   const body = await handleResponse<{ data: AttendanceCorrection }>(res);
-  return body.data;
-}
-
-export async function startBreak(): Promise<AttendanceRecord> {
-  const res = await apiFetch('/api/v1/attendance/break-start', {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
-  const body = await handleResponse<{ data: AttendanceRecord }>(res);
-  return body.data;
-}
-
-export async function endBreak(): Promise<AttendanceRecord> {
-  const res = await apiFetch('/api/v1/attendance/break-end', {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
-  const body = await handleResponse<{ data: AttendanceRecord }>(res);
   return body.data;
 }
 

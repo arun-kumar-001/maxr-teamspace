@@ -15,6 +15,13 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [, setNavRevision] = useState(0);
+  const [customLogo, setCustomLogo] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('maxr_company_logo');
+    } catch {
+      return null;
+    }
+  });
 
   const sidebarUser = user
     ? {
@@ -26,14 +33,35 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     : undefined;
 
   useEffect(() => {
-    const handleNavChange = () => setNavRevision((r) => r + 1);
+    const handleNavChange = () => {
+      setNavRevision((r) => r + 1);
+      try {
+        setCustomLogo(localStorage.getItem('maxr_company_logo'));
+      } catch {
+        // storage unavailable
+      }
+    };
     window.addEventListener('storage', handleNavChange);
     window.addEventListener('maxr:staff-payslips-change', handleNavChange);
+    window.addEventListener('maxr:company-config-updated', handleNavChange);
     return () => {
       window.removeEventListener('storage', handleNavChange);
       window.removeEventListener('maxr:staff-payslips-change', handleNavChange);
+      window.removeEventListener('maxr:company-config-updated', handleNavChange);
     };
   }, []);
+
+  // Ensure outer document window is locked at (0, 0) so only inner <main> scrolls
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    handleWindowScroll();
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [currentPath]);
 
   const groups = role ? getSidebarGroupsForRole(role) : [];
   const roleNavItems = role ? getNavItemsForRole(role) : [];
@@ -47,7 +75,13 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       </span>
     ),
     subtitle: 'Staff Management',
-    logo: (
+    logo: customLogo ? (
+      <img
+        src={customLogo}
+        alt="Company Logo"
+        className="w-9 h-9 rounded-lg object-contain select-none bg-white/10 p-0.5 shadow-sm"
+      />
+    ) : (
       <img
         src="/maxr-symbol.png"
         alt="MAXR"
@@ -99,14 +133,14 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Header
           onToggleMobileNav={() => setIsMobileNavOpen(true)}
           activePath={currentPath}
           onNavigate={onNavigate}
         />
 
-        <main className="flex-1 pb-20 md:pb-12">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-12">
           <PageContainer maxWidth="dashboard" className="py-6 sm:py-8">
             {children}
           </PageContainer>
