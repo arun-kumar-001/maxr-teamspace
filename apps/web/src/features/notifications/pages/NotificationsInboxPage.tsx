@@ -4,8 +4,13 @@ import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button, PageContainer } from '../../../components/ui';
 import { AnnouncementModal } from '../components/AnnouncementModal';
-import { formatRelativeTime, getNotificationTypeStyle } from '../components/notificationHelpers';
+import {
+  formatRelativeTime,
+  getNotificationTypeStyle,
+  resolveNotificationLink,
+} from '../components/notificationHelpers';
 import { useNotifications } from '../hooks/useNotifications';
+import type { AppNotification } from '../types';
 
 export function NotificationsInboxPage() {
   const { user, role } = useAuth();
@@ -37,20 +42,17 @@ export function NotificationsInboxPage() {
     setCurrentPage(1);
   };
 
-  const handleNotificationClick = async (
-    id: string,
-    readAt: string | null,
-    link: string | null,
-  ) => {
-    if (!readAt) {
+  const handleNotificationClick = async (item: AppNotification) => {
+    if (!item.readAt) {
       try {
-        await markAsRead(id);
+        await markAsRead(item.id);
       } catch {
         // Continue navigation even if marking read fails
       }
     }
-    if (link) {
-      navigate(link);
+    const targetLink = resolveNotificationLink(item);
+    if (targetLink) {
+      navigate(targetLink);
     }
   };
 
@@ -197,7 +199,7 @@ export function NotificationsInboxPage() {
               return (
                 <div
                   key={item.id}
-                  onClick={() => handleNotificationClick(item.id, item.readAt, item.link)}
+                  onClick={() => handleNotificationClick(item)}
                   className={`group relative flex flex-col sm:flex-row sm:items-start gap-4 rounded-card border p-4 sm:p-5 transition-all cursor-pointer ${
                     isUnread
                       ? 'border-primary-ink/30 bg-surface-raised shadow-raised'
@@ -243,27 +245,30 @@ export function NotificationsInboxPage() {
                           timeStyle: 'short',
                         })}
                       </span>
-                      {item.link && (
-                        <>
-                          <span>&bull;</span>
-                          <span className="text-primary-deep font-semibold group-hover:underline inline-flex items-center gap-1">
-                            Follow action
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </span>
-                        </>
-                      )}
+                      {(() => {
+                        const targetLink = resolveNotificationLink(item);
+                        return targetLink ? (
+                          <>
+                            <span>&bull;</span>
+                            <span className="text-primary-deep font-semibold group-hover:underline inline-flex items-center gap-1">
+                              View details
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </span>
+                          </>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
 

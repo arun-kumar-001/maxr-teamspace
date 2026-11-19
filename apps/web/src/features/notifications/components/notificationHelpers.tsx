@@ -156,3 +156,87 @@ export function getNotificationTypeStyle(type: string): NotificationTypeStyle {
     ),
   };
 }
+
+/**
+ * Resolves the destination route when a user clicks a notification.
+ * Prioritizes explicit links, then maps notification types, and falls back to content detection.
+ */
+export function resolveNotificationLink(item: {
+  link?: string | null;
+  type?: string;
+  title?: string;
+  body?: string;
+}): string {
+  // 1. If explicit valid link is provided, use it
+  if (item.link && item.link.trim() !== '' && item.link !== '#') {
+    return item.link;
+  }
+
+  const type = (item.type || '').toLowerCase();
+  const text = `${item.title || ''} ${item.body || ''}`.toLowerCase();
+
+  // 2. Type-based routing
+  if (type.startsWith('approval.')) {
+    return '/approvals';
+  }
+  if (type.startsWith('leave.')) {
+    return '/leave';
+  }
+  if (type.startsWith('task.')) {
+    return '/tasks';
+  }
+  if (type.startsWith('attendance.')) {
+    return '/attendance';
+  }
+  if (type.startsWith('meeting.')) {
+    return '/dashboard';
+  }
+  if (type.startsWith('employee.') || type.startsWith('onboarding.')) {
+    return '/employees';
+  }
+  if (type.startsWith('project.')) {
+    return '/projects';
+  }
+  if (type === 'announcement' || type.startsWith('announcement.')) {
+    return '/notifications';
+  }
+
+  // 3. Keyword-based matching from title & body
+  if (text.includes('leave') || text.includes('vacation') || text.includes('time off')) {
+    return '/leave';
+  }
+  if (
+    text.includes('approval') ||
+    text.includes('approved') ||
+    text.includes('rejected') ||
+    text.includes('decision')
+  ) {
+    return '/approvals';
+  }
+  if (text.includes('task') || text.includes('todo') || text.includes('to-do')) {
+    return '/tasks';
+  }
+  if (
+    text.includes('attendance') ||
+    text.includes('check-in') ||
+    text.includes('check in') ||
+    text.includes('punch') ||
+    text.includes('timesheet') ||
+    text.includes('roster') ||
+    text.includes('onduty')
+  ) {
+    return '/attendance';
+  }
+  if (text.includes('project')) {
+    return '/projects';
+  }
+  if (text.includes('payslip') || text.includes('salary') || text.includes('payroll')) {
+    return '/payslips';
+  }
+  if (text.includes('employee') || text.includes('onboarding') || text.includes('candidate')) {
+    return '/employees';
+  }
+
+  // 4. Fallback safe destination
+  return '/notifications';
+}
