@@ -421,6 +421,72 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     }
   };
 
+  const handleEditLeave = async (id: string, payload: ApplyForLeavePayload) => {
+    const policy = policies.find((p) => p.id === payload.leaveTypeId) || FALLBACK_POLICIES[0]!;
+    const daysCount = payload.halfDay ? 0.5 : 1;
+
+    // Adjust balances if days changed
+    const existing = requests.find((r) => r.id === id);
+    const oldDays = existing ? existing.days : 0;
+    const diff = daysCount - oldDays;
+
+    if (diff !== 0) {
+      setBalances((prev) =>
+        prev.map((b) =>
+          b.leaveTypeId === policy.id
+            ? {
+                ...b,
+                used: Math.max(0, b.used + diff),
+                remaining: Math.max(0, b.remaining - diff),
+              }
+            : b,
+        ),
+      );
+    }
+
+    setRequests((prev) => {
+      const exists = prev.some((r) => r.id === id);
+      if (!exists) {
+        return [
+          {
+            id,
+            employeeId: 'emp-me',
+            employeeName: 'Current User',
+            leaveTypeId: policy.id,
+            leaveTypeCode: policy.code,
+            leaveTypeName: policy.name,
+            startDate: payload.startDate,
+            endDate: payload.endDate,
+            halfDay: Boolean(payload.halfDay),
+            days: daysCount,
+            reason: payload.reason || '',
+            status: 'pending',
+            approvalId: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          ...prev,
+        ];
+      }
+      return prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              leaveTypeId: policy.id,
+              leaveTypeCode: policy.code,
+              leaveTypeName: policy.name,
+              startDate: payload.startDate,
+              endDate: payload.endDate,
+              halfDay: Boolean(payload.halfDay),
+              days: daysCount,
+              reason: payload.reason || '',
+              updatedAt: new Date().toISOString(),
+            }
+          : r,
+      );
+    });
+  };
+
   const handleCancelRequest = async (id: string) => {
     try {
       const cancelled = await leaveApi.cancelLeaveRequest(id);
@@ -429,11 +495,49 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       await loadBalances(selectedYear);
       return cancelled;
     } catch {
-      setRequests((prev) =>
-        prev.map((r) =>
+      // Local cancellation for fallback/mock/offline: refund leave balance
+      const existing = requests.find((r) => r.id === id);
+      if (existing) {
+        setBalances((prev) =>
+          prev.map((b) =>
+            b.leaveTypeId === existing.leaveTypeId
+              ? {
+                  ...b,
+                  used: Math.max(0, b.used - existing.days),
+                  remaining: b.remaining + existing.days,
+                }
+              : b,
+          ),
+        );
+      }
+      setRequests((prev) => {
+        const exists = prev.some((r) => r.id === id);
+        if (!exists) {
+          return [
+            ...prev,
+            {
+              id,
+              employeeId: 'emp-me',
+              employeeName: 'Current User',
+              leaveTypeId: 'pol-casual',
+              leaveTypeCode: 'CASUAL',
+              leaveTypeName: 'Casual Leave',
+              startDate: new Date().toISOString().slice(0, 10),
+              endDate: new Date().toISOString().slice(0, 10),
+              halfDay: false,
+              days: 1,
+              reason: 'Cancelled request',
+              status: 'cancelled',
+              approvalId: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ];
+        }
+        return prev.map((r) =>
           r.id === id ? { ...r, status: 'cancelled', updatedAt: new Date().toISOString() } : r,
-        ),
-      );
+        );
+      });
       return { id, status: 'cancelled' } as LeaveRequest;
     }
   };
@@ -513,6 +617,7 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     loadMyRequests,
     loadCalendar,
     applyLeave: handleApplyLeave,
+    editLeave: handleEditLeave,
     cancelRequest: handleCancelRequest,
     createPolicy: handleCreatePolicy,
     updatePolicy: handleUpdatePolicy,

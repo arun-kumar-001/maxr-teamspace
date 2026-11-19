@@ -4,6 +4,19 @@ import { Modal, Button, FormField, Select } from '../../../components/ui';
 import { fetchLeaveApprovalRoute } from '../api/leave';
 import type { LeaveApprovalRoute } from '../types';
 
+export interface InitialLeaveRequest {
+  id: string;
+  leaveTypeId?: string;
+  leaveTypeCode?: string;
+  leaveTypeName?: string;
+  startDate: string;
+  endDate: string;
+  halfDay?: boolean;
+  reason?: string | null;
+  requestCode?: string;
+  status?: string;
+}
+
 export interface ApplyLeaveModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -11,6 +24,20 @@ export interface ApplyLeaveModalProps {
   balances: LeaveBalance[];
   holidays: Holiday[];
   onSubmit: (payload: ApplyForLeavePayload) => Promise<void>;
+  initialRequest?: InitialLeaveRequest | null;
+  mode?: 'create' | 'edit';
+  onEditSubmit?: (id: string, payload: ApplyForLeavePayload) => Promise<void>;
+}
+
+function toDateInputValue(str?: string | null): string {
+  if (!str) return new Date().toISOString().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  const currentYear = new Date().getFullYear();
+  const parsed = Date.parse(`${str} ${currentYear}`);
+  if (!isNaN(parsed)) {
+    return new Date(parsed).toISOString().slice(0, 10);
+  }
+  return new Date().toISOString().slice(0, 10);
 }
 
 // Fallback policies when none are loaded from the backend
@@ -89,6 +116,9 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   balances,
   holidays,
   onSubmit,
+  initialRequest = null,
+  mode = 'create',
+  onEditSubmit,
 }) => {
   // Use active policies, or fall back to standard list if empty
   const resolvedPolicies = useMemo(() => {
@@ -127,29 +157,59 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     setRouteError(false);
     void fetchLeaveApprovalRoute(controller.signal).then(
       (route) => {
-        if (!controller.signal.aborted) setApprovalRoute(route);
+        if (!controller.signal.aborted) {
+          setApprovalRoute(route);
+          if (mode === 'edit' && route.approverRoles && route.approverRoles.length > 0) {
+            setApproverRole(route.approverRoles[0] as 'hr_manager' | 'team_lead' | 'admin');
+          }
+        }
       },
       () => {
-        if (!controller.signal.aborted) setRouteError(true);
+        if (!controller.signal.aborted) {
+          setRouteError(true);
+          if (mode === 'edit') {
+            setApproverRole('hr_manager');
+          }
+        }
       },
     );
     return () => controller.abort();
-  }, [isOpen, routeRetry]);
+  }, [isOpen, routeRetry, mode]);
 
   // Set default selected policy and reset inputs when modal opens
   useEffect(() => {
     if (isOpen) {
-      setLeaveTypeId((prev) => (prev ? prev : (resolvedPolicies[0]?.id ?? '')));
-      setStartDate(todayStr);
-      setEndDate(todayStr);
-      setHalfDay(false);
-      setReason('');
+      if (mode === 'edit' && initialRequest) {
+        const match =
+          resolvedPolicies.find(
+            (p) =>
+              (initialRequest.leaveTypeId && p.id === initialRequest.leaveTypeId) ||
+              (initialRequest.leaveTypeCode &&
+                p.code.toLowerCase() === initialRequest.leaveTypeCode.toLowerCase()) ||
+              (initialRequest.leaveTypeName &&
+                p.name.toLowerCase() === initialRequest.leaveTypeName.toLowerCase()),
+          ) || resolvedPolicies[0];
+
+        setLeaveTypeId(match?.id ?? '');
+        setStartDate(toDateInputValue(initialRequest.startDate));
+        setEndDate(toDateInputValue(initialRequest.endDate));
+        setHalfDay(Boolean(initialRequest.halfDay));
+        setReason(
+          initialRequest.reason && initialRequest.reason !== '—' ? initialRequest.reason : '',
+        );
+      } else {
+        setLeaveTypeId((prev) => (prev ? prev : (resolvedPolicies[0]?.id ?? '')));
+        setStartDate(todayStr);
+        setEndDate(todayStr);
+        setHalfDay(false);
+        setReason('');
+      }
       setError(null);
       setSearchQuery('');
       setIsDropdownOpen(false);
       setHighlightedIndex(0);
     }
-  }, [isOpen, resolvedPolicies, todayStr]);
+  }, [isOpen, mode, initialRequest, resolvedPolicies, todayStr]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -297,8 +357,8 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       return;
     }
 
-    // Check backdate limits
-    if (selectedPolicy && startDate < todayStr) {
+    // Check backdate limits (only for newly applied requests)
+    if (mode !== 'edit' && selectedPolicy && startDate < todayStr) {
       const diffMs = Date.parse(`${todayStr}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`);
       const diffDays = Math.floor(diffMs / 86_400_000);
       if (diffDays > selectedPolicy.maxBackdateDays) {
@@ -311,7 +371,10 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
 
     // Check balance sufficiency
     if (selectedPolicy?.hasBalance && selectedBalance) {
-      if (estimatedDays > selectedBalance.remaining) {
+      const priorDays =
+        mode === 'edit' && initialRequest ? (initialRequest.halfDay ? 0.5 : 1) : 0;
+      const effectiveRemaining = selectedBalance.remaining + priorDays;
+      if (estimatedDays > effectiveRemaining) {
         setError(
           `Insufficient leave balance. You are requesting ${estimatedDays} days, but only have ${selectedBalance.remaining} days remaining for ${selectedPolicy.name}.`,
         );
@@ -326,14 +389,19 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         setError('Select who should approve your leave request.');
         return;
       }
-      await onSubmit({
+      const payload: ApplyForLeavePayload = {
         approverRole,
         leaveTypeId,
         startDate,
         endDate,
         halfDay,
         reason: reason.trim() ? reason.trim() : undefined,
-      });
+      };
+      if (mode === 'edit' && initialRequest && onEditSubmit) {
+        await onEditSubmit(initialRequest.id, payload);
+      } else {
+        await onSubmit(payload);
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit leave application');
@@ -418,7 +486,13 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Apply for Leave"
+      title={
+        mode === 'edit'
+          ? initialRequest?.requestCode
+            ? `Edit Leave Request (${initialRequest.requestCode})`
+            : 'Edit Leave Request'
+          : 'Apply for Leave'
+      }
       footer={
         <div className="flex items-center justify-end gap-3 w-full">
           <Button
@@ -440,7 +514,13 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
             data-testid="submit-leave-request-btn"
             className="min-h-[44px]"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Application'}
+            {isSubmitting
+              ? mode === 'edit'
+                ? 'Saving...'
+                : 'Submitting...'
+              : mode === 'edit'
+                ? 'Save Changes'
+                : 'Submit Application'}
           </Button>
         </div>
       }

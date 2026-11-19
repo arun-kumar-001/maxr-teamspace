@@ -2,15 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { LeaveBalance, LeaveRequest } from '../types';
 import { EmptyState, KpiCard } from '../../../components/ui';
 
-export interface LeaveRequestsTableProps {
-  requests: LeaveRequest[];
-  balances?: LeaveBalance[];
-  isLoading?: boolean;
-  onCancelRequest?: (id: string) => Promise<void>;
-  onApplyClick?: () => void;
-}
-
-interface DisplayLeaveItem {
+export interface DisplayLeaveItem {
   id: string;
   requestCode: string;
   leaveTypeName: string;
@@ -23,6 +15,15 @@ interface DisplayLeaveItem {
   reason: string;
   status: string;
   rawRequest?: LeaveRequest;
+}
+
+export interface LeaveRequestsTableProps {
+  requests: LeaveRequest[];
+  balances?: LeaveBalance[];
+  isLoading?: boolean;
+  onCancelRequest?: (id: string) => Promise<void>;
+  onEditRequest?: (request: DisplayLeaveItem) => void;
+  onApplyClick?: () => void;
 }
 
 const DEV_SAMPLE_REQUESTS: DisplayLeaveItem[] = [
@@ -155,6 +156,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   balances: _balances = [],
   isLoading = false,
   onCancelRequest,
+  onEditRequest,
   onApplyClick,
 }) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -163,29 +165,36 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<DisplayLeaveItem | null>(null);
+  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<DisplayLeaveItem>>>({});
 
   const isDevMockMode = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH !== 'false';
-  const usingDevFallback = requests.length === 0 && isDevMockMode;
 
   const displayItems: DisplayLeaveItem[] = useMemo(() => {
-    if (requests.length > 0) {
-      return requests.map((r) => ({
-        id: r.id,
-        requestCode: formatRequestCode(r.id),
-        leaveTypeName: r.leaveTypeName,
-        leaveTypeCode: r.leaveTypeCode,
-        startDate: r.startDate,
-        endDate: r.endDate,
-        days: r.days,
-        halfDay: r.halfDay,
-        appliedDate: r.createdAt || r.startDate,
-        reason: r.reason || '—',
-        status: r.status,
-        rawRequest: r,
-      }));
-    }
-    return isDevMockMode ? DEV_SAMPLE_REQUESTS : [];
-  }, [requests, isDevMockMode]);
+    const base: DisplayLeaveItem[] =
+      requests.length > 0
+        ? requests.map((r) => ({
+            id: r.id,
+            requestCode: formatRequestCode(r.id),
+            leaveTypeName: r.leaveTypeName,
+            leaveTypeCode: r.leaveTypeCode,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            days: r.days,
+            halfDay: r.halfDay,
+            appliedDate: r.createdAt || r.startDate,
+            reason: r.reason || '—',
+            status: r.status,
+            rawRequest: r,
+          }))
+        : isDevMockMode
+          ? DEV_SAMPLE_REQUESTS
+          : [];
+
+    return base.map((item) => {
+      const override = localOverrides[item.id];
+      return override ? { ...item, ...override } : item;
+    });
+  }, [requests, isDevMockMode, localOverrides]);
 
   const monthOptions = useMemo(() => {
     const keys = new Set<string>();
@@ -199,12 +208,11 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   }, [displayItems]);
 
   const statusCounts = useMemo(() => {
-    const source = usingDevFallback ? displayItems : requests;
     let pending = 0;
     let approved = 0;
     let rejected = 0;
     let cancelled = 0;
-    for (const item of source) {
+    for (const item of displayItems) {
       const s = item.status.toLowerCase();
       if (s === 'pending' || s === 'applied') pending += 1;
       else if (s === 'approved') approved += 1;
@@ -212,13 +220,13 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
       else if (s === 'cancelled') cancelled += 1;
     }
     return {
-      all: source.length,
+      all: displayItems.length,
       pending,
       approved,
       rejected,
       cancelled,
     };
-  }, [usingDevFallback, displayItems, requests]);
+  }, [displayItems]);
 
   const summaryCards = useMemo(() => {
     const totalCount = statusCounts.all;
@@ -353,11 +361,23 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   const startIndex = (safePage - 1) * PAGE_SIZE;
   const paginatedItems = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
 
+  const handleEdit = (item: DisplayLeaveItem) => {
+    if (onEditRequest) {
+      onEditRequest(item);
+    } else {
+      setSelectedRequest(item);
+    }
+  };
+
   const handleCancel = async (id: string) => {
     if (!onCancelRequest) return;
     try {
       setCancellingId(id);
       await onCancelRequest(id);
+      setLocalOverrides((prev) => ({
+        ...prev,
+        [id]: { status: 'cancelled' },
+      }));
       setSelectedRequest(null);
     } finally {
       setCancellingId(null);
@@ -752,7 +772,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                               {canEdit && (
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedRequest(item)}
+                                  onClick={() => handleEdit(item)}
                                   aria-label={`Edit ${item.requestCode}`}
                                   data-testid={`edit-leave-btn-${item.id}`}
                                   className="w-7 h-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
@@ -773,8 +793,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                                   </svg>
                                 </button>
                               )}
-                              {item.rawRequest &&
-                                (canEdit || item.status.toLowerCase() === 'approved') &&
+                              {(canEdit || item.status.toLowerCase() === 'approved') &&
                                 onCancelRequest && (
                                   <button
                                     type="button"
@@ -849,20 +868,23 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                       {canEdit && (
                         <button
                           type="button"
-                          onClick={() => setSelectedRequest(item)}
-                          className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700"
+                          onClick={() => handleEdit(item)}
+                          data-testid={`mobile-edit-leave-btn-${item.id}`}
+                          className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                           Edit
                         </button>
                       )}
-                      {item.rawRequest && canEdit && onCancelRequest && (
+                      {(canEdit || item.status.toLowerCase() === 'approved') && onCancelRequest && (
                         <button
                           type="button"
                           onClick={() => handleCancel(item.id)}
+                          disabled={cancellingId === item.id}
+                          data-testid={`mobile-cancel-leave-btn-${item.id}`}
                           aria-label={`Cancel ${item.leaveTypeName} leave`}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
                         >
-                          Cancel
+                          {cancellingId === item.id ? 'Cancelling...' : 'Cancel'}
                         </button>
                       )}
                     </div>
@@ -1000,14 +1022,29 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
-              {selectedRequest.rawRequest &&
-                isEligiblePending(selectedRequest.status) &&
+              {isEligiblePending(selectedRequest.status) && onEditRequest && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = selectedRequest;
+                    setSelectedRequest(null);
+                    handleEdit(target);
+                  }}
+                  data-testid="modal-edit-leave-btn"
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 hover:bg-teal-100 transition-colors"
+                >
+                  Edit Request
+                </button>
+              )}
+              {(isEligiblePending(selectedRequest.status) ||
+                selectedRequest.status.toLowerCase() === 'approved') &&
                 onCancelRequest && (
                   <button
                     type="button"
                     onClick={() => handleCancel(selectedRequest.id)}
                     disabled={cancellingId === selectedRequest.id}
-                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
+                    data-testid="modal-cancel-leave-btn"
+                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors"
                   >
                     {cancellingId === selectedRequest.id ? 'Cancelling...' : 'Cancel Request'}
                   </button>

@@ -11,7 +11,7 @@ import { AddHolidayModal } from '../components/AddHolidayModal';
 import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
 import { RunAccrualModal } from '../components/RunAccrualModal';
 import { ApplyLeaveModal } from '../components/ApplyLeaveModal';
-import { LeaveRequestsTable } from '../components/LeaveRequestsTable';
+import { LeaveRequestsTable, type DisplayLeaveItem } from '../components/LeaveRequestsTable';
 import { LeaveCalendarView } from '../components/LeaveCalendarView';
 import { LeaveApprovalsTab } from '../components/LeaveApprovalsTab';
 
@@ -72,6 +72,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     requestsError,
     calendarError,
     applyLeave,
+    editLeave,
     cancelRequest,
     createPolicy,
     updatePolicy,
@@ -82,6 +83,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
 
   // Modals
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<DisplayLeaveItem | null>(null);
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [selectedPolicyForEdit, setSelectedPolicyForEdit] = useState<LeavePolicy | null>(null);
 
@@ -242,7 +244,14 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           onCancelRequest={async (id) => {
             await cancelRequest(id);
           }}
-          onApplyClick={() => setIsApplyModalOpen(true)}
+          onEditRequest={(req) => {
+            setEditingRequest(req);
+            setIsApplyModalOpen(true);
+          }}
+          onApplyClick={() => {
+            setEditingRequest(null);
+            setIsApplyModalOpen(true);
+          }}
         />
       )}
 
@@ -299,12 +308,21 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       {/* Modals */}
       <ApplyLeaveModal
         isOpen={isApplyModalOpen}
-        onClose={() => setIsApplyModalOpen(false)}
+        onClose={() => {
+          setIsApplyModalOpen(false);
+          setEditingRequest(null);
+        }}
         policies={policies}
         balances={balances}
         holidays={holidays}
+        initialRequest={editingRequest}
+        mode={editingRequest ? 'edit' : 'create'}
         onSubmit={async (payload) => {
-          await applyLeave(payload);
+          if (editingRequest) {
+            await editLeave(editingRequest.id, payload);
+          } else {
+            await applyLeave(payload);
+          }
         }}
       />
 
