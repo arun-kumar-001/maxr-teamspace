@@ -7,6 +7,10 @@ export interface LeaveRequestsTableProps {
   balances?: LeaveBalance[];
   isLoading?: boolean;
   onCancelRequest?: (id: string) => Promise<void>;
+  onEditRequest?: (
+    id: string,
+    payload: { startDate: string; endDate: string; halfDay: boolean; reason?: string },
+  ) => Promise<void>;
   onApplyClick?: () => void;
 }
 
@@ -155,6 +159,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   balances: _balances = [],
   isLoading = false,
   onCancelRequest,
+  onEditRequest,
   onApplyClick,
 }) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -163,6 +168,9 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<DisplayLeaveItem | null>(null);
+  const [confirmCancelItem, setConfirmCancelItem] = useState<DisplayLeaveItem | null>(null);
+  const [editingItem, setEditingItem] = useState<DisplayLeaveItem | null>(null);
+  const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
 
   const isDevMockMode = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH !== 'false';
   const usingDevFallback = requests.length === 0 && isDevMockMode;
@@ -358,10 +366,18 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     try {
       setCancellingId(id);
       await onCancelRequest(id);
+      setActionSuccessMessage('Leave request cancelled successfully.');
       setSelectedRequest(null);
+      setConfirmCancelItem(null);
+      setTimeout(() => setActionSuccessMessage(null), 4000);
     } finally {
       setCancellingId(null);
     }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!confirmCancelItem) return;
+    await handleCancel(confirmCancelItem.id);
   };
 
   const renderStatusBadge = (status: string) => {
@@ -445,6 +461,24 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
 
   return (
     <div className="space-y-5" data-testid="leave-requests-container">
+      {/* Action Success Message */}
+      {actionSuccessMessage && (
+        <div
+          role="status"
+          className="p-3.5 rounded-tile bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-semibold text-emerald-800 flex items-center justify-between animate-in fade-in"
+          data-testid="leave-action-success-alert"
+        >
+          <span>{actionSuccessMessage}</span>
+          <button
+            type="button"
+            onClick={() => setActionSuccessMessage(null)}
+            className="text-emerald-700 hover:text-emerald-900 text-sm font-bold ml-2"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       {/* 1. Request Summary KPI Cards matching Admin Dashboard style */}
       <div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4"
@@ -752,7 +786,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                               {canEdit && (
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedRequest(item)}
+                                  onClick={() => setEditingItem(item)}
                                   aria-label={`Edit ${item.requestCode}`}
                                   data-testid={`edit-leave-btn-${item.id}`}
                                   className="w-7 h-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
@@ -778,7 +812,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                                 onCancelRequest && (
                                   <button
                                     type="button"
-                                    onClick={() => handleCancel(item.id)}
+                                    onClick={() => setConfirmCancelItem(item)}
                                     disabled={cancellingId === item.id}
                                     data-testid={`table-cancel-leave-btn-${item.id}`}
                                     aria-label={`Cancel ${item.leaveTypeName} leave`}
@@ -849,7 +883,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                       {canEdit && (
                         <button
                           type="button"
-                          onClick={() => setSelectedRequest(item)}
+                          onClick={() => setEditingItem(item)}
                           className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-700"
                         >
                           Edit
@@ -858,7 +892,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                       {item.rawRequest && canEdit && onCancelRequest && (
                         <button
                           type="button"
-                          onClick={() => handleCancel(item.id)}
+                          onClick={() => setConfirmCancelItem(item)}
                           aria-label={`Cancel ${item.leaveTypeName} leave`}
                           className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50"
                         >
@@ -993,8 +1027,8 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
               </div>
               <div className="pt-1">
                 <span className="text-gray-500 block mb-1">Reason</span>
-                <p className="p-2.5 rounded-xl bg-gray-50 text-gray-800">
-                  {selectedRequest.reason}
+                <p className="p-2.5 rounded-xl bg-gray-50 text-gray-800 font-medium" data-testid="leave-detail-reason">
+                  {selectedRequest.rawRequest?.reason || (selectedRequest.reason !== '—' ? selectedRequest.reason : '') || 'No reason provided'}
                 </p>
               </div>
             </div>
@@ -1005,7 +1039,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                 onCancelRequest && (
                   <button
                     type="button"
-                    onClick={() => handleCancel(selectedRequest.id)}
+                    onClick={() => setConfirmCancelItem(selectedRequest)}
                     disabled={cancellingId === selectedRequest.id}
                     className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50"
                   >
@@ -1024,6 +1058,205 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
           </div>
         </div>
       )}
+
+      {/* Cancel Confirmation Modal */}
+      {confirmCancelItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          data-testid="cancel-leave-confirm-modal"
+        >
+          <div className="bg-surface rounded-card border border-border max-w-md w-full p-6 space-y-4 shadow-xl animate-in fade-in zoom-in-95">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-text font-display">Cancel Leave Request</h3>
+                <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                  Are you sure you want to cancel your leave request for{' '}
+                  <strong className="text-text">{confirmCancelItem.leaveTypeName}</strong> from{' '}
+                  <strong className="text-text">{formatShortDate(confirmCancelItem.startDate)}</strong> to{' '}
+                  <strong className="text-text">{formatShortDate(confirmCancelItem.endDate)}</strong>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setConfirmCancelItem(null)}
+                disabled={Boolean(cancellingId)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text border border-border hover:bg-surface-muted transition-colors"
+              >
+                Keep Request
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={Boolean(cancellingId)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-xs"
+              >
+                {cancellingId ? 'Cancelling...' : 'Confirm Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Request Modal */}
+      {editingItem && (
+        <EditLeaveRequestModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={async (payload) => {
+            if (onEditRequest) {
+              await onEditRequest(editingItem.id, payload);
+              setActionSuccessMessage('Leave request updated successfully.');
+              setEditingItem(null);
+              setTimeout(() => setActionSuccessMessage(null), 4000);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+interface EditLeaveRequestModalProps {
+  item: DisplayLeaveItem;
+  onClose: () => void;
+  onSave: (payload: { startDate: string; endDate: string; halfDay: boolean; reason?: string }) => Promise<void>;
+}
+
+const EditLeaveRequestModal: React.FC<EditLeaveRequestModalProps> = ({ item, onClose, onSave }) => {
+  const [startDate, setStartDate] = useState(item.startDate);
+  const [endDate, setEndDate] = useState(item.endDate);
+  const [halfDay, setHalfDay] = useState(item.halfDay);
+  const [reason, setReason] = useState(
+    item.rawRequest?.reason || (item.reason !== '—' ? item.reason : ''),
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startDate || !endDate) {
+      setError('Please provide start and end dates.');
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      await onSave({ startDate, endDate, halfDay, reason: reason.trim() || undefined });
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update leave request');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+      data-testid="edit-leave-modal"
+    >
+      <div className="bg-surface rounded-card border border-border max-w-lg w-full p-6 space-y-4 shadow-xl animate-in fade-in zoom-in-95">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
+          <div>
+            <h3 className="text-lg font-bold text-text font-display">Edit Leave Request</h3>
+            <p className="text-xs text-text-muted mt-0.5">{item.requestCode} • {item.leaveTypeName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="text-text-muted hover:text-text text-xl p-1"
+          >
+            &times;
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-3 rounded-tile bg-rose-50 border border-rose-200 text-xs text-rose-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-sm text-text focus:outline-hidden focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-sm text-text focus:outline-hidden focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="edit-half-day"
+              checked={halfDay}
+              onChange={(e) => setHalfDay(e.target.checked)}
+              className="rounded border-border text-primary focus:ring-primary w-4 h-4"
+            />
+            <label htmlFor="edit-half-day" className="text-xs font-medium text-text cursor-pointer">
+              Half Day Leave
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-text mb-1">Reason / Notes</label>
+            <textarea
+              rows={3}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="State the reason for this leave request..."
+              className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-sm text-text focus:outline-hidden focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text border border-border hover:bg-surface-muted transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary-deep hover:bg-teal-700 transition-colors shadow-xs"
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

@@ -4,8 +4,13 @@ import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button, PageContainer } from '../../../components/ui';
 import { AnnouncementModal } from '../components/AnnouncementModal';
-import { formatRelativeTime, getNotificationTypeStyle } from '../components/notificationHelpers';
+import {
+  formatRelativeTime,
+  getNotificationTypeStyle,
+  resolveNotificationLink,
+} from '../components/notificationHelpers';
 import { useNotifications } from '../hooks/useNotifications';
+import type { AppNotification } from '../types';
 
 export function NotificationsInboxPage() {
   const { user, role } = useAuth();
@@ -37,21 +42,16 @@ export function NotificationsInboxPage() {
     setCurrentPage(1);
   };
 
-  const handleNotificationClick = async (
-    id: string,
-    readAt: string | null,
-    link: string | null,
-  ) => {
-    if (!readAt) {
+  const handleNotificationClick = async (item: AppNotification) => {
+    if (!item.readAt) {
       try {
-        await markAsRead(id);
+        await markAsRead(item.id);
       } catch {
         // Continue navigation even if marking read fails
       }
     }
-    if (link) {
-      navigate(link);
-    }
+    const destination = resolveNotificationLink(item);
+    navigate(destination);
   };
 
   return (
@@ -197,7 +197,7 @@ export function NotificationsInboxPage() {
               return (
                 <div
                   key={item.id}
-                  onClick={() => handleNotificationClick(item.id, item.readAt, item.link)}
+                  onClick={() => void handleNotificationClick(item)}
                   className={`group relative flex flex-col sm:flex-row sm:items-start gap-4 rounded-card border p-4 sm:p-5 transition-all cursor-pointer ${
                     isUnread
                       ? 'border-primary-ink/30 bg-surface-raised shadow-raised'

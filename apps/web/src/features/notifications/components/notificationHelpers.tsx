@@ -156,3 +156,69 @@ export function getNotificationTypeStyle(type: string): NotificationTypeStyle {
     ),
   };
 }
+
+/**
+ * Resolves the target destination route when a user or administrator clicks on a notification.
+ * Handles both explicitly specified notification.link targets and semantic type/content fallbacks.
+ */
+export function resolveNotificationLink(item: {
+  link?: string | null;
+  type?: string;
+  title?: string;
+  body?: string;
+}): string {
+  if (item.link && item.link.trim().length > 0) {
+    return item.link.trim();
+  }
+
+  const type = (item.type || '').toLowerCase();
+  const text = `${item.title || ''} ${item.body || ''}`.toLowerCase();
+
+  if (type.startsWith('approval.') || text.includes('approval') || text.includes('pending approval')) {
+    if (type.includes('leave') || text.includes('leave')) {
+      return '/leave/approvals';
+    }
+    return '/approvals';
+  }
+
+  if (type.startsWith('leave.') || text.includes('leave')) {
+    return '/leave';
+  }
+
+  if (type.startsWith('task.') || text.includes('task')) {
+    return '/tasks';
+  }
+
+  if (type.startsWith('project.') || text.includes('project')) {
+    return '/projects';
+  }
+
+  if (
+    type.startsWith('attendance.') ||
+    text.includes('attendance') ||
+    text.includes('check-in') ||
+    text.includes('check-out') ||
+    text.includes('roster')
+  ) {
+    return '/attendance';
+  }
+
+  if (type.startsWith('meeting.') || text.includes('meeting')) {
+    return '/meetings';
+  }
+
+  if (type.startsWith('payslip.') || text.includes('payslip') || text.includes('salary')) {
+    return '/payslips';
+  }
+
+  if (
+    type.startsWith('employee.') ||
+    type.startsWith('onboarding.') ||
+    text.includes('employee') ||
+    text.includes('onboarding')
+  ) {
+    return '/employees';
+  }
+
+  return '/notifications';
+}

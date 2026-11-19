@@ -134,7 +134,7 @@ const WEEKLY_PROGRESS_BARS = [
  * Shared My Profile portal view available across Admin, HR Manager, Team Lead, and Staff portals.
  */
 export function ProfilePortalPage() {
-  const { user } = useAuth();
+  const { user, updateUserAvatar } = useAuth();
   const navigate = useNavigate();
 
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
@@ -142,7 +142,11 @@ export function ProfilePortalPage() {
   const [onboardingTasks, setOnboardingTasks] =
     useState<OnboardingChecklistItem[]>(INITIAL_ONBOARDING_TASKS);
   const [activeTasksCount, setActiveTasksCount] = useState(0);
-  const [totalProjectsCount, setTotalProjectsCount] = useState(0);
+  const [activeProjectsCount, setActiveProjectsCount] = useState(0);
+  const [completedProjectsCount, setCompletedProjectsCount] = useState(0);
+
+  const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
+  const totalProjectsCount = activeProjectsCount + completedProjectsCount;
 
   useEffect(() => {
     let active = true;
@@ -154,18 +158,32 @@ export function ProfilePortalPage() {
       })
       .catch(() => {});
 
-    void fetchMyTasks({ pageSize: 1 })
+    void fetchMyTasks({ pageSize: 50 })
       .then((res) => {
-        if (active && typeof res.meta?.total === 'number') {
-          setActiveTasksCount(res.meta.total);
+        if (active && res.data) {
+          const activeCount = res.data.filter((t) => t.status !== 'completed').length;
+          setActiveTasksCount(activeCount);
         }
       })
       .catch(() => {});
 
-    void fetchProjects({ pageSize: 1 })
+    void fetchProjects({ pageSize: 50 })
       .then((res) => {
-        if (active && typeof res.meta?.total === 'number') {
-          setTotalProjectsCount(res.meta.total);
+        if (active && res.data) {
+          const activeProj = res.data.filter(
+            (p) =>
+              (p.status as string) !== 'delivered' &&
+              (p.status as string) !== 'completed' &&
+              (p as unknown as { workflowStatus?: string }).workflowStatus !== 'completed',
+          ).length;
+          const doneProj = res.data.filter(
+            (p) =>
+              (p.status as string) === 'delivered' ||
+              (p.status as string) === 'completed' ||
+              (p as unknown as { workflowStatus?: string }).workflowStatus === 'completed',
+          ).length;
+          setActiveProjectsCount(activeProj);
+          setCompletedProjectsCount(doneProj);
         }
       })
       .catch(() => {});
@@ -174,6 +192,34 @@ export function ProfilePortalPage() {
       active = false;
     };
   }, []);
+
+  const avatarUrl =
+    user?.avatarUrl ||
+    (user?.id ? localStorage.getItem(`maxr_avatar_${user.id}`) : null) ||
+    (user?.email ? localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`) : null) ||
+    (user?.role ? localStorage.getItem(`maxr_avatar_${user.role}`) : null);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        if (user?.id) localStorage.setItem(`maxr_avatar_${user.id}`, dataUrl);
+        if (user?.email) localStorage.setItem(`maxr_avatar_${user.email.toLowerCase()}`, dataUrl);
+        if (user?.role) localStorage.setItem(`maxr_avatar_${user.role}`, dataUrl);
+        updateUserAvatar?.(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const toggleTask = (id: number) => {
+    setOnboardingTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    );
+  };
 
   const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '') || 'User';
   const firstPart = displayName.split(' ')[0];
@@ -216,14 +262,6 @@ export function ProfilePortalPage() {
     }
     return list;
   }, []);
-
-  const toggleTask = (id: number) => {
-    setOnboardingTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
-  };
-
-  const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
 
   return (
     <div
@@ -421,15 +459,53 @@ export function ProfilePortalPage() {
           />
 
           <div className="relative z-10 flex items-start justify-between">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl shadow-md border"
-              style={{
-                backgroundColor: 'rgba(85, 205, 179, 0.2)',
-                color: 'rgb(85, 205, 179)',
-                borderColor: 'rgba(85, 205, 179, 0.4)',
-              }}
-            >
-              {initials}
+            <div className="relative">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-14 h-14 rounded-2xl object-cover shadow-md border"
+                  style={{ borderColor: 'rgba(85, 205, 179, 0.4)' }}
+                />
+              ) : (
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl shadow-md border"
+                  style={{
+                    backgroundColor: 'rgba(85, 205, 179, 0.2)',
+                    color: 'rgb(85, 205, 179)',
+                    borderColor: 'rgba(85, 205, 179, 0.4)',
+                  }}
+                >
+                  {initials}
+                </div>
+              )}
+              <label
+                htmlFor="profile-avatar-upload"
+                title="Upload profile photo"
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-surface text-primary-deep flex items-center justify-center shadow-md cursor-pointer hover:bg-surface-raised transition-colors border border-border"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <input
+                  id="profile-avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </label>
             </div>
             <span
               className="text-[10px] font-semibold px-2.5 py-1 rounded-full border tracking-wide uppercase shadow-xs"
@@ -841,7 +917,9 @@ export function ProfilePortalPage() {
                   <div className="min-w-0">
                     <p
                       className={`text-xs font-medium truncate transition-colors ${
-                        task.completed ? 'text-white' : 'text-stone-300 group-hover:text-white'
+                        task.completed
+                          ? 'text-white/60 line-through'
+                          : 'text-stone-300 group-hover:text-white'
                       }`}
                     >
                       {task.title}

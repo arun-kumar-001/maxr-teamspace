@@ -108,6 +108,15 @@ export function Sidebar({
           .map((i) => i.id),
       ),
   );
+
+  useEffect(() => {
+    const parent = groups
+      .flatMap((g) => g.items)
+      .find((i) => i.children?.some((c) => c.id === activeId));
+    if (parent) {
+      setOpenGroups((prev) => new Set(prev).add(parent.id));
+    }
+  }, [activeId, groups]);
   const [tooltip, setTooltip] = useState<{ label: string; top: number; left: number } | null>(null);
 
   // The tooltip is placed from the icon's position, so any scroll would leave it behind: hide it.
@@ -235,7 +244,7 @@ export function Sidebar({
                 {group.items.map((item) => {
                   const hasChildren = Boolean(item.children?.length);
                   const childActive = item.children?.some((c) => c.id === activeId) ?? false;
-                  const active = item.id === activeId || (collapsed && childActive);
+                  const active = collapsed ? childActive : (item.id === activeId && !hasChildren);
                   const open = !collapsed && openGroups.has(item.id);
                   const subId = `${navId}-${item.id}`;
 
@@ -252,7 +261,7 @@ export function Sidebar({
                           className={`${itemBase} ${itemLayout} ${
                             active
                               ? activeStyle
-                              : open
+                              : childActive || open
                                 ? 'bg-sidebar-raised text-sidebar-strong'
                                 : idleStyle
                           }`}

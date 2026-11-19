@@ -477,6 +477,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/approvals/:id"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/lead/approvals"
         element={
           <ShellLayout>
@@ -548,6 +556,14 @@ function AppRoutes() {
       {/* Tasks Routes (Issue #43) */}
       <Route
         path="/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/tasks/:id"
         element={
           <ShellLayout>
             <TasksPage />

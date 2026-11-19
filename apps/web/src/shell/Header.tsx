@@ -108,10 +108,26 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
               data-testid="user-menu-trigger"
             >
               <div
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden"
                 title={`${user.name} (${user.email})`}
               >
-                {user.avatarInitials}
+                {user.avatarUrl ||
+                (typeof window !== 'undefined' &&
+                  (localStorage.getItem(`maxr_avatar_${user.id}`) ||
+                    localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`))) ? (
+                  <img
+                    src={
+                      user.avatarUrl ||
+                      localStorage.getItem(`maxr_avatar_${user.id}`) ||
+                      localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`) ||
+                      ''
+                    }
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user.avatarInitials
+                )}
               </div>
               <svg
                 viewBox="0 0 16 16"

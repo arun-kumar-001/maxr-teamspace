@@ -14,7 +14,11 @@ export function getProjectLifecycleStage(
   project: Project,
   taskSummary?: ProjectTaskSummary,
 ): ProjectLifecycleStage {
-  if (project.status === 'archived') {
+  if (
+    project.status === 'archived' ||
+    (project as unknown as { workflowStatus?: string }).workflowStatus === 'completed' ||
+    (project.status as string) === 'completed'
+  ) {
     return 'delivered';
   }
   if (taskSummary && taskSummary.total > 0 && taskSummary.completed === taskSummary.total) {

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useInRouterContext } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
@@ -17,11 +18,17 @@ import { LeaveApprovalsTab } from '../components/LeaveApprovalsTab';
 
 export interface LeaveManagementPageProps {
   initialTab?: 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies';
+  onNavigate?: (path: string) => void;
 }
 
-export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
+interface LeaveManagementPageContentProps extends LeaveManagementPageProps {
+  navigate?: (path: string) => void;
+}
+
+function LeaveManagementPageContent({
   initialTab = 'requests',
-}) => {
+  navigate,
+}: LeaveManagementPageContentProps) {
   const { role } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   const canReviewApprovals =
@@ -52,6 +59,21 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       );
     }
   }, [initialTab, canManage, canReviewApprovals]);
+
+  const handleTabChange = (val: string) => {
+    const targetTab = val as 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies';
+    setActiveTab(targetTab);
+    const routeMap: Record<string, string> = {
+      requests: '/leave',
+      approvals: '/leave/approvals',
+      balances: '/leave/balances',
+      holidays: '/leave/holidays',
+      policies: '/leave/policies',
+    };
+    if (routeMap[val] && navigate) {
+      navigate(routeMap[val]);
+    }
+  };
 
   const {
     policies,
@@ -132,18 +154,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
             Apply Leave
           </PrimaryActionButton>
 
-          {canManage && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsAccrualModalOpen(true)}
-              data-testid="open-accrual-modal-btn"
-              className="min-h-[44px]"
-            >
-              Yearly Accrual
-            </Button>
-          )}
-
           {canManage && activeTab === 'policies' && (
             <Button
               type="button"
@@ -174,9 +184,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       <div className="border-b border-border pb-4 overflow-x-auto max-w-full">
         <SegmentedControl
           value={activeTab}
-          onChange={(val) =>
-            setActiveTab(val as 'requests' | 'balances' | 'calendar' | 'holidays' | 'policies')
-          }
+          onChange={handleTabChange}
           options={tabOptions}
           ariaLabel="Leave and holiday navigation tabs"
         />
@@ -241,6 +249,17 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           isLoading={isLoadingRequests}
           onCancelRequest={async (id) => {
             await cancelRequest(id);
+          }}
+          onEditRequest={async (id, payload) => {
+            const req = requests.find((r) => r.id === id);
+            await cancelRequest(id);
+            await applyLeave({
+              leaveTypeId: req?.leaveTypeId || '',
+              startDate: payload.startDate,
+              endDate: payload.endDate,
+              halfDay: payload.halfDay,
+              reason: payload.reason,
+            });
           }}
           onApplyClick={() => setIsApplyModalOpen(true)}
         />
@@ -338,4 +357,22 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       />
     </div>
   );
-};
+}
+
+function RouterLeaveManagementPage(props: LeaveManagementPageProps) {
+  const routerNavigate = useNavigate();
+  const navigate = props.onNavigate || routerNavigate;
+  return <LeaveManagementPageContent {...props} navigate={navigate} />;
+}
+
+function StaticLeaveManagementPage(props: LeaveManagementPageProps) {
+  return <LeaveManagementPageContent {...props} navigate={props.onNavigate} />;
+}
+
+export function LeaveManagementPage(props: LeaveManagementPageProps) {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return <RouterLeaveManagementPage {...props} />;
+  }
+  return <StaticLeaveManagementPage {...props} />;
+}

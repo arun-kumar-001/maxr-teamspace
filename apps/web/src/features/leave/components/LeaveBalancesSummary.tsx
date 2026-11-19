@@ -1,5 +1,6 @@
-import React from 'react';
-import type { LeaveBalance } from '../types';
+import React, { useState, useEffect } from 'react';
+import type { LeaveBalance, EmployeeLeaveBalance } from '../types';
+import { fetchLeaveBalances } from '../api/leave';
 
 export interface LeaveBalancesSummaryProps {
   balances: LeaveBalance[];
@@ -14,6 +15,29 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
   year,
   onYearChange,
 }) => {
+  const [teamBalances, setTeamBalances] = useState<EmployeeLeaveBalance[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingTeam(true);
+    fetchLeaveBalances({ year, pageSize: 50 })
+      .then((res) => {
+        if (isMounted && res?.data) {
+          setTeamBalances(res.data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setTeamBalances([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingTeam(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [year]);
+
   // Compute totals if balances exist, otherwise use Image 2 values
   const hasRealBalances = balances.length > 0;
 
@@ -438,6 +462,69 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
           </div>
         </div>
       )}
+
+      {/* 5. Same Team Leave Balances Section */}
+      <div className="pt-6 border-t border-border/80" data-testid="same-team-leave-balances">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-text font-display">
+              Same Team Leave Balances
+            </h3>
+            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+              Available and used leave days for team members
+            </p>
+          </div>
+        </div>
+
+        {loadingTeam ? (
+          <div className="p-6 text-center text-sm text-text-muted bg-surface rounded-card border border-border">
+            Loading team leave balances...
+          </div>
+        ) : teamBalances.length === 0 ? (
+          <div className="p-6 text-center text-sm text-text-muted bg-surface rounded-card border border-border">
+            No team leave balance records found for {year}.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-card border border-border bg-surface">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-surface-muted border-b border-border text-xs uppercase font-semibold text-text-muted">
+                <tr>
+                  <th className="px-4 py-3">Team Member</th>
+                  <th className="px-4 py-3">Leave Type</th>
+                  <th className="px-4 py-3">Allotted</th>
+                  <th className="px-4 py-3">Used</th>
+                  <th className="px-4 py-3">Remaining</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {teamBalances.map((tb, idx) => (
+                  <tr key={`${tb.employeeId}-${tb.leaveTypeId}-${idx}`} className="hover:bg-surface-muted/50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-text">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary-soft text-primary-deep text-xs font-bold flex items-center justify-center">
+                          {tb.employeeName ? tb.employeeName.slice(0, 2).toUpperCase() : 'EM'}
+                        </div>
+                        <span>{tb.employeeName || 'Team Member'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-text-muted">
+                      <span className="font-semibold text-text">{tb.name}</span>{' '}
+                      <span className="text-xs font-mono text-text-muted">({tb.code})</span>
+                    </td>
+                    <td className="px-4 py-3 text-text font-mono">{tb.allotted + tb.carriedForward}d</td>
+                    <td className="px-4 py-3 text-text font-mono">{tb.used}d</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {tb.remaining}d left
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

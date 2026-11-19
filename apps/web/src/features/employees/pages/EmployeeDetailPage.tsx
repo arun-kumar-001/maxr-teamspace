@@ -11,7 +11,6 @@ import {
 } from '../../../components/ui';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
-import { EmployeeDocumentsTab } from '../components/EmployeeDocumentsTab';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
 import type { EmployeeDetail, EmployeePatch } from '../types';
@@ -73,9 +72,7 @@ export function EmployeeDetailPage() {
   const { employee, isLoading, isSaving, error, isNotFound, isForbidden, refetch, updateEmployee } =
     useEmployeeDetail(id);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'personal' | 'account' | 'documents'>(
-    'overview',
-  );
+  const [activeTab, setActiveTab] = useState<'overview' | 'personal' | 'account'>('overview');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [isChangeManagerOpen, setIsChangeManagerOpen] = useState(false);
@@ -167,6 +164,10 @@ export function EmployeeDetailPage() {
   }
 
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
+  const photoUrl =
+    localStorage.getItem(`maxr_avatar_${employee.id}`) ||
+    localStorage.getItem(`maxr_avatar_${employee.email?.toLowerCase()}`) ||
+    (employee as unknown as { avatarUrl?: string }).avatarUrl;
 
   const statusVariant =
     employee.status === 'active'
@@ -176,13 +177,12 @@ export function EmployeeDetailPage() {
         : 'neutral';
 
   const tabOptions: Array<{
-    value: 'overview' | 'personal' | 'account' | 'documents';
+    value: 'overview' | 'personal' | 'account';
     label: string;
   }> = [
     { value: 'overview', label: 'Job & Overview' },
     { value: 'personal', label: 'Personal Information' },
     ...(employee.account ? [{ value: 'account' as const, label: 'Account & Security' }] : []),
-    { value: 'documents', label: 'Documents' },
   ];
 
   return (
@@ -227,12 +227,20 @@ export function EmployeeDetailPage() {
       {/* Profile Header Card */}
       <div className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4 min-w-0">
-          <div
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-soft text-primary-ink font-display font-bold text-xl sm:text-2xl flex items-center justify-center shrink-0 border border-primary/20 shadow-sm"
-            aria-hidden="true"
-          >
-            {initials}
-          </div>
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={`${employee.firstName} ${employee.lastName}`}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shrink-0 border border-primary/20 shadow-sm"
+            />
+          ) : (
+            <div
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-soft text-primary-ink font-display font-bold text-xl sm:text-2xl flex items-center justify-center shrink-0 border border-primary/20 shadow-sm"
+              aria-hidden="true"
+            >
+              {initials}
+            </div>
+          )}
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold text-text font-display truncate">
@@ -603,21 +611,6 @@ export function EmployeeDetailPage() {
           </div>
 
           <BankAccountDetailsSection employee={employee} />
-        </div>
-      )}
-
-      {activeTab === 'documents' && (
-        <div
-          className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card"
-          data-testid="tab-documents"
-        >
-          <EmployeeDocumentsTab
-            employeeId={employee.id}
-            employeeName={`${employee.firstName} ${employee.lastName}`}
-            canUpload={true}
-            canDelete={isAdmin || isHR}
-            canSetSensitive={isAdmin || isHR}
-          />
         </div>
       )}
 

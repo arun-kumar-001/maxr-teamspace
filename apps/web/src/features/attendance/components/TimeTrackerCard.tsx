@@ -115,6 +115,7 @@ export function TimeTrackerCard({
       } else {
         await checkOut();
       }
+      await loadFromServer();
     } catch {
       // Keep optimistic UI state when offline/in unit tests
     } finally {
@@ -124,7 +125,7 @@ export function TimeTrackerCard({
 
   const handleConfirmCapture = async (payload: {
     location: AttendanceLocation;
-    photoDataUrl: string;
+    photoDataUrl?: string;
   }) => {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -134,7 +135,7 @@ export function TimeTrackerCard({
         try {
           await checkIn({
             location: payload.location,
-            photoDataUrl: payload.photoDataUrl,
+            ...(payload.photoDataUrl ? { photoDataUrl: payload.photoDataUrl } : {}),
           });
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : '';
@@ -156,7 +157,7 @@ export function TimeTrackerCard({
         try {
           await checkOut({
             location: payload.location,
-            photoDataUrl: payload.photoDataUrl,
+            ...(payload.photoDataUrl ? { photoDataUrl: payload.photoDataUrl } : {}),
           });
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : '';

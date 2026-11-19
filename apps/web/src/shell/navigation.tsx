@@ -170,7 +170,14 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Projects',
     path: '/projects',
     iconName: 'briefcase',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
+  {
+    id: 'staff-projects',
+    label: 'My Projects',
+    path: '/staff/projects',
+    iconName: 'briefcase',
+    allowedRoles: [ROLES.STAFF],
   },
   // Shared Expenses Route (Issue #29 - Available to all authenticated roles)
   {
@@ -303,7 +310,12 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   }
 
   // Projects route (Issue #42) - accessible to all authenticated roles
-  if (path === '/projects' || path.startsWith('/projects/')) {
+  if (
+    path === '/projects' ||
+    path.startsWith('/projects/') ||
+    path === '/staff/projects' ||
+    path.startsWith('/staff/projects/')
+  ) {
     return true;
   }
 
@@ -617,6 +629,7 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           children: [
             { id: '/leave', label: 'My Leave', href: '/leave' },
             { id: '/leave/approvals', label: 'Leave Approvals', href: '/leave/approvals' },
+            { id: '/leave/balances', label: 'My Balances', href: '/leave/balances' },
             { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
             { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
           ],
@@ -630,12 +643,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
             { id: '/tasks', label: 'Tasks', href: '/tasks' },
             { id: '/projects', label: 'Projects', href: '/projects' },
           ],
-        },
-        {
-          id: '/expenses',
-          label: 'Expenses & Claims',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
         },
         {
           id: '/admin/payslips',
@@ -942,6 +949,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         label: 'My Tasks',
         href: '/staff/tasks',
         icon: <NavSvgIcon name="check" />,
+      },
+      {
+        id: '/staff/projects',
+        label: 'My Projects',
+        href: '/staff/projects',
+        icon: <NavSvgIcon name="briefcase" />,
       },
     ];
 

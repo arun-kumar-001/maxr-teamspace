@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { ErrorState, PrimaryActionButton, Skeleton } from '../../../components/ui';
@@ -232,6 +233,8 @@ function AttendanceOpsWorkspace({
 }: {
   initialTab: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out';
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { role } = useAuth();
   const isAdmin = role === ROLES.ADMIN;
   const isHr = role === ROLES.HR_MANAGER;
@@ -244,6 +247,21 @@ function AttendanceOpsWorkspace({
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  const handleSwitchTab = (tab: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out') => {
+    setActiveTab(tab);
+    const targetPath =
+      tab === 'on-duty'
+        ? '/attendance'
+        : tab === 'roster'
+          ? '/attendance/roster'
+          : tab === 'timesheets'
+            ? '/attendance/timesheets'
+            : '/attendance/check-in-out';
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  };
   const [selectedDate, setSelectedDate] = useState<string>(() =>
     new Date().toISOString().slice(0, 10),
   );
@@ -419,7 +437,7 @@ function AttendanceOpsWorkspace({
       <div className="border-b border-border/80 flex items-center gap-6 text-sm font-semibold">
         <button
           type="button"
-          onClick={() => setActiveTab('on-duty')}
+          onClick={() => handleSwitchTab('on-duty')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'on-duty'
               ? 'text-emerald-700 font-bold'
@@ -434,7 +452,7 @@ function AttendanceOpsWorkspace({
 
         <button
           type="button"
-          onClick={() => setActiveTab('roster')}
+          onClick={() => handleSwitchTab('roster')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'roster'
               ? 'text-emerald-700 font-bold'
@@ -449,7 +467,7 @@ function AttendanceOpsWorkspace({
 
         <button
           type="button"
-          onClick={() => setActiveTab('timesheets')}
+          onClick={() => handleSwitchTab('timesheets')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'timesheets'
               ? 'text-emerald-700 font-bold'
@@ -464,7 +482,7 @@ function AttendanceOpsWorkspace({
 
         <button
           type="button"
-          onClick={() => setActiveTab('check-in-out')}
+          onClick={() => handleSwitchTab('check-in-out')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'check-in-out'
               ? 'text-emerald-700 font-bold'

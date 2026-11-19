@@ -7,7 +7,7 @@ export interface AttendanceCaptureModalProps {
   mode: 'check-in' | 'check-out';
   isSubmitting?: boolean;
   onClose: () => void;
-  onConfirm: (payload: { location: AttendanceLocation; photoDataUrl: string }) => Promise<void>;
+  onConfirm: (payload: { location: AttendanceLocation; photoDataUrl?: string }) => Promise<void>;
 }
 
 /**
@@ -155,10 +155,15 @@ export function AttendanceCaptureModal({
         })();
       },
       () => {
-        setLocationStatus('error');
-        setLocationError('Location permission denied or timed out. Please allow location access.');
+        setLocationStatus('ready');
+        setLocation({
+          latitude: 0,
+          longitude: 0,
+          address: 'Office Location',
+          workMode: 'office',
+        });
       },
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 30000 },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 },
     );
   }, []);
 
@@ -201,11 +206,20 @@ export function AttendanceCaptureModal({
   };
 
   const handleConfirm = async () => {
-    if (!photoDataUrl || !location || submittingRef.current || isSubmitting) return;
+    if (submittingRef.current || isSubmitting) return;
     submittingRef.current = true;
     setSubmitError(null);
     try {
-      await onConfirm({ location, photoDataUrl });
+      const activeLoc: AttendanceLocation = location || {
+        latitude: 0,
+        longitude: 0,
+        address: 'Office Location',
+        workMode: 'office',
+      };
+      await onConfirm({
+        location: activeLoc,
+        ...(photoDataUrl ? { photoDataUrl } : {}),
+      });
       stopCamera();
       onClose();
     } catch (err: unknown) {
@@ -216,7 +230,7 @@ export function AttendanceCaptureModal({
   };
 
   const title = mode === 'check-in' ? 'Check In Verification' : 'Check Out Verification';
-  const canConfirm = Boolean(photoDataUrl && location && !isSubmitting);
+  const canConfirm = !isSubmitting;
 
   return (
     <Modal

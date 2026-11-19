@@ -11,7 +11,7 @@ export interface AppShellProps {
 }
 
 export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [, setNavRevision] = useState(0);
@@ -50,7 +50,24 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   const activeNavPath =
     currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance'
       ? '/attendance'
-      : currentPath;
+      : currentPath === '/leave/requests'
+        ? '/leave'
+        : currentPath;
+
+  const sidebarUser = user
+    ? {
+        name: user.name,
+        role: user.role,
+        initials: user.avatarInitials,
+        avatarUrl:
+          user.avatarUrl ||
+          (typeof window !== 'undefined' && window.localStorage
+            ? localStorage.getItem(`maxr_avatar_${user.id}`) ||
+              localStorage.getItem(`maxr_avatar_${user.email?.toLowerCase()}`) ||
+              undefined
+            : undefined),
+      }
+    : undefined;
 
   return (
     <div
@@ -65,6 +82,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
           activeId={activeNavPath}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
+          user={sidebarUser}
           onNavigate={(id, e) => {
             e?.preventDefault?.();
             onNavigate(id);
@@ -79,6 +97,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         brand={brand}
         groups={groups}
         activeId={activeNavPath}
+        user={sidebarUser}
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);

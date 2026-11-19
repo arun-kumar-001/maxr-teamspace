@@ -410,9 +410,11 @@ export function AdminDashboard() {
   }, []);
 
   const handleApprove = async (id: string) => {
-    setApprovals((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
-    );
+    setApprovals((prev) => prev.filter((item) => item.id !== id));
+    setMetrics((prev) => ({
+      ...prev,
+      pendingApprovalsTotal: Math.max(0, prev.pendingApprovalsTotal - 1),
+    }));
     if (!id.startsWith('app-')) {
       try {
         await approveRequest(id);
