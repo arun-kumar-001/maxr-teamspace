@@ -82,117 +82,146 @@ export function StaffDashboard() {
     };
   };
 
-  const [onboardingTasks, setOnboardingTasks] = useState([
-    {
-      id: 1,
-      title: 'Complete profile checklist',
-      date: 'Sep 13, 08:30',
-      completed: true,
-      icon: (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="1.8"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 2,
-      title: 'Review project documents',
-      date: 'Sep 13, 10:30',
-      completed: true,
-      icon: (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="1.8"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 3,
-      title: 'Update sprint tasks',
-      date: 'Sep 13, 13:00',
-      completed: false,
-      icon: (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="1.8"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-    },
-    {
-      id: 4,
-      title: 'Submit weekly report',
-      date: 'Sep 13, 14:45',
-      completed: false,
-      icon: (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="1.8"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: 5,
-      title: 'Team policy review',
-      date: 'Sep 13, 16:30',
-      completed: false,
-      icon: (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="1.8"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-          />
-        </svg>
-      ),
-    },
-  ]);
+  const [onboardingTasks, setOnboardingTasks] = useState(() => {
+    const defaults = [
+      {
+        id: 1,
+        title: 'Complete profile checklist',
+        date: 'Sep 13, 08:30',
+        completed: true,
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="1.8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        ),
+      },
+      {
+        id: 2,
+        title: 'Review project documents',
+        date: 'Sep 13, 10:30',
+        completed: true,
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="1.8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        ),
+      },
+      {
+        id: 3,
+        title: 'Update sprint tasks',
+        date: 'Sep 13, 13:00',
+        completed: false,
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="1.8"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        ),
+      },
+      {
+        id: 4,
+        title: 'Submit weekly report',
+        date: 'Sep 13, 14:45',
+        completed: false,
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="1.8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+        ),
+      },
+      {
+        id: 5,
+        title: 'Team policy review',
+        date: 'Sep 13, 16:30',
+        completed: false,
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="1.8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
+          </svg>
+        ),
+      },
+    ];
+
+    try {
+      const saved = localStorage.getItem('maxr_staff_tasks_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return defaults.map((item) => {
+            const found = parsed.find((p: { id: number; completed: boolean }) => p.id === item.id);
+            return found ? { ...item, completed: Boolean(found.completed) } : item;
+          });
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return defaults;
+  });
 
   const toggleTask = (id: number) => {
-    setOnboardingTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
+    setOnboardingTasks((prev) => {
+      const updated = prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+      try {
+        localStorage.setItem(
+          'maxr_staff_tasks_state',
+          JSON.stringify(updated.map((t) => ({ id: t.id, completed: t.completed }))),
+        );
+      } catch {
+        // Ignore
+      }
+      return updated;
+    });
   };
 
   const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
+  const totalTasksCount = 8;
+  const completionPercentage = Math.round((completedTasksCount / totalTasksCount) * 100);
 
   return (
     <div
@@ -787,8 +816,12 @@ export function StaffDashboard() {
             <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
               Task Completion Process
             </span>
-            <span className="text-3xl font-light font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              18%
+            <span
+              className="text-3xl font-light font-display"
+              style={{ color: 'rgb(8, 11, 12)' }}
+              data-testid="task-completion-percentage"
+            >
+              {completionPercentage}%
             </span>
           </div>
 
@@ -802,44 +835,24 @@ export function StaffDashboard() {
                 className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: 'rgb(85, 205, 179)' }}
               />
-              <span>30%</span>
-              <span className="ml-auto">25%</span>
-              <span className="ml-auto">0%</span>
+              <span>{completionPercentage}% completed</span>
+              <span className="ml-auto">
+                {completedTasksCount} / {totalTasksCount} tasks
+              </span>
             </div>
 
-            <div className="grid grid-cols-12 gap-1.5 h-12">
-              {/* Task 30% teal block with subtle float */}
+            {/* Dynamic Progress Bar */}
+            <div
+              className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden border"
+              style={{ borderColor: 'rgba(8, 11, 12, 0.08)' }}
+            >
               <div
-                className="col-span-6 rounded-xl p-2.5 flex items-center shadow-xs animate-float-subtle"
+                className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{
+                  width: `${completionPercentage}%`,
                   backgroundColor: 'rgb(85, 205, 179)',
-                  color: 'rgb(8, 11, 12)',
                 }}
-              >
-                <span className="text-xs font-semibold">Task</span>
-              </div>
-
-              {/* 25% plum accent block */}
-              <div
-                className="col-span-4 rounded-xl p-2.5 flex items-center justify-center shadow-xs transition-transform hover:scale-105"
-                style={{
-                  backgroundColor: 'rgb(73, 53, 72)',
-                  color: 'rgb(255, 255, 255)',
-                }}
-              >
-                <span className="sr-only">25% completed</span>
-              </div>
-
-              {/* 0% outline block */}
-              <div
-                className="col-span-2 rounded-xl p-2.5 flex items-center justify-center transition-transform hover:scale-105"
-                style={{
-                  backgroundColor: 'rgb(244, 247, 246)',
-                  border: '1px solid rgba(8, 11, 12, 0.12)',
-                }}
-              >
-                <span className="sr-only">0% pending</span>
-              </div>
+              />
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 export * from './types';
 export * from './api/tasksApi';
 export * from './hooks/useTasks';
+export * from './task-sync';
 export * from './components/TaskPriorityBadge';
 export * from './components/TaskStatusPill';
 export * from './components/TaskCard';

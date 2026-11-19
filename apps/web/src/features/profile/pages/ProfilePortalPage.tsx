@@ -139,8 +139,23 @@ export function ProfilePortalPage() {
 
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
-  const [onboardingTasks, setOnboardingTasks] =
-    useState<OnboardingChecklistItem[]>(INITIAL_ONBOARDING_TASKS);
+  const [onboardingTasks, setOnboardingTasks] = useState<OnboardingChecklistItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('maxr_staff_tasks_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return INITIAL_ONBOARDING_TASKS.map((item) => {
+            const found = parsed.find((p: { id: number; completed: boolean }) => p.id === item.id);
+            return found ? { ...item, completed: Boolean(found.completed) } : item;
+          });
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return INITIAL_ONBOARDING_TASKS;
+  });
   const [activeTasksCount, setActiveTasksCount] = useState(0);
   const [totalProjectsCount, setTotalProjectsCount] = useState(0);
 
@@ -218,12 +233,23 @@ export function ProfilePortalPage() {
   }, []);
 
   const toggleTask = (id: number) => {
-    setOnboardingTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
+    setOnboardingTasks((prev) => {
+      const updated = prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+      try {
+        localStorage.setItem(
+          'maxr_staff_tasks_state',
+          JSON.stringify(updated.map((t) => ({ id: t.id, completed: t.completed }))),
+        );
+      } catch {
+        // Ignore
+      }
+      return updated;
+    });
   };
 
   const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
+  const totalTasksCount = 8;
+  const completionPercentage = Math.round((completedTasksCount / totalTasksCount) * 100);
 
   return (
     <div
@@ -566,10 +592,12 @@ export function ProfilePortalPage() {
             <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
               Task Completion Process
             </span>
-            <span className="text-3xl font-light font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              {activeTasksCount > 0
-                ? `${Math.round((completedTasksCount / Math.max(activeTasksCount, 1)) * 100)}%`
-                : '0%'}
+            <span
+              className="text-3xl font-light font-display"
+              style={{ color: 'rgb(8, 11, 12)' }}
+              data-testid="task-completion-percentage"
+            >
+              {completionPercentage}%
             </span>
           </div>
 
@@ -582,17 +610,19 @@ export function ProfilePortalPage() {
                 className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: 'rgb(85, 205, 179)' }}
               />
-              <span>{activeTasksCount} active tasks</span>
+              <span>
+                {completedTasksCount} of {totalTasksCount} tasks completed
+              </span>
             </div>
 
             <div
-              className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border"
+              className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden border"
               style={{ borderColor: 'rgba(8, 11, 12, 0.08)' }}
             >
               <div
-                className="h-full rounded-full transition-all duration-500"
+                className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{
-                  width: `${activeTasksCount > 0 ? Math.min(100, Math.round((completedTasksCount / activeTasksCount) * 100)) : 0}%`,
+                  width: `${completionPercentage}%`,
                   backgroundColor: 'rgb(85, 205, 179)',
                 }}
               />
@@ -601,7 +631,9 @@ export function ProfilePortalPage() {
 
           <div className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.5)' }}>
             <span>
-              {activeTasksCount > 0 ? 'Assigned tasks in current cycle' : 'No tasks assigned'}
+              {activeTasksCount > 0
+                ? `${activeTasksCount} active team tasks in current cycle`
+                : 'Overall completion status'}
             </span>
           </div>
         </div>

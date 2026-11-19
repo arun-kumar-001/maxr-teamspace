@@ -47,7 +47,9 @@ describe('ProfilePortalPage', () => {
     expect(toggleButton.textContent).toContain('Check In');
 
     expect(screen.getByText('Completed 2 of 8 tasks')).toBeTruthy();
+    expect(screen.getByTestId('task-completion-percentage').textContent).toBe('25%');
     fireEvent.click(screen.getByText('Update sprint tasks'));
     expect(screen.getByText('Completed 3 of 8 tasks')).toBeTruthy();
+    expect(screen.getByTestId('task-completion-percentage').textContent).toBe('38%');
   });
 });
