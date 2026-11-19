@@ -9,7 +9,6 @@ import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
 import { AddHolidayModal } from '../components/AddHolidayModal';
 import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
-import { RunAccrualModal } from '../components/RunAccrualModal';
 import { ApplyLeaveModal } from '../components/ApplyLeaveModal';
 import { LeaveRequestsTable, type DisplayLeaveItem } from '../components/LeaveRequestsTable';
 import { LeaveCalendarView } from '../components/LeaveCalendarView';
@@ -78,7 +77,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     updatePolicy,
     createHoliday,
     deleteHoliday,
-    runAccrual,
   } = useLeave();
 
   // Modals
@@ -88,7 +86,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
   const [selectedPolicyForEdit, setSelectedPolicyForEdit] = useState<LeavePolicy | null>(null);
 
   const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false);
-  const [isAccrualModalOpen, setIsAccrualModalOpen] = useState(false);
 
   const handleOpenCreatePolicy = () => {
     setSelectedPolicyForEdit(null);
@@ -133,18 +130,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           >
             Apply Leave
           </PrimaryActionButton>
-
-          {canManage && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsAccrualModalOpen(true)}
-              data-testid="open-accrual-modal-btn"
-              className="min-h-[44px]"
-            >
-              Yearly Accrual
-            </Button>
-          )}
 
           {canManage && activeTab === 'policies' && (
             <Button
@@ -345,13 +330,6 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
         onSubmit={async (data) => {
           await createHoliday(data);
         }}
-        defaultYear={selectedYear}
-      />
-
-      <RunAccrualModal
-        isOpen={isAccrualModalOpen}
-        onClose={() => setIsAccrualModalOpen(false)}
-        onRunAccrual={runAccrual}
         defaultYear={selectedYear}
       />
     </div>
