@@ -765,14 +765,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/leave/:id"
-        element={
-          <ShellLayout>
-            <LeaveManagementPage initialTab="requests" />
-          </ShellLayout>
-        }
-      />
-      <Route
         path="/leave/requests"
         element={
           <ShellLayout>
@@ -793,6 +785,14 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/calendar"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
@@ -825,6 +825,14 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <LeaveManagementPage initialTab="holidays" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/:id"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="requests" />
           </ShellLayout>
         }
       />

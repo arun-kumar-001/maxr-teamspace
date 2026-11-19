@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
@@ -21,6 +22,10 @@ export interface LeaveManagementPageProps {
 export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
   initialTab = 'requests',
 }) => {
+  const inRouter = useInRouterContext();
+  const navigate = inRouter ? useNavigate() : null;
+  const location = inRouter ? useLocation() : null;
+
   const { role } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   const canReviewApprovals =
@@ -33,9 +38,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       ? 'requests'
       : initialTab === 'approvals' && !canReviewApprovals
         ? 'requests'
-        : initialTab === 'calendar'
-          ? 'requests'
-          : initialTab,
+        : initialTab,
   );
 
   useEffect(() => {
@@ -45,12 +48,42 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           ? 'requests'
           : initialTab === 'approvals' && !canReviewApprovals
             ? 'requests'
-            : initialTab === 'calendar'
-              ? 'requests'
-              : initialTab,
+            : initialTab,
       );
     }
   }, [initialTab, canManage, canReviewApprovals]);
+
+  // Synchronize active tab from route pathname changes
+  useEffect(() => {
+    if (location?.pathname) {
+      const path = location.pathname;
+      if (path === '/leave/approvals' && canReviewApprovals) {
+        setActiveTab('approvals');
+      } else if (path === '/leave/balances') {
+        setActiveTab('balances');
+      } else if (path === '/leave/calendar') {
+        setActiveTab('calendar');
+      } else if (path === '/leave/holidays' || path === '/hr/holidays') {
+        setActiveTab('holidays');
+      } else if ((path === '/leave/policies' || path === '/hr/leave') && canManage) {
+        setActiveTab('policies');
+      } else if (path === '/leave' || path === '/leave/requests' || path === '/staff/leave') {
+        setActiveTab('requests');
+      }
+    }
+  }, [location?.pathname, canManage, canReviewApprovals]);
+
+  const handleTabChange = (
+    tab: 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies',
+  ) => {
+    setActiveTab(tab);
+    if (navigate) {
+      const targetPath = tab === 'requests' ? '/leave/requests' : `/leave/${tab}`;
+      if (location?.pathname !== targetPath) {
+        navigate(targetPath);
+      }
+    }
+  };
 
   const {
     policies,
@@ -101,6 +134,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     { value: 'requests', label: 'My Requests' },
     ...(canReviewApprovals ? [{ value: 'approvals', label: 'Leave Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
+    { value: 'calendar', label: 'Leave Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
@@ -162,7 +196,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
         <SegmentedControl
           value={activeTab}
           onChange={(val) =>
-            setActiveTab(val as 'requests' | 'balances' | 'calendar' | 'holidays' | 'policies')
+            handleTabChange(
+              val as 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies',
+            )
           }
           options={tabOptions}
           ariaLabel="Leave and holiday navigation tabs"

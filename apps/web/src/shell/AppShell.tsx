@@ -90,10 +90,27 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     ),
   };
 
-  const activeNavPath =
-    currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance'
-      ? '/attendance'
-      : currentPath;
+  const activeNavPath = (() => {
+    if (currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance') {
+      return '/attendance';
+    }
+    if (currentPath === '/leave/requests' || currentPath === '/staff/leave') {
+      return role === 'staff' ? '/staff/leave' : '/leave';
+    }
+    if (currentPath === '/leave') {
+      return role === 'staff' ? '/staff/leave' : '/leave';
+    }
+    if (currentPath === '/leave/balances') {
+      return role === 'staff' ? '/staff/leave' : '/leave';
+    }
+    if (currentPath === '/hr/leave') {
+      return '/leave/policies';
+    }
+    if (currentPath === '/hr/holidays' || currentPath === '/leave/calendar') {
+      return '/leave/holidays';
+    }
+    return currentPath;
+  })();
 
   return (
     <div
