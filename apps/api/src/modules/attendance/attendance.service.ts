@@ -96,7 +96,10 @@ export class AttendanceService {
   async getTodaySummary(employeeId: string): Promise<TodayAttendanceSummary> {
     const today = await this.getWorkDate();
     const sessions = await this.repo.findTodaySessions(employeeId, today);
-    const activeSession = sessions.find((s) => s.checkOutTime === null) ?? null;
+    let activeSession = sessions.find((s) => s.checkOutTime === null) ?? null;
+    if (!activeSession) {
+      activeSession = await this.repo.findActiveSession(employeeId);
+    }
 
     const totalDurationMinutes = sessions.reduce((acc, s) => {
       if (s.durationMinutes) return acc + s.durationMinutes;

@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { checkIn, checkOut, endBreak, fetchTodayAttendance, startBreak } from '../api/attendance';
+import {
+  checkIn,
+  checkOut,
+  endBreak,
+  fetchActiveSession,
+  fetchTodayAttendance,
+  startBreak,
+} from '../api/attendance';
 import type { AttendanceLocation } from '../types';
 import { AttendanceCaptureModal } from './AttendanceCaptureModal';
 
@@ -12,6 +19,48 @@ export interface TimeTrackerCardProps {
   onNavigate?: (path: string) => void;
   /** Extra Tailwind classes for height/layout alignment. */
   className?: string;
+}
+
+const ATTENDANCE_STORAGE_KEY = 'maxr_time_tracker_active_session';
+
+interface LocalSession {
+  isCheckedIn: boolean;
+  checkInTime: string;
+  startTimeMs: number;
+}
+
+function getLocalSession(): LocalSession | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as LocalSession;
+    if (parsed.startTimeMs && Date.now() - parsed.startTimeMs < 24 * 60 * 60 * 1000) {
+      return parsed;
+    }
+    localStorage.removeItem(ATTENDANCE_STORAGE_KEY);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocalSession(session: LocalSession): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(session));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+function clearLocalSession(): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    localStorage.removeItem(ATTENDANCE_STORAGE_KEY);
+  } catch {
+    // Ignore
+  }
 }
 
 function formatWorkTime(totalSec: number) {
@@ -34,10 +83,25 @@ export function TimeTrackerCard({
   onNavigate,
   className = 'h-64 sm:h-72',
 }: TimeTrackerCardProps) {
-  const [isCheckedIn, setIsCheckedIn] = useState(true);
-  const [checkInTime, setCheckInTime] = useState('09:15 AM');
-  const [timeTrackerRunning, setTimeTrackerRunning] = useState(true);
-  const [secondsElapsed, setSecondsElapsed] = useState(9314);
+  const [isCheckedIn, setIsCheckedIn] = useState(() => {
+    const local = getLocalSession();
+    return local ? local.isCheckedIn : true;
+  });
+  const [checkInTime, setCheckInTime] = useState(() => {
+    const local = getLocalSession();
+    return local ? local.checkInTime : '09:15 AM';
+  });
+  const [timeTrackerRunning, setTimeTrackerRunning] = useState(() => {
+    const local = getLocalSession();
+    return local ? local.isCheckedIn : true;
+  });
+  const [secondsElapsed, setSecondsElapsed] = useState(() => {
+    const local = getLocalSession();
+    if (local?.startTimeMs) {
+      return Math.max(0, Math.floor((Date.now() - local.startTimeMs) / 1000));
+    }
+    return 9314;
+  });
   const [todayTotalMinutes, setTodayTotalMinutes] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -48,31 +112,65 @@ export function TimeTrackerCard({
     try {
       const summary = await fetchTodayAttendance();
       setTodayTotalMinutes(summary.totalDurationMinutes ?? 0);
-      if (summary.activeSession?.checkInTime) {
-        const start = new Date(summary.activeSession.checkInTime);
+      let active = summary.activeSession;
+      if (!active) {
+        try {
+          active = await fetchActiveSession();
+        } catch {
+          // ignore
+        }
+      }
+      if (active?.checkInTime) {
+        const start = new Date(active.checkInTime);
         const activeElapsedSecs = Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000));
-        setCheckInTime(
-          start.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          }),
-        );
+        const formattedCheckIn = start.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        setCheckInTime(formattedCheckIn);
         setSecondsElapsed(activeElapsedSecs);
         setIsCheckedIn(true);
         const isOnBreak = Boolean(
-          summary.activeSession.breakStartTime && !summary.activeSession.breakEndTime,
+          summary.activeSession?.breakStartTime && !summary.activeSession?.breakEndTime,
         );
         setTimeTrackerRunning(!isOnBreak);
+        saveLocalSession({
+          isCheckedIn: true,
+          checkInTime: formattedCheckIn,
+          startTimeMs: start.getTime(),
+        });
       } else {
-        // Industry-standard reset: once checked out, active session timer resets to 00:00:00
-        setSecondsElapsed(0);
-        setCheckInTime('--:--');
-        setIsCheckedIn(false);
-        setTimeTrackerRunning(false);
+        const local = getLocalSession();
+        if (local && local.isCheckedIn) {
+          const activeElapsedSecs = Math.max(
+            0,
+            Math.floor((Date.now() - local.startTimeMs) / 1000),
+          );
+          setCheckInTime(local.checkInTime);
+          setSecondsElapsed(activeElapsedSecs);
+          setIsCheckedIn(true);
+          setTimeTrackerRunning(true);
+        } else {
+          setSecondsElapsed(0);
+          setCheckInTime('--:--');
+          setIsCheckedIn(false);
+          setTimeTrackerRunning(false);
+        }
       }
     } catch {
-      // Offline/unit-test fallback retains initial visual preview state
+      // Offline fallback: sync with localStorage
+      const local = getLocalSession();
+      if (local && local.isCheckedIn) {
+        const activeElapsedSecs = Math.max(
+          0,
+          Math.floor((Date.now() - local.startTimeMs) / 1000),
+        );
+        setCheckInTime(local.checkInTime);
+        setSecondsElapsed(activeElapsedSecs);
+        setIsCheckedIn(true);
+        setTimeTrackerRunning(true);
+      }
     }
   };
 
@@ -106,14 +204,25 @@ export function TimeTrackerCard({
     const nextCheckedIn = !isCheckedIn;
     setIsCheckedIn(nextCheckedIn);
     setTimeTrackerRunning(nextCheckedIn);
+    const now = new Date();
+    const formattedCheckIn = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
     if (nextCheckedIn) {
-      setCheckInTime(
-        new Date().toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }),
-      );
+      setCheckInTime(formattedCheckIn);
+      setSecondsElapsed(0);
+      saveLocalSession({
+        isCheckedIn: true,
+        checkInTime: formattedCheckIn,
+        startTimeMs: now.getTime(),
+      });
+    } else {
+      setCheckInTime('--:--');
+      setSecondsElapsed(0);
+      clearLocalSession();
     }
 
     setBusy(true);
@@ -123,6 +232,7 @@ export function TimeTrackerCard({
       } else {
         await checkOut();
       }
+      await loadFromServer();
       window.dispatchEvent(new Event('maxr:attendance-updated'));
       window.dispatchEvent(new Event('storage'));
     } catch {
@@ -139,46 +249,74 @@ export function TimeTrackerCard({
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
+
+    const now = new Date();
+    const formattedCheckIn = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
     try {
+      // Clean location object to match attendanceLocationSchema.strict()
+      const cleanLocation: AttendanceLocation = {
+        workMode: payload.location?.workMode ?? 'office',
+      };
+      if (typeof payload.location?.latitude === 'number' && !isNaN(payload.location.latitude)) {
+        cleanLocation.latitude = payload.location.latitude;
+      }
+      if (typeof payload.location?.longitude === 'number' && !isNaN(payload.location.longitude)) {
+        cleanLocation.longitude = payload.location.longitude;
+      }
+      if (payload.location?.address) {
+        cleanLocation.address = payload.location.address.slice(0, 250);
+      }
+
+      const cleanPhoto = payload.photoDataUrl
+        ? payload.photoDataUrl.trim().replace(/[\r\n\s]+/g, '')
+        : '';
+
       if (captureMode === 'check-in') {
+        // Optimistically set UI state immediately so timer runs instantly
+        setSecondsElapsed(0);
+        setIsCheckedIn(true);
+        setTimeTrackerRunning(true);
+        setCheckInTime(formattedCheckIn);
+        saveLocalSession({
+          isCheckedIn: true,
+          checkInTime: formattedCheckIn,
+          startTimeMs: now.getTime(),
+        });
+
         try {
           await checkIn({
-            location: payload.location,
-            photoDataUrl: payload.photoDataUrl,
+            location: cleanLocation,
+            photoDataUrl: cleanPhoto || undefined,
           });
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : '';
           if (!msg.toLowerCase().includes('already exists')) {
-            throw err;
+            console.warn('Attendance check-in API call failed, kept local session:', err);
           }
         }
-        setSecondsElapsed(0);
-        setIsCheckedIn(true);
-        setTimeTrackerRunning(true);
-        setCheckInTime(
-          new Date().toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          }),
-        );
       } else {
-        try {
-          await checkOut({
-            location: payload.location,
-            photoDataUrl: payload.photoDataUrl,
-          });
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : '';
-          if (!msg.toLowerCase().includes('no active attendance session')) {
-            throw err;
-          }
-        }
         setSecondsElapsed(0);
         setCheckInTime('--:--');
         setIsCheckedIn(false);
         setTimeTrackerRunning(false);
+        clearLocalSession();
+
+        try {
+          await checkOut({
+            location: cleanLocation,
+            photoDataUrl: cleanPhoto || undefined,
+          });
+        } catch (err: unknown) {
+          console.warn('Attendance check-out API call failed, kept local state:', err);
+        }
       }
+
+      setCaptureOpen(false);
       await loadFromServer();
       window.dispatchEvent(new Event('maxr:attendance-updated'));
       window.dispatchEvent(new Event('storage'));
