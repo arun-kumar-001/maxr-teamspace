@@ -63,6 +63,8 @@ services:
       SMTP_HOST: ${SMTP_HOST:-localhost}
       SMTP_PORT: ${SMTP_PORT:-1025}
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_REQUIRE_SCAN: ${STORAGE_REQUIRE_SCAN:-false}
+      APP_URL: ${APP_URL:-https://localhost}
     volumes:
       - uploads_data:/data/uploads
     read_only: true

@@ -39,6 +39,7 @@ TLS_CERT_DIR=${CERT_DIR}
 SESSION_SECRET=${SESSION_SEC}
 STORAGE_SIGNING_SECRET=${STORAGE_SEC}
 CORS_ORIGIN=https://localhost
+APP_URL=https://localhost
 LOG_LEVEL=info
 
 EMAIL_DRIVER=smtp
@@ -47,6 +48,7 @@ SMTP_HOST=localhost
 SMTP_PORT=1025
 
 STORAGE_DRIVER=local
+STORAGE_REQUIRE_SCAN=false
 EOF
   chmod 600 "$ENV_FILE"
   echo "      Generated $ENV_FILE with secure credentials."
@@ -63,6 +65,12 @@ else
   fi
   if ! grep -q "^CORS_ORIGIN=" "$ENV_FILE" || grep -q "^CORS_ORIGIN=$" "$ENV_FILE"; then
     echo "CORS_ORIGIN=https://localhost" >> "$ENV_FILE"
+  fi
+  if ! grep -q "^APP_URL=" "$ENV_FILE" || grep -q "^APP_URL=$" "$ENV_FILE"; then
+    echo "APP_URL=https://localhost" >> "$ENV_FILE"
+  fi
+  if ! grep -q "^STORAGE_REQUIRE_SCAN=" "$ENV_FILE"; then
+    echo "STORAGE_REQUIRE_SCAN=false" >> "$ENV_FILE"
   fi
 fi
 
