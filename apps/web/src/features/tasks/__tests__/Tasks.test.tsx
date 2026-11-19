@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { TasksPage } from '../pages/TasksPage';
@@ -411,5 +411,23 @@ describe('Tasks Feature (Issue #43)', () => {
     const modalContent = screen.getByTestId('task-detail-modal-content');
     expect(within(modalContent).getByText('Data Export Suite')).toBeInTheDocument();
     expect(within(modalContent).getByText('Bob Lead')).toBeInTheDocument();
+  });
+
+  it('automatically opens TaskDetailModal when accessed via /tasks/:id', async () => {
+    render(
+      <MemoryRouter initialEntries={['/tasks/11111111-1111-1111-1111-111111111111']}>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <Routes>
+            <Route path="/tasks/:id" element={<TasksPage initialScope="mine" />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      const modal = screen.getByTestId('task-detail-modal-content');
+      expect(modal).toBeInTheDocument();
+      expect(within(modal).getByText('Implement User CSV Export')).toBeInTheDocument();
+    });
   });
 });

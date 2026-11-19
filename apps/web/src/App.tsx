@@ -477,6 +477,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/approvals/:id"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/lead/approvals"
         element={
           <ShellLayout>
@@ -485,7 +493,23 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/lead/approvals/:id"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/hr/approvals"
+        element={
+          <ShellLayout>
+            <ApprovalsInboxPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/hr/approvals/:id"
         element={
           <ShellLayout>
             <ApprovalsInboxPage />
@@ -555,7 +579,23 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/tasks/:id"
+        element={
+          <ShellLayout>
+            <TasksPage />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/staff/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage initialScope="mine" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/staff/tasks/:id"
         element={
           <ShellLayout>
             <TasksPage initialScope="mine" />
@@ -571,7 +611,23 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/lead/tasks/:id"
+        element={
+          <ShellLayout>
+            <TasksPage initialScope="team" />
+          </ShellLayout>
+        }
+      />
+      <Route
         path="/admin/tasks"
+        element={
+          <ShellLayout>
+            <TasksPage initialScope="team" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/admin/tasks/:id"
         element={
           <ShellLayout>
             <TasksPage initialScope="team" />
@@ -689,6 +745,14 @@ function AppRoutes() {
       />
       <Route
         path="/leave"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="requests" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/:id"
         element={
           <ShellLayout>
             <LeaveManagementPage initialTab="requests" />
