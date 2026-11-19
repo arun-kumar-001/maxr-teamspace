@@ -19,6 +19,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
     title: 'System Administrator',
     department: 'Administration',
     avatarInitials: 'SH',
+    avatarUrl: '/user-portrait.png',
   },
   [ROLES.HR_MANAGER]: {
     id: 'usr-hr-002',
@@ -32,6 +33,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
     title: 'HR Manager',
     department: 'HR Department',
     avatarInitials: 'SH',
+    avatarUrl: '/user-portrait.png',
   },
   [ROLES.TEAM_LEAD]: {
     id: 'usr-lead-003',
@@ -46,6 +48,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
     title: 'Lead AI Engineer',
     department: 'AI Department',
     avatarInitials: 'MV',
+    avatarUrl: '/alex-mercer-card.png',
   },
   [ROLES.STAFF]: {
     id: 'usr-staff-004',
@@ -59,5 +62,6 @@ export const MOCK_USERS: Record<Role, MockUser> = {
     title: 'AI Intern',
     department: 'AI Department',
     avatarInitials: 'AK',
+    avatarUrl: '/user-portrait.png',
   },
 };

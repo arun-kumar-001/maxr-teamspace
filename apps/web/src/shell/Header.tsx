@@ -108,7 +108,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
               data-testid="user-menu-trigger"
             >
               <div
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden relative"
                 title={`${user.name} (${user.email})`}
               >
                 {user.avatarUrl ||
@@ -124,10 +124,25 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
                     }
                     alt={user.name}
                     className="w-full h-full object-cover"
+                    data-testid="header-avatar-img"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
-                ) : (
-                  user.avatarInitials
-                )}
+                ) : null}
+                <span
+                  className={
+                    user.avatarUrl ||
+                    (typeof window !== 'undefined' &&
+                      (localStorage.getItem(`maxr_avatar_${user.id}`) ||
+                        localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`)))
+                      ? 'sr-only'
+                      : undefined
+                  }
+                  data-testid="header-avatar-initials"
+                >
+                  {user.avatarInitials}
+                </span>
               </div>
               <svg
                 viewBox="0 0 16 16"
@@ -155,9 +170,26 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
               }`}
             >
               {/* User details header */}
-              <div className="px-4 py-2 border-b border-border">
-                <p className="text-xs font-bold text-text truncate">{user.name}</p>
-                <p className="text-[11px] text-text-muted truncate">{user.email}</p>
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-border">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-tile-peach text-sidebar text-xs font-semibold flex items-center justify-center shrink-0 relative">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                    {user.avatarInitials}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-text truncate">{user.name}</p>
+                  <p className="text-[11px] text-text-muted truncate">{user.email}</p>
+                </div>
               </div>
 
               {/* My Profile Link */}

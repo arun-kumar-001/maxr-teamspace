@@ -23,3 +23,26 @@ export function canDecideApproval(
     (approval.subjectType !== 'leave_request' || roles.includes(ROLES.TEAM_LEAD))
   );
 }
+
+export const APPROVED_IDS_STORAGE_KEY = 'maxr_approved_approval_ids';
+
+export function getApprovedIds(): Set<string> {
+  if (typeof window === 'undefined' || !window.localStorage) return new Set();
+  try {
+    const raw = localStorage.getItem(APPROVED_IDS_STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveApprovedId(id: string): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const current = getApprovedIds();
+    current.add(id);
+    localStorage.setItem(APPROVED_IDS_STORAGE_KEY, JSON.stringify([...current]));
+  } catch {
+    // Ignore storage errors
+  }
+}

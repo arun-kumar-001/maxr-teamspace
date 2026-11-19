@@ -28,6 +28,7 @@ describe('ProfilePortalPage', () => {
     expect(screen.getByText('Time tracker')).toBeTruthy();
     expect(screen.getByText('09:15 AM')).toBeTruthy();
     expect(screen.getByText('Checked In')).toBeTruthy();
+    expect(screen.getByTestId('portal-avatar-img')).toBeTruthy();
     expect(screen.getByText('Recent Payslips')).toBeTruthy();
     expect(screen.getByText('My Tasks')).toBeTruthy();
   });
@@ -47,7 +48,9 @@ describe('ProfilePortalPage', () => {
     expect(toggleButton.textContent).toContain('Check In');
 
     expect(screen.getByText('Completed 2 of 8 tasks')).toBeTruthy();
+    expect(screen.getByTestId('task-completion-percentage').textContent).toBe('25%');
     fireEvent.click(screen.getByText('Update sprint tasks'));
     expect(screen.getByText('Completed 3 of 8 tasks')).toBeTruthy();
+    expect(screen.getByTestId('task-completion-percentage').textContent).toBe('38%');
   });
 });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { ErrorState, PrimaryActionButton, Skeleton } from '../../../components/ui';
@@ -233,8 +233,10 @@ function AttendanceOpsWorkspace({
 }: {
   initialTab: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out';
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const inRouter = useInRouterContext();
+  const navigate = inRouter ? useNavigate() : null;
+  const location = inRouter ? useLocation() : null;
+
   const { role } = useAuth();
   const isAdmin = role === ROLES.ADMIN;
   const isHr = role === ROLES.HR_MANAGER;
@@ -244,22 +246,32 @@ function AttendanceOpsWorkspace({
   const [activeTab, setActiveTab] = useState<'on-duty' | 'roster' | 'timesheets' | 'check-in-out'>(
     initialTab,
   );
+
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
-  const handleSwitchTab = (tab: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out') => {
+  useEffect(() => {
+    if (location?.pathname) {
+      if (location.pathname === '/attendance/roster') {
+        setActiveTab('roster');
+      } else if (location.pathname === '/attendance/timesheets') {
+        setActiveTab('timesheets');
+      } else if (location.pathname === '/attendance/check-in-out') {
+        setActiveTab('check-in-out');
+      } else if (location.pathname === '/attendance' || location.pathname === '/attendance/on-duty') {
+        setActiveTab('on-duty');
+      }
+    }
+  }, [location?.pathname]);
+
+  const handleTabChange = (tab: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out') => {
     setActiveTab(tab);
-    const targetPath =
-      tab === 'on-duty'
-        ? '/attendance'
-        : tab === 'roster'
-          ? '/attendance/roster'
-          : tab === 'timesheets'
-            ? '/attendance/timesheets'
-            : '/attendance/check-in-out';
-    if (location.pathname !== targetPath) {
-      navigate(targetPath);
+    if (navigate) {
+      const targetPath = tab === 'on-duty' ? '/attendance' : `/attendance/${tab}`;
+      if (location?.pathname !== targetPath) {
+        navigate(targetPath);
+      }
     }
   };
   const [selectedDate, setSelectedDate] = useState<string>(() =>
@@ -437,12 +449,13 @@ function AttendanceOpsWorkspace({
       <div className="border-b border-border/80 flex items-center gap-6 text-sm font-semibold">
         <button
           type="button"
-          onClick={() => handleSwitchTab('on-duty')}
+          onClick={() => handleTabChange('on-duty')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'on-duty'
               ? 'text-emerald-700 font-bold'
               : 'text-text-muted hover:text-text'
           }`}
+          data-testid="attendance-ops-tab-on-duty"
         >
           <span>On Duty</span>
           {activeTab === 'on-duty' && (
@@ -452,12 +465,13 @@ function AttendanceOpsWorkspace({
 
         <button
           type="button"
-          onClick={() => handleSwitchTab('roster')}
+          onClick={() => handleTabChange('roster')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'roster'
               ? 'text-emerald-700 font-bold'
               : 'text-text-muted hover:text-text'
           }`}
+          data-testid="attendance-ops-tab-roster"
         >
           <span>Roster</span>
           {activeTab === 'roster' && (
@@ -467,12 +481,13 @@ function AttendanceOpsWorkspace({
 
         <button
           type="button"
-          onClick={() => handleSwitchTab('timesheets')}
+          onClick={() => handleTabChange('timesheets')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'timesheets'
               ? 'text-emerald-700 font-bold'
               : 'text-text-muted hover:text-text'
           }`}
+          data-testid="attendance-ops-tab-timesheets"
         >
           <span>Timesheets</span>
           {activeTab === 'timesheets' && (
@@ -482,12 +497,13 @@ function AttendanceOpsWorkspace({
 
         <button
           type="button"
-          onClick={() => handleSwitchTab('check-in-out')}
+          onClick={() => handleTabChange('check-in-out')}
           className={`pb-3 relative transition-colors ${
             activeTab === 'check-in-out'
               ? 'text-emerald-700 font-bold'
               : 'text-text-muted hover:text-text'
           }`}
+          data-testid="attendance-ops-tab-check-in-out"
         >
           <span>Check-In / Check-Out</span>
           {activeTab === 'check-in-out' && (

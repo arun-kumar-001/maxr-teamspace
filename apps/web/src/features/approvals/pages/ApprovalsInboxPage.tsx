@@ -1,4 +1,5 @@
 import React from 'react';
+import { useInRouterContext, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { canDecideApproval } from '../approval-permissions';
 import { PageContainer } from '../../../components/ui/PageContainer';
@@ -16,7 +17,15 @@ import { ApprovalDetailsModal } from '../components/ApprovalDetailsModal';
 import { useApprovals } from '../hooks/useApprovals';
 import type { Approval } from '../types';
 
-export const ApprovalsInboxPage: React.FC = () => {
+interface ApprovalsInboxPageContentProps {
+  paramId?: string;
+  onNavigate?: (path: string, options?: { replace?: boolean }) => void;
+}
+
+const ApprovalsInboxPageContent: React.FC<ApprovalsInboxPageContentProps> = ({
+  paramId,
+  onNavigate,
+}) => {
   const { user, role } = useAuth();
   const mayDecide = (approval: Approval) =>
     canDecideApproval(approval, user?.employeeId, user?.roles ?? (role ? [role] : []));
@@ -41,6 +50,23 @@ export const ApprovalsInboxPage: React.FC = () => {
     closeDetailsModal,
     submitDecision,
   } = useApprovals();
+
+  // Auto-open approval details modal when accessed via /approvals/:id
+  React.useEffect(() => {
+    if (paramId && approvals.length > 0) {
+      const found = approvals.find((a) => a.id === paramId);
+      if (found) {
+        openDetails(found);
+      }
+    }
+  }, [paramId, approvals, openDetails]);
+
+  const handleCloseDetails = () => {
+    closeDetailsModal();
+    if (paramId && onNavigate) {
+      onNavigate('/approvals', { replace: true });
+    }
+  };
 
   // Metrics summary
   const pendingCount = approvals.filter((a) => a.status === 'pending').length;
@@ -343,7 +369,7 @@ export const ApprovalsInboxPage: React.FC = () => {
         {/* Details & Audit History Modal */}
         <ApprovalDetailsModal
           isOpen={isDetailsModalOpen}
-          onClose={closeDetailsModal}
+          onClose={handleCloseDetails}
           approval={selectedApproval}
           onApproveClick={openApprove}
           onRejectClick={openReject}
@@ -352,4 +378,18 @@ export const ApprovalsInboxPage: React.FC = () => {
       </div>
     </PageContainer>
   );
+};
+
+function RouterApprovalsInboxPage() {
+  const params = useParams<{ id?: string }>();
+  const navigate = useNavigate();
+  return <ApprovalsInboxPageContent paramId={params.id} onNavigate={navigate} />;
+}
+
+export const ApprovalsInboxPage: React.FC = () => {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return <RouterApprovalsInboxPage />;
+  }
+  return <ApprovalsInboxPageContent />;
 };

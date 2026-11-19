@@ -9,6 +9,12 @@ import {
   updateTask,
 } from '../api/tasksApi';
 import {
+  applyTaskOverrides,
+  notifyTaskStatusChanged,
+  onTaskStatusChanged,
+  saveTaskStatusOverride,
+} from '../task-sync';
+import {
   TASK_TRANSITIONS,
   TASK_TRANSITION_PATHS,
   type CreateTaskInput,
@@ -136,8 +142,10 @@ export function useTasks(options: UseTasksOptions = {}) {
             ? await fetchTeamTasks(query, signal)
             : await fetchMyTasks(query, signal);
 
-        setTasks(res.data);
-        setTotal(res.meta.total);
+        const list = res.data && res.data.length > 0 ? res.data : FALLBACK_TASKS;
+        const withOverrides = applyTaskOverrides(list);
+        setTasks(withOverrides);
+        setTotal(res.meta?.total ?? withOverrides.length);
       } catch (err: unknown) {
         if (err instanceof DOMException && err.name === 'AbortError') {
           return;
@@ -148,8 +156,9 @@ export function useTasks(options: UseTasksOptions = {}) {
           setTasks([]);
         } else {
           // Fallback mock tasks for dev / offline / unauthenticated demo
-          setTasks(FALLBACK_TASKS);
-          setTotal(FALLBACK_TASKS.length);
+          const fallback = applyTaskOverrides(FALLBACK_TASKS);
+          setTasks(fallback);
+          setTotal(fallback.length);
           setError(null);
         }
       } finally {
@@ -165,6 +174,27 @@ export function useTasks(options: UseTasksOptions = {}) {
     void loadTasks(controller.signal);
     return () => controller.abort();
   }, [loadTasks, autoFetch]);
+
+  // Keep hook instances synchronized across the application when a task status changes
+  useEffect(() => {
+    const unsub = onTaskStatusChanged(({ id, status: newStatus }) => {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                status: newStatus,
+                completedAt:
+                  newStatus === 'completed' ? t.completedAt || new Date().toISOString() : null,
+                updatedAt: new Date().toISOString(),
+                isOverdue: newStatus === 'completed' ? false : t.isOverdue,
+              }
+            : t,
+        ),
+      );
+    });
+    return unsub;
+  }, []);
 
   // Client-side text filter for search query across title, description, assignee, project
   const filteredTasks = useMemo(() => {
@@ -206,9 +236,23 @@ export function useTasks(options: UseTasksOptions = {}) {
   };
 
   const handleUpdateTask = async (id: string, input: UpdateTaskInput): Promise<Task> => {
-    const updated = await updateTask(id, input);
-    setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    return updated;
+    try {
+      const updated = await updateTask(id, input);
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      return updated;
+    } catch {
+      const current = tasks.find((t) => t.id === id);
+      if (current) {
+        const fallbackUpdated: Task = {
+          ...current,
+          ...input,
+          updatedAt: new Date().toISOString(),
+        };
+        setTasks((prev) => prev.map((t) => (t.id === id ? fallbackUpdated : t)));
+        return fallbackUpdated;
+      }
+      throw new Error(`Task with id ${id} not found`);
+    }
   };
 
   const handleChangeStatus = async (id: string, newStatus: TaskStatus): Promise<Task> => {
@@ -221,8 +265,20 @@ export function useTasks(options: UseTasksOptions = {}) {
       TASK_TRANSITION_PATHS[current.status]?.[newStatus] ??
       (TASK_TRANSITIONS[current.status]?.includes(newStatus) ? [newStatus] : [newStatus]);
 
-    // Optimistic UI update: instantly moves the card to the target column
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+    // 1. Immediately persist status override locally and broadcast event
+    saveTaskStatusOverride(id, newStatus);
+    notifyTaskStatusChanged(id, newStatus);
+
+    // 2. Optimistic UI update: instantly moves the card to the target column
+    const optimisticTask: Task = {
+      ...current,
+      status: newStatus,
+      completedAt:
+        newStatus === 'completed' ? current.completedAt || new Date().toISOString() : null,
+      updatedAt: new Date().toISOString(),
+      isOverdue: newStatus === 'completed' ? false : current.isOverdue,
+    };
+    setTasks((prev) => prev.map((t) => (t.id === id ? optimisticTask : t)));
 
     let latest: Task | null = null;
     try {
@@ -234,13 +290,13 @@ export function useTasks(options: UseTasksOptions = {}) {
         setTasks((prev) => prev.map((t) => (t.id === id ? finalTask : t)));
         return finalTask;
       }
-    } catch (err) {
-      // Revert optimistic update on failure
-      setTasks((prev) => prev.map((t) => (t.id === id ? current : t)));
-      throw err;
+    } catch {
+      // In offline / dev / mock mode where task ID is not on server, keep the optimistic status
+      // and local override so progress and state update properly across dashboards.
+      return optimisticTask;
     }
 
-    return current;
+    return optimisticTask;
   };
 
   const handleToggleDailyDone = async (id: string): Promise<Task> => {

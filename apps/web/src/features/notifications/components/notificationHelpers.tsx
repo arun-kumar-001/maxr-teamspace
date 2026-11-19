@@ -158,8 +158,8 @@ export function getNotificationTypeStyle(type: string): NotificationTypeStyle {
 }
 
 /**
- * Resolves the target destination route when a user or administrator clicks on a notification.
- * Handles both explicitly specified notification.link targets and semantic type/content fallbacks.
+ * Resolves the destination route when a user clicks a notification.
+ * Prioritizes explicit links, then maps notification types, and falls back to content detection.
  */
 export function resolveNotificationLink(item: {
   link?: string | null;
@@ -167,58 +167,76 @@ export function resolveNotificationLink(item: {
   title?: string;
   body?: string;
 }): string {
-  if (item.link && item.link.trim().length > 0) {
-    return item.link.trim();
+  // 1. If explicit valid link is provided, use it
+  if (item.link && item.link.trim() !== '' && item.link !== '#') {
+    return item.link;
   }
 
   const type = (item.type || '').toLowerCase();
   const text = `${item.title || ''} ${item.body || ''}`.toLowerCase();
 
-  if (type.startsWith('approval.') || text.includes('approval') || text.includes('pending approval')) {
-    if (type.includes('leave') || text.includes('leave')) {
-      return '/leave/approvals';
-    }
+  // 2. Type-based routing
+  if (type.startsWith('approval.')) {
     return '/approvals';
   }
-
-  if (type.startsWith('leave.') || text.includes('leave')) {
+  if (type.startsWith('leave.')) {
     return '/leave';
   }
-
-  if (type.startsWith('task.') || text.includes('task')) {
+  if (type.startsWith('task.')) {
     return '/tasks';
   }
-
-  if (type.startsWith('project.') || text.includes('project')) {
+  if (type.startsWith('attendance.')) {
+    return '/attendance';
+  }
+  if (type.startsWith('meeting.')) {
+    return '/dashboard';
+  }
+  if (type.startsWith('employee.') || type.startsWith('onboarding.')) {
+    return '/employees';
+  }
+  if (type.startsWith('project.')) {
     return '/projects';
   }
+  if (type === 'announcement' || type.startsWith('announcement.')) {
+    return '/notifications';
+  }
 
+  // 3. Keyword-based matching from title & body
+  if (text.includes('leave') || text.includes('vacation') || text.includes('time off')) {
+    return '/leave';
+  }
   if (
-    type.startsWith('attendance.') ||
+    text.includes('approval') ||
+    text.includes('approved') ||
+    text.includes('rejected') ||
+    text.includes('decision')
+  ) {
+    return '/approvals';
+  }
+  if (text.includes('task') || text.includes('todo') || text.includes('to-do')) {
+    return '/tasks';
+  }
+  if (
     text.includes('attendance') ||
     text.includes('check-in') ||
-    text.includes('check-out') ||
-    text.includes('roster')
+    text.includes('check in') ||
+    text.includes('punch') ||
+    text.includes('timesheet') ||
+    text.includes('roster') ||
+    text.includes('onduty')
   ) {
     return '/attendance';
   }
-
-  if (type.startsWith('meeting.') || text.includes('meeting')) {
-    return '/meetings';
+  if (text.includes('project')) {
+    return '/projects';
   }
-
-  if (type.startsWith('payslip.') || text.includes('payslip') || text.includes('salary')) {
+  if (text.includes('payslip') || text.includes('salary') || text.includes('payroll')) {
     return '/payslips';
   }
-
-  if (
-    type.startsWith('employee.') ||
-    type.startsWith('onboarding.') ||
-    text.includes('employee') ||
-    text.includes('onboarding')
-  ) {
+  if (text.includes('employee') || text.includes('onboarding') || text.includes('candidate')) {
     return '/employees';
   }
 
+  // 4. Fallback safe destination
   return '/notifications';
 }

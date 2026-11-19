@@ -1245,11 +1245,23 @@ export function EmployeeDirectoryPage() {
                       {/* Employee Column: Avatar, Name, Email */}
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <DirectoryEmployeePhoto
-                            name={`${emp.firstName} ${emp.lastName}`}
-                            initials={initials}
-                            photoUrl={getEmployeePhoto(emp)}
-                          />
+                          <div
+                            className={`w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative`}
+                          >
+                            {getEmployeePhoto(emp) ? (
+                              <img
+                                src={getEmployeePhoto(emp)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : null}
+                            <span className={getEmployeePhoto(emp) ? 'sr-only' : undefined}>
+                              {initials}
+                            </span>
+                          </div>
                           <div className="min-w-0">
                             <a
                               href={`/employees/${emp.id}`}

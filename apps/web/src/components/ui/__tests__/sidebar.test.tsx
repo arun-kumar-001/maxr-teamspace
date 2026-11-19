@@ -96,6 +96,40 @@ describe('Sidebar (expanded)', () => {
     );
   });
 
+  it('automatically expands parent group when activeId transitions to a child item (Issue #7)', () => {
+    const { rerender } = render(
+      <Sidebar
+        brand={brand}
+        groups={groups}
+        activeId="overview"
+        collapsed={false}
+        user={user}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Attendance' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+
+    rerender(
+      <Sidebar
+        brand={brand}
+        groups={groups}
+        activeId="attendance-team"
+        collapsed={false}
+        user={user}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Attendance' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(screen.getByRole('link', { name: 'Team attendance' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
   it('shows group labels, brand and user', () => {
     render(<Harness />);
     expect(screen.getByText('Workforce')).toBeVisible();

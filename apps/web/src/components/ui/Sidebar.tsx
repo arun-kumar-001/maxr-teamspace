@@ -108,13 +108,26 @@ export function Sidebar({
           .map((i) => i.id),
       ),
   );
+  const prevActiveIdRef = useRef(activeId);
 
+  // Automatically expand parent group if the active page is a child sub-item
   useEffect(() => {
-    const parent = groups
-      .flatMap((g) => g.items)
-      .find((i) => i.children?.some((c) => c.id === activeId));
-    if (parent) {
-      setOpenGroups((prev) => new Set(prev).add(parent.id));
+    if (prevActiveIdRef.current !== activeId) {
+      prevActiveIdRef.current = activeId;
+      const parentWithActiveChild = groups
+        .flatMap((g) => g.items)
+        .filter((i) => i.children?.some((c) => c.id === activeId))
+        .map((i) => i.id);
+
+      if (parentWithActiveChild.length > 0) {
+        setOpenGroups((prev) => {
+          const next = new Set(prev);
+          for (const p of parentWithActiveChild) {
+            next.add(p);
+          }
+          return next;
+        });
+      }
     }
   }, [activeId, groups]);
   const [tooltip, setTooltip] = useState<{ label: string; top: number; left: number } | null>(null);
@@ -244,7 +257,11 @@ export function Sidebar({
                 {group.items.map((item) => {
                   const hasChildren = Boolean(item.children?.length);
                   const childActive = item.children?.some((c) => c.id === activeId) ?? false;
-                  const active = collapsed ? childActive : (item.id === activeId && !hasChildren);
+                  const active = collapsed
+                    ? item.id === activeId || childActive
+                    : childActive
+                      ? false
+                      : item.id === activeId;
                   const open = !collapsed && openGroups.has(item.id);
                   const subId = `${navId}-${item.id}`;
 
@@ -261,7 +278,7 @@ export function Sidebar({
                           className={`${itemBase} ${itemLayout} ${
                             active
                               ? activeStyle
-                              : childActive || open
+                              : open || childActive
                                 ? 'bg-sidebar-raised text-sidebar-strong'
                                 : idleStyle
                           }`}
@@ -344,33 +361,42 @@ export function Sidebar({
                 onClick={onUserMenu}
                 aria-label={`Account menu, ${user.name}`}
                 {...tooltipHandlers(user.name)}
-                className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden ${focusRing}`}
+                className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden relative ${focusRing}`}
               >
                 {user.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
-                ) : (
-                  user.initials
-                )}
+                ) : null}
+                <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                  {user.initials}
+                </span>
               </button>
             ) : (
               <>
                 <span
-                  className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden"
+                  className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden relative cursor-pointer"
                   aria-hidden="true"
+                  onClick={onUserMenu}
                 >
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
                       alt={user.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
-                  ) : (
-                    user.initials
-                  )}
+                  ) : null}
+                  <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                    {user.initials}
+                  </span>
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-semibold text-sidebar-strong truncate">

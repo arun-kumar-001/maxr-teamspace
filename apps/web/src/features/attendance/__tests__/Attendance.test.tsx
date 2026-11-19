@@ -342,5 +342,45 @@ describe('Attendance Feature UI Components & Pages', () => {
         expect(screen.getAllByText('Completed sprint backlog')[0]).toBeDefined();
       });
     });
+
+    it('AttendanceOpsWorkspace synchronizes section changes with navigation route (Issue #7)', async () => {
+      render(
+        <MemoryRouter initialEntries={['/attendance']}>
+          <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+            <AttendancePage initialTab="on-duty" />
+          </AuthProvider>
+        </MemoryRouter>,
+      );
+
+      expect(screen.getByTestId('attendance-ops-tab-on-duty')).toBeInTheDocument();
+      expect(screen.getByTestId('attendance-ops-tab-roster')).toBeInTheDocument();
+
+      // Click on Roster tab
+      fireEvent.click(screen.getByTestId('attendance-ops-tab-roster'));
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Weekly shift schedules and employee assignments.'),
+        ).toBeInTheDocument();
+      });
+
+      // Click on Timesheets tab
+      fireEvent.click(screen.getByTestId('attendance-ops-tab-timesheets'));
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Review and approve employee working hours and overtime.'),
+        ).toBeInTheDocument();
+      });
+
+      // Click back to On Duty tab
+      fireEvent.click(screen.getByTestId('attendance-ops-tab-on-duty'));
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Today \u2013 Company-wide employee attendance.'),
+        ).toBeInTheDocument();
+      });
+    });
   });
 });

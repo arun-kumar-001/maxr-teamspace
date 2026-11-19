@@ -188,6 +188,7 @@ export function TaskFormModal({
           <Input
             id="task-title"
             data-testid="task-title-input"
+            placeholder="e.g. Implement user export CSV"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={submitting}

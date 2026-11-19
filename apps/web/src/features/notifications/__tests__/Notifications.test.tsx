@@ -7,6 +7,7 @@ import { ROLES } from '@maxr/shared';
 import * as authContext from '../../../auth/AuthContext';
 import * as notificationsApi from '../api/notificationsApi';
 import { NotificationBell } from '../components/NotificationBell';
+import { resolveNotificationLink } from '../components/notificationHelpers';
 import { NotificationsInboxPage } from '../pages/NotificationsInboxPage';
 import type { AppNotification, ListNotificationsResponse } from '../types';
 
@@ -260,5 +261,98 @@ describe('NotificationsInboxPage', () => {
       });
       expect(screen.getByTestId('announcement-success-message')).toBeInTheDocument();
     });
+  });
+
+  it('navigates to resolved target route on notification row click', async () => {
+    vi.spyOn(authContext, 'useAuth').mockReturnValue({
+      user: {
+        id: 'usr-1',
+        employeeId: 'emp-1',
+        email: 'staff@example.com',
+        name: 'Alice Staff',
+        role: ROLES.STAFF,
+        roles: [ROLES.STAFF],
+        permissions: ['notifications.read_own'],
+        avatarInitials: 'AS',
+      },
+      role: ROLES.STAFF,
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      switchRole: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter>
+        <NotificationsInboxPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('inbox-notification-row-notif-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('inbox-notification-row-notif-1'));
+
+    await waitFor(() => {
+      expect(notificationsApi.markNotificationAsRead).toHaveBeenCalledWith('notif-1');
+    });
+  });
+});
+
+describe('resolveNotificationLink helper', () => {
+  it('preserves valid explicit links', () => {
+    expect(resolveNotificationLink({ link: '/custom/path' })).toBe('/custom/path');
+  });
+
+  it('routes approval notifications to /approvals when link is null', () => {
+    expect(
+      resolveNotificationLink({
+        type: 'approval.requested',
+        title: 'Decision required',
+        link: null,
+      }),
+    ).toBe('/approvals');
+  });
+
+  it('routes leave notifications to /leave when link is null', () => {
+    expect(
+      resolveNotificationLink({
+        type: 'leave.applied',
+        title: 'Annual leave submitted',
+        link: null,
+      }),
+    ).toBe('/leave');
+  });
+
+  it('routes task notifications to /tasks when link is null', () => {
+    expect(
+      resolveNotificationLink({
+        type: 'task.assigned',
+        title: 'New assignment',
+        link: null,
+      }),
+    ).toBe('/tasks');
+  });
+
+  it('routes attendance notifications to /attendance', () => {
+    expect(
+      resolveNotificationLink({
+        type: 'attendance.regularization',
+        title: 'Correction request',
+        link: null,
+      }),
+    ).toBe('/attendance');
+  });
+
+  it('falls back to keyword content detection when type is unknown', () => {
+    expect(
+      resolveNotificationLink({
+        type: 'custom.alert',
+        title: 'Your sick leave request has been processed',
+        link: null,
+      }),
+    ).toBe('/leave');
   });
 });

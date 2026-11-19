@@ -139,8 +139,23 @@ export function ProfilePortalPage() {
 
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
-  const [onboardingTasks, setOnboardingTasks] =
-    useState<OnboardingChecklistItem[]>(INITIAL_ONBOARDING_TASKS);
+  const [onboardingTasks, setOnboardingTasks] = useState<OnboardingChecklistItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('maxr_staff_tasks_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return INITIAL_ONBOARDING_TASKS.map((item) => {
+            const found = parsed.find((p: { id: number; completed: boolean }) => p.id === item.id);
+            return found ? { ...item, completed: Boolean(found.completed) } : item;
+          });
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return INITIAL_ONBOARDING_TASKS;
+  });
   const [activeTasksCount, setActiveTasksCount] = useState(0);
   const [activeProjectsCount, setActiveProjectsCount] = useState(0);
   const [completedProjectsCount, setCompletedProjectsCount] = useState(0);
@@ -216,9 +231,18 @@ export function ProfilePortalPage() {
   };
 
   const toggleTask = (id: number) => {
-    setOnboardingTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
+    setOnboardingTasks((prev) => {
+      const updated = prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+      try {
+        localStorage.setItem(
+          'maxr_staff_tasks_state',
+          JSON.stringify(updated.map((t) => ({ id: t.id, completed: t.completed }))),
+        );
+      } catch {
+        // Ignore
+      }
+      return updated;
+    });
   };
 
   const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '') || 'User';
@@ -263,6 +287,8 @@ export function ProfilePortalPage() {
     return list;
   }, []);
 
+  const totalTasksCount = 8;
+  const completionPercentage = Math.round((completedTasksCount / totalTasksCount) * 100);
   return (
     <div
       data-testid="profile-portal-page"
@@ -440,91 +466,101 @@ export function ProfilePortalPage() {
 
       {/* Row 1: Four Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
-        {/* Card 1: Executive Monogram Profile Card */}
+        {/* Card 1: Executive Profile Card (Overall Big Size View) */}
         <div
-          className="relative rounded-[26px] overflow-hidden shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72 w-full flex flex-col justify-between p-5"
+          className="relative rounded-[26px] overflow-hidden shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72 w-full group cursor-pointer"
+          onClick={() => navigate('/profile/details')}
+          title="Click to view and edit profile details"
           style={{
             background:
               'linear-gradient(135deg, rgb(14, 40, 38) 0%, rgb(18, 56, 53) 50%, rgb(10, 30, 28) 100%)',
-            border: '1px solid rgba(85, 205, 179, 0.2)',
+            border: '1px solid rgba(85, 205, 179, 0.25)',
           }}
         >
-          <div
-            className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-10 pointer-events-none"
-            style={{ backgroundColor: 'rgb(85, 205, 179)', filter: 'blur(20px)' }}
-          />
-          <div
-            className="absolute -left-6 -bottom-6 w-28 h-28 rounded-full opacity-10 pointer-events-none"
-            style={{ backgroundColor: 'rgb(85, 205, 179)', filter: 'blur(20px)' }}
-          />
+          {user?.avatarUrl || avatarUrl ? (
+            <img
+              src={user?.avatarUrl || avatarUrl || ''}
+              alt={displayName}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              style={{ objectPosition: 'center 20%' }}
+              data-testid="portal-avatar-img"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : null}
 
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="relative">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={displayName}
-                  className="w-14 h-14 rounded-2xl object-cover shadow-md border"
-                  style={{ borderColor: 'rgba(85, 205, 179, 0.4)' }}
+          {/* Fallback initials if image fails or no avatar */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center font-display font-bold text-5xl text-primary/30 pointer-events-none ${
+              user?.avatarUrl || avatarUrl ? 'sr-only' : ''
+            }`}
+          >
+            {initials}
+          </div>
+
+          {/* Top Right Floating Active Profile Badge and Photo Upload */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+            <label
+              htmlFor="profile-avatar-upload"
+              title="Upload profile photo"
+              onClick={(e) => e.stopPropagation()}
+              className="w-6 h-6 rounded-full bg-surface/90 text-primary-deep flex items-center justify-center shadow-md cursor-pointer hover:bg-surface transition-colors border border-border backdrop-blur-xs"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
                 />
-              ) : (
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center font-display font-bold text-xl shadow-md border"
-                  style={{
-                    backgroundColor: 'rgba(85, 205, 179, 0.2)',
-                    color: 'rgb(85, 205, 179)',
-                    borderColor: 'rgba(85, 205, 179, 0.4)',
-                  }}
-                >
-                  {initials}
-                </div>
-              )}
-              <label
-                htmlFor="profile-avatar-upload"
-                title="Upload profile photo"
-                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-surface text-primary-deep flex items-center justify-center shadow-md cursor-pointer hover:bg-surface-raised transition-colors border border-border"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <input
-                  id="profile-avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                 />
-              </label>
-            </div>
+              </svg>
+              <input
+                id="profile-avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+            </label>
             <span
-              className="text-[10px] font-semibold px-2.5 py-1 rounded-full border tracking-wide uppercase shadow-xs"
+              className="text-[10px] font-semibold px-2.5 py-1 rounded-full border tracking-wide uppercase shadow-sm backdrop-blur-md"
               style={{
-                backgroundColor: 'rgba(85, 205, 179, 0.15)',
+                backgroundColor: 'rgba(14, 40, 38, 0.75)',
                 color: 'rgb(85, 205, 179)',
-                borderColor: 'rgba(85, 205, 179, 0.3)',
+                borderColor: 'rgba(85, 205, 179, 0.4)',
+              }}
+            >
+              Active Profile
+            </span>
+          </div>
               }}
             >
               Active Profile
             </span>
           </div>
 
-          <div className="relative z-10">
-            <h2 className="text-lg font-bold font-display text-white leading-tight drop-shadow-xs">
+          {/* Bottom Gradient Overlay with Name, Role & Email */}
+          <div
+            className="absolute bottom-0 inset-x-0 p-5 z-20 flex flex-col justify-end"
+            style={{
+              background:
+                'linear-gradient(to top, rgba(10, 26, 24, 0.95) 0%, rgba(10, 26, 24, 0.6) 65%, transparent 100%)',
+            }}
+          >
+            <h2 className="text-lg font-bold font-display text-white leading-tight drop-shadow-md">
               {displayName}
             </h2>
-            <p className="text-xs font-medium text-emerald-200/80 mt-0.5">{displayRole}</p>
-            <p className="text-[11px] text-white/50 truncate mt-1">
+            <p className="text-xs font-medium text-emerald-300 mt-0.5 drop-shadow-sm">
+              {displayRole}
+            </p>
+            <p className="text-[11px] text-white/70 truncate mt-1 drop-shadow-sm">
               {user?.email || 'admin@maxr.internal'}
             </p>
           </div>
@@ -642,10 +678,12 @@ export function ProfilePortalPage() {
             <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
               Task Completion Process
             </span>
-            <span className="text-3xl font-light font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              {activeTasksCount > 0
-                ? `${Math.round((completedTasksCount / Math.max(activeTasksCount, 1)) * 100)}%`
-                : '0%'}
+            <span
+              className="text-3xl font-light font-display"
+              style={{ color: 'rgb(8, 11, 12)' }}
+              data-testid="task-completion-percentage"
+            >
+              {completionPercentage}%
             </span>
           </div>
 
@@ -658,17 +696,19 @@ export function ProfilePortalPage() {
                 className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: 'rgb(85, 205, 179)' }}
               />
-              <span>{activeTasksCount} active tasks</span>
+              <span>
+                {completedTasksCount} of {totalTasksCount} tasks completed
+              </span>
             </div>
 
             <div
-              className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border"
+              className="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden border"
               style={{ borderColor: 'rgba(8, 11, 12, 0.08)' }}
             >
               <div
-                className="h-full rounded-full transition-all duration-500"
+                className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{
-                  width: `${activeTasksCount > 0 ? Math.min(100, Math.round((completedTasksCount / activeTasksCount) * 100)) : 0}%`,
+                  width: `${completionPercentage}%`,
                   backgroundColor: 'rgb(85, 205, 179)',
                 }}
               />
@@ -677,7 +717,9 @@ export function ProfilePortalPage() {
 
           <div className="text-[11px]" style={{ color: 'rgba(8, 11, 12, 0.5)' }}>
             <span>
-              {activeTasksCount > 0 ? 'Assigned tasks in current cycle' : 'No tasks assigned'}
+              {activeTasksCount > 0
+                ? `${activeTasksCount} active team tasks in current cycle`
+                : 'Overall completion status'}
             </span>
           </div>
         </div>

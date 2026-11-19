@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Approval, ApprovalFilters, ApprovalOutcome, ApprovalPaginationMeta } from '../types';
 import { fetchApprovals, approveRequest, rejectRequest } from '../api/approvals';
+import { saveApprovedId } from '../approval-permissions';
 
 export interface UseApprovalsOptions {
   initialFilters?: ApprovalFilters;
@@ -92,6 +93,7 @@ export function useApprovals(options: UseApprovalsOptions = {}) {
       if (!selectedApproval || !decisionOutcome) return;
 
       if (decisionOutcome === 'approved') {
+        saveApprovedId(selectedApproval.id);
         await approveRequest(selectedApproval.id, comment);
       } else {
         await rejectRequest(selectedApproval.id, comment);

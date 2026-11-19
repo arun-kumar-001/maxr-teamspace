@@ -159,7 +159,7 @@ export function AttendanceCaptureModal({
         setLocation({
           latitude: 0,
           longitude: 0,
-          address: 'Office Location',
+          address: 'Office / Web Check-In',
           workMode: 'office',
         });
       },
@@ -186,8 +186,21 @@ export function AttendanceCaptureModal({
     const video = videoRef.current;
     if (!video || video.videoWidth === 0 || video.videoHeight === 0) return;
 
-    const targetWidth = 480;
-    const targetHeight = Math.round((video.videoHeight / video.videoWidth) * targetWidth);
+    const maxDim = 360;
+    const origW = video.videoWidth;
+    const origH = video.videoHeight;
+    let targetWidth = origW;
+    let targetHeight = origH;
+    if (origW > maxDim || origH > maxDim) {
+      if (origW >= origH) {
+        targetWidth = maxDim;
+        targetHeight = Math.round((origH / origW) * maxDim);
+      } else {
+        targetHeight = maxDim;
+        targetWidth = Math.round((origW / origH) * maxDim);
+      }
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = targetWidth;
     canvas.height = targetHeight;
@@ -195,8 +208,9 @@ export function AttendanceCaptureModal({
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-    setPhotoDataUrl(dataUrl);
+    const rawDataUrl = canvas.toDataURL('image/jpeg', 0.65);
+    const cleanedDataUrl = rawDataUrl.trim().replace(/[\r\n\s]+/g, '');
+    setPhotoDataUrl(cleanedDataUrl);
     stopCamera();
   };
 
@@ -207,17 +221,17 @@ export function AttendanceCaptureModal({
 
   const handleConfirm = async () => {
     if (submittingRef.current || isSubmitting) return;
+    const activeLocation: AttendanceLocation = location ?? {
+      latitude: 0,
+      longitude: 0,
+      address: 'Office / Web Check-In',
+      workMode: 'office',
+    };
     submittingRef.current = true;
     setSubmitError(null);
     try {
-      const activeLoc: AttendanceLocation = location || {
-        latitude: 0,
-        longitude: 0,
-        address: 'Office Location',
-        workMode: 'office',
-      };
       await onConfirm({
-        location: activeLoc,
+        location: activeLocation,
         ...(photoDataUrl ? { photoDataUrl } : {}),
       });
       stopCamera();

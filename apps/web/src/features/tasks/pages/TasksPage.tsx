@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useInRouterContext, useNavigate, useParams } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
@@ -17,7 +18,17 @@ export interface TasksPageProps {
   initialViewMode?: 'board' | 'list' | 'assigned';
 }
 
-export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
+interface TasksPageContentProps extends TasksPageProps {
+  paramId?: string;
+  onNavigate?: (path: string, options?: { replace?: boolean }) => void;
+}
+
+function TasksPageContent({
+  initialScope,
+  initialViewMode,
+  paramId,
+  onNavigate,
+}: TasksPageContentProps) {
   const { user, role } = useAuth();
   const effectiveRole = role ?? user?.role;
   const isAdmin = effectiveRole === ROLES.ADMIN;
@@ -57,7 +68,25 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
     toggleDailyDone,
   } = useTasks({ scope: defaultScope, autoFetch: true });
 
-  // Dynamic assignee quick-filter list derived from real loaded CRM tasks
+  // Auto-open detail drawer if accessed via /tasks/:id
+  useEffect(() => {
+    if (paramId && allTasks.length > 0) {
+      const found = allTasks.find((t) => t.id === paramId);
+      if (found) {
+        setSelectedTask(found);
+        setIsDetailOpen(true);
+      }
+    }
+  }, [paramId, allTasks]);
+
+  const handleCloseDetail = () => {
+    setIsDetailOpen(false);
+    if (paramId && onNavigate) {
+      onNavigate('/tasks', { replace: true });
+    }
+  };
+
+  // Dynamic assignee quick-filter list derived from real loaded tasks
   const assigneeOptions = useMemo<AssigneeOption[]>(() => {
     const map = new Map<string, string>();
     for (const t of allTasks) {
@@ -301,7 +330,7 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
       {/* Task Slide-Over Detail Drawer */}
       <TaskDetailModal
         isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
+        onClose={handleCloseDetail}
         task={selectedTask}
         onStatusChange={handleStatusChange}
         onReassign={handleReassign}
@@ -329,4 +358,18 @@ export function TasksPage({ initialScope, initialViewMode }: TasksPageProps) {
       />
     </div>
   );
+}
+
+function RouterTasksPage(props: TasksPageProps) {
+  const params = useParams<{ id?: string }>();
+  const navigate = useNavigate();
+  return <TasksPageContent {...props} paramId={params.id} onNavigate={navigate} />;
+}
+
+export function TasksPage(props: TasksPageProps) {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return <RouterTasksPage {...props} />;
+  }
+  return <TasksPageContent {...props} />;
 }

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
+import type { AppNotification } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
 import {
   formatRelativeTime,
   getNotificationTypeStyle,
   resolveNotificationLink,
 } from './notificationHelpers';
-import type { AppNotification } from '../types';
+
 
 export interface NotificationBellProps {
   onNavigate?: (path: string) => void;
@@ -81,8 +82,10 @@ function NotificationBellContent({
       }
     }
     setIsOpen(false);
-    const destination = resolveNotificationLink(item);
-    navigate(destination);
+    const targetLink = resolveNotificationLink(item);
+    if (targetLink) {
+      navigate(targetLink);
+    }
   };
 
   const handleViewAll = () => {
@@ -222,7 +225,7 @@ function NotificationBellContent({
                 return (
                   <div
                     key={item.id}
-                    onClick={() => void handleNotificationClick(item)}
+                    onClick={() => handleNotificationClick(item)}
                     className={`group flex items-start gap-3 p-3 transition-colors cursor-pointer ${
                       isUnread
                         ? 'bg-primary-soft/30 hover:bg-primary-soft/50'
