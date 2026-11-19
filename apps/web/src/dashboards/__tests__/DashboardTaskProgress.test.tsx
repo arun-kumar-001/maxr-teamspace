@@ -6,10 +6,7 @@ import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../auth/AuthContext';
 import { AdminDashboard } from '../AdminDashboard';
 import { StaffDashboard } from '../StaffDashboard';
-import {
-  FALLBACK_TASKS,
-  notifyTaskStatusChanged,
-} from '../../features/tasks';
+import { FALLBACK_TASKS, notifyTaskStatusChanged } from '../../features/tasks';
 
 afterEach(() => {
   cleanup();

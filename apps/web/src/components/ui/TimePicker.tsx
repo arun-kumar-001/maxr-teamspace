@@ -144,7 +144,7 @@ export function TimePicker({
   const displayTime = formatDisplay(
     parse24To12(value).hour12,
     parse24To12(value).minute,
-    parse24To12(value).period
+    parse24To12(value).period,
   );
 
   return (
@@ -162,8 +162,8 @@ export function TimePicker({
             isOpen
               ? 'border-primary-strong ring-2 ring-primary/20 shadow-xs'
               : error
-              ? 'border-danger focus:border-danger'
-              : 'border-border-strong hover:border-primary-strong focus:border-primary-strong'
+                ? 'border-danger focus:border-danger'
+                : 'border-border-strong hover:border-primary-strong focus:border-primary-strong'
           }
           ${disabled ? 'bg-surface-muted text-text-muted cursor-not-allowed opacity-75' : ''}
           ${className}`}

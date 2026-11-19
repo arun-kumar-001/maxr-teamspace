@@ -2,7 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
 import { DonutChart, type DonutChartSegment, KpiCard, PrimaryActionButton } from '../components/ui';
-import { approveRequest, fetchApprovals, getApprovedIds, saveApprovedId } from '../features/approvals';
+import {
+  approveRequest,
+  fetchApprovals,
+  getApprovedIds,
+  saveApprovedId,
+} from '../features/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import {
@@ -542,7 +547,8 @@ export function AdminDashboard() {
           ? {
               ...t,
               status,
-              completedAt: status === 'completed' ? t.completedAt || new Date().toISOString() : null,
+              completedAt:
+                status === 'completed' ? t.completedAt || new Date().toISOString() : null,
               isOverdue: status === 'completed' ? false : t.isOverdue,
             }
           : t,

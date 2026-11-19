@@ -379,11 +379,7 @@ export function AttendanceSetupSection({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
             {/* Grace Period with Customizable Dropdown */}
             <div>
-              <FormField
-                label="Check-in Grace Period"
-                htmlFor="late-grace-minutes"
-                required
-              >
+              <FormField label="Check-in Grace Period" htmlFor="late-grace-minutes" required>
                 <CustomizableDropdown
                   id="late-grace-minutes"
                   value={latePolicy.graceMinutes ?? 15}
@@ -478,7 +474,8 @@ export function AttendanceSetupSection({
           </div>
         ) : (
           <div className="p-4 rounded-xl bg-surface-muted border border-border text-xs text-text-muted">
-            Late penalty and salary deduction rules are currently disabled. Staff check-in times will be logged without pay deductions.
+            Late penalty and salary deduction rules are currently disabled. Staff check-in times
+            will be logged without pay deductions.
           </div>
         )}
       </div>

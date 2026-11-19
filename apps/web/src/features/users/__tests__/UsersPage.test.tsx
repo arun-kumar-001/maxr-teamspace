@@ -293,7 +293,9 @@ describe('UsersPage Component Suite (Issue #27)', () => {
     vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
     const verifySpy = vi
       .spyOn(usersApi, 'verifyAdminPassword')
-      .mockRejectedValue(new usersApi.UsersApiError(401, 'Invalid admin password. Authentication failed.'));
+      .mockRejectedValue(
+        new usersApi.UsersApiError(401, 'Invalid admin password. Authentication failed.'),
+      );
 
     render(
       <MemoryRouter>

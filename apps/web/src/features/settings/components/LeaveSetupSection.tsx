@@ -170,10 +170,7 @@ function ModernDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const selected = options.find((o) => o.value === value) ?? options[0];
 
-  const menuPlacement =
-    direction === 'up'
-      ? 'bottom-full mb-1.5'
-      : 'top-full mt-1.5';
+  const menuPlacement = direction === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5';
 
   return (
     <div className={`relative w-full ${className}`}>
@@ -196,8 +193,8 @@ function ModernDropdown({
                 ? ''
                 : 'rotate-180 text-primary-deep'
               : direction === 'up'
-              ? 'rotate-180'
-              : ''
+                ? 'rotate-180'
+                : ''
           }`}
           viewBox="0 0 20 20"
           fill="none"
@@ -281,11 +278,7 @@ interface LeaveSetupSectionProps {
   disabled?: boolean;
 }
 
-export function LeaveSetupSection({
-  draft,
-  onUpdate,
-  disabled = false,
-}: LeaveSetupSectionProps) {
+export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSetupSectionProps) {
   // Leave types list: strictly dynamic, starts empty if not configured
   const leaveTypes: CustomLeaveType[] = draft.customLeaveTypes ?? [];
   const permissionPolicy: PermissionPolicyConfig =
@@ -296,7 +289,9 @@ export function LeaveSetupSection({
 
   // Helper to identify Permission leave items
   const isPermissionType = (t: { category?: string; code?: string; id?: string }) =>
-    t.category === 'permission' || t.code === 'PM' || (t.id ? t.id.startsWith('leave_permission_') : false);
+    t.category === 'permission' ||
+    t.code === 'PM' ||
+    (t.id ? t.id.startsWith('leave_permission_') : false);
 
   // Modal State for Permission Policy
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
@@ -361,7 +356,9 @@ export function LeaveSetupSection({
 
     let updatedLeaves: CustomLeaveType[];
     if (editingPermissionId) {
-      updatedLeaves = leaveTypes.map((t) => (t.id === editingPermissionId ? permissionLeaveType : t));
+      updatedLeaves = leaveTypes.map((t) =>
+        t.id === editingPermissionId ? permissionLeaveType : t,
+      );
     } else {
       updatedLeaves = [...leaveTypes, permissionLeaveType];
     }
@@ -382,7 +379,9 @@ export function LeaveSetupSection({
   const [formCode, setFormCode] = useState('');
   const [formCategory, setFormCategory] = useState<CustomLeaveType['category']>('general');
   const [formIsPaid, setFormIsPaid] = useState(true);
-  const [formAccrualMethod, setFormAccrualMethod] = useState<'monthly' | 'yearly' | 'upfront' | 'manual'>('yearly');
+  const [formAccrualMethod, setFormAccrualMethod] = useState<
+    'monthly' | 'yearly' | 'upfront' | 'manual'
+  >('yearly');
   const [formQuota, setFormQuota] = useState('12');
   const [formMonthlyCredit, setFormMonthlyCredit] = useState('1.0');
   const [formMaxBalance, setFormMaxBalance] = useState('30');
@@ -392,7 +391,9 @@ export function LeaveSetupSection({
   const [formCarryForwardExpiry, setFormCarryForwardExpiry] = useState('12');
   const [formEncashmentEnabled, setFormEncashmentEnabled] = useState(false);
   const [formMaxEncashable, setFormMaxEncashable] = useState('10');
-  const [formEncashmentBasis, setFormEncashmentBasis] = useState<'basic_salary' | 'gross_salary' | 'fixed_rate'>('basic_salary');
+  const [formEncashmentBasis, setFormEncashmentBasis] = useState<
+    'basic_salary' | 'gross_salary' | 'fixed_rate'
+  >('basic_salary');
   const [formAllowHalfDay, setFormAllowHalfDay] = useState(false);
   const [formAllowNegative, setFormAllowNegative] = useState(false);
   const [formRequireDocs, setFormRequireDocs] = useState(false);
@@ -469,7 +470,10 @@ export function LeaveSetupSection({
     }
     const cleanCode =
       formCode.trim().toUpperCase() ||
-      cleanName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() ||
+      cleanName
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .slice(0, 4)
+        .toUpperCase() ||
       'LV';
 
     const quotaNum = formIsPaid ? Number(formQuota) || 0 : 0;
@@ -489,7 +493,8 @@ export function LeaveSetupSection({
       description: formDescription.trim() || undefined,
       carryForwardEnabled: formIsPaid ? formCarryForwardEnabled : false,
       carryForwardMax: formIsPaid && formCarryForwardEnabled ? Number(formCarryForwardMax) || 0 : 0,
-      carryForwardExpiryMonths: formIsPaid && formCarryForwardEnabled ? Number(formCarryForwardExpiry) || 12 : undefined,
+      carryForwardExpiryMonths:
+        formIsPaid && formCarryForwardEnabled ? Number(formCarryForwardExpiry) || 12 : undefined,
       encashmentEnabled: formIsPaid ? formEncashmentEnabled : false,
       maxEncashableDays: formIsPaid && formEncashmentEnabled ? Number(formMaxEncashable) || 0 : 0,
       encashmentBasis: formEncashmentBasis,
@@ -598,281 +603,284 @@ export function LeaveSetupSection({
 
       {/* Leave Types Management */}
       <div className="space-y-5">
-          {leaveTypes.length === 0 ? (
-            /* Attractive Initial Empty State */
-            <div className="p-8 sm:p-10 rounded-2xl bg-surface-muted/40 border border-dashed border-border-strong text-center space-y-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shadow-xs">
-                <IconCalendar className="w-7 h-7" />
-              </div>
-              <div className="max-w-md mx-auto space-y-1.5">
-                <h4 className="text-base font-bold text-text font-display">
-                  No Leave Types Configured
-                </h4>
-                <p className="text-xs text-text-muted leading-relaxed">
-                  Every company configures its leave types and policies independently. Get started by creating your custom leave types (e.g. Casual Leave, Sick Leave, Earned Leave, Maternity Leave, Comp-off).
-                </p>
-              </div>
-
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="md"
-                  onClick={openCreatePermissionModal}
-                  disabled={disabled}
-                  className="gap-2 shadow-xs border-primary-strong/40 text-primary-deep hover:bg-primary-soft/50"
-                  data-testid="empty-create-permission-btn"
-                >
-                  <IconClock className="w-4 h-4 text-primary-deep" />
-                  <span>{permissionPolicy.enabled ? 'Manage Permission' : 'Create Permission'}</span>
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="md"
-                  onClick={openCreateModal}
-                  disabled={disabled}
-                  className="gap-2 shadow-xs"
-                >
-                  <IconPlus className="w-4 h-4" />
-                  <span>Create Leave Type</span>
-                </Button>
-              </div>
+        {leaveTypes.length === 0 ? (
+          /* Attractive Initial Empty State */
+          <div className="p-8 sm:p-10 rounded-2xl bg-surface-muted/40 border border-dashed border-border-strong text-center space-y-4">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shadow-xs">
+              <IconCalendar className="w-7 h-7" />
             </div>
-          ) : (
-            /* Modern Redesigned Leave Types Table with Restored Columns */
-            <div className="rounded-2xl border border-border bg-surface overflow-x-auto min-h-[220px]">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-surface-muted/70 border-b border-border text-text-muted font-bold text-[11px] uppercase tracking-wider">
-                    <th className="py-3 px-4">Name</th>
-                    <th className="py-3 px-3">Code</th>
-                    <th className="py-3 px-3">Type</th>
-                    <th className="py-3 px-4">Accrual Method</th>
-                    <th className="py-3 px-4">Annual Entitlement</th>
-                    <th className="py-3 px-4">Carry Forward</th>
-                    <th className="py-3 px-4">Encashment</th>
-                    <th className="py-3 px-3">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {leaveTypes.map((t, index) => {
-                    const isActive = t.isActive !== false;
-                    const isPerm = isPermissionType(t);
-                    const openUpwards = index > 0 && index >= leaveTypes.length - 1;
-                    return (
-                      <tr
-                        key={t.id}
-                        className={`hover:bg-primary-soft/20 transition-colors ${
-                          !isActive ? 'opacity-65 bg-surface-muted/20' : ''
-                        }`}
-                      >
-                        {/* Name Column */}
-                        <td className="py-3.5 px-4 font-semibold text-text">
-                          <div>
-                            <span className="font-bold text-sm text-text block">{t.name}</span>
-                            {t.description && !isPerm && (
-                              <span className="text-[11px] text-text-muted block font-normal line-clamp-1 mt-0.5">
-                                {t.description}
-                              </span>
-                            )}
-                          </div>
-                        </td>
+            <div className="max-w-md mx-auto space-y-1.5">
+              <h4 className="text-base font-bold text-text font-display">
+                No Leave Types Configured
+              </h4>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Every company configures its leave types and policies independently. Get started by
+                creating your custom leave types (e.g. Casual Leave, Sick Leave, Earned Leave,
+                Maternity Leave, Comp-off).
+              </p>
+            </div>
 
-                        {/* Code Column */}
-                        <td className="py-3.5 px-3">
-                          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-surface-muted border border-border text-text">
-                            {t.code || t.name.slice(0, 3).toUpperCase()}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={openCreatePermissionModal}
+                disabled={disabled}
+                className="gap-2 shadow-xs border-primary-strong/40 text-primary-deep hover:bg-primary-soft/50"
+                data-testid="empty-create-permission-btn"
+              >
+                <IconClock className="w-4 h-4 text-primary-deep" />
+                <span>{permissionPolicy.enabled ? 'Manage Permission' : 'Create Permission'}</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                onClick={openCreateModal}
+                disabled={disabled}
+                className="gap-2 shadow-xs"
+              >
+                <IconPlus className="w-4 h-4" />
+                <span>Create Leave Type</span>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* Modern Redesigned Leave Types Table with Restored Columns */
+          <div className="rounded-2xl border border-border bg-surface overflow-x-auto min-h-[220px]">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-surface-muted/70 border-b border-border text-text-muted font-bold text-[11px] uppercase tracking-wider">
+                  <th className="py-3 px-4">Name</th>
+                  <th className="py-3 px-3">Code</th>
+                  <th className="py-3 px-3">Type</th>
+                  <th className="py-3 px-4">Accrual Method</th>
+                  <th className="py-3 px-4">Annual Entitlement</th>
+                  <th className="py-3 px-4">Carry Forward</th>
+                  <th className="py-3 px-4">Encashment</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {leaveTypes.map((t, index) => {
+                  const isActive = t.isActive !== false;
+                  const isPerm = isPermissionType(t);
+                  const openUpwards = index > 0 && index >= leaveTypes.length - 1;
+                  return (
+                    <tr
+                      key={t.id}
+                      className={`hover:bg-primary-soft/20 transition-colors ${
+                        !isActive ? 'opacity-65 bg-surface-muted/20' : ''
+                      }`}
+                    >
+                      {/* Name Column */}
+                      <td className="py-3.5 px-4 font-semibold text-text">
+                        <div>
+                          <span className="font-bold text-sm text-text block">{t.name}</span>
+                          {t.description && !isPerm && (
+                            <span className="text-[11px] text-text-muted block font-normal line-clamp-1 mt-0.5">
+                              {t.description}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Code Column */}
+                      <td className="py-3.5 px-3">
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-surface-muted border border-border text-text">
+                          {t.code || t.name.slice(0, 3).toUpperCase()}
+                        </span>
+                      </td>
+
+                      {/* Type Column */}
+                      <td className="py-3.5 px-3">
+                        {isPerm ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                            <span>Permission</span>
                           </span>
-                        </td>
+                        ) : t.isPaid ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                            <span>Paid</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                            <span>Unpaid</span>
+                          </span>
+                        )}
+                      </td>
 
-                        {/* Type Column */}
-                        <td className="py-3.5 px-3">
-                          {isPerm ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                              <span>Permission</span>
-                            </span>
-                          ) : t.isPaid ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                              <span>Paid</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-700 border border-zinc-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
-                              <span>Unpaid</span>
-                            </span>
-                          )}
-                        </td>
+                      {/* Accrual Method Column */}
+                      <td className="py-3.5 px-4 capitalize text-text font-medium text-xs">
+                        {isPerm
+                          ? 'Monthly Quota'
+                          : (t.accrualMethod ??
+                            (t.frequency === 'monthly' ? 'Monthly Accrual' : 'Yearly Allocation'))}
+                      </td>
 
-                        {/* Accrual Method Column */}
-                        <td className="py-3.5 px-4 capitalize text-text font-medium text-xs">
-                          {isPerm
-                            ? 'Monthly Quota'
-                            : (t.accrualMethod ?? (t.frequency === 'monthly' ? 'Monthly Accrual' : 'Yearly Allocation'))}
-                        </td>
+                      {/* Annual Entitlement Column */}
+                      <td className="py-3.5 px-4 font-bold text-xs text-primary-deep">
+                        {isPerm
+                          ? `${t.quota} times / mo`
+                          : `${t.quota} ${t.frequency === 'monthly' ? 'days / yr (1/mo)' : 'days / yr'}`}
+                      </td>
 
-                        {/* Annual Entitlement Column */}
-                        <td className="py-3.5 px-4 font-bold text-xs text-primary-deep">
-                          {isPerm
-                            ? `${t.quota} times / mo`
-                            : `${t.quota} ${t.frequency === 'monthly' ? 'days / yr (1/mo)' : 'days / yr'}`}
-                        </td>
+                      {/* Carry Forward Column */}
+                      <td className="py-3.5 px-4">
+                        {isPerm ? (
+                          <span className="text-[11px] text-text-subtle font-medium">No</span>
+                        ) : t.carryForwardEnabled ? (
+                          <span className="text-[11px] text-indigo-700 font-medium">
+                            Max {t.carryForwardMax}d ({t.carryForwardExpiryMonths ?? 12}m exp)
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-text-subtle">Disabled</span>
+                        )}
+                      </td>
 
-                        {/* Carry Forward Column */}
-                        <td className="py-3.5 px-4">
-                          {isPerm ? (
-                            <span className="text-[11px] text-text-subtle font-medium">No</span>
-                          ) : t.carryForwardEnabled ? (
-                            <span className="text-[11px] text-indigo-700 font-medium">
-                              Max {t.carryForwardMax}d ({t.carryForwardExpiryMonths ?? 12}m exp)
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-text-subtle">Disabled</span>
-                          )}
-                        </td>
+                      {/* Encashment Column */}
+                      <td className="py-3.5 px-4">
+                        {isPerm ? (
+                          <span className="text-[11px] text-text-subtle font-medium">No</span>
+                        ) : t.encashmentEnabled ? (
+                          <span className="text-[11px] text-amber-700 font-medium">
+                            Max {t.maxEncashableDays}d
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-text-subtle">Disabled</span>
+                        )}
+                      </td>
 
-                        {/* Encashment Column */}
-                        <td className="py-3.5 px-4">
-                          {isPerm ? (
-                            <span className="text-[11px] text-text-subtle font-medium">No</span>
-                          ) : t.encashmentEnabled ? (
-                            <span className="text-[11px] text-amber-700 font-medium">
-                              Max {t.maxEncashableDays}d
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-text-subtle">Disabled</span>
-                          )}
-                        </td>
+                      {/* Status Column */}
+                      <td className="py-3.5 px-3">
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
+                            <span>Active</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            <span>Inactive</span>
+                          </span>
+                        )}
+                      </td>
 
-                        {/* Status Column */}
-                        <td className="py-3.5 px-3">
-                          {isActive ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
-                              <span>Active</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                              <span>Inactive</span>
-                            </span>
-                          )}
-                        </td>
+                      {/* Actions with Compact Smart Dropdown */}
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="relative inline-block text-left">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(openMenuId === t.id ? null : t.id);
+                            }}
+                            disabled={disabled}
+                            aria-label={`Actions for ${t.name}`}
+                            aria-expanded={openMenuId === t.id}
+                            className="p-1.5 rounded-lg border border-border/80 text-text-muted hover:text-text hover:bg-surface-muted hover:border-primary-strong/40 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <IconMoreVertical className="w-4 h-4" />
+                          </button>
 
-                        {/* Actions with Compact Smart Dropdown */}
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="relative inline-block text-left">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(openMenuId === t.id ? null : t.id);
-                              }}
-                              disabled={disabled}
-                              aria-label={`Actions for ${t.name}`}
-                              aria-expanded={openMenuId === t.id}
-                              className="p-1.5 rounded-lg border border-border/80 text-text-muted hover:text-text hover:bg-surface-muted hover:border-primary-strong/40 transition-colors cursor-pointer shadow-2xs"
-                            >
-                              <IconMoreVertical className="w-4 h-4" />
-                            </button>
-
-                            {openMenuId === t.id && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-20 cursor-default"
-                                  onClick={() => setOpenMenuId(null)}
-                                  aria-hidden="true"
-                                />
-                                <div
-                                  className={`absolute right-0 z-30 w-32 bg-surface border border-border/90 rounded-xl shadow-lg p-1 animate-in fade-in zoom-in-95 text-left ${
-                                    openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
-                                  }`}
-                                  role="menu"
-                                  aria-label={`Actions menu for ${t.name}`}
+                          {openMenuId === t.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-20 cursor-default"
+                                onClick={() => setOpenMenuId(null)}
+                                aria-hidden="true"
+                              />
+                              <div
+                                className={`absolute right-0 z-30 w-32 bg-surface border border-border/90 rounded-xl shadow-lg p-1 animate-in fade-in zoom-in-95 text-left ${
+                                  openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
+                                }`}
+                                role="menu"
+                                aria-label={`Actions menu for ${t.name}`}
+                              >
+                                {/* Edit Option */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    if (isPerm) {
+                                      openEditPermissionModal(t);
+                                    } else {
+                                      openEditModal(t);
+                                    }
+                                  }}
+                                  disabled={disabled}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-teal-900 hover:bg-teal-50/80 transition-all cursor-pointer text-left"
+                                  title={isPerm ? 'Edit permission' : 'Edit leave type'}
                                 >
-                                  {/* Edit Option */}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      if (isPerm) {
-                                        openEditPermissionModal(t);
-                                      } else {
-                                        openEditModal(t);
-                                      }
-                                    }}
-                                    disabled={disabled}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-teal-900 hover:bg-teal-50/80 transition-all cursor-pointer text-left"
-                                    title={isPerm ? 'Edit permission' : 'Edit leave type'}
-                                  >
-                                    <div className="w-5 h-5 rounded-md bg-teal-100/70 text-teal-700 flex items-center justify-center shrink-0">
-                                      <IconEdit className="w-3 h-3" />
-                                    </div>
-                                    <span>Edit</span>
-                                  </button>
+                                  <div className="w-5 h-5 rounded-md bg-teal-100/70 text-teal-700 flex items-center justify-center shrink-0">
+                                    <IconEdit className="w-3 h-3" />
+                                  </div>
+                                  <span>Edit</span>
+                                </button>
 
-                                  {/* Activate / Deactivate Option */}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      handleToggleActive(t.id);
-                                    }}
-                                    disabled={disabled}
-                                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+                                {/* Activate / Deactivate Option */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    handleToggleActive(t.id);
+                                  }}
+                                  disabled={disabled}
+                                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
+                                    isActive
+                                      ? 'text-amber-900 hover:bg-amber-50/80'
+                                      : 'text-emerald-900 hover:bg-emerald-50/80'
+                                  }`}
+                                  title={isActive ? 'Deactivate leave type' : 'Activate leave type'}
+                                >
+                                  <div
+                                    className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
                                       isActive
-                                        ? 'text-amber-900 hover:bg-amber-50/80'
-                                        : 'text-emerald-900 hover:bg-emerald-50/80'
+                                        ? 'bg-amber-100/70 text-amber-700'
+                                        : 'bg-emerald-100/70 text-emerald-700'
                                     }`}
-                                    title={isActive ? 'Deactivate leave type' : 'Activate leave type'}
                                   >
-                                    <div
-                                      className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
-                                        isActive
-                                          ? 'bg-amber-100/70 text-amber-700'
-                                          : 'bg-emerald-100/70 text-emerald-700'
-                                      }`}
-                                    >
-                                      <IconToggle className="w-3 h-3" />
-                                    </div>
-                                    <span>{isActive ? 'Deactivate' : 'Activate'}</span>
-                                  </button>
+                                    <IconToggle className="w-3 h-3" />
+                                  </div>
+                                  <span>{isActive ? 'Deactivate' : 'Activate'}</span>
+                                </button>
 
-                                  {/* Delete Option */}
-                                  <div className="my-0.5 border-t border-border/60" />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      handleDeleteLeaveType(t.id);
-                                    }}
-                                    disabled={disabled}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50/80 transition-all cursor-pointer text-left"
-                                    title="Delete leave type"
-                                    aria-label={`Delete ${t.name}`}
-                                  >
-                                    <div className="w-5 h-5 rounded-md bg-rose-100/70 text-rose-600 flex items-center justify-center shrink-0">
-                                      <IconTrash className="w-3 h-3" />
-                                    </div>
-                                    <span>Delete</span>
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                                {/* Delete Option */}
+                                <div className="my-0.5 border-t border-border/60" />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    handleDeleteLeaveType(t.id);
+                                  }}
+                                  disabled={disabled}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50/80 transition-all cursor-pointer text-left"
+                                  title="Delete leave type"
+                                  aria-label={`Delete ${t.name}`}
+                                >
+                                  <div className="w-5 h-5 rounded-md bg-rose-100/70 text-rose-600 flex items-center justify-center shrink-0">
+                                    <IconTrash className="w-3 h-3" />
+                                  </div>
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* CREATE / EDIT LEAVE TYPE MODAL */}
       <Modal
@@ -883,20 +891,10 @@ export function LeaveSetupSection({
         maxWidth="5xl"
         footer={
           <div className="flex items-center justify-end gap-2.5 w-full">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsModalOpen(false)}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={handleSaveLeaveType}
-            >
+            <Button type="button" variant="primary" size="sm" onClick={handleSaveLeaveType}>
               Save Leave Type
             </Button>
           </div>
@@ -916,7 +914,9 @@ export function LeaveSetupSection({
               {/* 1. Basic Details */}
               <div className="space-y-3.5">
                 <h5 className="text-xs font-bold uppercase tracking-wider text-primary-deep flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">1</span>
+                  <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">
+                    1
+                  </span>
                   <span>Basic Information</span>
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -971,7 +971,9 @@ export function LeaveSetupSection({
               {formIsPaid ? (
                 <div className="space-y-3.5 pt-4 border-t border-border">
                   <h5 className="text-xs font-bold uppercase tracking-wider text-primary-deep flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">2</span>
+                    <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">
+                      2
+                    </span>
                     <span>Allocation &amp; Accrual</span>
                   </h5>
 
@@ -981,7 +983,9 @@ export function LeaveSetupSection({
                         id="modal-accrual-method"
                         value={formAccrualMethod}
                         onChange={(e) =>
-                          setFormAccrualMethod(e.target.value as 'monthly' | 'yearly' | 'upfront' | 'manual')
+                          setFormAccrualMethod(
+                            e.target.value as 'monthly' | 'yearly' | 'upfront' | 'manual',
+                          )
                         }
                         options={[
                           { value: 'monthly', label: 'Monthly Accrual' },
@@ -1048,7 +1052,9 @@ export function LeaveSetupSection({
                     Unpaid Leave Policy
                   </span>
                   <p className="text-[11px] text-teal-800 leading-relaxed">
-                    No monthly credit or balance cap is needed. When an employee takes this leave, deductions are calculated directly against working days in payroll without consuming paid leave quota.
+                    No monthly credit or balance cap is needed. When an employee takes this leave,
+                    deductions are calculated directly against working days in payroll without
+                    consuming paid leave quota.
                   </p>
                 </div>
               )}
@@ -1063,7 +1069,9 @@ export function LeaveSetupSection({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h5 className="text-xs font-bold uppercase tracking-wider text-primary-deep flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">3</span>
+                        <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">
+                          3
+                        </span>
                         <span>Carry Forward</span>
                       </h5>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -1112,7 +1120,9 @@ export function LeaveSetupSection({
                   <div className="space-y-3 pt-3 border-t border-border">
                     <div className="flex items-center justify-between">
                       <h5 className="text-xs font-bold uppercase tracking-wider text-primary-deep flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">4</span>
+                        <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-800 inline-flex items-center justify-center text-[10px] font-bold">
+                          4
+                        </span>
                         <span>Leave Encashment</span>
                       </h5>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -1145,7 +1155,9 @@ export function LeaveSetupSection({
                             id="modal-encash-basis"
                             value={formEncashmentBasis}
                             onChange={(e) =>
-                              setFormEncashmentBasis(e.target.value as 'basic_salary' | 'gross_salary' | 'fixed_rate')
+                              setFormEncashmentBasis(
+                                e.target.value as 'basic_salary' | 'gross_salary' | 'fixed_rate',
+                              )
                             }
                             options={[
                               { value: 'basic_salary', label: 'Basic Salary' },
@@ -1272,11 +1284,7 @@ export function LeaveSetupSection({
               </div>
             </div>
 
-            <FormField
-              label="How Many Times per Month?"
-              htmlFor="perm-monthly-count"
-              required
-            >
+            <FormField label="How Many Times per Month?" htmlFor="perm-monthly-count" required>
               <ModernDropdown
                 id="perm-monthly-count"
                 value={permMonthlyCount}
@@ -1285,11 +1293,7 @@ export function LeaveSetupSection({
               />
             </FormField>
 
-            <FormField
-              label="How Many Hours per Permission?"
-              htmlFor="perm-max-hours"
-              required
-            >
+            <FormField label="How Many Hours per Permission?" htmlFor="perm-max-hours" required>
               <ModernDropdown
                 id="perm-max-hours"
                 value={permMaxHours}

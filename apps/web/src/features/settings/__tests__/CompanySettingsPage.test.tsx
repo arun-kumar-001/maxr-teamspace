@@ -191,7 +191,9 @@ describe('CompanySettingsPage Component Suite (Issue #30)', () => {
     render(
       <MemoryRouter>
         <div>
-          <a href="/employees" data-testid="test-nav-link">Employees</a>
+          <a href="/employees" data-testid="test-nav-link">
+            Employees
+          </a>
           <CompanySettingsPage />
         </div>
       </MemoryRouter>,

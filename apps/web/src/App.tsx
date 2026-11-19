@@ -13,7 +13,10 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { AppShell } from './shell/AppShell';
 import { RouteGuard } from './shell/RouteGuard';
-import { NavigationBlockerProvider, NavigationBlockerContext } from './shell/NavigationBlockerContext';
+import {
+  NavigationBlockerProvider,
+  NavigationBlockerContext,
+} from './shell/NavigationBlockerContext';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';

@@ -23,7 +23,9 @@ vi.mock('../api/leave', () => ({
   fetchMyLeaveBalances: vi.fn(),
   fetchLeaveBalances: vi.fn(),
   runYearlyAccrual: vi.fn(),
-  fetchMyLeaveRequests: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 10, total: 0 } }),
+  fetchMyLeaveRequests: vi
+    .fn()
+    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 10, total: 0 } }),
   fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
 }));
 

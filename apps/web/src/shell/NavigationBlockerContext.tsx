@@ -8,7 +8,9 @@ export interface NavigationBlockerContextType {
   navigateWithBlockCheck: (path: string) => Promise<boolean>;
 }
 
-export const NavigationBlockerContext = createContext<NavigationBlockerContextType | undefined>(undefined);
+export const NavigationBlockerContext = createContext<NavigationBlockerContextType | undefined>(
+  undefined,
+);
 
 export function NavigationBlockerProvider({
   onNavigate,
@@ -42,7 +44,9 @@ export function NavigationBlockerProvider({
   );
 
   return (
-    <NavigationBlockerContext.Provider value={{ registerBlocker, unregisterBlocker, navigateWithBlockCheck }}>
+    <NavigationBlockerContext.Provider
+      value={{ registerBlocker, unregisterBlocker, navigateWithBlockCheck }}
+    >
       {children}
     </NavigationBlockerContext.Provider>
   );

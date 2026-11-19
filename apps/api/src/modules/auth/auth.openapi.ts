@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
-import { changePasswordSchema, loginSchema, sessionResponseSchema, verifyPasswordSchema } from './auth.schemas';
+import {
+  changePasswordSchema,
+  loginSchema,
+  sessionResponseSchema,
+  verifyPasswordSchema,
+} from './auth.schemas';
 
 const tags = ['Auth'];
 

@@ -155,122 +155,122 @@ export const ExpensesPage: React.FC = () => {
 
   return (
     <div className="space-y-6 w-full min-w-0" data-testid="expenses-page">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-text tracking-tight">
-              Expenses & Claims
-            </h1>
-            <p className="text-sm text-text-muted mt-1">
-              Submit business expense claims with receipts and track approval progress.
-            </p>
-          </div>
-          <div>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => setIsSubmitModalOpen(true)}
-              data-testid="submit-claim-button"
-            >
-              + Submit Claim
-            </Button>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-text tracking-tight">
+            Expenses & Claims
+          </h1>
+          <p className="text-sm text-text-muted mt-1">
+            Submit business expense claims with receipts and track approval progress.
+          </p>
         </div>
-
-        {/* Metrics Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Claims Count" value={String(total)} />
-          <StatCard label="Total Amount" value={formatPaiseToInr(totalAmount)} />
-          <StatCard label="Awaiting Approval" value={String(pendingCount)} />
-          <StatCard label="Reimbursed" value={String(reimbursedCount)} />
+        <div>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => setIsSubmitModalOpen(true)}
+            data-testid="submit-claim-button"
+          >
+            + Submit Claim
+          </Button>
         </div>
+      </div>
 
-        {/* Controls: Scope Tabs & Status Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-          {isApproverOrAdmin ? (
-            <Tabs
-              tabs={[
-                { id: 'mine', label: 'My Claims' },
-                {
-                  id: 'team',
-                  label: role === ROLES.TEAM_LEAD ? 'Team Claims' : 'All Claims',
-                },
-              ]}
-              activeTab={activeTab}
-              onChange={(tabId) => {
-                setActiveTab(tabId as 'mine' | 'team');
-                setPage(1);
-              }}
-            />
-          ) : (
-            <div className="text-sm font-medium text-text-muted">My Claims</div>
-          )}
+      {/* Metrics Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Claims Count" value={String(total)} />
+        <StatCard label="Total Amount" value={formatPaiseToInr(totalAmount)} />
+        <StatCard label="Awaiting Approval" value={String(pendingCount)} />
+        <StatCard label="Reimbursed" value={String(reimbursedCount)} />
+      </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <span className="text-text-subtle mr-1">Status:</span>
-            {['all', 'submitted', 'approved', 'reimbursed', 'rejected', 'cancelled'].map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => {
-                  setStatusFilter(st);
-                  setPage(1);
-                }}
-                className={`px-2.5 py-1 rounded-full font-medium transition-colors ${
-                  statusFilter === st
-                    ? 'bg-primary-deep text-white shadow-sm'
-                    : 'bg-surface text-text-muted hover:bg-surface-raised border border-border'
-                }`}
-              >
-                {st.charAt(0).toUpperCase() + st.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Content / Error / Table */}
-        {error ? (
-          <ErrorState title="Unable to load claims" message={error} onRetry={fetchClaims} />
+      {/* Controls: Scope Tabs & Status Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        {isApproverOrAdmin ? (
+          <Tabs
+            tabs={[
+              { id: 'mine', label: 'My Claims' },
+              {
+                id: 'team',
+                label: role === ROLES.TEAM_LEAD ? 'Team Claims' : 'All Claims',
+              },
+            ]}
+            activeTab={activeTab}
+            onChange={(tabId) => {
+              setActiveTab(tabId as 'mine' | 'team');
+              setPage(1);
+            }}
+          />
         ) : (
-          <div className="bg-surface border border-border rounded-card shadow-card overflow-hidden">
-            <DataTable
-              data={claims as (ExpenseClaim & Record<string, unknown>)[]}
-              columns={columns}
-              keyExtractor={(c) => c.id}
-              isLoading={isLoading}
-              emptyTitle="No expense claims found"
-              emptyMessage={
-                activeTab === 'mine'
-                  ? "You haven't submitted any expense claims matching the filter criteria."
-                  : 'No team or company claims found matching the filter criteria.'
-              }
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onPageChange={setPage}
-              ariaLabel="Expense claims table"
-            />
-          </div>
+          <div className="text-sm font-medium text-text-muted">My Claims</div>
         )}
 
-        {/* Submit Claim Modal */}
-        <ExpenseClaimFormModal
-          isOpen={isSubmitModalOpen}
-          onClose={() => setIsSubmitModalOpen(false)}
-          categories={categories}
-          onSuccess={handleClaimCreated}
-        />
-
-        {/* Claim Details Drawer */}
-        <ExpenseClaimDetailDrawer
-          claim={selectedClaim}
-          isOpen={!!selectedClaim}
-          onClose={() => setSelectedClaim(null)}
-          currentUserEmployeeId={user?.employeeId}
-          isHrOrAdmin={isHrOrAdmin}
-          onClaimUpdated={handleClaimUpdated}
-        />
+        {/* Filter Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="text-text-subtle mr-1">Status:</span>
+          {['all', 'submitted', 'approved', 'reimbursed', 'rejected', 'cancelled'].map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() => {
+                setStatusFilter(st);
+                setPage(1);
+              }}
+              className={`px-2.5 py-1 rounded-full font-medium transition-colors ${
+                statusFilter === st
+                  ? 'bg-primary-deep text-white shadow-sm'
+                  : 'bg-surface text-text-muted hover:bg-surface-raised border border-border'
+              }`}
+            >
+              {st.charAt(0).toUpperCase() + st.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
-    );
+
+      {/* Content / Error / Table */}
+      {error ? (
+        <ErrorState title="Unable to load claims" message={error} onRetry={fetchClaims} />
+      ) : (
+        <div className="bg-surface border border-border rounded-card shadow-card overflow-hidden">
+          <DataTable
+            data={claims as (ExpenseClaim & Record<string, unknown>)[]}
+            columns={columns}
+            keyExtractor={(c) => c.id}
+            isLoading={isLoading}
+            emptyTitle="No expense claims found"
+            emptyMessage={
+              activeTab === 'mine'
+                ? "You haven't submitted any expense claims matching the filter criteria."
+                : 'No team or company claims found matching the filter criteria.'
+            }
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            ariaLabel="Expense claims table"
+          />
+        </div>
+      )}
+
+      {/* Submit Claim Modal */}
+      <ExpenseClaimFormModal
+        isOpen={isSubmitModalOpen}
+        onClose={() => setIsSubmitModalOpen(false)}
+        categories={categories}
+        onSuccess={handleClaimCreated}
+      />
+
+      {/* Claim Details Drawer */}
+      <ExpenseClaimDetailDrawer
+        claim={selectedClaim}
+        isOpen={!!selectedClaim}
+        onClose={() => setSelectedClaim(null)}
+        currentUserEmployeeId={user?.employeeId}
+        isHrOrAdmin={isHrOrAdmin}
+        onClaimUpdated={handleClaimUpdated}
+      />
+    </div>
+  );
 };

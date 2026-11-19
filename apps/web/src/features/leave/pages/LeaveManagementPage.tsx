@@ -140,10 +140,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
   ];
 
   return (
-    <div
-      className="space-y-6 w-full min-w-0"
-      data-testid="leave-management-page"
-    >
+    <div className="space-y-6 w-full min-w-0" data-testid="leave-management-page">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -180,9 +180,7 @@ export const LeavePolicyFormModal: React.FC<LeavePolicyFormModalProps> = ({
           htmlFor="leave-policy-code"
           required={!isEditing}
           helperText={
-            isEditing
-              ? 'Policy code is immutable once created.'
-              : 'Short uppercase code.'
+            isEditing ? 'Policy code is immutable once created.' : 'Short uppercase code.'
           }
         >
           <input

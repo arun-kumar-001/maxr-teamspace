@@ -335,7 +335,10 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                   </button>
                 </div>
                 <div className="text-[10px] text-text-muted">
-                  Default password: <code className="bg-surface-muted px-1.5 py-0.5 rounded font-mono font-semibold text-text">Password123!</code>
+                  Default password:{' '}
+                  <code className="bg-surface-muted px-1.5 py-0.5 rounded font-mono font-semibold text-text">
+                    Password123!
+                  </code>
                 </div>
               </div>
             )}

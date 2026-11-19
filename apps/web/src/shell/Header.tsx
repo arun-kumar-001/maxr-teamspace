@@ -63,172 +63,172 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     <header className="h-16 w-full bg-bg/95 border-b border-border/60 px-4 sm:px-6 lg:px-8 shrink-0 z-20">
       <div className="w-full h-full mx-auto max-w-dashboard flex items-center justify-between">
         {/* Left: Mobile Toggle & Page Title */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onToggleMobileNav}
-          className="inline-flex items-center justify-center rounded-input p-2 text-text-muted hover:bg-surface-raised hover:text-text focus:outline-none focus:ring-2 focus:ring-primary md:hidden min-h-[44px] min-w-[44px]"
-          aria-label="Open navigation menu"
-          data-testid="mobile-menu-toggle"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onToggleMobileNav}
+            className="inline-flex items-center justify-center rounded-input p-2 text-text-muted hover:bg-surface-raised hover:text-text focus:outline-none focus:ring-2 focus:ring-primary md:hidden min-h-[44px] min-w-[44px]"
+            aria-label="Open navigation menu"
+            data-testid="mobile-menu-toggle"
           >
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-
-        {title ? (
-          <div>
-            <h2 className="text-base font-semibold text-text sm:text-lg">{title}</h2>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Right: Notifications & User Profile Menu with Dropdown */}
-      <div className="flex items-center gap-3">
-        {user && <NotificationBell onNavigate={onNavigate} />}
-
-        {/* User avatar dropdown trigger */}
-        {user && (
-          <div className="relative pl-2 sm:border-l sm:border-border" ref={userMenuRef}>
-            <button
-              type="button"
-              id="user-menu-button"
-              onClick={() => setIsUserMenuOpen((prev) => !prev)}
-              aria-expanded={isUserMenuOpen}
-              aria-haspopup="menu"
-              aria-label={`User menu, ${user.name}`}
-              className="group flex items-center gap-1.5 p-1 rounded-full hover:bg-surface-raised focus:outline-none focus:ring-2 focus:ring-primary transition-colors cursor-pointer"
-              data-testid="user-menu-trigger"
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden relative"
-                title={`${user.name} (${user.email})`}
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          {title ? (
+            <div>
+              <h2 className="text-base font-semibold text-text sm:text-lg">{title}</h2>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Right: Notifications & User Profile Menu with Dropdown */}
+        <div className="flex items-center gap-3">
+          {user && <NotificationBell onNavigate={onNavigate} />}
+
+          {/* User avatar dropdown trigger */}
+          {user && (
+            <div className="relative pl-2 sm:border-l sm:border-border" ref={userMenuRef}>
+              <button
+                type="button"
+                id="user-menu-button"
+                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                aria-expanded={isUserMenuOpen}
+                aria-haspopup="menu"
+                aria-label={`User menu, ${user.name}`}
+                className="group flex items-center gap-1.5 p-1 rounded-full hover:bg-surface-raised focus:outline-none focus:ring-2 focus:ring-primary transition-colors cursor-pointer"
+                data-testid="user-menu-trigger"
               >
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="w-full h-full object-cover"
-                    data-testid="header-avatar-img"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : null}
-                <span
-                  className={user.avatarUrl ? 'sr-only' : undefined}
-                  data-testid="header-avatar-initials"
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden relative"
+                  title={`${user.name} (${user.email})`}
                 >
-                  {user.avatarInitials}
-                </span>
-              </div>
-              <svg
-                viewBox="0 0 16 16"
-                className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-text' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m4 6 4 4 4-4" />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu (revealed when avatar clicked) */}
-            <div
-              role="menu"
-              aria-orientation="vertical"
-              aria-labelledby="user-menu-button"
-              className={`absolute right-0 top-full mt-2 w-56 rounded-card bg-surface border border-border shadow-raised py-2 z-50 transition-all duration-150 origin-top-right ${
-                isUserMenuOpen
-                  ? 'opacity-100 visible scale-100 pointer-events-auto'
-                  : 'opacity-0 invisible scale-95 pointer-events-none'
-              }`}
-            >
-              {/* User details header */}
-              <div className="flex items-center gap-3 px-4 py-2 border-b border-border">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-tile-peach text-sidebar text-xs font-semibold flex items-center justify-center shrink-0 relative">
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
                       alt={user.name}
                       className="w-full h-full object-cover"
+                      data-testid="header-avatar-img"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
                   ) : null}
-                  <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                  <span
+                    className={user.avatarUrl ? 'sr-only' : undefined}
+                    data-testid="header-avatar-initials"
+                  >
                     {user.avatarInitials}
                   </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-text truncate">{user.name}</p>
-                  <p className="text-[11px] text-text-muted truncate">{user.email}</p>
-                </div>
-              </div>
+                <svg
+                  viewBox="0 0 16 16"
+                  className={`w-3.5 h-3.5 text-text-muted transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-text' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m4 6 4 4 4-4" />
+                </svg>
+              </button>
 
-              {/* My Profile Link */}
-              {onNavigate && (
+              {/* Dropdown Menu (revealed when avatar clicked) */}
+              <div
+                role="menu"
+                aria-orientation="vertical"
+                aria-labelledby="user-menu-button"
+                className={`absolute right-0 top-full mt-2 w-56 rounded-card bg-surface border border-border shadow-raised py-2 z-50 transition-all duration-150 origin-top-right ${
+                  isUserMenuOpen
+                    ? 'opacity-100 visible scale-100 pointer-events-auto'
+                    : 'opacity-0 invisible scale-95 pointer-events-none'
+                }`}
+              >
+                {/* User details header */}
+                <div className="flex items-center gap-3 px-4 py-2 border-b border-border">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-tile-peach text-sidebar text-xs font-semibold flex items-center justify-center shrink-0 relative">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                      {user.avatarInitials}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-text truncate">{user.name}</p>
+                    <p className="text-[11px] text-text-muted truncate">{user.email}</p>
+                  </div>
+                </div>
+
+                {/* My Profile Link */}
+                {onNavigate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      onNavigate('/profile');
+                    }}
+                    className="w-full text-left px-4 py-2 text-xs font-medium text-text hover:bg-surface-raised flex items-center gap-2.5 transition-colors cursor-pointer"
+                    role="menuitem"
+                  >
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      className="w-4 h-4 text-text-muted"
+                    >
+                      <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-7 9a7 7 0 1 1 14 0H3z" />
+                    </svg>
+                    <span>My Profile</span>
+                  </button>
+                )}
+
+                {/* Sign Out Action */}
                 <button
                   type="button"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    onNavigate('/profile');
+                    logout();
                   }}
-                  className="w-full text-left px-4 py-2 text-xs font-medium text-text hover:bg-surface-raised flex items-center gap-2.5 transition-colors cursor-pointer"
+                  className="w-full text-left px-4 py-2 text-xs font-medium text-danger hover:bg-negative-soft flex items-center gap-2.5 transition-colors cursor-pointer"
                   role="menuitem"
+                  data-testid="logout-button"
                 >
                   <svg
                     viewBox="0 0 20 20"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.6"
-                    className="w-4 h-4 text-text-muted"
+                    className="w-4 h-4 text-danger"
                   >
-                    <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-7 9a7 7 0 1 1 14 0H3z" />
+                    <path d="M13 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M9 14l4-4-4-4M13 10H3" />
                   </svg>
-                  <span>My Profile</span>
+                  <span>Sign Out</span>
                 </button>
-              )}
-
-              {/* Sign Out Action */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  logout();
-                }}
-                className="w-full text-left px-4 py-2 text-xs font-medium text-danger hover:bg-negative-soft flex items-center gap-2.5 transition-colors cursor-pointer"
-                role="menuitem"
-                data-testid="logout-button"
-              >
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  className="w-4 h-4 text-danger"
-                >
-                  <path d="M13 3h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3M9 14l4-4-4-4M13 10H3" />
-                </svg>
-                <span>Sign Out</span>
-              </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
   );
 }

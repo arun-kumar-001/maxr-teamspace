@@ -336,7 +336,8 @@ export interface UseSettingsResult {
 export function useSettings(): UseSettingsResult {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
-  const [savedExtended, setSavedExtended] = useState<ExtendedCompanyConfig>(loadStoredExtendedConfig);
+  const [savedExtended, setSavedExtended] =
+    useState<ExtendedCompanyConfig>(loadStoredExtendedConfig);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -468,24 +469,44 @@ export function useSettings(): UseSettingsResult {
 
     // Extended config differences
     if ((draft.companyLogo ?? null) !== (savedExtended.companyLogo ?? null)) return true;
-    if ((draft.shiftStartTime ?? '09:00') !== (savedExtended.shiftStartTime ?? '09:00')) return true;
+    if ((draft.shiftStartTime ?? '09:00') !== (savedExtended.shiftStartTime ?? '09:00'))
+      return true;
     if ((draft.shiftEndTime ?? '18:00') !== (savedExtended.shiftEndTime ?? '18:00')) return true;
     if ((draft.standardDailyHours ?? 8) !== (savedExtended.standardDailyHours ?? 8)) return true;
     if ((draft.breakMinutes ?? 60) !== (savedExtended.breakMinutes ?? 60)) return true;
     if ((draft.graceMinutes ?? 15) !== (savedExtended.graceMinutes ?? 15)) return true;
-    if ((draft.halfDayCutoffMinutes ?? 120) !== (savedExtended.halfDayCutoffMinutes ?? 120)) return true;
+    if ((draft.halfDayCutoffMinutes ?? 120) !== (savedExtended.halfDayCutoffMinutes ?? 120))
+      return true;
     if ((draft.autoCheckoutHours ?? 14) !== (savedExtended.autoCheckoutHours ?? 14)) return true;
     if ((draft.annualLeaveDays ?? 18) !== (savedExtended.annualLeaveDays ?? 18)) return true;
     if ((draft.casualLeaveDays ?? 12) !== (savedExtended.casualLeaveDays ?? 12)) return true;
     if ((draft.sickLeaveDays ?? 12) !== (savedExtended.sickLeaveDays ?? 12)) return true;
-    if ((draft.leaveApprovalFlow ?? 'lead_only') !== (savedExtended.leaveApprovalFlow ?? 'lead_only')) return true;
+    if (
+      (draft.leaveApprovalFlow ?? 'lead_only') !== (savedExtended.leaveApprovalFlow ?? 'lead_only')
+    )
+      return true;
     if ((draft.advanceNoticeDays ?? 2) !== (savedExtended.advanceNoticeDays ?? 2)) return true;
-    if ((draft.excludeWeekendsFromLeave ?? true) !== (savedExtended.excludeWeekendsFromLeave ?? true)) return true;
+    if (
+      (draft.excludeWeekendsFromLeave ?? true) !== (savedExtended.excludeWeekendsFromLeave ?? true)
+    )
+      return true;
 
     // Custom leave types, permission policies, and late deduction policy
-    if (JSON.stringify(draft.customLeaveTypes || []) !== JSON.stringify(savedExtended.customLeaveTypes || [])) return true;
-    if (JSON.stringify(draft.permissionPolicy || {}) !== JSON.stringify(savedExtended.permissionPolicy || {})) return true;
-    if (JSON.stringify(draft.lateDeductionPolicy || {}) !== JSON.stringify(savedExtended.lateDeductionPolicy || {})) return true;
+    if (
+      JSON.stringify(draft.customLeaveTypes || []) !==
+      JSON.stringify(savedExtended.customLeaveTypes || [])
+    )
+      return true;
+    if (
+      JSON.stringify(draft.permissionPolicy || {}) !==
+      JSON.stringify(savedExtended.permissionPolicy || {})
+    )
+      return true;
+    if (
+      JSON.stringify(draft.lateDeductionPolicy || {}) !==
+      JSON.stringify(savedExtended.lateDeductionPolicy || {})
+    )
+      return true;
 
     return false;
   }, [settings, draft, savedExtended]);

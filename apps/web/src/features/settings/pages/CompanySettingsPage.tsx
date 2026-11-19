@@ -93,7 +93,11 @@ function IconAlertTriangle({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-const TABS: { id: SettingsTab; label: string; icon: (props: { className?: string }) => JSX.Element }[] = [
+const TABS: {
+  id: SettingsTab;
+  label: string;
+  icon: (props: { className?: string }) => JSX.Element;
+}[] = [
   { id: 'branding', label: 'Identity & Logo', icon: IconBuilding },
   { id: 'attendance', label: 'Attendance & Work Schedule', icon: IconClock },
   { id: 'leave', label: 'Leave Setup', icon: IconCalendar },
@@ -151,7 +155,12 @@ export function CompanySettingsPage() {
       const anchor = (e.target as HTMLElement).closest('a[href]');
       if (anchor) {
         const href = anchor.getAttribute('href');
-        if (href && !href.startsWith('#') && href !== '/settings' && href !== window.location.pathname) {
+        if (
+          href &&
+          !href.startsWith('#') &&
+          href !== '/settings' &&
+          href !== window.location.pathname
+        ) {
           e.preventDefault();
           e.stopPropagation();
           setPendingNavigationPath(href);
@@ -298,7 +307,10 @@ export function CompanySettingsPage() {
           )}
 
           {/* Tab 1: Identity & Logo */}
-          <div className={activeTab === 'branding' ? 'space-y-6' : 'hidden'} data-tab-panel="branding">
+          <div
+            className={activeTab === 'branding' ? 'space-y-6' : 'hidden'}
+            data-tab-panel="branding"
+          >
             <CompanyLogoSection
               companyName={draft.companyName}
               logoUrl={draft.companyLogo}
@@ -311,7 +323,10 @@ export function CompanySettingsPage() {
           </div>
 
           {/* Tab 2: Attendance & Work Schedule */}
-          <div className={activeTab === 'attendance' ? 'space-y-6' : 'hidden'} data-tab-panel="attendance">
+          <div
+            className={activeTab === 'attendance' ? 'space-y-6' : 'hidden'}
+            data-tab-panel="attendance"
+          >
             <WorkingTimeSection
               draft={draft}
               onUpdate={updateDraft}
@@ -320,20 +335,12 @@ export function CompanySettingsPage() {
               disabled={isSaving}
             />
 
-            <AttendanceSetupSection
-              draft={draft}
-              onUpdate={updateDraft}
-              disabled={isSaving}
-            />
+            <AttendanceSetupSection draft={draft} onUpdate={updateDraft} disabled={isSaving} />
           </div>
 
           {/* Tab 3: Leave Setup */}
           <div className={activeTab === 'leave' ? 'space-y-6' : 'hidden'} data-tab-panel="leave">
-            <LeaveSetupSection
-              draft={draft}
-              onUpdate={updateDraft}
-              disabled={isSaving}
-            />
+            <LeaveSetupSection draft={draft} onUpdate={updateDraft} disabled={isSaving} />
           </div>
         </div>
       ) : null}
@@ -375,11 +382,10 @@ export function CompanySettingsPage() {
             </div>
 
             {/* Centered Title & Description */}
-            <h3 className="text-base font-bold text-text">
-              Unsaved Changes
-            </h3>
+            <h3 className="text-base font-bold text-text">Unsaved Changes</h3>
             <p className="text-xs text-text-muted mt-1.5 leading-relaxed max-w-[280px] mx-auto">
-              You have unsaved changes in company settings. Would you like to save or discard your modifications before leaving?
+              You have unsaved changes in company settings. Would you like to save or discard your
+              modifications before leaving?
             </p>
 
             {/* Compact Centered Action Buttons */}

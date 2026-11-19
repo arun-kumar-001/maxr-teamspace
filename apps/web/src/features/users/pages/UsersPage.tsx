@@ -1091,9 +1091,12 @@ export function UsersPage() {
 
                           {/* Password */}
                           <td className="py-3.5 px-3">
-                            <div className="flex items-center gap-1 font-mono text-[11px]" data-testid={`password-cell-${u.id}`}>
+                            <div
+                              className="flex items-center gap-1 font-mono text-[11px]"
+                              data-testid={`password-cell-${u.id}`}
+                            >
                               {isAdmin ? (
-                                (u.tempCredential || u.temporaryPassword) ? (
+                                u.tempCredential || u.temporaryPassword ? (
                                   <>
                                     <span
                                       className={`px-2 py-0.5 rounded-md border text-[11px] transition-colors ${
@@ -1104,14 +1107,19 @@ export function UsersPage() {
                                       data-testid={`password-value-${u.id}`}
                                     >
                                       {revealedPasswords[u.id]
-                                        ? ((u.tempCredential as string) || (u.temporaryPassword as string))
+                                        ? (u.tempCredential as string) ||
+                                          (u.temporaryPassword as string)
                                         : '••••••••••••'}
                                     </span>
                                     <button
                                       type="button"
                                       onClick={() => togglePasswordReveal(u.id)}
-                                      title={revealedPasswords[u.id] ? 'Hide password' : 'View password'}
-                                      aria-label={revealedPasswords[u.id] ? 'Hide password' : 'View password'}
+                                      title={
+                                        revealedPasswords[u.id] ? 'Hide password' : 'View password'
+                                      }
+                                      aria-label={
+                                        revealedPasswords[u.id] ? 'Hide password' : 'View password'
+                                      }
                                       data-testid={`toggle-view-password-${u.id}`}
                                       className="p-1 rounded-md text-text-muted hover:text-text hover:bg-surface-raised transition-colors cursor-pointer"
                                     >
@@ -1126,7 +1134,8 @@ export function UsersPage() {
                                       onClick={() =>
                                         handleCopyPassword(
                                           u.id,
-                                          ((u.tempCredential as string) || (u.temporaryPassword as string)),
+                                          (u.tempCredential as string) ||
+                                            (u.temporaryPassword as string),
                                         )
                                       }
                                       title="Copy password"
@@ -1142,10 +1151,17 @@ export function UsersPage() {
                                     </button>
                                   </>
                                 ) : (
-                                  <span className="text-text-subtle font-mono text-[11px]" data-testid={`password-value-${u.id}`}>••••••••••••</span>
+                                  <span
+                                    className="text-text-subtle font-mono text-[11px]"
+                                    data-testid={`password-value-${u.id}`}
+                                  >
+                                    ••••••••••••
+                                  </span>
                                 )
                               ) : (
-                                <span className="text-text-subtle font-mono text-[11px]">••••••••••••</span>
+                                <span className="text-text-subtle font-mono text-[11px]">
+                                  ••••••••••••
+                                </span>
                               )}
                             </div>
                           </td>

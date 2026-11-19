@@ -115,10 +115,7 @@ export function EmployeeDetailPage() {
 
   if (isLoading) {
     return (
-      <div
-        className="space-y-6 w-full min-w-0"
-        data-testid="employee-detail-loading"
-      >
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-loading">
         <div className="flex items-center gap-3">
           <Skeleton className="w-24 h-8 rounded-md" />
         </div>
@@ -174,9 +171,13 @@ export function EmployeeDetailPage() {
     (typeof window !== 'undefined' && window.localStorage
       ? localStorage.getItem(`maxr_avatar_${employee.id}`) ||
         ((employee as unknown as { userId?: string }).userId
-          ? localStorage.getItem(`maxr_avatar_${(employee as unknown as { userId: string }).userId}`)
+          ? localStorage.getItem(
+              `maxr_avatar_${(employee as unknown as { userId: string }).userId}`,
+            )
           : null) ||
-        (employee.email ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`) : null)
+        (employee.email
+          ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`)
+          : null)
       : null);
 
   const statusVariant =
@@ -252,9 +253,7 @@ export function EmployeeDetailPage() {
                 }}
               />
             ) : null}
-            <span className={employeeAvatar ? 'sr-only' : undefined}>
-              {initials}
-            </span>
+            <span className={employeeAvatar ? 'sr-only' : undefined}>{initials}</span>
           </div>
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">

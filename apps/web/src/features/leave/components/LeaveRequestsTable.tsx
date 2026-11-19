@@ -165,7 +165,9 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<DisplayLeaveItem | null>(null);
-  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<DisplayLeaveItem>>>({});
+  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<DisplayLeaveItem>>>(
+    {},
+  );
 
   const isDevMockMode = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH !== 'false';
 

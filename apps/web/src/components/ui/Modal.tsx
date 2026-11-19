@@ -47,9 +47,7 @@ export function Modal({
   const modalContent = (
     <div
       className={`fixed inset-0 z-[100] flex bg-overlay backdrop-blur-sm transition-opacity ${
-        isDrawer
-          ? 'justify-end items-stretch p-0'
-          : 'items-center justify-center p-4'
+        isDrawer ? 'justify-end items-stretch p-0' : 'items-center justify-center p-4'
       }`}
       role="dialog"
       aria-modal="true"
@@ -80,7 +78,10 @@ export function Modal({
             <div className="flex items-center gap-3 min-w-0">
               {headerIcon}
               <div className="min-w-0">
-                <h2 id={titleId} className="text-base sm:text-lg font-bold text-text truncate font-display">
+                <h2
+                  id={titleId}
+                  className="text-base sm:text-lg font-bold text-text truncate font-display"
+                >
                   {title}
                 </h2>
                 {subtitle && <p className="text-xs text-text-subtle mt-0.5 truncate">{subtitle}</p>}

@@ -232,9 +232,7 @@ export function WorkingTimeSection({
               <h4 className="text-xs font-bold uppercase tracking-wider text-text-subtle">
                 Active Work Schedule
               </h4>
-              <p className="text-xs text-text-muted mt-0.5">
-                Weekly operational breakdown
-              </p>
+              <p className="text-xs text-text-muted mt-0.5">Weekly operational breakdown</p>
             </div>
           </div>
 
@@ -260,7 +258,9 @@ export function WorkingTimeSection({
                         className={`flex items-center justify-center px-3 py-2.5 rounded-xl border transition-all ${color.bg} ${color.border} shadow-2xs`}
                         data-testid={`day-pill-${day}`}
                       >
-                        <span className={`font-display font-bold text-sm tracking-wide ${color.text}`}>
+                        <span
+                          className={`font-display font-bold text-sm tracking-wide ${color.text}`}
+                        >
                           {day}
                         </span>
                       </div>
@@ -293,7 +293,9 @@ export function WorkingTimeSection({
                         className={`flex items-center justify-center px-3 py-2.5 rounded-xl border transition-all ${color.bg} ${color.border} shadow-2xs opacity-90`}
                         data-testid={`day-pill-${day}`}
                       >
-                        <span className={`font-display font-bold text-sm tracking-wide ${color.text}`}>
+                        <span
+                          className={`font-display font-bold text-sm tracking-wide ${color.text}`}
+                        >
                           {day}
                         </span>
                       </div>

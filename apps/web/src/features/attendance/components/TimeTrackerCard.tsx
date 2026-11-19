@@ -162,10 +162,7 @@ export function TimeTrackerCard({
       // Offline fallback: sync with localStorage
       const local = getLocalSession();
       if (local && local.isCheckedIn) {
-        const activeElapsedSecs = Math.max(
-          0,
-          Math.floor((Date.now() - local.startTimeMs) / 1000),
-        );
+        const activeElapsedSecs = Math.max(0, Math.floor((Date.now() - local.startTimeMs) / 1000));
         setCheckInTime(local.checkInTime);
         setSecondsElapsed(activeElapsedSecs);
         setIsCheckedIn(true);

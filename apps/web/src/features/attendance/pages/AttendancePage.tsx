@@ -110,10 +110,7 @@ function EmployeeAttendanceWorkspace({
   } = useAttendanceCorrections();
 
   return (
-    <div
-      className="space-y-6 w-full min-w-0 font-sans select-none"
-      data-testid="attendance-page"
-    >
+    <div className="space-y-6 w-full min-w-0 font-sans select-none" data-testid="attendance-page">
       {/* Top Clean White Header & Sub-Navigation */}
       <div className="rounded-card p-4 sm:p-6 md:p-7 border border-border/80 space-y-4 bg-white shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -259,7 +256,10 @@ function AttendanceOpsWorkspace({
         setActiveTab('timesheets');
       } else if (location.pathname === '/attendance/check-in-out') {
         setActiveTab('check-in-out');
-      } else if (location.pathname === '/attendance' || location.pathname === '/attendance/on-duty') {
+      } else if (
+        location.pathname === '/attendance' ||
+        location.pathname === '/attendance/on-duty'
+      ) {
         setActiveTab('on-duty');
       }
     }
@@ -391,10 +391,7 @@ function AttendanceOpsWorkspace({
   })();
 
   return (
-    <div
-      className="space-y-6 w-full min-w-0 font-sans select-none"
-      data-testid="attendance-page"
-    >
+    <div className="space-y-6 w-full min-w-0 font-sans select-none" data-testid="attendance-page">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div className="space-y-1">
           <div className="text-xs text-text-muted flex items-center gap-1.5 font-medium">

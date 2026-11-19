@@ -371,8 +371,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
 
     // Check balance sufficiency
     if (selectedPolicy?.hasBalance && selectedBalance) {
-      const priorDays =
-        mode === 'edit' && initialRequest ? (initialRequest.halfDay ? 0.5 : 1) : 0;
+      const priorDays = mode === 'edit' && initialRequest ? (initialRequest.halfDay ? 0.5 : 1) : 0;
       const effectiveRemaining = selectedBalance.remaining + priorDays;
       if (estimatedDays > effectiveRemaining) {
         setError(

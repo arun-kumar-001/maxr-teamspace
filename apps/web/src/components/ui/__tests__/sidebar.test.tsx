@@ -98,13 +98,7 @@ describe('Sidebar (expanded)', () => {
 
   it('automatically expands parent group when activeId transitions to a child item (Issue #7)', () => {
     const { rerender } = render(
-      <Sidebar
-        brand={brand}
-        groups={groups}
-        activeId="overview"
-        collapsed={false}
-        user={user}
-      />,
+      <Sidebar brand={brand} groups={groups} activeId="overview" collapsed={false} user={user} />,
     );
     expect(screen.getByRole('button', { name: 'Attendance' })).toHaveAttribute(
       'aria-expanded',
