@@ -451,6 +451,15 @@ function getEmployeePhoto(emp: EmployeeDirectoryItem): string {
   if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
     return (emp as unknown as { avatarUrl: string }).avatarUrl;
   }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const localAvatar =
+      localStorage.getItem(`maxr_avatar_${emp.id}`) ||
+      ((emp as unknown as { userId?: string }).userId
+        ? localStorage.getItem(`maxr_avatar_${(emp as unknown as { userId: string }).userId}`)
+        : null) ||
+      (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null);
+    if (localAvatar) return localAvatar;
+  }
   if (AVATAR_SEEDS[emp.employeeCode]) return AVATAR_SEEDS[emp.employeeCode]!;
   const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return DEFAULT_AVATARS[hash % DEFAULT_AVATARS.length]!;
@@ -1250,9 +1259,21 @@ export function EmployeeDirectoryPage() {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs shrink-0 shadow-xs`}
+                            className={`w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative`}
                           >
-                            {initials}
+                            {getEmployeePhoto(emp) ? (
+                              <img
+                                src={getEmployeePhoto(emp)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : null}
+                            <span className={getEmployeePhoto(emp) ? 'sr-only' : undefined}>
+                              {initials}
+                            </span>
                           </div>
                           <div className="min-w-0">
                             <a

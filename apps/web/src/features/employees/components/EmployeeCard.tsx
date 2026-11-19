@@ -4,6 +4,7 @@ import { Badge } from '../../../components/ui/StatusPill';
 
 export interface EmployeeCardProps {
   employee: EmployeeDirectoryItem;
+  photoUrl?: string;
   canDeactivate?: boolean;
   onDeactivate?: (employee: EmployeeDirectoryItem) => void;
   onViewDetails?: (employee: EmployeeDirectoryItem) => void;
@@ -11,12 +12,24 @@ export interface EmployeeCardProps {
 
 export function EmployeeCard({
   employee,
+  photoUrl,
   canDeactivate = false,
   onDeactivate,
   onViewDetails,
 }: EmployeeCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
+
+  const photo =
+    photoUrl ||
+    (employee as unknown as { avatarUrl?: string }).avatarUrl ||
+    (typeof window !== 'undefined' && window.localStorage
+      ? localStorage.getItem(`maxr_avatar_${employee.id}`) ||
+        ((employee as unknown as { userId?: string }).userId
+          ? localStorage.getItem(`maxr_avatar_${(employee as unknown as { userId: string }).userId}`)
+          : null) ||
+        (employee.email ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`) : null)
+      : null);
 
   const statusVariant =
     employee.status === 'active'
@@ -123,10 +136,22 @@ export function EmployeeCard({
       <div className="flex flex-col items-center text-center mt-1">
         <div className="relative">
           <div
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center border-2 border-primary-strong/20 shadow-xs overflow-hidden"
+            className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center border-2 border-primary-strong/20 shadow-xs overflow-hidden relative"
             aria-hidden="true"
           >
-            {initials || '?'}
+            {photo ? (
+              <img
+                src={photo}
+                alt={`${employee.firstName} ${employee.lastName}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : null}
+            <span className={photo ? 'sr-only' : undefined}>
+              {initials || '?'}
+            </span>
           </div>
 
           {/* Status Indicator Dot on Avatar Ring (Image 2 Reference) */}

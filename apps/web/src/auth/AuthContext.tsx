@@ -59,6 +59,15 @@ export function buildUserFromApi(apiUser: Record<string, unknown>): AuthUser {
     (apiUser.email as string) ||
     'User';
 
+  const defaultAvatar =
+    (MOCK_USERS[role]?.avatarUrl as string | undefined) ||
+    (role === ROLES.TEAM_LEAD ? '/alex-mercer-card.png' : '/user-portrait.png');
+  const savedAvatar =
+    typeof window !== 'undefined' && window.localStorage
+      ? localStorage.getItem(`maxr_avatar_${role}`) ||
+        (apiUser.id ? localStorage.getItem(`maxr_avatar_${apiUser.id}`) : null)
+      : null;
+
   return {
     id: (apiUser.id as string) || '',
     employeeId: apiUser.employeeId as string | undefined,
@@ -72,6 +81,11 @@ export function buildUserFromApi(apiUser: Record<string, unknown>): AuthUser {
     title: (apiUser.title as string) || ROLE_DISPLAY_NAMES[role] || role,
     department: (apiUser.department as string) || undefined,
     avatarInitials: computeInitials(fullName, apiUser.email as string),
+    avatarUrl:
+      (apiUser.avatarUrl as string) ||
+      (apiUser.profilePhotoUrl as string) ||
+      savedAvatar ||
+      defaultAvatar,
   };
 }
 
@@ -88,14 +102,21 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
   const [user, setUser] = useState<AuthUser | null>(() => {
     // 1. Explicit initialRole (used by unit tests)
     if (initialRole && MOCK_USERS[initialRole]) {
-      return MOCK_USERS[initialRole];
+      const baseUser = MOCK_USERS[initialRole];
+      const saved =
+        typeof window !== 'undefined' && window.localStorage
+          ? localStorage.getItem(`maxr_avatar_${initialRole}`)
+          : null;
+      return saved ? { ...baseUser, avatarUrl: saved } : baseUser;
     }
     // 2. In DEV mode with explicit VITE_DEV_MOCK_AUTH opt-in: check storage or fallback
     if (isDevMockAuth && persistSession && typeof window !== 'undefined' && window.localStorage) {
       try {
         const storedRole = localStorage.getItem(AUTH_STORAGE_KEY) as Role | null;
         if (storedRole && MOCK_USERS[storedRole]) {
-          return MOCK_USERS[storedRole];
+          const baseUser = MOCK_USERS[storedRole];
+          const saved = localStorage.getItem(`maxr_avatar_${storedRole}`);
+          return saved ? { ...baseUser, avatarUrl: saved } : baseUser;
         }
       } catch {
         // Fallback gracefully on storage access errors
@@ -224,7 +245,12 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
 
   const switchRole = (newRole: Role) => {
     if (isDevMockAuth && MOCK_USERS[newRole]) {
-      setUser(MOCK_USERS[newRole]);
+      const baseUser = MOCK_USERS[newRole];
+      const saved =
+        typeof window !== 'undefined' && window.localStorage
+          ? localStorage.getItem(`maxr_avatar_${newRole}`)
+          : null;
+      setUser(saved ? { ...baseUser, avatarUrl: saved } : baseUser);
     }
   };
 
@@ -234,8 +260,12 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
       const key = `maxr_avatar_${user?.role || 'admin'}`;
       if (avatarUrl) {
         localStorage.setItem(key, avatarUrl);
+        if (user?.id) localStorage.setItem(`maxr_avatar_${user.id}`, avatarUrl);
+        if (user?.email) localStorage.setItem(`maxr_avatar_${user.email.toLowerCase()}`, avatarUrl);
       } else {
         localStorage.removeItem(key);
+        if (user?.id) localStorage.removeItem(`maxr_avatar_${user.id}`);
+        if (user?.email) localStorage.removeItem(`maxr_avatar_${user.email.toLowerCase()}`);
       }
     }
   };

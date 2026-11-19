@@ -335,33 +335,42 @@ export function Sidebar({
                 onClick={onUserMenu}
                 aria-label={`Account menu, ${user.name}`}
                 {...tooltipHandlers(user.name)}
-                className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden ${focusRing}`}
+                className={`flex items-center justify-center w-12 h-12 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden relative ${focusRing}`}
               >
                 {user.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
-                ) : (
-                  user.initials
-                )}
+                ) : null}
+                <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                  {user.initials}
+                </span>
               </button>
             ) : (
               <>
                 <span
-                  className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden"
+                  className="flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-tile-peach text-sidebar font-semibold overflow-hidden relative cursor-pointer"
                   aria-hidden="true"
+                  onClick={onUserMenu}
                 >
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
                       alt={user.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
-                  ) : (
-                    user.initials
-                  )}
+                  ) : null}
+                  <span className={user.avatarUrl ? 'sr-only' : undefined}>
+                    {user.initials}
+                  </span>
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-semibold text-sidebar-strong truncate">

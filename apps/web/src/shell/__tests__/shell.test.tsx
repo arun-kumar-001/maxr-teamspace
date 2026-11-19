@@ -18,6 +18,8 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
       expect(html).toContain('SH'); // Admin fixture initials
       expect(html).toContain('Sign Out');
       expect(html).toContain('data-testid="mobile-menu-toggle"');
+      expect(html).toContain('data-testid="header-avatar-img"');
+      expect(html).toContain('src="/user-portrait.png"');
     });
   });
 

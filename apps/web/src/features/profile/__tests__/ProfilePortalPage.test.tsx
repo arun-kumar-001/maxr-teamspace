@@ -28,6 +28,7 @@ describe('ProfilePortalPage', () => {
     expect(screen.getByText('Time tracker')).toBeTruthy();
     expect(screen.getByText('09:15 AM')).toBeTruthy();
     expect(screen.getByText('Checked In')).toBeTruthy();
+    expect(screen.getByTestId('portal-avatar-img')).toBeTruthy();
     expect(screen.getByText('Recent Payslips')).toBeTruthy();
     expect(screen.getByText('My Tasks')).toBeTruthy();
   });

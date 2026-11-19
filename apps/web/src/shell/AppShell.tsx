@@ -11,10 +11,19 @@ export interface AppShellProps {
 }
 
 export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [, setNavRevision] = useState(0);
+
+  const sidebarUser = user
+    ? {
+        name: user.name,
+        role: user.title || user.role,
+        initials: user.avatarInitials,
+        avatarUrl: user.avatarUrl,
+      }
+    : undefined;
 
   useEffect(() => {
     const handleNavChange = () => setNavRevision((r) => r + 1);
@@ -65,6 +74,8 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
           activeId={activeNavPath}
           collapsed={collapsed}
           onCollapsedChange={setCollapsed}
+          user={sidebarUser}
+          onUserMenu={() => onNavigate('/profile')}
           onNavigate={(id, e) => {
             e?.preventDefault?.();
             onNavigate(id);
@@ -79,6 +90,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         brand={brand}
         groups={groups}
         activeId={activeNavPath}
+        user={sidebarUser}
         onNavigate={(id, e) => {
           e?.preventDefault?.();
           onNavigate(id);

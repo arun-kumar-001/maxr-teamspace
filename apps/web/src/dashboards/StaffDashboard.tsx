@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../auth/AuthContext';
 import { downloadPayslipPdf, fetchMyPayslips } from '../features/payslips/api/payslips';
 import type { PayslipRecord } from '../features/payslips/types';
 
 export function StaffDashboard() {
+  const auth = useContext(AuthContext);
+  const user = auth?.user;
   const [isCheckedIn, setIsCheckedIn] = useState(true);
   const [checkInTime, setCheckInTime] = useState('09:15 AM');
   const [timeTrackerRunning, setTimeTrackerRunning] = useState(true);
@@ -469,10 +472,13 @@ export function StaffDashboard() {
           }}
         >
           <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80"
-            alt="Lora Piterson - UX/UI Designer"
+            src={user?.avatarUrl || '/user-portrait.png'}
+            alt={`${user?.name || 'User'} - ${user?.title || 'Profile'}`}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             style={{ objectPosition: 'center 20%' }}
+            onError={(e) => {
+              e.currentTarget.src = '/user-portrait.png';
+            }}
           />
 
           {/* Bottom Overlay with Name, Role and Floating Salary pill */}
@@ -485,9 +491,9 @@ export function StaffDashboard() {
           >
             <div>
               <h2 className="text-base font-bold font-display text-white leading-tight drop-shadow-sm">
-                Lora Piterson
+                {user?.name || 'Lora Piterson'}
               </h2>
-              <p className="text-xs text-white/80 drop-shadow-sm">UX/UI Designer</p>
+              <p className="text-xs text-white/80 drop-shadow-sm">{user?.title || 'UX/UI Designer'}</p>
             </div>
 
             {/* Floating $1,200 salary badge */}
