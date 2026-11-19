@@ -108,6 +108,28 @@ export function Sidebar({
           .map((i) => i.id),
       ),
   );
+  const prevActiveIdRef = useRef(activeId);
+
+  // Automatically expand parent group if the active page is a child sub-item
+  useEffect(() => {
+    if (prevActiveIdRef.current !== activeId) {
+      prevActiveIdRef.current = activeId;
+      const parentWithActiveChild = groups
+        .flatMap((g) => g.items)
+        .filter((i) => i.children?.some((c) => c.id === activeId))
+        .map((i) => i.id);
+
+      if (parentWithActiveChild.length > 0) {
+        setOpenGroups((prev) => {
+          const next = new Set(prev);
+          for (const p of parentWithActiveChild) {
+            next.add(p);
+          }
+          return next;
+        });
+      }
+    }
+  }, [activeId, groups]);
   const [tooltip, setTooltip] = useState<{ label: string; top: number; left: number } | null>(null);
 
   // The tooltip is placed from the icon's position, so any scroll would leave it behind: hide it.
@@ -235,7 +257,11 @@ export function Sidebar({
                 {group.items.map((item) => {
                   const hasChildren = Boolean(item.children?.length);
                   const childActive = item.children?.some((c) => c.id === activeId) ?? false;
-                  const active = item.id === activeId || (collapsed && childActive);
+                  const active = collapsed
+                    ? item.id === activeId || childActive
+                    : childActive
+                      ? false
+                      : item.id === activeId;
                   const open = !collapsed && openGroups.has(item.id);
                   const subId = `${navId}-${item.id}`;
 
@@ -252,7 +278,7 @@ export function Sidebar({
                           className={`${itemBase} ${itemLayout} ${
                             active
                               ? activeStyle
-                              : open
+                              : open || childActive
                                 ? 'bg-sidebar-raised text-sidebar-strong'
                                 : idleStyle
                           }`}
