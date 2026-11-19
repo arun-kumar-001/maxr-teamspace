@@ -23,14 +23,6 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     }
   });
 
-  const sidebarUser = user
-    ? {
-        name: user.name,
-        role: user.title || user.role,
-        initials: user.avatarInitials,
-        avatarUrl: user.avatarUrl,
-      }
-    : undefined;
 
   useEffect(() => {
     const handleNavChange = () => {

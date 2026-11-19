@@ -540,11 +540,6 @@ export function ProfilePortalPage() {
               Active Profile
             </span>
           </div>
-              }}
-            >
-              Active Profile
-            </span>
-          </div>
 
           {/* Bottom Gradient Overlay with Name, Role & Email */}
           <div

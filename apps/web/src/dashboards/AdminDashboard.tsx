@@ -469,8 +469,10 @@ export function AdminDashboard() {
     // 1. Persist locally immediately so this approval never shows as pending again
     saveApprovedId(id);
 
-    // 2. Optimistic UI update - remove from pending list immediately
-    setApprovals((prev) => prev.filter((item) => item.id !== id));
+    // 2. Optimistic UI update - mark as approved for smooth feedback
+    setApprovals((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
+    );
     setMetrics((prev) => ({
       ...prev,
       pendingApprovalsTotal: Math.max(0, prev.pendingApprovalsTotal - 1),

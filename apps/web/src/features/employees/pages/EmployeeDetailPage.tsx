@@ -164,10 +164,6 @@ export function EmployeeDetailPage() {
   }
 
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
-  const photoUrl =
-    localStorage.getItem(`maxr_avatar_${employee.id}`) ||
-    localStorage.getItem(`maxr_avatar_${employee.email?.toLowerCase()}`) ||
-    (employee as unknown as { avatarUrl?: string }).avatarUrl;
 
   const employeeAvatar =
     (employee as unknown as { avatarUrl?: string }).avatarUrl ||

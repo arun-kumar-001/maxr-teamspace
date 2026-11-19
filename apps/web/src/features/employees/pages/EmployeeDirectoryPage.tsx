@@ -1246,7 +1246,7 @@ export function EmployeeDirectoryPage() {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative`}
+                            className="w-9 h-9 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative"
                           >
                             {getEmployeePhoto(emp) ? (
                               <img
