@@ -131,7 +131,7 @@ export function TimePicker({
 
   const handleSetNow = () => {
     const now = new Date();
-    let h = now.getHours();
+    const h = now.getHours();
     const m = Math.round(now.getMinutes() / 5) * 5;
     const p: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
     let h12 = h % 12;
