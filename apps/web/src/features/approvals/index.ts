@@ -7,4 +7,5 @@ export * from './components/ApprovalFilters';
 export * from './components/ApprovalCard';
 export * from './components/ApprovalDecisionModal';
 export * from './components/ApprovalDetailsModal';
+export * from './approval-permissions';
 export * from './pages/ApprovalsInboxPage';

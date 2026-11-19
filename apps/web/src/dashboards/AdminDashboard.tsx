@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
 import { DonutChart, type DonutChartSegment, KpiCard, PrimaryActionButton } from '../components/ui';
-import { approveRequest, fetchApprovals } from '../features/approvals/api/approvals';
+import { approveRequest, fetchApprovals, getApprovedIds, saveApprovedId } from '../features/approvals';
 import { fetchTeamAttendance, TimeTrackerCard } from '../features/attendance';
 import { fetchTeamTasks } from '../features/tasks/api/tasksApi';
 import { cn } from '../lib/utils';
@@ -329,11 +329,18 @@ export function AdminDashboard() {
       }
 
       if (approvalsRes.status === 'fulfilled') {
-        const items = approvalsRes.value.data ?? [];
-        const total = approvalsRes.value.meta?.total ?? items.length;
+        const locallyApproved = getApprovedIds();
+        const rawItems = approvalsRes.value.data ?? [];
+        const pendingItems = rawItems.filter(
+          (a) => a.status === 'pending' && !locallyApproved.has(a.id),
+        );
+        const total = Math.max(
+          0,
+          (approvalsRes.value.meta?.total ?? rawItems.length) - locallyApproved.size,
+        );
         setMetrics((prev) => ({ ...prev, pendingApprovalsTotal: total }));
         setApprovals(
-          items.map((a, idx) => {
+          pendingItems.map((a, idx) => {
             const name = a.requesterName || 'Employee';
             const initials = name
               .split(' ')
@@ -354,7 +361,7 @@ export function AdminDashboard() {
               detail: `${a.subjectType.replace(/_/g, ' ')} request`,
               initial: initials || 'EM',
               avatarBg: bgList[idx % bgList.length]!,
-              status: a.status === 'approved' ? 'approved' : 'pending',
+              status: 'pending',
             };
           }),
         );
@@ -410,16 +417,31 @@ export function AdminDashboard() {
   }, []);
 
   const handleApprove = async (id: string) => {
+    // 1. Persist locally immediately so this approval never shows as pending again
+    saveApprovedId(id);
+
+    // 2. Optimistic UI update
     setApprovals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );
+    setMetrics((prev) => ({
+      ...prev,
+      pendingApprovalsTotal: Math.max(0, prev.pendingApprovalsTotal - 1),
+    }));
+
+    // 3. Dispatch backend approval API call
     if (!id.startsWith('app-')) {
       try {
         await approveRequest(id);
-      } catch {
-        // Optimistic UI fallback
+      } catch (err) {
+        console.warn('Approval decision API call failed, kept local state:', err);
       }
     }
+
+    // 4. Smoothly remove from Pending Approvals list after 600ms
+    setTimeout(() => {
+      setApprovals((prev) => prev.filter((item) => item.id !== id));
+    }, 600);
   };
 
   const rawTotalAttendance =
@@ -938,8 +960,9 @@ export function AdminDashboard() {
                   ) : (
                     <button
                       type="button"
+                      disabled={item.status === 'approved'}
                       onClick={() => void handleApprove(item.id)}
-                      className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap ${
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition-all duration-150 hover:scale-102 active:scale-95 shrink-0 shadow-xs whitespace-nowrap disabled:cursor-default ${
                         item.status === 'approved'
                           ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
                           : 'border-emerald-500 text-emerald-600 hover:bg-emerald-50'

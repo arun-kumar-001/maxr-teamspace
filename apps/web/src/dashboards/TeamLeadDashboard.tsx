@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button, Badge, StatusPill, KpiCard } from '../components/ui';
 
 function UsersIcon({ className = 'w-7 h-7' }: { className?: string }) {
@@ -64,6 +65,36 @@ function AlertIcon({ className = 'w-7 h-7' }: { className?: string }) {
 }
 
 export function TeamLeadDashboard() {
+  const [pendingLeave, setPendingLeave] = useState([
+    {
+      id: 'lead-app-1',
+      employee: 'Alex Mercer',
+      type: 'Annual Leave',
+      dates: 'Nov 02 - Nov 04 (3 days)',
+      status: 'pending',
+    },
+    {
+      id: 'lead-app-2',
+      employee: 'Kavita Nair',
+      type: 'Sick Leave',
+      dates: 'Oct 29 (1 day)',
+      status: 'pending',
+    },
+  ]);
+
+  const handleLeadApprove = (id: string) => {
+    setPendingLeave((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
+    );
+    setTimeout(() => {
+      setPendingLeave((prev) => prev.filter((item) => item.id !== id));
+    }, 600);
+  };
+
+  const handleLeadReject = (id: string) => {
+    setPendingLeave((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
     <div className="space-y-6" data-testid="team-lead-dashboard">
       {/* Top Banner with Sample Data Badge (B2 Fix) */}
@@ -100,9 +131,9 @@ export function TeamLeadDashboard() {
         />
         <KpiCard
           label="Pending Approvals"
-          value="2"
+          value={String(pendingLeave.length)}
           icon={<ClockIcon />}
-          badge="Awaiting action"
+          badge={pendingLeave.length > 0 ? 'Awaiting action' : 'All clear'}
           variant="amber"
         />
         <KpiCard
@@ -128,36 +159,48 @@ export function TeamLeadDashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-text font-display">Pending Leave Approvals</h2>
             <div className="flex items-center gap-2">
-              <Badge variant="warning">2 Actions</Badge>
+              <Badge variant="warning">{pendingLeave.length} Actions</Badge>
               <Badge variant="neutral">Sample data</Badge>
             </div>
           </div>
 
           <div className="space-y-3">
-            {[
-              { employee: 'Alex Mercer', type: 'Annual Leave', dates: 'Nov 02 - Nov 04 (3 days)' },
-              { employee: 'Kavita Nair', type: 'Sick Leave', dates: 'Oct 29 (1 day)' },
-            ].map((req, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-input bg-surface-muted border border-border gap-3"
-              >
-                <div>
-                  <p className="text-xs font-bold text-text">{req.employee}</p>
-                  <p className="text-[11px] text-text-muted">
-                    {req.type} &middot; {req.dates}
-                  </p>
+            {pendingLeave.length === 0 ? (
+              <p className="text-xs text-text-muted py-5 text-center">No pending leave approvals</p>
+            ) : (
+              pendingLeave.map((req) => (
+                <div
+                  key={req.id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-input bg-surface-muted border border-border gap-3"
+                >
+                  <div>
+                    <p className="text-xs font-bold text-text">{req.employee}</p>
+                    <p className="text-[11px] text-text-muted">
+                      {req.type} &middot; {req.dates}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs min-h-[44px]"
+                      onClick={() => handleLeadReject(req.id)}
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="text-xs min-h-[44px]"
+                      disabled={req.status === 'approved'}
+                      onClick={() => handleLeadApprove(req.id)}
+                    >
+                      {req.status === 'approved' ? 'Approved' : 'Approve'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="text-xs min-h-[44px]">
-                    Reject
-                  </Button>
-                  <Button variant="primary" size="sm" className="text-xs min-h-[44px]">
-                    Approve
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
