@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { LeaveBalance, EmployeeLeaveBalance } from '../types';
 import { fetchLeaveBalances } from '../api/leave';
+import { useAuth } from '../../../auth/AuthContext';
+import { fetchEmployeeDirectory } from '../../employees/api/employees';
+import type { EmployeeDirectoryItem } from '../../employees/types';
 
 export interface LeaveBalancesSummaryProps {
   balances: LeaveBalance[];
@@ -15,28 +18,122 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
   year,
   onYearChange,
 }) => {
+  const { user } = useAuth();
   const [teamBalances, setTeamBalances] = useState<EmployeeLeaveBalance[]>([]);
+  const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState<'ALL' | 'ANNUAL' | 'SICK' | 'CASUAL'>('ALL');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
     setLoadingTeam(true);
-    fetchLeaveBalances({ year, pageSize: 50 })
-      .then((res) => {
-        if (isMounted && res?.data) {
-          setTeamBalances(res.data);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setTeamBalances([]);
-      })
-      .finally(() => {
-        if (isMounted) setLoadingTeam(false);
-      });
+
+    Promise.allSettled([
+      fetchLeaveBalances({ year, pageSize: 100 }),
+      fetchEmployeeDirectory({ pageSize: 100 }),
+    ]).then(([balancesRes, employeesRes]) => {
+      if (!isMounted) return;
+
+      if (balancesRes.status === 'fulfilled' && balancesRes.value?.data) {
+        setTeamBalances(balancesRes.value.data);
+      } else {
+        setTeamBalances([]);
+      }
+
+      if (employeesRes.status === 'fulfilled' && employeesRes.value?.data) {
+        setEmployees(employeesRes.value.data);
+      } else {
+        setEmployees([]);
+      }
+
+      setLoadingTeam(false);
+    });
+
+    const handleAutoUpdate = () => {
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    window.addEventListener('storage', handleAutoUpdate);
+    window.addEventListener('maxr:leave-updated', handleAutoUpdate);
+    window.addEventListener('maxr:leave-applied', handleAutoUpdate);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('storage', handleAutoUpdate);
+      window.removeEventListener('maxr:leave-updated', handleAutoUpdate);
+      window.removeEventListener('maxr:leave-applied', handleAutoUpdate);
     };
-  }, [year]);
+  }, [year, refreshTrigger]);
+
+  // Determine current user's employee record and team/department
+  const currentEmployee = useMemo(() => {
+    return employees.find(
+      (e) =>
+        (user?.employeeId && e.id === user.employeeId) ||
+        (user?.email && e.email.toLowerCase() === user.email.toLowerCase()),
+    );
+  }, [employees, user?.employeeId, user?.email]);
+
+  const adminDepartment =
+    currentEmployee?.department?.name ||
+    user?.department ||
+    '';
+
+  const employeeMap = useMemo(() => {
+    const map = new Map<string, EmployeeDirectoryItem>();
+    for (const emp of employees) {
+      map.set(emp.id, emp);
+    }
+    return map;
+  }, [employees]);
+
+  const getEmployeePhoto = (empId: string, email?: string): string | undefined => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const local =
+        localStorage.getItem(`maxr_avatar_${empId}`) ||
+        (email ? localStorage.getItem(`maxr_avatar_${email.toLowerCase()}`) : null);
+      if (local) return local;
+    }
+    const emp = employeeMap.get(empId);
+    return (emp as unknown as { avatarUrl?: string })?.avatarUrl || undefined;
+  };
+
+  // Filter balances by admin's team/department, leave type, and search query
+  const filteredTeamBalances = useMemo(() => {
+    return teamBalances.filter((tb) => {
+      const emp = employeeMap.get(tb.employeeId);
+
+      // If admin has a specific department and the employee has a department, keep same department
+      if (adminDepartment && emp?.department?.name) {
+        if (emp.department.name.toLowerCase() !== adminDepartment.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // Leave Type Filter
+      if (leaveTypeFilter !== 'ALL') {
+        const typeStr = `${tb.name} ${tb.code}`.toLowerCase();
+        if (leaveTypeFilter === 'ANNUAL' && !typeStr.includes('annual') && !typeStr.includes('al')) return false;
+        if (leaveTypeFilter === 'SICK' && !typeStr.includes('sick') && !typeStr.includes('sl')) return false;
+        if (leaveTypeFilter === 'CASUAL' && !typeStr.includes('casual') && !typeStr.includes('cl')) return false;
+      }
+
+      // Search Query Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const name = (tb.employeeName || '').toLowerCase();
+        const code = (emp?.employeeCode || '').toLowerCase();
+        const dept = (emp?.department?.name || '').toLowerCase();
+        if (!name.includes(q) && !code.includes(q) && !dept.includes(q)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [teamBalances, employeeMap, adminDepartment, leaveTypeFilter, searchQuery]);
 
   // Compute totals if balances exist, otherwise use Image 2 values
   const hasRealBalances = balances.length > 0;
@@ -464,62 +561,239 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
       )}
 
       {/* 5. Same Team Leave Balances Section */}
-      <div className="pt-6 border-t border-border/80" data-testid="same-team-leave-balances">
-        <div className="flex items-center justify-between mb-4">
+      <div className="pt-6 border-t border-border/80 space-y-4" data-testid="same-team-leave-balances">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-text font-display">
-              Same Team Leave Balances
-            </h3>
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-base sm:text-lg font-bold text-text font-display">
+                Same Team Leave Balances
+              </h3>
+              {adminDepartment && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary-soft text-primary-deep border border-primary/20">
+                  Team: {adminDepartment}
+                </span>
+              )}
+            </div>
             <p className="text-xs sm:text-sm text-text-muted mt-0.5">
               Available and used leave days for team members
             </p>
           </div>
+
+          {/* Results count chip */}
+          <span className="text-xs font-semibold text-text-muted self-start sm:self-auto bg-surface px-2.5 py-1 rounded-lg border border-border">
+            {filteredTeamBalances.length} record{filteredTeamBalances.length === 1 ? '' : 's'}
+          </span>
         </div>
 
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-3 rounded-card border border-border shadow-xs">
+          {/* Employee Search */}
+          <div className="relative flex-1 max-w-sm">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search employee name or code..."
+              className="w-full pl-9 pr-8 py-1.5 text-xs rounded-xl border border-border bg-surface-raised text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              data-testid="team-leave-search-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-text p-0.5"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Leave Type Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <span className="text-xs font-semibold text-text-muted mr-1 hidden md:inline">Type:</span>
+            {(
+              [
+                { id: 'ALL', label: 'All Types' },
+                { id: 'ANNUAL', label: 'Annual Leave' },
+                { id: 'SICK', label: 'Sick Leave' },
+                { id: 'CASUAL', label: 'Casual Leave' },
+              ] as const
+            ).map((filter) => {
+              const active = leaveTypeFilter === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setLeaveTypeFilter(filter.id)}
+                  data-testid={`team-leave-filter-${filter.id.toLowerCase()}`}
+                  className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                    active
+                      ? 'bg-primary-deep text-white shadow-xs'
+                      : 'bg-surface-muted text-text-muted hover:text-text hover:bg-surface-raised border border-border/60'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content Table */}
         {loadingTeam ? (
-          <div className="p-6 text-center text-sm text-text-muted bg-surface rounded-card border border-border">
+          <div className="p-8 text-center text-sm text-text-muted bg-surface rounded-card border border-border animate-pulse">
             Loading team leave balances...
           </div>
-        ) : teamBalances.length === 0 ? (
-          <div className="p-6 text-center text-sm text-text-muted bg-surface rounded-card border border-border">
-            No team leave balance records found for {year}.
+        ) : filteredTeamBalances.length === 0 ? (
+          <div className="p-8 text-center bg-surface rounded-card border border-border space-y-2">
+            <p className="text-sm font-semibold text-text">No team leave balance records found.</p>
+            <p className="text-xs text-text-muted">
+              {searchQuery || leaveTypeFilter !== 'ALL'
+                ? 'Try adjusting your search query or leave type filter.'
+                : `No leave records assigned for year ${year}.`}
+            </p>
+            {(searchQuery || leaveTypeFilter !== 'ALL') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setLeaveTypeFilter('ALL');
+                }}
+                className="mt-2 text-xs font-semibold text-primary-ink hover:underline"
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-card border border-border bg-surface">
-            <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-xs">
+            <table className="w-full text-left text-sm min-w-[640px]">
               <thead className="bg-surface-muted border-b border-border text-xs uppercase font-semibold text-text-muted">
                 <tr>
                   <th className="px-4 py-3">Team Member</th>
+                  <th className="px-4 py-3">Department</th>
                   <th className="px-4 py-3">Leave Type</th>
-                  <th className="px-4 py-3">Allotted</th>
-                  <th className="px-4 py-3">Used</th>
-                  <th className="px-4 py-3">Remaining</th>
+                  <th className="px-4 py-3 text-right">Allocated</th>
+                  <th className="px-4 py-3 text-right">Used</th>
+                  <th className="px-4 py-3 text-right">Remaining</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {teamBalances.map((tb, idx) => (
-                  <tr key={`${tb.employeeId}-${tb.leaveTypeId}-${idx}`} className="hover:bg-surface-muted/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-text">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-primary-soft text-primary-deep text-xs font-bold flex items-center justify-center">
-                          {tb.employeeName ? tb.employeeName.slice(0, 2).toUpperCase() : 'EM'}
+                {filteredTeamBalances.map((tb, idx) => {
+                  const emp = employeeMap.get(tb.employeeId);
+                  const photo = getEmployeePhoto(tb.employeeId, emp?.email);
+                  const initials = tb.employeeName
+                    ? tb.employeeName
+                        .split(' ')
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                    : 'EM';
+
+                  const typeLower = `${tb.name} ${tb.code}`.toLowerCase();
+                  const isAnnual = typeLower.includes('annual') || typeLower.includes('al');
+                  const isSick = typeLower.includes('sick') || typeLower.includes('sl');
+                  const isCasual = typeLower.includes('casual') || typeLower.includes('cl');
+
+                  const typeBadgeClass = isAnnual
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : isSick
+                      ? 'bg-pink-50 text-pink-800 border-pink-200'
+                      : isCasual
+                        ? 'bg-sky-50 text-sky-800 border-sky-200'
+                        : 'bg-surface-muted text-text-muted border-border';
+
+                  const totalAllocated = tb.allotted + tb.carriedForward;
+
+                  return (
+                    <tr
+                      key={`${tb.employeeId}-${tb.leaveTypeId}-${idx}`}
+                      className="hover:bg-surface-muted/50 transition-colors"
+                      data-testid={`team-balance-row-${tb.employeeId}-${tb.code}`}
+                    >
+                      {/* Employee Name + Avatar + Code */}
+                      <td className="px-4 py-3.5 font-medium text-text">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary-soft text-primary-deep text-xs font-bold flex items-center justify-center shrink-0 overflow-hidden relative shadow-xs">
+                            {photo ? (
+                              <img
+                                src={photo}
+                                alt={tb.employeeName || 'Employee'}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : null}
+                            <span className={photo ? 'sr-only' : undefined}>{initials}</span>
+                          </div>
+                          <div>
+                            <span className="font-semibold text-text block leading-tight">
+                              {tb.employeeName || 'Team Member'}
+                            </span>
+                            {emp?.employeeCode && (
+                              <span className="text-[11px] font-mono text-text-muted">
+                                {emp.employeeCode}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <span>{tb.employeeName || 'Team Member'}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-text-muted">
-                      <span className="font-semibold text-text">{tb.name}</span>{' '}
-                      <span className="text-xs font-mono text-text-muted">({tb.code})</span>
-                    </td>
-                    <td className="px-4 py-3 text-text font-mono">{tb.allotted + tb.carriedForward}d</td>
-                    <td className="px-4 py-3 text-text font-mono">{tb.used}d</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {tb.remaining}d left
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* Department */}
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-surface-muted text-text border border-border">
+                          {emp?.department?.name || adminDepartment || 'General'}
+                        </span>
+                      </td>
+
+                      {/* Leave Type */}
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${typeBadgeClass}`}
+                        >
+                          {tb.name}
+                          <span className="ml-1 opacity-75 font-mono text-[10px]">
+                            ({tb.code})
+                          </span>
+                        </span>
+                      </td>
+
+                      {/* Total Allocated */}
+                      <td className="px-4 py-3.5 text-right font-mono text-xs font-semibold text-text">
+                        {totalAllocated}d
+                      </td>
+
+                      {/* Used */}
+                      <td className="px-4 py-3.5 text-right font-mono text-xs text-text-muted">
+                        {tb.used}d
+                      </td>
+
+                      {/* Remaining */}
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {tb.remaining}d left
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

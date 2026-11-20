@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import type { LeavePolicy, Holiday, LeaveBalance } from '../types';
@@ -20,7 +21,9 @@ vi.mock('../api/leave', () => ({
   createHoliday: vi.fn(),
   deleteHoliday: vi.fn(),
   fetchMyLeaveBalances: vi.fn(),
-  fetchLeaveBalances: vi.fn(),
+  fetchLeaveBalances: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchMyLeaveRequests: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
   runYearlyAccrual: vi.fn(),
 }));
 
