@@ -303,12 +303,13 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   }, [filteredPolicies.length, highlightedIndex]);
 
   // Calculate estimated working days excluding weekend days and holidays
-  const estimatedDays = useMemo(() => {
-    if (!startDate || !endDate || endDate < startDate) return 0;
-    if (isPermission) return 0.25;
-    if (halfDay) return 0.5;
+  const { estimatedDays, excludedDays } = useMemo(() => {
+    if (!startDate || !endDate || endDate < startDate) return { estimatedDays: 0, excludedDays: 0 };
+    if (isPermission) return { estimatedDays: 0.25, excludedDays: 0 };
+    if (halfDay) return { estimatedDays: 0.5, excludedDays: 0 };
 
     let count = 0;
+    let weekendCount = 0;
     const cur = new Date(`${startDate}T00:00:00Z`);
     const end = new Date(`${endDate}T00:00:00Z`);
 
@@ -319,13 +320,15 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       const dateStr = cur.toISOString().slice(0, 10);
 
       // Standard work week Mon-Fri (day 1-5); exclude Sat(6) and Sun(0)
-      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidaySet.has(dateStr)) {
+      if (dayOfWeek === 0 || dayOfWeek === 6 || holidaySet.has(dateStr)) {
+        weekendCount += 1;
+      } else {
         count += 1;
       }
       cur.setUTCDate(cur.getUTCDate() + 1);
     }
 
-    return count;
+    return { estimatedDays: count, excludedDays: weekendCount };
   }, [startDate, endDate, halfDay, holidays, isPermission]);
 
   const handleStartDateChange = (val: string) => {
@@ -696,7 +699,8 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                 const balanceText = p.hasBalance && bal ? ` (${bal.remaining}d available)` : '';
                 return (
                   <option key={p.id} value={p.id}>
-                    {p.name} [{p.code}]{balanceText}
+                    {p.name}
+                    {balanceText}
                   </option>
                 );
               })}
@@ -753,14 +757,8 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                     />
                   </div>
 
-                  {/* Action Buttons: Clear + Dropdown toggle arrow */}
+                  {/* Action Buttons: Dropdown toggle arrow */}
                   <div className="flex items-center gap-1 shrink-0 text-text-muted">
-                    {selectedPolicy && !isDropdownOpen && (
-                      <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-muted text-text-muted border border-border">
-                        {selectedPolicy.code}
-                      </span>
-                    )}
-
                     <button
                       type="button"
                       onClick={(e) => {
@@ -821,9 +819,6 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="font-bold block truncate">{policy.name}</span>
-                              <span className="text-[10px] text-text-muted font-mono">
-                                [{policy.code}]
-                              </span>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -926,9 +921,14 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               </span>
             </label>
           ) : (
-            <div className="flex items-center gap-2 text-xs text-text-subtle font-medium">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-text-subtle font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary-strong/70 shrink-0" />
-              <span>{isPermission ? 'Short permission' : 'Standard working day request'}</span>
+              <span>{isPermission ? 'Short permission' : 'Working days request'}</span>
+              {excludedDays > 0 && !isPermission && !halfDay && (
+                <span className="text-[11px] text-text-subtle bg-surface-muted px-2 py-0.5 rounded-md border border-border/60">
+                  {excludedDays} weekend {excludedDays === 1 ? 'day' : 'days'} excluded
+                </span>
+              )}
             </div>
           )}
 
