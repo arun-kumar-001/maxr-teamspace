@@ -440,9 +440,6 @@ function getEmploymentType(
   }
   return undefined;
 }
-  }
-  return undefined;
-}
 
 function DirectoryEmployeePhoto({
   name,

@@ -88,6 +88,7 @@ function LeaveManagementPageContent({
       if (location?.pathname !== targetPath) {
         navigate(targetPath);
       }
+    }
   };
 
   const {
