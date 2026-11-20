@@ -6,6 +6,7 @@ import {
   checkInSchema,
   checkOutSchema,
   listAttendanceQuerySchema,
+  photoParamsSchema,
   teamCalendarQuerySchema,
 } from './attendance.schemas';
 import { AttendanceService, RequestContext } from './attendance.service';
@@ -89,6 +90,17 @@ export class AttendanceController {
     const { query } = validated(req, { query: listAttendanceQuerySchema });
     const page = await this.service.list(query, accessFor(req).filter);
     res.status(200).json(page);
+  };
+
+  photo = async (req: Request, res: Response): Promise<void> => {
+    const { params } = validated(req, { params: photoParamsSchema });
+    const link = await this.service.photoLink(
+      params.id,
+      params.which,
+      this.context(req),
+      accessFor(req).filter,
+    );
+    res.status(200).json({ data: link });
   };
 
   breakStart = async (req: Request, res: Response): Promise<void> => {

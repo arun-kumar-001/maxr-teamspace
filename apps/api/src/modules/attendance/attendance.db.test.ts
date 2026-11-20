@@ -222,4 +222,96 @@ describe('PgAttendanceRepository (PostgreSQL Integration - Issue #34)', () => {
       expect(res.employees).toEqual([]);
     });
   });
+
+  describe('photos are kept as storage keys, never in lists', () => {
+    const ALL: ScopeFilter = { kind: 'all' };
+    const photoIds: string[] = [];
+
+    // Their own employees: the shared ones above may already have an open session.
+    beforeAll(async () => {
+      for (const n of [1, 2, 3]) {
+        const res = await pool.query<{ id: string }>(
+          `INSERT INTO employees (employee_code, first_name, last_name, email, department_id, designation_id)
+           VALUES ($1, 'Photo', $2, $3, $4, $5) RETURNING id`,
+          [
+            `ATT_PH${n}_${randomUUID().slice(0, 6)}`,
+            `P${n}`,
+            `photo${n}_${randomUUID().slice(0, 6)}@attendance.test`,
+            deptId,
+            desigId,
+          ],
+        );
+        photoIds.push(res.rows[0]!.id);
+        createdEmployeeIds.push(res.rows[0]!.id);
+      }
+    });
+
+    it('stores the key of a check-in photo, flags it, and keeps it out of the list columns', async () => {
+      const rec = await repo.createCheckIn(
+        photoIds[0]!,
+        '2027-03-01',
+        {},
+        '2027-03-01T03:30:00Z',
+        'present',
+        'attendance-photos/2027/03/abc',
+      );
+      createdRecordIds.push(rec.id);
+      expect(rec).toMatchObject({ hasCheckInPhoto: true, hasCheckOutPhoto: false });
+      expect(rec).not.toHaveProperty('checkInPhoto');
+      expect(await repo.findPhotoRef(rec.id, 'check-in')).toEqual({
+        key: 'attendance-photos/2027/03/abc',
+        legacyDataUrl: null,
+      });
+      expect(await repo.findPhotoRef(rec.id, 'check-out')).toEqual({
+        key: null,
+        legacyDataUrl: null,
+      });
+
+      const out = await repo.createCheckOut(
+        rec.id,
+        '2027-03-01T12:30:00Z',
+        540,
+        undefined,
+        undefined,
+        'attendance-photos/2027/03/def',
+      );
+      expect(out).toMatchObject({ hasCheckInPhoto: true, hasCheckOutPhoto: true });
+      expect((await repo.findPhotoRef(rec.id, 'check-out'))?.key).toBe(
+        'attendance-photos/2027/03/def',
+      );
+
+      const listed = await repo.findMany(
+        {
+          offset: 0,
+          limit: 50,
+          sort: { column: 'workDate', order: 'desc' },
+          employeeId: photoIds[0],
+        },
+        ALL,
+      );
+      expect(JSON.stringify(listed.items)).not.toContain('attendance-photos');
+    });
+
+    it('still flags and returns a photo that an older row holds inline, until it is moved', async () => {
+      const rec = await repo.createCheckIn(photoIds[1]!, '2027-03-02', {}, '2027-03-02T03:30:00Z');
+      createdRecordIds.push(rec.id);
+      await pool.query('UPDATE attendance_records SET check_in_photo = $2 WHERE id = $1', [
+        rec.id,
+        'data:image/png;base64,AAAA',
+      ]);
+      const found = await repo.findById(rec.id, ALL);
+      expect(found).toMatchObject({ hasCheckInPhoto: true, hasCheckOutPhoto: false });
+      expect(await repo.findPhotoRef(rec.id, 'check-in')).toEqual({
+        key: null,
+        legacyDataUrl: 'data:image/png;base64,AAAA',
+      });
+    });
+
+    it('reports no photo for a record that has none, and nothing for an unknown record', async () => {
+      const rec = await repo.createCheckIn(photoIds[2]!, '2027-03-03', {}, '2027-03-03T03:30:00Z');
+      createdRecordIds.push(rec.id);
+      expect(rec).toMatchObject({ hasCheckInPhoto: false, hasCheckOutPhoto: false });
+      expect(await repo.findPhotoRef(randomUUID(), 'check-in')).toBeNull();
+    });
+  });
 });

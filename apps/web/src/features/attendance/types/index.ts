@@ -28,8 +28,9 @@ export interface AttendanceRecord extends Record<string, unknown> {
   status: AttendanceStatus;
   location: AttendanceLocation | null;
   checkOutLocation?: AttendanceLocation | null;
-  checkInPhoto?: string | null;
-  checkOutPhoto?: string | null;
+  /** Whether a photo exists. Fetch it with fetchAttendancePhotoLink. */
+  hasCheckInPhoto?: boolean;
+  hasCheckOutPhoto?: boolean;
   notes: string | null;
   createdAt: string;
   updatedAt: string;

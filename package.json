@@ -28,6 +28,7 @@
     "db:seed": "npm run db:seed --workspace=@maxr/api",
     "db:create-admin": "npm run db:create-admin --workspace=@maxr/api",
     "db:encrypt-fields": "npm run db:encrypt-fields --workspace=@maxr/api",
+    "db:move-attendance-photos": "npm run db:move-attendance-photos --workspace=@maxr/api",
     "check:lockfile": "node scripts/check-lockfile.mjs",
     "test": "npm run test --workspaces --if-present",
     "e2e": "npm run e2e --workspace=@maxr/web",

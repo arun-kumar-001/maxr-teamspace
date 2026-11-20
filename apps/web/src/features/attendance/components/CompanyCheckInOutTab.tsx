@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { AttendanceRecord, AttendanceBreak } from '../types';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
+import { fetchAttendancePhotoLink } from '../api/attendance';
+import { AttendancePhoto } from './AttendancePhoto';
 
 export interface CompanyCheckInOutTabProps {
   records: AttendanceRecord[];
@@ -20,8 +22,8 @@ interface EmployeeSessionRow {
   durationFormatted: string;
   breakSummary: string;
   isOnBreak: boolean;
-  checkInPhoto: string | null;
-  checkOutPhoto: string | null;
+  hasCheckInPhoto: boolean;
+  hasCheckOutPhoto: boolean;
   checkInAddress: string;
   checkOutAddress: string;
 }
@@ -183,10 +185,36 @@ export function CompanyCheckInOutTab({
     'all' | 'checked_in' | 'on_break' | 'checked_out' | 'not_checked_in'
   >('all');
   const [previewPhoto, setPreviewPhoto] = useState<{
-    url: string;
+    /** null while the short-lived link is being fetched, or when it could not be. */
+    url: string | null;
     title: string;
     subtitle?: string;
+    error?: string;
   } | null>(null);
+
+  /** Photos are not part of the list: ask for this one, show it when the link arrives. */
+  const openPhoto = (
+    recordId: string,
+    which: 'check-in' | 'check-out',
+    title: string,
+    subtitle: string,
+  ) => {
+    setPreviewPhoto({ url: null, title, subtitle });
+    fetchAttendancePhotoLink(recordId, which)
+      .then(({ url }) =>
+        setPreviewPhoto((prev) => (prev?.title === title ? { ...prev, url } : prev)),
+      )
+      .catch((err: unknown) =>
+        setPreviewPhoto((prev) =>
+          prev?.title === title
+            ? {
+                ...prev,
+                error: err instanceof Error ? err.message : 'The photo could not be loaded.',
+              }
+            : prev,
+        ),
+      );
+  };
   const [selectedSessionRow, setSelectedSessionRow] = useState<EmployeeSessionRow | null>(null);
 
   // Map employee with their latest record for selectedDate
@@ -213,8 +241,8 @@ export function CompanyCheckInOutTab({
           durationFormatted: '0h 00m',
           breakSummary: 'None',
           isOnBreak: false,
-          checkInPhoto: null,
-          checkOutPhoto: null,
+          hasCheckInPhoto: false,
+          hasCheckOutPhoto: false,
           checkInAddress: 'Not Checked In',
           checkOutAddress: '--',
         };
@@ -274,8 +302,8 @@ export function CompanyCheckInOutTab({
         durationFormatted: formatMinutes(rec.durationMinutes),
         breakSummary,
         isOnBreak,
-        checkInPhoto: rec.checkInPhoto || null,
-        checkOutPhoto: rec.checkOutPhoto || null,
+        hasCheckInPhoto: Boolean(rec.hasCheckInPhoto),
+        hasCheckOutPhoto: Boolean(rec.hasCheckOutPhoto),
         checkInAddress: checkInAddr,
         checkOutAddress: checkOutAddr,
       };
@@ -582,24 +610,21 @@ export function CompanyCheckInOutTab({
                             <span className="font-semibold text-text text-xs">
                               {row.checkInTimeFormatted}
                             </span>
-                            {row.checkInPhoto && (
+                            {row.hasCheckInPhoto && row.record && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  setPreviewPhoto({
-                                    url: row.checkInPhoto!,
-                                    title: `${row.fullName} – Check-In Selfie`,
-                                    subtitle: `Recorded at ${row.checkInTimeFormatted} &middot; ${row.checkInAddress}`,
-                                  })
+                                  openPhoto(
+                                    row.record!.id,
+                                    'check-in',
+                                    `${row.fullName} – Check-In Selfie`,
+                                    `Recorded at ${row.checkInTimeFormatted} · ${row.checkInAddress}`,
+                                  )
                                 }
-                                className="group relative"
+                                className="px-2 py-0.5 rounded-md border border-primary-strong/40 text-[11px] font-semibold text-primary-ink hover:bg-primary-soft cursor-pointer"
                                 title="View Check-In Photo"
                               >
-                                <img
-                                  src={row.checkInPhoto}
-                                  alt="Selfie"
-                                  className="w-6 h-6 rounded-md object-cover border border-primary-strong/40 shadow-2xs group-hover:scale-110 transition-transform cursor-pointer"
-                                />
+                                Photo
                               </button>
                             )}
                           </div>
@@ -624,24 +649,21 @@ export function CompanyCheckInOutTab({
                             <span className="font-semibold text-text text-xs">
                               {row.checkOutTimeFormatted}
                             </span>
-                            {row.checkOutPhoto && (
+                            {row.hasCheckOutPhoto && row.record && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  setPreviewPhoto({
-                                    url: row.checkOutPhoto!,
-                                    title: `${row.fullName} – Check-Out Selfie`,
-                                    subtitle: `Recorded at ${row.checkOutTimeFormatted} &middot; ${row.checkOutAddress}`,
-                                  })
+                                  openPhoto(
+                                    row.record!.id,
+                                    'check-out',
+                                    `${row.fullName} – Check-Out Selfie`,
+                                    `Recorded at ${row.checkOutTimeFormatted} · ${row.checkOutAddress}`,
+                                  )
                                 }
-                                className="group relative"
+                                className="px-2 py-0.5 rounded-md border border-teal-600/40 text-[11px] font-semibold text-primary-ink hover:bg-primary-soft cursor-pointer"
                                 title="View Check-Out Photo"
                               >
-                                <img
-                                  src={row.checkOutPhoto}
-                                  alt="Check-Out Selfie"
-                                  className="w-6 h-6 rounded-md object-cover border border-teal-600/40 shadow-2xs group-hover:scale-110 transition-transform cursor-pointer"
-                                />
+                                Photo
                               </button>
                             )}
                           </div>
@@ -734,11 +756,20 @@ export function CompanyCheckInOutTab({
             </div>
 
             <div className="rounded-xl overflow-hidden bg-black/90 flex items-center justify-center max-h-[360px]">
-              <img
-                src={previewPhoto.url}
-                alt="Captured Selfie"
-                className="max-h-[360px] w-auto object-contain"
-              />
+              {previewPhoto.url ? (
+                <img
+                  src={previewPhoto.url}
+                  alt="Captured Selfie"
+                  className="max-h-[360px] w-auto object-contain"
+                />
+              ) : (
+                <p
+                  role={previewPhoto.error ? 'alert' : 'status'}
+                  className="p-10 text-sm text-white/90"
+                >
+                  {previewPhoto.error ?? 'Loading photo…'}
+                </p>
+              )}
             </div>
 
             <div className="flex justify-end">
@@ -794,9 +825,10 @@ export function CompanyCheckInOutTab({
                 <p className="text-lg font-bold font-display text-text">
                   {selectedSessionRow.checkInTimeFormatted}
                 </p>
-                {selectedSessionRow.checkInPhoto && (
-                  <img
-                    src={selectedSessionRow.checkInPhoto}
+                {selectedSessionRow.hasCheckInPhoto && (
+                  <AttendancePhoto
+                    recordId={selectedSessionRow.record.id}
+                    which="check-in"
                     alt="Check-In"
                     className="w-full h-32 rounded-lg object-cover border border-border"
                   />
@@ -815,9 +847,10 @@ export function CompanyCheckInOutTab({
                 <p className="text-lg font-bold font-display text-text">
                   {selectedSessionRow.checkOutTimeFormatted}
                 </p>
-                {selectedSessionRow.checkOutPhoto ? (
-                  <img
-                    src={selectedSessionRow.checkOutPhoto}
+                {selectedSessionRow.hasCheckOutPhoto ? (
+                  <AttendancePhoto
+                    recordId={selectedSessionRow.record.id}
+                    which="check-out"
                     alt="Check-Out"
                     className="w-full h-32 rounded-lg object-cover border border-border"
                   />

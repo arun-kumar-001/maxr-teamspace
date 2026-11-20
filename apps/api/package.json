@@ -12,6 +12,7 @@
     "db:seed": "node dist/db/seeder.js",
     "db:create-admin": "node dist/db/create-admin.js",
     "db:encrypt-fields": "node dist/db/encrypt-fields.js",
+    "db:move-attendance-photos": "node dist/db/move-attendance-photos.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",

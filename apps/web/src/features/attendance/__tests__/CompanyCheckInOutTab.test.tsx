@@ -1,14 +1,24 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+import * as attendanceApi from '../api/attendance';
 import { CompanyCheckInOutTab } from '../components/CompanyCheckInOutTab';
 import type { AttendanceRecord } from '../types';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 
+vi.mock('../api/attendance', () => ({ fetchAttendancePhotoLink: vi.fn() }));
+
 describe('CompanyCheckInOutTab', () => {
+  beforeEach(() => {
+    vi.mocked(attendanceApi.fetchAttendancePhotoLink).mockResolvedValue({
+      url: '/api/v1/files/download?token=default',
+      expiresAt: null,
+    });
+  });
   afterEach(() => {
     cleanup();
+    vi.resetAllMocks();
   });
   const mockDepartments: DepartmentItem[] = [
     { id: 'dept-eng', name: 'Engineering', code: 'ENG' },
@@ -78,9 +88,9 @@ describe('CompanyCheckInOutTab', () => {
         longitude: 80.2707,
         address: 'Mount Road, Guindy, Chennai',
       },
-      checkInPhoto: 'data:image/jpeg;base64,mockCheckInPhoto1',
+      hasCheckInPhoto: true,
       checkOutLocation: null,
-      checkOutPhoto: null,
+      hasCheckOutPhoto: false,
       breaks: [],
       notes: null,
       createdAt: '2026-11-03T09:00:00.000Z',
@@ -105,8 +115,8 @@ describe('CompanyCheckInOutTab', () => {
         longitude: 80.2707,
         address: 'Anna Salai, Chennai',
       },
-      checkInPhoto: 'data:image/jpeg;base64,mockCheckInPhoto2',
-      checkOutPhoto: 'data:image/jpeg;base64,mockCheckOutPhoto2',
+      hasCheckInPhoto: true,
+      hasCheckOutPhoto: true,
       breaks: [
         {
           startTime: '2026-11-03T13:00:00.000Z',
@@ -200,5 +210,53 @@ describe('CompanyCheckInOutTab', () => {
     // Close button
     fireEvent.click(screen.getByText('Done'));
     expect(screen.queryByText('Breaks History')).not.toBeInTheDocument();
+  });
+
+  describe('photos', () => {
+    const renderTab = () =>
+      render(
+        <CompanyCheckInOutTab
+          records={mockRecords}
+          employees={mockEmployees}
+          departments={mockDepartments}
+          selectedDate="2026-11-03"
+        />,
+      );
+
+    it('loads no photo with the list, and offers one only where a photo exists', () => {
+      renderTab();
+      expect(attendanceApi.fetchAttendancePhotoLink).not.toHaveBeenCalled();
+      expect(document.querySelector('img[src^="data:"]')).toBeNull();
+      // rec-1: check-in photo only; rec-2: both.
+      expect(screen.getAllByTitle('View Check-In Photo')).toHaveLength(2);
+      expect(screen.getAllByTitle('View Check-Out Photo')).toHaveLength(1);
+    });
+
+    it('asks for the photo of the record that was clicked, then shows it from its link', async () => {
+      vi.mocked(attendanceApi.fetchAttendancePhotoLink).mockResolvedValue({
+        url: '/api/v1/files/download?token=abc',
+        expiresAt: '2026-11-03T09:02:00.000Z',
+      });
+      renderTab();
+
+      fireEvent.click(screen.getAllByTitle('View Check-In Photo')[0]!);
+
+      expect(attendanceApi.fetchAttendancePhotoLink).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(attendanceApi.fetchAttendancePhotoLink).mock.calls[0]?.[1]).toBe('check-in');
+      const img = await screen.findByAltText('Captured Selfie');
+      expect(img).toHaveAttribute('src', '/api/v1/files/download?token=abc');
+    });
+
+    it('says so when the photo cannot be loaded, instead of showing a broken image', async () => {
+      vi.mocked(attendanceApi.fetchAttendancePhotoLink).mockRejectedValue(
+        new Error('Photo not found'),
+      );
+      renderTab();
+
+      fireEvent.click(screen.getAllByTitle('View Check-In Photo')[0]!);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Photo not found');
+      await waitFor(() => expect(screen.queryByAltText('Captured Selfie')).not.toBeInTheDocument());
+    });
   });
 });

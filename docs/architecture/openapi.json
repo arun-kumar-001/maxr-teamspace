@@ -297,6 +297,12 @@
               }
             }
           },
+          "hasCheckInPhoto": {
+            "type": "boolean"
+          },
+          "hasCheckOutPhoto": {
+            "type": "boolean"
+          },
           "notes": {
             "type": "string",
             "nullable": true
@@ -319,6 +325,8 @@
           "durationMinutes",
           "status",
           "location",
+          "hasCheckInPhoto",
+          "hasCheckOutPhoto",
           "notes",
           "createdAt",
           "updatedAt"
@@ -4433,7 +4441,7 @@
                   "photoDataUrl": {
                     "type": "string",
                     "maxLength": 600000,
-                    "pattern": "^data:image\\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=\\s]+$"
+                    "pattern": "^data:image\\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=\\s]+$"
                   },
                   "notes": {
                     "type": "string",
@@ -4574,7 +4582,7 @@
                   "photoDataUrl": {
                     "type": "string",
                     "maxLength": 600000,
-                    "pattern": "^data:image\\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=\\s]+$"
+                    "pattern": "^data:image\\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=\\s]+$"
                   },
                   "notes": {
                     "type": "string",
@@ -5354,7 +5362,7 @@
       "get": {
         "tags": ["Attendance"],
         "summary": "Get scoped team attendance, leave, and holiday calendar entries",
-        "description": "Required permission: `attendance.read_own`",
+        "description": "Required permission: `attendance.list`",
         "parameters": [
           {
             "schema": {
@@ -5459,6 +5467,122 @@
           },
           "403": {
             "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attendance/{id}/photos/{which}": {
+      "get": {
+        "tags": ["Attendance"],
+        "summary": "A short-lived link (two minutes) to the check-in or check-out photo of one record in your scope. Photos are never part of a list. Each look is audited",
+        "description": "Required permission: `attendance.list`",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["check-in", "check-out"]
+            },
+            "required": true,
+            "name": "which",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Where to fetch the photo; the link works for you only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "format": "date-time"
+                        }
+                      },
+                      "required": ["url", "expiresAt"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such record in your scope, or it has no photo for that moment",
             "content": {
               "application/json": {
                 "schema": {

@@ -28,7 +28,14 @@ async function setup() {
   const managerOf = (employeeId: string) =>
     employeeId === users.staff.employeeId ? users.team_lead.employeeId : null;
   const repo = new InMemoryAttendanceRepository(managerOf);
-  const service = new AttendanceService(repo, platform.audit);
+  const service = new AttendanceService(
+    repo,
+    platform.audit,
+    undefined,
+    undefined,
+    undefined,
+    platform.storage,
+  );
 
   const app = express();
   app.use(requestIdMiddleware);
@@ -42,6 +49,7 @@ async function setup() {
       repository: repo,
       service,
       shiftResolver: undefined,
+      storage: platform.storage,
     }),
   );
   app.use(notFoundHandler);

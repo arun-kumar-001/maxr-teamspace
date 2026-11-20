@@ -8,12 +8,14 @@ import { AttendanceController } from './attendance.controller';
 import { IAttendanceRepository, PgAttendanceRepository } from './attendance.repository';
 import { AttendanceService } from './attendance.service';
 import { AuditLogger } from '../../platform/audit/types';
+import type { StorageService } from '../../platform/storage/storage-service';
 import { CompanySettingsReader } from '../settings';
 import type { ShiftResolver } from '../shifts';
 import {
   checkInSchema,
   checkOutSchema,
   listAttendanceQuerySchema,
+  photoParamsSchema,
   teamCalendarQuerySchema,
 } from './attendance.schemas';
 
@@ -28,6 +30,12 @@ export interface AttendanceRouterOptions {
    * check-in `present` without any error. Pass `undefined` only where shifts do not matter (tests).
    */
   shiftResolver: ShiftResolver | undefined;
+  /**
+   * Where check-in and check-out photos are kept. A required key on purpose, like the shift
+   * resolver: forgetting it would make every photo upload fail. Pass `undefined` only where no
+   * photo is sent (tests).
+   */
+  storage: StorageService | undefined;
   getPool?: () => Pool;
 }
 
@@ -42,6 +50,7 @@ export function createAttendanceRouter(options: AttendanceRouterOptions): Router
       options.settingsReader,
       undefined,
       options.shiftResolver,
+      options.storage,
     );
   const controller = new AttendanceController(service);
 
@@ -78,6 +87,13 @@ export function createAttendanceRouter(options: AttendanceRouterOptions): Router
     requirePermission('attendance.list'),
     validate({ query: teamCalendarQuerySchema }),
     asyncHandler(controller.getTeamCalendar),
+  );
+
+  router.get(
+    '/:id/photos/:which',
+    requirePermission('attendance.list'),
+    validate({ params: photoParamsSchema }),
+    asyncHandler(controller.photo),
   );
 
   router.get(

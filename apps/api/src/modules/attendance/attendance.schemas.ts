@@ -14,9 +14,13 @@ export const photoDataUrlSchema = z
   .string()
   .max(600_000, 'Captured photo exceeds 600KB limit')
   .regex(
-    /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=\s]+$/,
+    /^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=\s]+$/,
     'Captured photo must be a valid base64 image data URL',
   );
+
+export const photoParamsSchema = z
+  .object({ id: z.string().uuid(), which: z.enum(['check-in', 'check-out']) })
+  .strict();
 
 export const checkInSchema = z
   .object({

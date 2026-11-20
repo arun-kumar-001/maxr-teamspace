@@ -1,7 +1,8 @@
 import { PaginatedResponse } from '@maxr/shared';
-import { badRequest, conflict, forbidden } from '../../http/errors';
+import { badRequest, conflict, forbidden, notFound } from '../../http/errors';
 import { buildPage, resolveSort, toOffsetLimit } from '../../http/pagination';
 import { AuditLogger } from '../../platform/audit/types';
+import type { StorageService } from '../../platform/storage/storage-service';
 import { ScopeFilter } from '../rbac';
 import {
   ATTENDANCE_SORTABLE_FIELDS,
@@ -10,7 +11,7 @@ import {
   ListAttendanceQuery,
   TeamCalendarQuery,
 } from './attendance.schemas';
-import { IAttendanceRepository } from './attendance.repository';
+import { IAttendanceRepository, type PhotoKind } from './attendance.repository';
 import {
   AttendanceBreak,
   AttendanceRecord,
@@ -80,8 +81,79 @@ export class AttendanceService {
       repo.isEmployeeActive(id),
     /** Without it every check-in is `present`. */
     private readonly shiftResolver?: ShiftResolver,
+    /** Where photos are kept. Required whenever a check-in or check-out carries one. */
+    private readonly storage?: StorageService,
   ) {
     this.settingsReader = settingsReader ?? DEFAULT_SETTINGS_READER;
+  }
+
+  /**
+   * Puts a captured photo into private storage (type check, size limit, virus scan) and returns
+   * its key; the attendance row keeps only that key. No photo, no key.
+   */
+  private async storePhoto(
+    photoDataUrl: string | undefined,
+    kind: PhotoKind,
+    ctx: RequestContext,
+  ): Promise<string | undefined> {
+    if (!photoDataUrl) return undefined;
+    if (!this.storage) {
+      // A wiring mistake, not a client error: never drop the photo silently.
+      throw new Error('A photo was sent but the attendance service has no storage');
+    }
+    const match = /^data:image\/(jpeg|jpg|png);base64,(.+)$/s.exec(photoDataUrl);
+    if (!match) throw badRequest('The photo must be a PNG or JPEG image');
+    const isPng = match[1] === 'png';
+    const stored = await this.storage.upload({
+      category: 'attendancePhotos',
+      filename: `${kind}.${isPng ? 'png' : 'jpg'}`,
+      declaredType: isPng ? 'image/png' : 'image/jpeg',
+      body: Buffer.from(match[2]!.replace(/\s+/g, ''), 'base64'),
+      uploadedBy: ctx.actorId,
+    });
+    return stored.key;
+  }
+
+  private async discardPhoto(key: string | undefined): Promise<void> {
+    if (key) await this.storage?.delete(key).catch(() => undefined);
+  }
+
+  /** A short-lived link to one record's photo, after the caller's scope has been checked. */
+  async photoLink(
+    id: string,
+    which: PhotoKind,
+    ctx: RequestContext,
+    scope: ScopeFilter,
+  ): Promise<{ url: string; expiresAt: string | null }> {
+    // Out of scope looks exactly like missing.
+    const record = await this.repo.findById(id, scope);
+    const hasPhoto = which === 'check-in' ? record?.hasCheckInPhoto : record?.hasCheckOutPhoto;
+    if (!record || !hasPhoto) throw notFound('Photo not found');
+    const ref = await this.repo.findPhotoRef(id, which);
+    if (!ref) throw notFound('Photo not found');
+
+    await this.audit?.tryRecord({
+      action: 'attendance.view_photo',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: id,
+      metadata: { which },
+      requestId: ctx.requestId,
+    });
+
+    if (ref.key) {
+      if (!this.storage) throw new Error('The attendance service has no storage');
+      const link = await this.storage.createDownloadLink(ref.key, {
+        subject: ctx.actorId,
+        ttlSeconds: 120,
+      });
+      return { url: link.url, expiresAt: link.expiresAt };
+    }
+    // Written before photos moved to storage and not copied yet (npm run db:move-attendance-photos).
+    if (ref.legacyDataUrl) return { url: ref.legacyDataUrl, expiresAt: null };
+    throw notFound('Photo not found');
   }
 
   private async getWorkDate(date = new Date()): Promise<string> {
@@ -152,7 +224,14 @@ export class AttendanceService {
     const workDate = await this.getWorkDate(now);
 
     const status = await this.statusFor(employeeId, workDate, now);
-    const record = await this.repo.createCheckIn(employeeId, workDate, dto, nowIso, status);
+    const photoKey = await this.storePhoto(dto.photoDataUrl, 'check-in', ctx);
+    let record: AttendanceRecord;
+    try {
+      record = await this.repo.createCheckIn(employeeId, workDate, dto, nowIso, status, photoKey);
+    } catch (err) {
+      await this.discardPhoto(photoKey);
+      throw err;
+    }
 
     // Where someone checked in from is personal data and the audit trail is append-only, so it
     // records only that a location was given and the work mode. The coordinates stay on the record.
@@ -212,16 +291,24 @@ export class AttendanceService {
     const rawMinutes = Math.max(0, Math.round((now.getTime() - checkInMs) / 60000));
     const durationMinutes = Math.max(0, rawMinutes - totalBreakMinutes);
 
-    const updated = await this.repo.createCheckOut(
-      openSession.id,
-      nowIso,
-      durationMinutes,
-      dto.notes,
-      dto.location,
-      dto.photoDataUrl,
-    );
+    const photoKey = await this.storePhoto(dto.photoDataUrl, 'check-out', ctx);
+    let updated: AttendanceRecord | null;
+    try {
+      updated = await this.repo.createCheckOut(
+        openSession.id,
+        nowIso,
+        durationMinutes,
+        dto.notes,
+        dto.location,
+        photoKey,
+      );
+    } catch (err) {
+      await this.discardPhoto(photoKey);
+      throw err;
+    }
 
     if (!updated) {
+      await this.discardPhoto(photoKey);
       // Closed by a concurrent request between the read and the write: the same answer as finding
       // nothing open in the first place.
       throw badRequest('No active attendance session found to check out');

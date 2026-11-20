@@ -12,6 +12,8 @@ import {
 import {
   AttendanceFindManyParams,
   IAttendanceRepository,
+  PhotoKind,
+  PhotoRef,
   TeamCalendarParams,
 } from './attendance.repository';
 
@@ -26,6 +28,8 @@ export function uniqueViolation(constraint = 'idx_attendance_single_open_session
  */
 export class InMemoryAttendanceRepository implements IAttendanceRepository {
   private readonly items = new Map<string, AttendanceRecord>();
+  /** Storage keys and legacy inline photos by record id, as the real table keeps them. */
+  readonly photos = new Map<string, { checkIn: PhotoRef; checkOut: PhotoRef }>();
   private readonly activeEmployees = new Set<string>();
 
   /** `managerOf` returns the manager employee ID for a given employee ID. */
@@ -80,6 +84,7 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
     dto: CheckInDto,
     checkInTime = new Date().toISOString(),
     status: AttendanceStatus = 'present',
+    photoKey?: string,
   ): Promise<AttendanceRecord> {
     // Enforce partial unique index: at most one open session per employee
     const active = await this.findActiveSession(employeeId);
@@ -100,13 +105,17 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       status,
       location: (dto.location as AttendanceLocation) ?? null,
       checkOutLocation: null,
-      checkInPhoto: dto.photoDataUrl ?? null,
-      checkOutPhoto: null,
+      hasCheckInPhoto: photoKey !== undefined,
+      hasCheckOutPhoto: false,
       notes: dto.notes ?? null,
       createdAt: now,
       updatedAt: now,
     };
 
+    this.photos.set(record.id, {
+      checkIn: { key: photoKey ?? null, legacyDataUrl: null },
+      checkOut: { key: null, legacyDataUrl: null },
+    });
     this.items.set(record.id, record);
     return record;
   }
@@ -117,7 +126,7 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
     durationMinutes: number,
     notes?: string,
     checkOutLocation?: AttendanceLocation,
-    checkOutPhoto?: string,
+    checkOutPhotoKey?: string,
   ): Promise<AttendanceRecord | null> {
     const record = this.items.get(sessionId);
     if (!record || record.checkOutTime !== null) {
@@ -129,13 +138,23 @@ export class InMemoryAttendanceRepository implements IAttendanceRepository {
       checkOutTime,
       durationMinutes,
       checkOutLocation: checkOutLocation ?? record.checkOutLocation,
-      checkOutPhoto: checkOutPhoto ?? record.checkOutPhoto,
+      hasCheckOutPhoto: checkOutPhotoKey !== undefined || record.hasCheckOutPhoto,
       notes: notes ?? record.notes,
       updatedAt: new Date().toISOString(),
     };
 
+    if (checkOutPhotoKey) {
+      const held = this.photos.get(sessionId);
+      if (held) held.checkOut = { key: checkOutPhotoKey, legacyDataUrl: null };
+    }
     this.items.set(sessionId, updated);
     return updated;
+  }
+
+  async findPhotoRef(id: string, which: PhotoKind): Promise<PhotoRef | null> {
+    const held = this.photos.get(id);
+    if (!held) return null;
+    return which === 'check-in' ? held.checkIn : held.checkOut;
   }
 
   async findMany(

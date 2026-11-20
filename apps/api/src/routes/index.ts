@@ -106,6 +106,7 @@ export function createApiRouter({
       audit: platform.audit,
       settingsReader: settings.reader,
       shiftResolver: shifts.resolver,
+      storage: platform.storage,
     }),
   );
 
@@ -243,7 +244,14 @@ export function createApiRouter({
   );
 
   // File downloads by signed link (see docs/architecture/shared-services.md).
-  router.use('/files', createFilesRouter(platform.storage));
+  // Signed links are bound to the person they were issued to, so this route has to know who is
+  // asking. A missing or invalid session is not an error here: with no actor the link simply fails
+  // (404), exactly like any other link that is not yours.
+  router.use(
+    '/files',
+    (req, res, next) => auth.authenticate(req, res, () => next()),
+    createFilesRouter(platform.storage),
+  );
 
   const expenses = createExpensesModule({
     approvals: approvals.service,

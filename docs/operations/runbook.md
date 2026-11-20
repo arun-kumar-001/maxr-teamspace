@@ -69,13 +69,19 @@ Private file uploads reside in dedicated volume `uploads_data` (`/data/uploads`)
    unset ADMIN_PASSWORD
    ```
    Optional: `-e ADMIN_FIRST_NAME=...`, `-e ADMIN_LAST_NAME=...`, `-e ADMIN_EMPLOYEE_CODE=...`. The command does nothing if an active Admin already exists, so running it again is safe. Sign in and change the password straight away; it is audited as `users.bootstrap_admin`.
-6. **Encrypt existing identity and bank numbers (installations that predate field encryption only):**
-   New values are encrypted as they are saved, and old plain values stay readable meanwhile, so this can be run while the API is up. It is safe to run again; it only touches values still stored as plain text:
-   ```bash
-   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production run --rm \
-     migrate node apps/api/dist/db/encrypt-fields.js
-   ```
-   It prints how many values it encrypted per column. A new installation has nothing to convert.
+6. **Convert data stored before these features existed (upgraded installations only):**
+   Both commands are safe to run again and can run while the API is up. A new installation has nothing to convert.
+   - *Identity and bank numbers* are encrypted as they are saved; old plain values stay readable until this has run. It only touches values still stored as plain text and prints how many it encrypted per column:
+     ```bash
+     docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production run --rm \
+       migrate node apps/api/dist/db/encrypt-fields.js
+     ```
+   - *Attendance photos* used to be stored inside the database. New photos go to private storage; old ones keep working (the API serves either form) until this copies them into storage and clears the inline copy. Run it in the running `api` service (on an upgrade it already is; otherwise do it after step 7), because that is where the uploads volume and the virus scanner are:
+     ```bash
+     docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production exec -T api \
+       node apps/api/dist/db/move-attendance-photos.js
+     ```
+     It prints how many photos it moved and lists any it left in place (for example a WebP, which storage does not accept, or a file the scanner rejected). Those stay viewable from the database.
 7. **Start Full Stack:**
    ```bash
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production up -d --build
