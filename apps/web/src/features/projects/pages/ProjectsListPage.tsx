@@ -16,7 +16,7 @@ import { ProjectDetailDrawer } from '../components/ProjectDetailDrawer';
 import { ProjectFilters } from '../components/ProjectFilters';
 import { ProjectFormModal } from '../components/ProjectFormModal';
 import { ProjectOverviewCards } from '../components/ProjectOverviewCards';
-import { ProjectStatusBadge } from '../components/ProjectStatusBadge';
+import { ProjectWorkflowBadge } from '../components/ProjectStatusBadge';
 import { useProjects } from '../hooks/useProjects';
 import type { CreateProjectInput } from '../types';
 
@@ -80,14 +80,14 @@ export function ProjectsListPage() {
   }, [projectTasks]);
 
   const counts = useMemo(() => {
-    const active = projects.filter((p) => p.status === 'active').length;
-    const archived = projects.filter((p) => p.status === 'archived').length;
     return {
-      all: status ? projects.length : total,
-      active,
-      archived,
+      all: total,
+      inProgress: summary.inProgress,
+      completed: summary.completed,
+      archived: summary.archived ?? projects.filter((p) => p.status === 'archived').length,
+      active: summary.inProgress,
     };
-  }, [projects, status, total]);
+  }, [total, summary, projects]);
 
   const openTasksTotal = useMemo(
     () => projectTasks.filter((t) => t.status !== 'completed').length,
@@ -107,6 +107,35 @@ export function ProjectsListPage() {
   const handleQuickCreateTask = async (input: CreateTaskInput) => {
     await createTask(input);
     loadTasksSummary();
+  };
+
+  const activeOverviewCard = useMemo<
+    'total-assigned' | 'in-progress' | 'completed' | 'upcoming' | undefined
+  >(() => {
+    if (workflowStatus === 'completed') return 'completed';
+    if (workflowStatus === 'in_progress') return 'in-progress';
+    if (workflowStatus === 'not_started') return 'upcoming';
+    if (!status && !workflowStatus) return 'total-assigned';
+    return undefined;
+  }, [status, workflowStatus]);
+
+  const handleOverviewCardClick = (
+    cardId: 'total-assigned' | 'in-progress' | 'completed' | 'upcoming',
+  ) => {
+    setPage(1);
+    if (cardId === 'in-progress') {
+      setStatus('active');
+      setWorkflowStatus('in_progress');
+    } else if (cardId === 'completed') {
+      setStatus('active');
+      setWorkflowStatus('completed');
+    } else if (cardId === 'upcoming') {
+      setStatus('active');
+      setWorkflowStatus('not_started');
+    } else {
+      setStatus(undefined);
+      setWorkflowStatus(undefined);
+    }
   };
 
   return (
@@ -149,7 +178,12 @@ export function ProjectsListPage() {
       </div>
 
       {/* Overview Cards */}
-      <ProjectOverviewCards summary={summary} loading={loading && projects.length === 0} />
+      <ProjectOverviewCards
+        summary={summary}
+        loading={loading && projects.length === 0}
+        activeCardId={activeOverviewCard}
+        onCardClick={handleOverviewCardClick}
+      />
 
       {/* Filters */}
       <ProjectFilters
@@ -234,11 +268,13 @@ export function ProjectsListPage() {
                 <tbody className="divide-y divide-border text-sm">
                   {projects.map((project) => {
                     const summary = taskSummaryByProject.get(project.id);
+                    const isCompleted =
+                      project.workflowStatus === 'completed' || project.status === 'archived';
                     const pct =
-                      summary && summary.total > 0
-                        ? Math.round((summary.completed / summary.total) * 100)
-                        : project.status === 'archived'
-                          ? 100
+                      isCompleted
+                        ? 100
+                        : summary && summary.total > 0
+                          ? Math.round((summary.completed / summary.total) * 100)
                           : 0;
                     return (
                       <tr
@@ -257,7 +293,12 @@ export function ProjectsListPage() {
                         </td>
                         <td className="py-3.5 px-4 text-xs text-text-muted">{project.ownerName}</td>
                         <td className="py-3.5 px-4">
-                          <ProjectStatusBadge status={project.status} />
+                          <ProjectWorkflowBadge
+                            workflowStatus={
+                              project.workflowStatus ??
+                              (project.status === 'archived' ? 'completed' : 'in_progress')
+                            }
+                          />
                         </td>
                         <td className="py-3.5 px-4 w-40">
                           <div className="flex items-center gap-2">

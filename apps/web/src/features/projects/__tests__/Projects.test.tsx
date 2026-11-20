@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
@@ -509,6 +509,133 @@ describe('Projects Feature (Issue #42)', () => {
         expect.objectContaining({
           updateType: 'progress_update',
           content: 'Finished milestone 2 integration.',
+        }),
+      );
+    });
+  });
+
+  it('marks an In Progress project as Completed via detail drawer and triggers update (Issue #12)', async () => {
+    vi.mocked(projectsApi.updateProject).mockResolvedValue({
+      ...mockProjectDetail,
+      workflowStatus: 'completed',
+      progressPercent: 100,
+      version: 2,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/projects']}>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <ProjectsListPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Alpha Redesign Initiative')).toBeInTheDocument();
+    });
+
+    // Open project in detail drawer
+    fireEvent.click(screen.getByTestId('project-card-11111111-1111-1111-1111-111111111111'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Change project status')).toBeInTheDocument();
+    });
+
+    // Click "Completed" option in drawer status switcher
+    const statusSwitcher = screen.getByLabelText('Change project status');
+    const completedOption = within(statusSwitcher).getByRole('radio', { name: /^Completed$/i });
+    fireEvent.click(completedOption);
+
+    await waitFor(() => {
+      expect(projectsApi.updateProject).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        expect.objectContaining({
+          status: 'active',
+          workflowStatus: 'completed',
+          progressPercent: 100,
+        }),
+      );
+    });
+  });
+
+  it('filters projects by In Progress and Completed tabs (Issue #12)', async () => {
+    render(
+      <MemoryRouter initialEntries={['/projects']}>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <ProjectsListPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Projects')).toBeInTheDocument();
+    });
+
+    // Click "In Progress" tab
+    const inProgressTab = screen.getByRole('radio', { name: /In Progress/i });
+    fireEvent.click(inProgressTab);
+
+    await waitFor(() => {
+      expect(projectsApi.fetchProjects).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'active',
+          workflowStatus: 'in_progress',
+        }),
+        expect.any(AbortSignal),
+      );
+    });
+
+    // Click "Completed" tab
+    const completedTab = screen.getByRole('radio', { name: /Completed/i });
+    fireEvent.click(completedTab);
+
+    await waitFor(() => {
+      expect(projectsApi.fetchProjects).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'active',
+          workflowStatus: 'completed',
+        }),
+        expect.any(AbortSignal),
+      );
+    });
+  });
+
+  it('marks project as Completed from ProjectDetailPage header (Issue #12)', async () => {
+    const inProgressDetail: ProjectDetail = {
+      ...mockProjectDetail,
+      workflowStatus: 'in_progress',
+      progressPercent: 40,
+    };
+    vi.mocked(projectsApi.fetchProjectById).mockResolvedValue(inProgressDetail);
+    vi.mocked(projectsApi.updateProject).mockResolvedValue({
+      ...inProgressDetail,
+      workflowStatus: 'completed',
+      progressPercent: 100,
+      version: 2,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/projects/11111111-1111-1111-1111-111111111111']}>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <Routes>
+            <Route path="/projects/:id" element={<ProjectDetailPage />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mark-completed-btn')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('mark-completed-btn'));
+
+    await waitFor(() => {
+      expect(projectsApi.updateProject).toHaveBeenCalledWith(
+        '11111111-1111-1111-1111-111111111111',
+        expect.objectContaining({
+          workflowStatus: 'completed',
+          progressPercent: 100,
         }),
       );
     });

@@ -32,6 +32,8 @@ export interface ProjectFiltersProps {
     active?: number;
     archived?: number;
     in_process?: number;
+    inProgress?: number;
+    completed?: number;
     waiting?: number;
     delivered?: number;
   };
@@ -63,15 +65,32 @@ export function ProjectFilters({
   const usesStageMode = Boolean(onStageChange);
 
   const stageValue = stage ?? 'all';
-  const statusSegment = status || 'all';
+  const statusSegment =
+    workflowStatus === 'completed'
+      ? 'completed'
+      : status === 'archived'
+        ? 'archived'
+        : workflowStatus === 'in_progress' || status === 'active'
+          ? 'in_progress'
+          : 'all';
 
   const handleSegmentChange = (val: string) => {
     if (onStageChange) {
       onStageChange(val as ProjectStageFilter);
       return;
     }
-    if (onStatusChange) {
-      onStatusChange(val === 'all' ? undefined : (val as ProjectStatus));
+    if (val === 'in_progress') {
+      onStatusChange?.('active');
+      onWorkflowStatusChange?.('in_progress');
+    } else if (val === 'completed') {
+      onStatusChange?.('active');
+      onWorkflowStatusChange?.('completed');
+    } else if (val === 'archived') {
+      onStatusChange?.('archived');
+      onWorkflowStatusChange?.(undefined);
+    } else {
+      onStatusChange?.(undefined);
+      onWorkflowStatusChange?.(undefined);
     }
   };
 
@@ -116,16 +135,31 @@ export function ProjectFilters({
                     label: counts ? `All (${counts.all})` : 'All',
                   },
                   {
-                    value: 'active',
+                    value: 'in_progress',
                     label:
-                      counts?.active !== undefined ? `In Process (${counts.active})` : 'In Process',
+                      counts?.inProgress !== undefined
+                        ? `In Progress (${counts.inProgress})`
+                        : counts?.in_process !== undefined
+                          ? `In Progress (${counts.in_process})`
+                          : counts?.active !== undefined
+                            ? `In Progress (${counts.active})`
+                            : 'In Progress',
+                  },
+                  {
+                    value: 'completed',
+                    label:
+                      counts?.completed !== undefined
+                        ? `Completed (${counts.completed})`
+                        : counts?.delivered !== undefined
+                          ? `Completed (${counts.delivered})`
+                          : 'Completed',
                   },
                   {
                     value: 'archived',
                     label:
                       counts?.archived !== undefined
-                        ? `Delivered (${counts.archived})`
-                        : 'Delivered',
+                        ? `Archived (${counts.archived})`
+                        : 'Archived',
                   },
                 ]
           }

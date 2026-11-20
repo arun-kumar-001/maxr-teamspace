@@ -90,6 +90,7 @@ export class MemoryProjectsRepository implements IProjectsRepository {
       completed: activeVisible.filter((p) => p.workflowStatus === 'completed').length,
       upcoming: activeVisible.filter((p) => p.workflowStatus === 'not_started').length,
       onHold: activeVisible.filter((p) => p.workflowStatus === 'on_hold').length,
+      archived: visibleProjects.filter((p) => p.status === 'archived').length,
     };
 
     const q = params.q?.toLowerCase();

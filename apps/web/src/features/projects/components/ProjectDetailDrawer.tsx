@@ -9,8 +9,8 @@ import type { Task } from '../../tasks/types';
 import { useProjectDetail } from '../hooks/useProjectDetail';
 import { formatProjectDueSummary } from './ProjectCard';
 import { ProjectFormModal } from './ProjectFormModal';
-import { ProjectStatusBadge } from './ProjectStatusBadge';
-import type { ProjectStatus, UpdateProjectInput } from '../types';
+import { ProjectWorkflowBadge } from './ProjectStatusBadge';
+import type { UpdateProjectInput } from '../types';
 
 export interface ProjectDetailDrawerProps {
   projectId: string | null;
@@ -45,12 +45,13 @@ export function ProjectDetailDrawer({
 
   const projectTasks = tasks.filter((t) => t.projectId === projectId);
   const doneCount = projectTasks.filter((t) => t.status === 'completed').length;
-  const progressPct =
-    projectTasks.length > 0
+  const isCompleted =
+    project?.workflowStatus === 'completed' || project?.status === 'archived';
+  const progressPct = isCompleted
+    ? 100
+    : projectTasks.length > 0
       ? Math.round((doneCount / projectTasks.length) * 100)
-      : project?.status === 'archived'
-        ? 100
-        : 0;
+      : (project?.progressPercent ?? 0);
 
   const getInitials = (name: string) =>
     name
@@ -60,12 +61,28 @@ export function ProjectDetailDrawer({
       .map((part) => part[0]?.toUpperCase())
       .join('');
 
-  const handleStatusSwitch = async (nextStatus: ProjectStatus) => {
-    if (!project || project.status === nextStatus || !canManage) return;
+  const handleWorkflowStatusSwitch = async (
+    target: 'in_progress' | 'completed' | 'archived',
+  ) => {
+    if (!project || !canManage) return;
     setUpdatingStatus(true);
     setStatusError(null);
     try {
-      await updateProject({ status: nextStatus });
+      if (target === 'archived') {
+        await updateProject({ status: 'archived' });
+      } else if (target === 'completed') {
+        await updateProject({
+          status: 'active',
+          workflowStatus: 'completed',
+          progressPercent: 100,
+        });
+      } else {
+        await updateProject({
+          status: 'active',
+          workflowStatus: 'in_progress',
+        });
+      }
+      await refetch();
       onProjectUpdated?.();
     } catch (err: unknown) {
       setStatusError(err instanceof Error ? err.message : 'Failed to update project status');
@@ -76,6 +93,7 @@ export function ProjectDetailDrawer({
 
   const handleEditSubmit = async (input: Omit<UpdateProjectInput, 'version'>) => {
     await updateProject(input);
+    await refetch();
     onProjectUpdated?.();
   };
 
@@ -173,7 +191,11 @@ export function ProjectDetailDrawer({
             <div className="h-2 w-full rounded-full bg-track overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
-                  project.status === 'archived' ? 'bg-text-subtle' : 'bg-primary'
+                  isCompleted
+                    ? 'bg-positive-ink'
+                    : project.status === 'archived'
+                      ? 'bg-text-subtle'
+                      : 'bg-primary'
                 }`}
                 style={{ width: `${progressPct}%` }}
               />
@@ -185,17 +207,33 @@ export function ProjectDetailDrawer({
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">
                   Status
                 </span>
-                <ProjectStatusBadge status={project.status} />
+                <ProjectWorkflowBadge
+                  workflowStatus={
+                    project.workflowStatus ??
+                    (project.status === 'archived' ? 'completed' : 'in_progress')
+                  }
+                />
               </div>
 
               {canManage && (
                 <div className={updatingStatus ? 'opacity-60 pointer-events-none' : ''}>
                   <SegmentedControl
                     ariaLabel="Change project status"
-                    value={project.status}
-                    onChange={(val) => void handleStatusSwitch(val as ProjectStatus)}
+                    value={
+                      project.status === 'archived'
+                        ? 'archived'
+                        : project.workflowStatus === 'completed'
+                          ? 'completed'
+                          : 'in_progress'
+                    }
+                    onChange={(val) =>
+                      void handleWorkflowStatusSwitch(
+                        val as 'in_progress' | 'completed' | 'archived',
+                      )
+                    }
                     options={[
-                      { value: 'active', label: 'Active' },
+                      { value: 'in_progress', label: 'In Progress' },
+                      { value: 'completed', label: 'Completed' },
                       { value: 'archived', label: 'Archived' },
                     ]}
                   />

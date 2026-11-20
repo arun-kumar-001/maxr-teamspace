@@ -48,6 +48,7 @@ export function ProjectDetailPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isSubmittingStatus, setIsSubmittingStatus] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -91,6 +92,38 @@ export function ProjectDetailPage() {
       );
     } finally {
       setIsArchiving(false);
+    }
+  };
+
+  const handleMarkCompletedClick = async () => {
+    if (!project) return;
+    setActionError(null);
+    setIsSubmittingStatus(true);
+    try {
+      await updateProject({ workflowStatus: 'completed', progressPercent: 100 });
+      await refetch();
+    } catch (err: unknown) {
+      setActionError(
+        err instanceof Error ? err.message : 'Failed to mark project as completed',
+      );
+    } finally {
+      setIsSubmittingStatus(false);
+    }
+  };
+
+  const handleMarkInProgressClick = async () => {
+    if (!project) return;
+    setActionError(null);
+    setIsSubmittingStatus(true);
+    try {
+      await updateProject({ workflowStatus: 'in_progress' });
+      await refetch();
+    } catch (err: unknown) {
+      setActionError(
+        err instanceof Error ? err.message : 'Failed to update project status',
+      );
+    } finally {
+      setIsSubmittingStatus(false);
     }
   };
 
@@ -149,8 +182,9 @@ export function ProjectDetailPage() {
     );
   }
 
-  const progress = Math.max(0, Math.min(100, project.progressPercent ?? 0));
   const workflowStatus = project.workflowStatus ?? 'in_progress';
+  const isCompleted = workflowStatus === 'completed' || isArchived;
+  const progress = isCompleted ? 100 : Math.max(0, Math.min(100, project.progressPercent ?? 0));
   const priority = project.priority ?? 'medium';
   const milestones = project.milestones ?? [];
   const updates = project.updates ?? [];
@@ -246,6 +280,29 @@ export function ProjectDetailPage() {
 
           {canManage && (
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              {!isArchived && workflowStatus !== 'completed' && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleMarkCompletedClick}
+                  disabled={isSubmittingStatus}
+                  data-testid="mark-completed-btn"
+                >
+                  {isSubmittingStatus ? 'Updating...' : 'Mark as Completed'}
+                </Button>
+              )}
+              {!isArchived && workflowStatus === 'completed' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleMarkInProgressClick}
+                  disabled={isSubmittingStatus}
+                  data-testid="mark-in-progress-btn"
+                >
+                  {isSubmittingStatus ? 'Updating...' : 'Reopen (In Progress)'}
+                </Button>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"

@@ -23,6 +23,7 @@ function deriveSummary(items: Project[]): ProjectsSummary {
     completed: active.filter((p) => p.workflowStatus === 'completed').length,
     upcoming: active.filter((p) => p.workflowStatus === 'not_started').length,
     onHold: active.filter((p) => p.workflowStatus === 'on_hold').length,
+    archived: items.filter((p) => p.status === 'archived').length,
   };
 }
 

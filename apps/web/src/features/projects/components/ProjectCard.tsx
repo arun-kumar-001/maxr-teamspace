@@ -39,7 +39,7 @@ export const PROJECT_STAGE_STYLES: Record<
   { label: string; badgeClass: string; dotClass: string; topBorderClass: string }
 > = {
   in_process: {
-    label: 'In Process',
+    label: 'In Progress',
     badgeClass: 'bg-tile-yellow text-warning border border-warning/20',
     dotClass: 'bg-warning',
     topBorderClass: 'border-t-primary-strong',
@@ -51,7 +51,7 @@ export const PROJECT_STAGE_STYLES: Record<
     topBorderClass: 'border-t-primary',
   },
   delivered: {
-    label: 'Delivered',
+    label: 'Completed',
     badgeClass: 'bg-positive-soft text-positive-ink border border-positive-ink/20',
     dotClass: 'bg-positive-ink',
     topBorderClass: 'border-t-positive-ink',
@@ -105,10 +105,10 @@ export function ProjectCard({
   const stageStyle = PROJECT_STAGE_STYLES[stage];
 
   const progressPct =
-    taskSummary && taskSummary.total > 0
-      ? Math.round((taskSummary.completed / taskSummary.total) * 100)
-      : stage === 'delivered'
-        ? 100
+    stage === 'delivered' || project.workflowStatus === 'completed'
+      ? 100
+      : taskSummary && taskSummary.total > 0
+        ? Math.round((taskSummary.completed / taskSummary.total) * 100)
         : 0;
 
   const dueSummary = formatProjectDueSummary(project.startDate, project.endDate);
@@ -187,7 +187,11 @@ export function ProjectCard({
           <div className="flex-1 h-1.5 rounded-full bg-track overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
-                project.status === 'archived' ? 'bg-text-subtle' : 'bg-primary'
+                stage === 'delivered' || project.workflowStatus === 'completed'
+                  ? 'bg-positive-ink'
+                  : project.status === 'archived'
+                    ? 'bg-text-subtle'
+                    : 'bg-primary'
               }`}
               style={{ width: `${progressPct}%` }}
             />
