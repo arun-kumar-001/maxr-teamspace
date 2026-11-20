@@ -143,6 +143,21 @@ registerRoute({
 });
 
 registerRoute({
+  method: 'post',
+  path: '/expense-claims/raw',
+  tags: ['Expenses'],
+  summary:
+    'Submit an expense claim with the receipt as the raw request body. The claim fields go in the X-Category-Id, X-Amount-Paise, X-Expense-Date and X-Description headers (or the same names as query parameters)',
+  permission: 'expenses.submit',
+  upload: { contentTypes: ['application/pdf', 'image/png', 'image/jpeg'] },
+  success: {
+    status: 201,
+    description: 'Submitted claim',
+    schema: z.object({ data: expenseClaimSchema }),
+  },
+});
+
+registerRoute({
   method: 'get',
   path: '/expense-claims/{id}',
   tags: ['Expenses'],

@@ -25,7 +25,7 @@ export const errorEnvelopeSchema = z
   })
   .meta({ id: 'ErrorEnvelope' });
 
-type Method = 'get' | 'post' | 'put' | 'delete';
+type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export interface RouteDoc {
   method: Method;

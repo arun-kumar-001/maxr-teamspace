@@ -2,7 +2,10 @@ import { idParamSchema } from '@maxr/shared';
 import { z } from 'zod';
 import { registerRoute } from '../../../openapi/registry';
 import {
+  employeeStepSchema,
+  itemParamSchema,
   listOnboardingQuerySchema,
+  reopenBodySchema,
   setPasswordSchema,
   verifyItemSchema,
 } from './onboarding.schemas';
@@ -137,5 +140,65 @@ registerRoute({
         employeeId: z.string(),
       }),
     }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/onboarding/{id}/items/{itemKey}/unverify',
+  tags: ['Onboarding'],
+  summary: 'Undo the verification of an onboarding checklist item',
+  permission: 'onboarding.reopen',
+  params: itemParamSchema,
+  success: {
+    status: 200,
+    description: 'Updated onboarding checklist',
+    schema: z.object({ data: onboardingDetailSchema }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/onboarding/{id}/generate-token',
+  tags: ['Onboarding'],
+  summary: 'Create a single-use set-password token for the new employee (Admin, HR Manager)',
+  permission: 'onboarding.verify_hr',
+  params: idParamSchema,
+  success: {
+    status: 200,
+    description: 'When the token expires; it is delivered to the employee by email',
+    schema: z.object({
+      data: z.object({ expiresAt: z.string(), token: z.string().optional() }),
+    }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/onboarding/{id}/employee-step',
+  tags: ['Onboarding'],
+  summary: 'The new employee confirms their profile and acknowledges the policies',
+  permission: 'onboarding.complete_employee',
+  params: idParamSchema,
+  body: employeeStepSchema,
+  success: {
+    status: 200,
+    description: 'Updated onboarding checklist',
+    schema: z.object({ data: onboardingDetailSchema }),
+  },
+});
+
+registerRoute({
+  method: 'post',
+  path: '/onboarding/{id}/reopen',
+  tags: ['Onboarding'],
+  summary: 'Reopen a completed onboarding checklist',
+  permission: 'onboarding.reopen',
+  params: idParamSchema,
+  body: reopenBodySchema,
+  success: {
+    status: 200,
+    description: 'Reopened onboarding checklist',
+    schema: z.object({ data: onboardingDetailSchema }),
   },
 });

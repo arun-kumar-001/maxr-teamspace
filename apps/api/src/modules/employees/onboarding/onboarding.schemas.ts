@@ -24,3 +24,12 @@ export const setPasswordSchema = z.object({
   token: z.string().min(16).max(256),
   newPassword: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH),
 });
+
+export const itemParamSchema = z.object({
+  id: z.string().uuid(),
+  itemKey: z.string().min(1).max(100),
+});
+
+export const reopenBodySchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+});
