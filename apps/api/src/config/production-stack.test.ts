@@ -9,6 +9,13 @@ const read = (file: string) => fs.readFileSync(path.join(DEPLOY, file), 'utf8');
 describe('production stack (deploy/)', () => {
   const compose = read('docker-compose.prod.yml');
 
+  describe('email', () => {
+    it('does not default SMTP_HOST to this machine, so a missing value is caught at start-up', () => {
+      expect(compose).toContain('SMTP_HOST: ${SMTP_HOST:-}');
+      expect(compose).not.toMatch(/SMTP_HOST:.*localhost/);
+    });
+  });
+
   describe('payslip PDF', () => {
     it('ships the logo the PDF draws into the API image, where the PDF code looks for it', () => {
       const dockerfile = read('Dockerfile.api');

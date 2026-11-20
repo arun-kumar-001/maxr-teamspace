@@ -98,6 +98,12 @@ export function loadPlatformConfig(env: NodeJS.ProcessEnv = process.env): Platfo
     fail('STORAGE_SIGNING_SECRET is required in production');
   }
 
+  // `localhost:1025` is the development mail catcher. Defaulting to it in production would let every
+  // email (password set-up links, approvals) be accepted by nothing and lost without an error.
+  if (production && emailDriver === 'smtp' && !env.SMTP_HOST) {
+    fail('SMTP_HOST is required in production when EMAIL_DRIVER=smtp');
+  }
+
   const smtpPort = readInt('SMTP_PORT', env.SMTP_PORT, 1025, 1, 65535);
 
   return {
