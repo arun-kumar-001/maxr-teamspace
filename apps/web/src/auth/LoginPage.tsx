@@ -132,7 +132,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
           {error && (
             <div
               role="alert"
-              className="w-full mb-4 px-3.5 py-2.5 rounded-control text-xs sm:text-sm font-medium text-center border border-danger/30 bg-danger/10 text-danger"
+              className="w-full mb-4 px-3.5 py-2.5 rounded-input text-xs sm:text-sm font-medium text-center border border-danger/30 bg-danger/10 text-danger"
             >
               {error}
             </div>
@@ -166,7 +166,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 autoComplete="username"
                 required
                 aria-label="Email or Username"
-                className="w-full h-11 rounded-control border border-border-strong bg-surface-raised pl-10 pr-4 text-sm text-text placeholder:text-sm placeholder:text-text-subtle outline-none transition-all focus:border-primary-strong focus:ring-2 focus:ring-primary-soft"
+                className="w-full h-11 rounded-input border border-border-strong bg-surface-raised pl-10 pr-4 text-sm text-text placeholder:text-sm placeholder:text-text-subtle outline-none transition-all focus:border-primary-strong focus:ring-2 focus:ring-primary-soft"
               />
             </div>
 
@@ -196,7 +196,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 aria-label="Password"
-                className="w-full h-11 rounded-control border border-border-strong bg-surface-raised pl-10 pr-11 text-sm text-text placeholder:text-sm placeholder:text-text-subtle outline-none transition-all focus:border-primary-strong focus:ring-2 focus:ring-primary-soft"
+                className="w-full h-11 rounded-input border border-border-strong bg-surface-raised pl-10 pr-11 text-sm text-text placeholder:text-sm placeholder:text-text-subtle outline-none transition-all focus:border-primary-strong focus:ring-2 focus:ring-primary-soft"
               />
               <button
                 type="button"
@@ -257,7 +257,7 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-1 w-full h-11 flex items-center justify-center gap-2 font-semibold text-sm rounded-control bg-primary-deep hover:bg-primary-ink text-white shadow-primary cursor-pointer transition-all disabled:opacity-70"
+              className="mt-1 w-full h-11 flex items-center justify-center gap-2 font-semibold text-sm rounded-input bg-primary-deep hover:bg-primary-ink text-white shadow-primary cursor-pointer transition-all disabled:opacity-70"
             >
               {isLoading ? (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

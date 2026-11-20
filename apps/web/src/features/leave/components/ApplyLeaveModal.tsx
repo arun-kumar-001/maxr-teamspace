@@ -535,7 +535,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4" data-testid="apply-leave-form">
         {error && (
           <div
-            className="p-3 rounded-control bg-rose-50 border border-rose-200 text-xs text-rose-800"
+            className="p-3 rounded-input bg-rose-50 border border-rose-200 text-xs text-rose-800"
             role="alert"
             data-testid="apply-leave-error-banner"
           >
@@ -578,7 +578,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                   data-testid="leave-approver-dropdown-btn"
                   disabled={isSubmitting || !approvalRoute || routeError}
                   onClick={() => setIsApproverDropdownOpen((prev) => !prev)}
-                  className={`w-full rounded-control border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
+                  className={`w-full rounded-input border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
                     isApproverDropdownOpen
                       ? 'border-primary-strong ring-1 ring-primary-strong'
                       : 'border-border hover:border-border-strong'
@@ -724,7 +724,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                     setIsDropdownOpen(true);
                     inputRef.current?.focus();
                   }}
-                  className={`w-full rounded-control border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
+                  className={`w-full rounded-input border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
                     isDropdownOpen
                       ? 'border-primary-strong ring-1 ring-primary-strong'
                       : 'border-border hover:border-border-strong'
@@ -880,7 +880,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               value={startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
               disabled={isSubmitting}
-              className="w-full rounded-control border border-border hover:border-border-strong bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px] transition-colors"
+              className="w-full rounded-input border border-border hover:border-border-strong bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px] transition-colors"
               required
             />
           </FormField>
@@ -895,7 +895,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                 value={endDate}
                 onChange={(e) => handleEndDateChange(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full rounded-control border border-border hover:border-border-strong bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px] transition-colors"
+                className="w-full rounded-input border border-border hover:border-border-strong bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px] transition-colors"
                 required
               />
             </FormField>
@@ -963,7 +963,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               disabled={isSubmitting}
               placeholder="Provide context for your team lead and approvers..."
-              className="w-full rounded-control border border-border bg-surface p-2.5 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none transition-colors"
+              className="w-full rounded-input border border-border bg-surface p-2.5 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none transition-colors"
             />
           </FormField>
 
@@ -1012,7 +1012,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                   const file = e.dataTransfer.files?.[0];
                   if (file) handleFile(file);
                 }}
-                className={`relative flex flex-col items-center justify-center p-3 rounded-control border-2 border-dashed cursor-pointer transition-all min-h-[92px] text-center ${
+                className={`relative flex flex-col items-center justify-center p-3 rounded-input border-2 border-dashed cursor-pointer transition-all min-h-[92px] text-center ${
                   isDragging
                     ? 'border-primary-strong bg-primary-soft/60 ring-2 ring-primary-soft'
                     : 'border-border hover:border-primary-strong/60 hover:bg-surface-muted/60 bg-surface'
@@ -1048,7 +1048,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                 <p className="text-[11px] text-text-subtle">PDF, PNG, JPG, DOCX (Max 5 MB)</p>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-3 rounded-control border border-border bg-surface-muted min-h-[92px]">
+              <div className="flex items-center justify-between p-3 rounded-input border border-border bg-surface-muted min-h-[92px]">
                 <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
                   <div className="w-9 h-9 rounded-xl bg-primary-soft text-primary-deep flex items-center justify-center shrink-0 border border-primary-strong/20 font-bold text-xs font-mono uppercase">
                     {attachment.name.split('.').pop() || 'DOC'}
