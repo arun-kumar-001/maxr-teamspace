@@ -519,6 +519,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      maxWidth="2xl"
       title={
         mode === 'edit'
           ? initialRequest?.requestCode
@@ -558,47 +559,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 py-2" data-testid="apply-leave-form">
-        <div
-          className="rounded-control border border-border bg-surface-muted p-3"
-          aria-live="polite"
-        >
-          <FormField htmlFor="leave-approver" label="Send request to" required>
-            <Select
-              id="leave-approver"
-              value={approverRole}
-              required
-              placeholder={!approvalRoute && !routeError ? 'Loading approvers…' : 'Select approver'}
-              options={(approvalRoute?.approverRoles ?? []).map((role) => ({
-                value: role,
-                label: { hr_manager: 'HR Manager', team_lead: 'Team Lead', admin: 'Admin' }[role],
-              }))}
-              disabled={isSubmitting || !approvalRoute || routeError}
-              onChange={(event) => {
-                setApproverRole(event.target.value as typeof approverRole);
-                setError(null);
-              }}
-            />
-          </FormField>
-          {routeError ? (
-            <div>
-              <p role="alert" className="text-sm text-danger">
-                Could not load your approver.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setRouteRetry((value) => value + 1)}
-              >
-                Retry approver
-              </Button>
-            </div>
-          ) : null}
-          <p className="mt-1 text-xs text-text-subtle">
-            Choose who should approve this leave request. Team Lead is available when an active Team
-            Lead is assigned. HR leave goes to Admin.
-          </p>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4" data-testid="apply-leave-form">
         {error && (
           <div
             className="p-3 rounded-control bg-rose-50 border border-rose-200 text-xs text-rose-800"
@@ -609,215 +570,234 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           </div>
         )}
 
-        {/* Hidden native select to preserve 100% compatibility with unit tests querying getByLabelText */}
-        <select
-          id="apply-leave-type-native"
-          aria-label="Select Leave Type"
-          value={leaveTypeId}
-          onChange={(e) => handleSelectPolicy(e.target.value)}
-          className="sr-only"
-          tabIndex={-1}
-        >
-          <option value="">Select policy to request leave.</option>
-          {resolvedPolicies.map((p) => {
-            const bal = balances.find((b) => b.leaveTypeId === p.id);
-            const balanceText = p.hasBalance && bal ? ` (${bal.remaining}d available)` : '';
-            return (
-              <option key={p.id} value={p.id}>
-                {p.name} [{p.code}]{balanceText}
-              </option>
-            );
-          })}
-        </select>
-
-        {/* Enhanced Searchable Combobox Leave Type Dropdown */}
-        <FormField
-          label="Leave Type"
-          htmlFor="apply-leave-type-input"
-          required
-          helperText={
-            selectedBalance
-              ? `${selectedBalance.remaining} days available out of ${selectedBalance.allotted + selectedBalance.carriedForward} total days.`
-              : selectedPolicy?.hasBalance
-                ? `${selectedPolicy.annualDays} days available out of ${selectedPolicy.annualDays} total days.`
-                : isPermission
-                  ? 'Permission request (up to 2 hours).'
-                  : 'Select policy to request leave.'
-          }
-        >
-          <div ref={dropdownRef} className="relative w-full" data-testid="leave-type-combobox">
-            {/* Input Trigger Box */}
-            <div
-              onClick={() => {
-                setIsDropdownOpen(true);
-                inputRef.current?.focus();
-              }}
-              className={`w-full rounded-control border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
-                isDropdownOpen
-                  ? 'border-primary-strong ring-1 ring-primary-strong'
-                  : 'border-border hover:border-border-strong'
-              }`}
-            >
-              <div className="flex items-center gap-2.5 flex-1 min-w-0 mr-2">
-                {selectedPolicy && !isDropdownOpen && getPolicyIcon(selectedPolicy.name)}
-
-                <input
-                  ref={inputRef}
-                  id="apply-leave-type-input"
-                  data-testid="apply-leave-type-search-input"
-                  type="text"
-                  value={isDropdownOpen ? searchQuery : selectedPolicy ? selectedPolicy.name : ''}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (!isDropdownOpen) setIsDropdownOpen(true);
-                  }}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    selectedPolicy ? selectedPolicy.name : 'Search or select leave type...'
-                  }
-                  className="w-full bg-transparent border-none p-0 text-sm font-medium text-text placeholder-text-muted/60 focus:outline-none focus:ring-0 truncate"
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              {/* Action Buttons: Clear + Dropdown toggle arrow */}
-              <div className="flex items-center gap-1 shrink-0 text-text-muted">
-                {selectedPolicy && !isDropdownOpen && (
-                  <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-muted text-text-muted border border-border">
-                    {selectedPolicy.code}
-                  </span>
-                )}
-
-                <button
+        {/* Row 1: Approver & Leave Type side by side */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div aria-live="polite">
+            <FormField htmlFor="leave-approver" label="Send request to" required>
+              <Select
+                id="leave-approver"
+                value={approverRole}
+                required
+                placeholder={
+                  !approvalRoute && !routeError ? 'Loading approvers…' : 'Select approver'
+                }
+                options={(approvalRoute?.approverRoles ?? []).map((role) => ({
+                  value: role,
+                  label: { hr_manager: 'HR Manager', team_lead: 'Team Lead', admin: 'Admin' }[role],
+                }))}
+                disabled={isSubmitting || !approvalRoute || routeError}
+                onChange={(event) => {
+                  setApproverRole(event.target.value as typeof approverRole);
+                  setError(null);
+                }}
+              />
+            </FormField>
+            {routeError ? (
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <p role="alert" className="text-xs text-danger">
+                  Could not load your approver.
+                </p>
+                <Button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDropdownOpen((prev) => !prev);
-                  }}
-                  data-testid="leave-type-dropdown-btn"
-                  aria-label="Toggle leave types list"
-                  className="p-1 hover:text-text rounded-md transition-colors"
+                  variant="outline"
+                  onClick={() => setRouteRetry((value) => value + 1)}
                 >
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isDropdownOpen ? 'rotate-180' : ''
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                  Retry approver
+                </Button>
               </div>
-            </div>
+            ) : null}
+          </div>
 
-            {/* Floating Dropdown List Menu */}
-            {isDropdownOpen && (
-              <div
-                className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border border-border bg-surface p-1.5 shadow-2xl max-h-60 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95 duration-150"
-                role="listbox"
-                data-testid="leave-type-options-list"
-              >
-                {filteredPolicies.length === 0 ? (
-                  <div className="p-3 text-center text-xs text-text-muted">
-                    No matching leave types found
+          <div>
+            {/* Hidden native select to preserve 100% compatibility with unit tests querying getByLabelText */}
+            <select
+              id="apply-leave-type-native"
+              aria-label="Select Leave Type"
+              value={leaveTypeId}
+              onChange={(e) => handleSelectPolicy(e.target.value)}
+              className="sr-only"
+              tabIndex={-1}
+            >
+              <option value="">Select policy to request leave.</option>
+              {resolvedPolicies.map((p) => {
+                const bal = balances.find((b) => b.leaveTypeId === p.id);
+                const balanceText = p.hasBalance && bal ? ` (${bal.remaining}d available)` : '';
+                return (
+                  <option key={p.id} value={p.id}>
+                    {p.name} [{p.code}]{balanceText}
+                  </option>
+                );
+              })}
+            </select>
+
+            {/* Enhanced Searchable Combobox Leave Type Dropdown */}
+            <FormField
+              label="Leave Type"
+              htmlFor="apply-leave-type-input"
+              required
+              helperText={
+                selectedBalance
+                  ? `${selectedBalance.remaining} days available out of ${selectedBalance.allotted + selectedBalance.carriedForward} total days.`
+                  : selectedPolicy?.hasBalance
+                    ? `${selectedPolicy.annualDays} days quota.`
+                    : isPermission
+                      ? 'Permission request (up to 2 hours).'
+                      : undefined
+              }
+            >
+              <div ref={dropdownRef} className="relative w-full" data-testid="leave-type-combobox">
+                {/* Input Trigger Box */}
+                <div
+                  onClick={() => {
+                    setIsDropdownOpen(true);
+                    inputRef.current?.focus();
+                  }}
+                  className={`w-full rounded-control border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
+                    isDropdownOpen
+                      ? 'border-primary-strong ring-1 ring-primary-strong'
+                      : 'border-border hover:border-border-strong'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0 mr-2">
+                    {selectedPolicy && !isDropdownOpen && getPolicyIcon(selectedPolicy.name)}
+
+                    <input
+                      ref={inputRef}
+                      id="apply-leave-type-input"
+                      data-testid="apply-leave-type-search-input"
+                      type="text"
+                      value={
+                        isDropdownOpen ? searchQuery : selectedPolicy ? selectedPolicy.name : ''
+                      }
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        if (!isDropdownOpen) setIsDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsDropdownOpen(true)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={
+                        selectedPolicy ? selectedPolicy.name : 'Search or select leave type...'
+                      }
+                      className="w-full bg-transparent border-none p-0 text-sm font-medium text-text placeholder-text-muted/60 focus:outline-none focus:ring-0 truncate"
+                      disabled={isSubmitting}
+                    />
                   </div>
-                ) : (
-                  filteredPolicies.map((policy, idx) => {
-                    const isSelected = policy.id === leaveTypeId;
-                    const isHighlighted = idx === highlightedIndex;
-                    const bal = balances.find((b) => b.leaveTypeId === policy.id);
 
-                    return (
-                      <div
-                        key={policy.id}
-                        role="option"
-                        aria-selected={isSelected}
-                        data-testid={`leave-type-option-${policy.id}`}
-                        onClick={() => handleSelectPolicy(policy.id)}
-                        onMouseEnter={() => setHighlightedIndex(idx)}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-primary-soft text-primary-deep'
-                            : isHighlighted
-                              ? 'bg-surface-muted text-text'
-                              : 'text-text hover:bg-surface-muted'
+                  {/* Action Buttons: Clear + Dropdown toggle arrow */}
+                  <div className="flex items-center gap-1 shrink-0 text-text-muted">
+                    {selectedPolicy && !isDropdownOpen && (
+                      <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-surface-muted text-text-muted border border-border">
+                        {selectedPolicy.code}
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsDropdownOpen((prev) => !prev);
+                      }}
+                      data-testid="leave-type-dropdown-btn"
+                      aria-label="Toggle leave types list"
+                      className="p-1 hover:text-text rounded-md transition-colors"
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          isDropdownOpen ? 'rotate-180' : ''
                         }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth="2"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {getPolicyIcon(policy.name)}
-                          <div className="truncate text-left">
-                            <span className="font-bold block truncate">{policy.name}</span>
-                            <span className="text-[10px] text-text-muted font-mono">
-                              [{policy.code}]
-                            </span>
-                          </div>
-                        </div>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
 
-                        <div className="flex items-center gap-2 shrink-0 ml-2">
-                          {policy.hasBalance ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-surface-muted text-text-muted border border-border">
-                              {bal ? `${bal.remaining}d left` : `${policy.annualDays}d quota`}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              No quota limit
-                            </span>
-                          )}
-
-                          {isSelected && (
-                            <svg
-                              className="w-4 h-4 text-primary-deep"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2.5"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
-                          )}
-                        </div>
+                {/* Floating Dropdown List Menu */}
+                {isDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border border-border bg-surface p-1.5 shadow-2xl max-h-56 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95 duration-150"
+                    role="listbox"
+                    data-testid="leave-type-options-list"
+                  >
+                    {filteredPolicies.length === 0 ? (
+                      <div className="p-3 text-center text-xs text-text-muted">
+                        No matching leave types found
                       </div>
-                    );
-                  })
+                    ) : (
+                      filteredPolicies.map((policy, idx) => {
+                        const isSelected = policy.id === leaveTypeId;
+                        const isHighlighted = idx === highlightedIndex;
+                        const bal = balances.find((b) => b.leaveTypeId === policy.id);
+
+                        return (
+                          <div
+                            key={policy.id}
+                            role="option"
+                            aria-selected={isSelected}
+                            data-testid={`leave-type-option-${policy.id}`}
+                            onClick={() => handleSelectPolicy(policy.id)}
+                            onMouseEnter={() => setHighlightedIndex(idx)}
+                            className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-primary-soft text-primary-deep'
+                                : isHighlighted
+                                  ? 'bg-surface-muted text-text'
+                                  : 'text-text hover:bg-surface-muted'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {getPolicyIcon(policy.name)}
+                              <div className="truncate text-left">
+                                <span className="font-bold block truncate">{policy.name}</span>
+                                <span className="text-[10px] text-text-muted font-mono">
+                                  [{policy.code}]
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              {policy.hasBalance ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-surface-muted text-text-muted border border-border">
+                                  {bal ? `${bal.remaining}d left` : `${policy.annualDays}d quota`}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  No quota limit
+                                </span>
+                              )}
+
+                              {isSelected && (
+                                <svg
+                                  className="w-4 h-4 text-primary-deep"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="2.5"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 )}
               </div>
-            )}
+            </FormField>
           </div>
-        </FormField>
+        </div>
 
-        {/* Half Day Toggle */}
-        {selectedPolicy?.allowHalfDay && !isPermission && (
-          <div className="flex items-center gap-3 p-3 rounded-tile bg-surface-muted border border-border">
-            <input
-              id="apply-half-day-toggle"
-              data-testid="apply-half-day-toggle"
-              type="checkbox"
-              checked={halfDay}
-              disabled={isSubmitting}
-              onChange={(e) => handleHalfDayToggle(e.target.checked)}
-              className="h-5 w-5 rounded border-border-strong text-primary-deep focus:ring-primary-strong"
-            />
-            <label
-              htmlFor="apply-half-day-toggle"
-              className="text-xs font-semibold text-text cursor-pointer select-none"
-            >
-              Half-Day Leave (0.5 day)
-              <span className="block font-normal text-text-muted mt-0.5">
-                Applies to a single working day.
-              </span>
-            </label>
-          </div>
-        )}
-
-        {/* Date Pickers */}
+        {/* Row 2: Date Pickers */}
         <div
           className={`grid grid-cols-1 ${isPermission || halfDay ? 'sm:grid-cols-1' : 'sm:grid-cols-2'} gap-4`}
         >
@@ -825,7 +805,6 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
             label={isPermission ? 'Permission Date' : halfDay ? 'Date' : 'Start Date'}
             htmlFor="apply-start-date"
             required
-            helperText="Format: YYYY-MM-DD"
           >
             <input
               id="apply-start-date"
@@ -840,12 +819,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           </FormField>
 
           {!halfDay && !isPermission && (
-            <FormField
-              label="End Date"
-              htmlFor="apply-end-date"
-              required
-              helperText="Format: YYYY-MM-DD"
-            >
+            <FormField label="End Date" htmlFor="apply-end-date" required>
               <input
                 id="apply-end-date"
                 data-testid="apply-end-date-input"
@@ -861,21 +835,41 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           )}
         </div>
 
-        {/* Dynamic Duration Calculation Preview */}
-        <div className="p-3 rounded-tile bg-surface-muted border border-border flex items-center justify-between text-xs">
-          <div>
-            <span className="text-text-subtle block font-semibold">
-              {isPermission ? 'Permission Request' : 'Calculated Duration'}
+        {/* Row 3: Half-Day Option & Duration strip */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-tile bg-surface-muted border border-border text-xs">
+          {selectedPolicy?.allowHalfDay && !isPermission ? (
+            <label
+              htmlFor="apply-half-day-toggle"
+              className="flex items-center gap-2.5 cursor-pointer select-none text-xs font-semibold text-text"
+            >
+              <input
+                id="apply-half-day-toggle"
+                data-testid="apply-half-day-toggle"
+                type="checkbox"
+                checked={halfDay}
+                disabled={isSubmitting}
+                onChange={(e) => handleHalfDayToggle(e.target.checked)}
+                className="h-4 w-4 rounded border-border-strong text-primary-deep focus:ring-primary-strong"
+              />
+              <span>
+                Half-Day Leave (0.5 day)
+                <span className="font-normal text-text-subtle ml-1.5 hidden sm:inline">
+                  (single working day)
+                </span>
+              </span>
+            </label>
+          ) : (
+            <span className="text-xs text-text-subtle font-medium">
+              {isPermission ? 'Short permission' : 'Standard working day request'}
             </span>
-            <span className="text-xs text-text-muted">
-              {isPermission
-                ? 'Short permission on a single working day'
-                : 'Excludes weekends and company holidays'}
+          )}
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <span className="text-xs text-text-subtle font-medium">
+              {isPermission ? 'Permission:' : 'Calculated Duration:'}
             </span>
-          </div>
-          <div className="text-right">
             <span
-              className="text-sm font-bold text-primary-deep font-mono"
+              className="text-xs font-bold text-primary-deep font-mono px-2 py-0.5 rounded-full bg-primary-soft border border-primary-strong/20"
               data-testid="estimated-days-badge"
             >
               {isPermission
@@ -885,7 +879,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           </div>
         </div>
 
-        {/* Reason */}
+        {/* Row 4: Reason / Notes */}
         <FormField
           label="Reason / Notes (Optional)"
           htmlFor="apply-reason"
@@ -894,13 +888,13 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           <textarea
             id="apply-reason"
             data-testid="apply-reason-input"
-            rows={3}
+            rows={2}
             maxLength={500}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             disabled={isSubmitting}
             placeholder="Provide context for your team lead and approvers..."
-            className="w-full rounded-control border border-border bg-surface p-3 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong"
+            className="w-full rounded-control border border-border bg-surface p-2.5 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none"
           />
         </FormField>
       </form>
