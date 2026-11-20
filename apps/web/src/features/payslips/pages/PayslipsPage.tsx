@@ -649,35 +649,6 @@ export const PayslipsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Leave Details Strip (Server Style) */}
-            <div className="rounded-xl border border-border bg-surface-muted/60 p-2.5">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-primary-ink mb-1.5">
-                Leave Details (Days)
-              </p>
-              <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                <div className="bg-surface rounded-lg p-1.5 border border-border">
-                  <span className="text-text-muted text-[10px] block font-semibold">SL</span>
-                  <span className="font-bold text-text">{previewSlip.leaveBalances?.sl ?? 0}</span>
-                </div>
-                <div className="bg-surface rounded-lg p-1.5 border border-border">
-                  <span className="text-text-muted text-[10px] block font-semibold">EL</span>
-                  <span className="font-bold text-text">{previewSlip.leaveBalances?.el ?? 0}</span>
-                </div>
-                <div className="bg-surface rounded-lg p-1.5 border border-border">
-                  <span className="text-text-muted text-[10px] block font-semibold">CL</span>
-                  <span className="font-bold text-text">{previewSlip.leaveBalances?.cl ?? 0}</span>
-                </div>
-                <div className="bg-surface rounded-lg p-1.5 border border-border">
-                  <span className="text-text-muted text-[10px] block font-semibold">FL</span>
-                  <span className="font-bold text-text">{previewSlip.leaveBalances?.fl ?? 0}</span>
-                </div>
-                <div className="bg-surface rounded-lg p-1.5 border border-border">
-                  <span className="text-text-muted text-[10px] block font-semibold">LC</span>
-                  <span className="font-bold text-text">{previewSlip.leaveBalances?.lc ?? 0}</span>
-                </div>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="border border-border rounded-tile p-3.5 bg-surface flex flex-col justify-between gap-2">
                 <div className="space-y-2">
@@ -755,51 +726,6 @@ export const PayslipsPage: React.FC = () => {
                   <span>Total Deductions</span>
                   <span className="font-display tabular-nums whitespace-nowrap">
                     {formatInr(previewSlip.totalDeductions)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Retirals & Projected Annual Tax (Server Style) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="border border-border rounded-tile p-3 bg-surface-muted/40 space-y-1.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted border-b border-border pb-1">
-                  Retirals as on Month end
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Provident Fund</span>
-                  <span className="font-medium tabular-nums">
-                    {formatInr(previewSlip.retiralPf || previewSlip.providentFund || 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Gratuity</span>
-                  <span className="font-medium tabular-nums">
-                    {formatInr(previewSlip.retiralGratuity || 2165)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="border border-border rounded-tile p-3 bg-surface-muted/40 space-y-1.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted border-b border-border pb-1">
-                  Projected Annual Tax Information
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Annual Income</span>
-                  <span className="font-medium tabular-nums">
-                    {formatInr(previewSlip.annualIncome || 1020000)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">NetTax Income</span>
-                  <span className="font-medium tabular-nums">
-                    {formatInr(previewSlip.netTaxIncome || 870000)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-text-muted">Balance Tax</span>
-                  <span className="font-bold text-primary-ink tabular-nums">
-                    {formatInr(previewSlip.balanceTax || 17000)}
                   </span>
                 </div>
               </div>

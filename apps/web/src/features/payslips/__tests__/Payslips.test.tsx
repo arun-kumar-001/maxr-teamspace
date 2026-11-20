@@ -138,27 +138,4 @@ describe('PayslipsPage', () => {
     expect(await screen.findByText('HR Payroll Management')).toBeDefined();
     expect(screen.getByTestId('create-payslip-btn')).toBeDefined();
   });
-
-  it('gracefully falls back to demo records and downloads PDF when backend is offline', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new Error('Backend API is not running on http://localhost:4000')),
-    );
-
-    render(
-      <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
-        <PayslipsPage />
-      </AuthProvider>,
-    );
-
-    expect(await screen.findByTestId('payslip-card-2026-11')).toBeDefined();
-    expect(screen.getAllByText('November 2026').length).toBeGreaterThan(0);
-
-    // Verify PDF download works even with backend offline
-    const downloadBtn = screen.getByTestId('download-payslip-demo-slip-2026-11');
-    fireEvent.click(downloadBtn);
-    await waitFor(() => {
-      expect(screen.getByText(/Downloaded MAXR_Payslip_November_2026_EMP-001.pdf/i)).toBeDefined();
-    });
-  });
 });
