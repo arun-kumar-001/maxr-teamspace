@@ -313,4 +313,25 @@ describe('Expenses API: Access & RBAC', () => {
     expect(hrReimburse.status).toBe(200);
     expect(hrReimburse.body.data.status).toBe('reimbursed');
   });
+
+  it('nobody can reimburse their own claim, even with the reimburse permission', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const own = await env.expensesRepo.createClaim(dummyTx, {
+      employeeId: env.hrEmpId,
+      categoryId: TARGET_CAT_ID,
+      amountPaise: 10000,
+      expenseDate: today,
+      description: 'HR own approved claim',
+      status: 'approved',
+    });
+
+    const res = await env.as.hr_manager.post(`/api/v1/expense-claims/${own.id}/reimburse`);
+    expect(res.status).toBe(403);
+
+    // Still approved, not paid, and someone else can pay it.
+    const stillApproved = await env.expensesRepo.findClaimById(dummyTx, own.id);
+    expect(stillApproved?.status).toBe('approved');
+    const byAdmin = await env.as.admin.post(`/api/v1/expense-claims/${own.id}/reimburse`);
+    expect(byAdmin.status).toBe(200);
+  });
 });

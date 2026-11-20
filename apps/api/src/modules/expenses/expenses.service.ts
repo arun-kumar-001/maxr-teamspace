@@ -1,5 +1,5 @@
 import { PaginatedResponse } from '@maxr/shared';
-import { conflict, notFound, unprocessable } from '../../http/errors';
+import { conflict, forbidden, notFound, unprocessable } from '../../http/errors';
 import { buildPage } from '../../http/pagination';
 import type { PlatformServices } from '../../platform';
 import { EventCollector } from '../../platform/events/event-bus';
@@ -307,6 +307,11 @@ export class ExpensesService implements ApprovalHandler {
       const claim = await this.repository.findClaimById(tx, id);
       if (!claim) {
         throw notFound('Expense claim not found');
+      }
+
+      // Paying out is a separate duty from claiming: nobody may reimburse their own claim.
+      if (claim.employeeId === caller.employeeId) {
+        throw forbidden('You cannot reimburse your own expense claim');
       }
 
       if (claim.status !== 'approved') {
