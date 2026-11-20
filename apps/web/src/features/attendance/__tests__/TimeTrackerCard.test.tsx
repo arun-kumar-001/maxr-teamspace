@@ -99,6 +99,35 @@ describe('TimeTrackerCard & AttendanceCaptureModal (Issue #2)', () => {
     expect(confirmBtn).toBeDefined();
   });
 
+  it('never sends the position to an outside service when GPS succeeds', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
+    vi.stubGlobal('fetch', fetchMock);
+    const getCurrentPosition = vi.fn((success: (pos: unknown) => void) =>
+      success({ coords: { latitude: 12.971599, longitude: 77.594566 } }),
+    );
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    render(
+      <AttendanceCaptureModal
+        isOpen={true}
+        mode="check-in"
+        onClose={vi.fn()}
+        onConfirm={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    await waitFor(() => expect(getCurrentPosition).toHaveBeenCalled());
+    // Let any pending work finish before checking that nothing left the browser.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const hosts = fetchMock.mock.calls.map((call) => String(call[0]));
+    expect(hosts.filter((url) => /^https?:\/\//.test(url))).toEqual([]);
+    expect(hosts.join(' ')).not.toMatch(/openstreetmap|bigdatacloud|reverse/i);
+  });
+
   it('TimeTrackerCard persists active session in localStorage across reloads', async () => {
     localStorage.setItem(
       'maxr_time_tracker_active_session',
