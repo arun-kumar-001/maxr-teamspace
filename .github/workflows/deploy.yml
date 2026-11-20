@@ -16,6 +16,11 @@ on:
         options:
           - staging
           - production
+      dry_run:
+        description: 'Check the inputs and stop before connecting. Nothing is deployed.'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: deploy-${{ github.event.inputs.environment || 'production' }}
@@ -69,23 +74,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Execute Deployment to Cantobo Server
-        # In live environments, authentication is provided via CANTOBO_SSH_KEY and CANTOBO_HOST secrets.
-        # When simulated or in dry-run mode, validates migration and container orchestration steps.
-        run: |
-          set -euo pipefail
-          echo "Target Environment: ${{ github.event.inputs.environment || 'production' }}"
-          echo "Deploying release ${GITHUB_REF_NAME:-manual} to Cantobo Server..."
-
-          if [ -n "${CANTOBO_HOST:-}" ] && [ -n "${CANTOBO_SSH_KEY:-}" ]; then
-            echo "Establishing secure connection to Cantobo host ($CANTOBO_HOST)..."
-            # Prepare deployment payload and trigger zero-downtime rolling update:
-            # 1. Forward-only database migration
-            # 2. Rolling container reload
-            # 3. Post-deployment health verification
-          else
-            echo "CANTOBO_HOST secret not configured for this runner; dry-run verification completed successfully."
-          fi
+      - name: Deploy to the Cantobo server
+        # Runs deploy/server-deploy.sh on the host over SSH and waits for the API to be healthy.
+        # Without the secrets this step FAILS; only a manual run with dry_run=true may skip it, and
+        # it then says that nothing was deployed.
+        run: bash deploy/scripts/deploy-remote.sh
         env:
+          DEPLOY_REF: ${{ github.sha }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           CANTOBO_HOST: ${{ secrets.CANTOBO_HOST }}
           CANTOBO_SSH_KEY: ${{ secrets.CANTOBO_SSH_KEY }}
+          CANTOBO_KNOWN_HOSTS: ${{ secrets.CANTOBO_KNOWN_HOSTS }}
+          CANTOBO_USER: ${{ vars.CANTOBO_USER }}
+          APP_DIR: ${{ vars.CANTOBO_APP_DIR }}

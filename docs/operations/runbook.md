@@ -85,7 +85,21 @@ Private file uploads reside in dedicated volume `uploads_data` (`/data/uploads`)
 
 ## 4. Release and Deployment Procedure
 
-Deployments are orchestrated via `.github/workflows/deploy.yml`. When executing manual or emergency updates on the host:
+Deployments are orchestrated via `.github/workflows/deploy.yml`, which runs on a published release or by hand (Actions, "Deploy", choose `staging` or `production`). After the browser checks pass it connects to the host over SSH, checks out the exact commit being released, runs `deploy/server-deploy.sh` there and waits for the API to report healthy. The workflow is only green when the deployment really happened and is healthy: if it cannot connect it fails.
+
+**One-time setup** (in the GitHub environment `staging` / `production`):
+
+| Name                  | Kind     | Meaning                                                                                                                                                  |
+| --------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CANTOBO_HOST`        | secret   | Host name or IP of the server.                                                                                                                           |
+| `CANTOBO_SSH_KEY`     | secret   | Private key of the deploy user. Give that user only what the deploy needs (Docker, the checkout directory).                                              |
+| `CANTOBO_KNOWN_HOSTS` | secret   | The server's host key, taken once from a trusted place: `ssh-keyscan -t ed25519 <host>`. The connection is refused if the server presents a different key. |
+| `CANTOBO_USER`        | variable | SSH user. Default `deploy`.                                                                                                                              |
+| `CANTOBO_APP_DIR`     | variable | Repository checkout on the server. Default `/opt/maxr-teamspace`.                                                                                        |
+
+The server needs the repository cloned at that path with read access to `origin`. A manual run with `dry_run` ticked checks the inputs and stops before connecting; it says "NOTHING WAS DEPLOYED" and is the only way the step passes without secrets. The workflow does not take a backup: run the pre-deployment backup below first.
+
+When executing manual or emergency updates on the host:
 
 1. **Pre-Deployment Backup:**
    Always take an encrypted snapshot before migrating:
