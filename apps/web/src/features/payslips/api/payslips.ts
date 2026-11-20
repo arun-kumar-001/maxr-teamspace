@@ -97,6 +97,18 @@ function filenameFromHeaders(
   return `MAXR_Payslip_${safePeriod}_${safeEmp}.pdf`;
 }
 
+function formatPdfAmount(val: number | undefined): string {
+  return Number(val || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatPdfNumberClean(val: number | undefined): string {
+  const n = Number(val || 0);
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
 function generateClientPayslipPdf(p: Partial<PayslipRecord>): Uint8Array {
   const lines: string[] = [];
   function rect(
@@ -116,131 +128,284 @@ function generateClientPayslipPdf(p: Partial<PayslipRecord>): Uint8Array {
     str: string,
     x: number,
     y: number,
-    size = 10,
+    size = 8.5,
     isBold = false,
-    r = 0.1,
-    g = 0.15,
-    b = 0.15,
+    r = 0.075,
+    g = 0.125,
+    b = 0.118,
+    align: 'left' | 'right' | 'center' = 'left',
   ) {
     const font = isBold ? '/F2' : '/F1';
-    const safe = str.replace(/[()\\]/g, '\\$&');
-    lines.push(`BT ${font} ${size} Tf ${r} ${g} ${b} rg ${x} ${y} Td (${safe}) Tj ET`);
+    const safe = String(str).replace(/[()\\]/g, '\\$&');
+    let xPos = x;
+    if (align === 'right') {
+      const approxCharWidth = size * 0.52;
+      xPos = x - safe.length * approxCharWidth;
+    } else if (align === 'center') {
+      const approxCharWidth = size * 0.52;
+      xPos = x - (safe.length * approxCharWidth) / 2;
+    }
+    lines.push(`BT ${font} ${size} Tf ${r} ${g} ${b} rg ${xPos} ${y} Td (${safe}) Tj ET`);
   }
 
-  // Header Bar (Teal brand)
-  rect(40, 780, 515, 30, 0.058, 0.462, 0.431, true);
-  text('MAXR TEAMSPACE - SALARY STATEMENT', 50, 792, 12, true, 1, 1, 1);
-  text(`Period: ${p.periodLabel || 'November 2026'}`, 430, 792, 10, false, 1, 1, 1);
+  // 1. Mint Green Top Accent Bar
+  rect(28, 814, 539, 4, 0.275, 0.78, 0.722, true);
 
-  // Employee Info Box
-  rect(40, 670, 515, 95, 0.94, 0.96, 0.95, true);
-  rect(40, 670, 515, 95, 0.85, 0.88, 0.87, false);
-  text('EMPLOYEE DETAILS', 50, 750, 9, true, 0.058, 0.462, 0.431);
-  text(`Name: ${p.employeeName || 'Shagul Hamithu'}`, 50, 732, 9, true);
-  text(`Employee Code: ${p.employeeCode || 'EMP-001'}`, 50, 717, 9, false);
-  text(`Designation: ${p.designation || 'System Administrator'}`, 50, 702, 9, false);
-  text(`Department: ${p.departmentName || 'Information Technology'}`, 50, 687, 8, false);
+  // 2. Header
+  text('Payslip', 28, 792, 14, true, 0.075, 0.125, 0.118);
+  text(p.periodLabel || 'November 2026', 28, 775, 12, true, 0.059, 0.463, 0.431);
+  text('MAXR TEAMSPACE', 567, 785, 13, true, 0.059, 0.463, 0.431, 'right');
 
-  text(`Bank: ${p.bankName || 'HDFC Bank Ltd.'}`, 220, 732, 9, false);
-  text(`Account: ${p.accountNumber || '****7304'}`, 220, 717, 9, false);
-  text(`PAN: ${p.pan || 'BNZPS4821K'}`, 220, 702, 9, false);
-  text(`Location: ${p.workLocation || 'Chennai'}`, 220, 687, 8, false);
+  // 3. Mint Banner: Employee Name + Net Pay (INR)
+  rect(28, 715, 360, 42, 0.914, 0.973, 0.965, true);
+  rect(28, 715, 360, 42, 0.275, 0.78, 0.722, false);
+  text(p.employeeName || 'Shagul Hamithu', 40, 730, 13, true, 0.075, 0.125, 0.118);
 
-  text(`Days Paid: ${p.daysPaid || 30} / 30`, 380, 732, 9, true);
+  rect(388, 715, 179, 42, 0.059, 0.463, 0.431, true);
+  text('Net Pay (INR)', 555, 742, 7.8, true, 0.914, 0.973, 0.965, 'right');
+  text(`Rs. ${formatPdfAmount(p.netPay ?? 79000)}`, 555, 724, 14, true, 1, 1, 1, 'right');
+
+  // 4. Employee Details | Payment Details | Location Details
+  // Col 1: Employee Details
+  rect(28, 620, 172, 82, 1, 1, 1, true);
+  rect(28, 620, 172, 82, 0.89, 0.914, 0.906, false);
+  rect(28, 684, 172, 18, 0.914, 0.973, 0.965, true);
+  text('Employee Details', 34, 689, 7.8, true, 0.059, 0.463, 0.431);
+  text('Emp No', 34, 671, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.employeeCode || 'EMP-001', 192, 671, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('Designation', 34, 655, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.designation || 'System Administrator', 192, 655, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('UAN', 34, 639, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.uan || '101458290341', 192, 639, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('PAN', 34, 624, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.pan || 'BNZPS4821K', 192, 624, 7.8, true, 0.075, 0.125, 0.118, 'right');
+
+  // Col 2: Payment Details
+  rect(211, 620, 172, 82, 1, 1, 1, true);
+  rect(211, 620, 172, 82, 0.89, 0.914, 0.906, false);
+  rect(211, 684, 172, 18, 0.914, 0.973, 0.965, true);
+  text('Payment Details', 217, 689, 7.8, true, 0.059, 0.463, 0.431);
+  text('Bank Name', 217, 671, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.bankName || 'HDFC Bank Ltd.', 375, 671, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('Acc No.', 217, 655, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.accountNumber || '50100482917304', 375, 655, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('Days Paid', 217, 639, 7.8, false, 0.373, 0.424, 0.416);
+  text(String(p.daysPaid || 30), 375, 639, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('Permissions', 217, 624, 7.8, false, 0.373, 0.424, 0.416);
+  text('2 hrs (Paid)', 375, 624, 7.8, true, 0.059, 0.463, 0.431, 'right');
+
+  // Col 3: Location Details
+  rect(395, 620, 172, 82, 1, 1, 1, true);
+  rect(395, 620, 172, 82, 0.89, 0.914, 0.906, false);
+  rect(395, 684, 172, 18, 0.914, 0.973, 0.965, true);
+  text('Location Details', 401, 689, 7.8, true, 0.059, 0.463, 0.431);
+  text('Location', 401, 671, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.workLocation || 'Chennai', 559, 671, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('Base Br.', 401, 655, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.baseBranch || 'Chennai HQ', 559, 655, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  text('Beneficiary ID', 401, 639, 7.8, false, 0.373, 0.424, 0.416);
+  text(p.beneficiaryId || 'BEN0048219', 559, 639, 7.8, true, 0.075, 0.125, 0.118, 'right');
+
+  // 5. Leave Details Table
+  rect(28, 565, 539, 44, 1, 1, 1, true);
+  rect(28, 565, 539, 44, 0.89, 0.914, 0.906, false);
+  rect(28, 594, 539, 15, 0.914, 0.973, 0.965, true);
+  text('Leave Details', 34, 598, 7.8, true, 0.059, 0.463, 0.431);
+  rect(28, 579, 539, 15, 0.949, 0.961, 0.957, true);
+  const leaveCols = ['SL', 'EL', 'CL', 'FL', 'LC'];
+  const leaveVals = [
+    formatPdfNumberClean(p.leaveBalances?.sl ?? 2),
+    formatPdfNumberClean(p.leaveBalances?.el ?? 10),
+    formatPdfNumberClean(p.leaveBalances?.cl ?? 3),
+    formatPdfNumberClean(p.leaveBalances?.fl ?? 1),
+    formatPdfNumberClean(p.leaveBalances?.lc ?? 0),
+  ];
+  const colW = 539 / 5;
+  for (let i = 0; i < 5; i++) {
+    const cx = 28 + i * colW + colW / 2;
+    text(leaveCols[i]!, cx, 583, 7.8, true, 0.373, 0.424, 0.416, 'center');
+    text(leaveVals[i]!, cx, 569, 8.5, true, 0.075, 0.125, 0.118, 'center');
+  }
+
+  // 6. Side-by-side Earnings & Deductions
+  // Earnings Table (w=295, x=28)
+  rect(28, 385, 295, 168, 1, 1, 1, true);
+  rect(28, 385, 295, 168, 0.89, 0.914, 0.906, false);
+  rect(28, 533, 295, 20, 0.059, 0.463, 0.431, true);
+  text('Earnings', 34, 539, 8, true, 1, 1, 1);
+  text('Arrears (INR)', 230, 539, 7.8, true, 1, 1, 1, 'right');
+  text('Current (INR)', 315, 539, 7.8, true, 1, 1, 1, 'right');
+
+  const earnings: [string, number, number, boolean][] = [
+    ['Basic Salary', p.basicArrears || 0, p.basicSalary ?? 45000, false],
+    ['House Rent Allowance', p.hraArrears || 0, p.hra ?? 18000, true],
+    ['Performance Pay', p.performanceArrears || 0, p.performancePay ?? 10000, false],
+    ['Variable Allowance', p.variableArrears || 0, p.variableAllowance ?? 12000, true],
+  ];
+  let ey = 512;
+  for (const e of earnings) {
+    if (e[3]) rect(29, ey - 5, 293, 20, 0.949, 0.961, 0.957, true);
+    text(e[0], 34, ey, 8, false, 0.075, 0.125, 0.118);
+    text(e[1] > 0 ? formatPdfAmount(e[1]) : '', 230, ey, 8, false, 0.075, 0.125, 0.118, 'right');
+    text(formatPdfAmount(e[2]), 315, ey, 8, true, 0.075, 0.125, 0.118, 'right');
+    ey -= 23;
+  }
+  // Total Earnings
+  rect(28, 385, 295, 22, 0.914, 0.973, 0.965, true);
+  text('Total Earnings', 34, 392, 8.5, true, 0.075, 0.125, 0.118);
   text(
-    `Leave SL: ${p.leaveBalances?.sl ?? 2}d  CL: ${p.leaveBalances?.cl ?? 3}d`,
-    380,
-    717,
-    9,
-    false,
-  );
-  text(`Leave EL: ${p.leaveBalances?.el ?? 10}d (Paid)`, 380, 702, 9, false);
-  text('Permission: 2 hrs (Approved & Paid)', 380, 687, 8, false);
-
-  // Earnings Table
-  rect(40, 470, 250, 185, 0.98, 0.99, 0.99, true);
-  rect(40, 470, 250, 185, 0.85, 0.88, 0.87, false);
-  rect(40, 630, 250, 25, 0.91, 0.97, 0.96, true);
-  text('EARNINGS', 50, 638, 10, true, 0.058, 0.462, 0.431);
-  text('AMOUNT (INR)', 205, 638, 9, true, 0.058, 0.462, 0.431);
-
-  text('Basic Salary', 50, 610, 9);
-  text(`Rs. ${(p.basicSalary ?? 45000).toLocaleString('en-IN')}.00`, 200, 610, 9);
-  text('House Rent Allowance (HRA)', 50, 585, 9);
-  text(`Rs. ${(p.hra ?? 18000).toLocaleString('en-IN')}.00`, 200, 585, 9);
-  text('Special Allowance', 50, 560, 9);
-  text(`Rs. ${(p.variableAllowance ?? 12000).toLocaleString('en-IN')}.00`, 200, 560, 9);
-  text('Performance Pay', 50, 535, 9);
-  text(`Rs. ${(p.performancePay ?? 10000).toLocaleString('en-IN')}.00`, 200, 535, 9);
-
-  rect(40, 470, 250, 25, 0.91, 0.97, 0.96, true);
-  text('GROSS EARNINGS', 50, 478, 9, true, 0.058, 0.462, 0.431);
-  text(
-    `Rs. ${(p.totalEarnings ?? 85000).toLocaleString('en-IN')}.00`,
-    195,
-    478,
-    9,
+    `Rs. ${formatPdfAmount(p.totalEarnings ?? 85000)}`,
+    315,
+    392,
+    8.5,
     true,
-    0.058,
-    0.462,
+    0.059,
+    0.463,
     0.431,
+    'right',
   );
 
-  // Deductions Table
-  rect(305, 470, 250, 185, 0.98, 0.99, 0.99, true);
-  rect(305, 470, 250, 185, 0.85, 0.88, 0.87, false);
-  rect(305, 630, 250, 25, 0.98, 0.94, 0.94, true);
-  text('DEDUCTIONS', 315, 638, 10, true, 0.85, 0.15, 0.15);
-  text('AMOUNT (INR)', 470, 638, 9, true, 0.85, 0.15, 0.15);
+  // Deductions Table (w=232, x=335)
+  rect(335, 385, 232, 168, 1, 1, 1, true);
+  rect(335, 385, 232, 168, 0.89, 0.914, 0.906, false);
+  rect(335, 533, 232, 20, 0.059, 0.463, 0.431, true);
+  text('Deductions', 342, 539, 8, true, 1, 1, 1);
+  text('Amount (INR)', 559, 539, 7.8, true, 1, 1, 1, 'right');
 
-  text('Provident Fund (PF)', 315, 610, 9);
-  text(`Rs. ${(p.providentFund ?? 3600).toLocaleString('en-IN')}.00`, 475, 610, 9);
-  text('Income Tax (TDS)', 315, 585, 9);
-  text(`Rs. ${(p.incomeTax ?? 2200).toLocaleString('en-IN')}.00`, 475, 585, 9);
-  text('Professional Tax', 315, 560, 9);
-  text(`Rs. ${(p.professionalTax ?? 200).toLocaleString('en-IN')}.00`, 475, 560, 9);
-  text('Loss of Pay (LOP)', 315, 535, 9);
-  text('Rs. 0.00', 475, 535, 9);
-
-  rect(305, 470, 250, 25, 0.98, 0.94, 0.94, true);
-  text('TOTAL DEDUCTIONS', 315, 478, 9, true, 0.85, 0.15, 0.15);
+  const deductions: [string, number, boolean][] = [
+    ['Provident Fund', p.providentFund ?? 3600, false],
+    ['Income Tax (TDS)', p.incomeTax ?? 2200, true],
+    ['Professional Tax', p.professionalTax ?? 200, false],
+    [p.otherDeductionDesc || 'Loss of Pay (LOP)', p.otherDeductionAmount || 0, true],
+  ];
+  let dy = 512;
+  for (const d of deductions) {
+    if (d[2]) rect(336, dy - 5, 230, 20, 0.949, 0.961, 0.957, true);
+    text(d[0], 342, dy, 8, false, 0.075, 0.125, 0.118);
+    text(formatPdfAmount(d[1]), 559, dy, 8, true, 0.075, 0.125, 0.118, 'right');
+    dy -= 23;
+  }
+  // Total Deductions
+  rect(335, 385, 232, 22, 0.914, 0.973, 0.965, true);
+  text('Total Deductions', 342, 392, 8.5, true, 0.075, 0.125, 0.118);
   text(
-    `Rs. ${(p.totalDeductions ?? 6000).toLocaleString('en-IN')}.00`,
-    470,
-    478,
-    9,
+    `Rs. ${formatPdfAmount(p.totalDeductions ?? 6000)}`,
+    559,
+    392,
+    8.5,
     true,
-    0.85,
-    0.15,
-    0.15,
-  );
-
-  // Net Pay Highlight Box
-  rect(40, 390, 515, 60, 0.91, 0.97, 0.96, true);
-  rect(40, 390, 515, 60, 0.27, 0.78, 0.72, false);
-  text('NET TAKE-HOME SALARY', 55, 425, 11, true, 0.058, 0.462, 0.431);
-  text('Transferred to Bank Account - Fully Processed', 55, 405, 9, false, 0.35, 0.42, 0.4);
-  text(
-    `Rs. ${(p.netPay ?? 79000).toLocaleString('en-IN')}.00`,
-    405,
-    415,
-    15,
-    true,
-    0.058,
-    0.462,
+    0.059,
+    0.463,
     0.431,
+    'right',
   );
 
-  // Footer Note
+  // 7. Retirals & Projected Annual Tax
+  // Retirals (w=165, x=28)
+  rect(28, 280, 165, 92, 1, 1, 1, true);
+  rect(28, 280, 165, 92, 0.89, 0.914, 0.906, false);
+  rect(28, 354, 165, 18, 0.914, 0.973, 0.965, true);
+  text('Retirals as on Month end', 34, 359, 7.8, true, 0.059, 0.463, 0.431);
+  text('Provident Fund', 34, 335, 7.8, false, 0.373, 0.424, 0.416);
+  text(formatPdfAmount(p.retiralPf ?? 3600), 185, 335, 7.8, true, 0.075, 0.125, 0.118, 'right');
+  rect(29, 310, 163, 18, 0.949, 0.961, 0.957, true);
+  text('Gratuity', 34, 315, 7.8, false, 0.373, 0.424, 0.416);
   text(
-    'This is an official system generated salary slip. Verified by MAXR Teamspace Payroll.',
-    110,
-    340,
+    formatPdfAmount(p.retiralGratuity ?? 2165),
+    185,
+    315,
+    7.8,
+    true,
+    0.075,
+    0.125,
+    0.118,
+    'right',
+  );
+
+  // Projected Annual Tax (w=360, x=207)
+  rect(207, 280, 360, 92, 1, 1, 1, true);
+  rect(207, 280, 360, 92, 0.89, 0.914, 0.906, false);
+  rect(207, 354, 360, 18, 0.914, 0.973, 0.965, true);
+  text('Projected Annual Tax Information', 214, 359, 7.8, true, 0.059, 0.463, 0.431);
+
+  text('Annual Income', 214, 338, 7.8, false, 0.373, 0.424, 0.416);
+  text(
+    formatPdfAmount(p.annualIncome ?? 1020000),
+    370,
+    338,
+    7.8,
+    true,
+    0.075,
+    0.125,
+    0.118,
+    'right',
+  );
+  text('NetTax Income', 400, 338, 7.8, false, 0.373, 0.424, 0.416);
+  text(
+    formatPdfAmount(p.netTaxIncome ?? 870000),
+    559,
+    338,
+    7.8,
+    true,
+    0.075,
+    0.125,
+    0.118,
+    'right',
+  );
+
+  rect(208, 316, 358, 17, 0.949, 0.961, 0.957, true);
+  text('Deductions (if any)', 214, 321, 7.8, false, 0.373, 0.424, 0.416);
+  text(
+    formatPdfAmount(p.taxDeductions ?? 150000),
+    370,
+    321,
+    7.8,
+    true,
+    0.075,
+    0.125,
+    0.118,
+    'right',
+  );
+  text('Total Tax Payable', 400, 321, 7.8, false, 0.373, 0.424, 0.416);
+  text(
+    formatPdfAmount(p.totalTaxPayable ?? 39000),
+    559,
+    321,
+    7.8,
+    true,
+    0.075,
+    0.125,
+    0.118,
+    'right',
+  );
+
+  text('Tax deducted till now', 400, 303, 7.8, false, 0.373, 0.424, 0.416);
+  text(
+    formatPdfAmount(p.taxDeductedTillNow ?? 22000),
+    559,
+    303,
+    7.8,
+    true,
+    0.075,
+    0.125,
+    0.118,
+    'right',
+  );
+
+  text('Balance Tax', 400, 287, 7.8, true, 0.059, 0.463, 0.431);
+  text(formatPdfAmount(p.balanceTax ?? 17000), 559, 287, 7.8, true, 0.059, 0.463, 0.431, 'right');
+
+  // 8. Footer Note
+  text(
+    'This is an official system generated salary slip verified by MAXR Teamspace Payroll.',
+    297,
+    240,
     8,
     false,
-    0.5,
-    0.55,
-    0.55,
+    0.373,
+    0.424,
+    0.416,
+    'center',
   );
 
   const stream = lines.join('\n');
