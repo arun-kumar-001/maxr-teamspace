@@ -291,8 +291,8 @@ export class PgUsersRepository implements IUsersRepository {
       const employeeId = empRes.rows[0]?.id as string;
 
       const userRes = await client.query<{ id: string }>(
-        `INSERT INTO users (employee_id, email, password_hash, is_active)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO users (employee_id, email, password_hash, is_active, must_change_password)
+         VALUES ($1, $2, $3, $4, true)
          RETURNING id`,
         [employeeId, email, input.passwordHash, isActive],
       );

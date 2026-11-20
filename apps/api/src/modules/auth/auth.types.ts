@@ -12,6 +12,8 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   roles: string[];
+  /** The password was set by someone else; its owner must change it before doing anything else. */
+  mustChangePassword: boolean;
 }
 
 export interface FailureWindow {
@@ -40,6 +42,8 @@ export interface Profile {
   roles: Role[];
   /** For showing or hiding UI only; the server checks permissions on every request (modules/rbac). */
   permissions: string[];
+  /** True until the person has replaced a password someone else set for them. */
+  mustChangePassword: boolean;
 }
 
 export interface RequestMeta {

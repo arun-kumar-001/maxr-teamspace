@@ -10,11 +10,12 @@ interface UserRow {
   employee_status: string;
   first_name: string;
   last_name: string;
+  must_change_password: boolean;
   roles: string[] | null;
 }
 
 const USER_SELECT = `
-  SELECT u.id, u.employee_id, u.email, u.password_hash, u.is_active,
+  SELECT u.id, u.employee_id, u.email, u.password_hash, u.is_active, u.must_change_password,
          e.status AS employee_status, e.first_name, e.last_name,
          COALESCE(array_agg(r.key ORDER BY r.key) FILTER (WHERE r.key IS NOT NULL), '{}') AS roles
     FROM users u
@@ -32,6 +33,7 @@ const toUser = (row: UserRow): AuthUser => ({
   firstName: row.first_name,
   lastName: row.last_name,
   roles: row.roles ?? [],
+  mustChangePassword: row.must_change_password,
 });
 
 /** `getPool` is lazy so building the app opens no connection. */
@@ -89,7 +91,7 @@ export class PgAuthRepository implements AuthRepository {
 
   async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
     await this.getPool().query(
-      'UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1',
+      'UPDATE users SET password_hash = $2, must_change_password = false, updated_at = NOW() WHERE id = $1',
       [userId, passwordHash],
     );
   }

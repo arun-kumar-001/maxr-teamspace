@@ -243,6 +243,7 @@ export class AuthService {
       role: roles[0] as Role,
       roles,
       permissions: permissionsForRoles(roles),
+      mustChangePassword: user.mustChangePassword,
     };
   }
 }

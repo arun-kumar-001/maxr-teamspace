@@ -15,6 +15,8 @@ export interface AuthContextValue {
   logout: () => void;
   switchRole: (newRole: Role) => void;
   updateUserAvatar?: (avatarUrl: string | null) => void;
+  /** Called once the password has been changed, so the app opens up. */
+  markPasswordChanged?: () => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -86,6 +88,7 @@ export function buildUserFromApi(apiUser: Record<string, unknown>): AuthUser {
       (apiUser.profilePhotoUrl as string) ||
       savedAvatar ||
       defaultAvatar,
+    mustChangePassword: apiUser.mustChangePassword === true,
   };
 }
 
@@ -281,6 +284,9 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     }
   }, [user?.role]);
 
+  const markPasswordChanged = () =>
+    setUser((prev) => (prev ? { ...prev, mustChangePassword: false } : null));
+
   const value: AuthContextValue = {
     user,
     role: user ? user.role : null,
@@ -290,6 +296,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     logout,
     switchRole,
     updateUserAvatar,
+    markPasswordChanged,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

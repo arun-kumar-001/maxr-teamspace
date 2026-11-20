@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom';
 import type { Role } from '@maxr/shared';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { ForcedPasswordChangePage } from './auth/ForcedPasswordChangePage';
 import { LoginPage } from './auth/LoginPage';
 import { AppShell } from './shell/AppShell';
 import { RouteGuard } from './shell/RouteGuard';
@@ -142,9 +143,12 @@ function ShellLayout({ children }: { children: ReactNode }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // A password someone else set must be replaced first; the server refuses everything else anyway.
+  if (isAuthenticated && user?.mustChangePassword) return <ForcedPasswordChangePage />;
 
   return (
     <Routes>

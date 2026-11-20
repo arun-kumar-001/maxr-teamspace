@@ -35,6 +35,8 @@ export const profileSchema = z
     role,
     roles: z.array(role),
     permissions: z.array(z.string()),
+    /** While true, every request except /auth/me, /auth/change-password and /auth/logout answers 403 PASSWORD_CHANGE_REQUIRED. */
+    mustChangePassword: z.boolean(),
   })
   .meta({ id: 'AuthProfile' });
 

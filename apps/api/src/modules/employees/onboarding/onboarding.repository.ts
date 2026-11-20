@@ -629,9 +629,9 @@ export class PgOnboardingRepository implements IOnboardingRepository {
     passwordHash: string,
   ): Promise<void> {
     await tx.query(`UPDATE set_password_tokens SET used_at = NOW() WHERE id = $1`, [tokenId]);
-    await tx.query(`UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1`, [
-      userId,
-      passwordHash,
-    ]);
+    await tx.query(
+      `UPDATE users SET password_hash = $2, must_change_password = false, updated_at = NOW() WHERE id = $1`,
+      [userId, passwordHash],
+    );
   }
 }

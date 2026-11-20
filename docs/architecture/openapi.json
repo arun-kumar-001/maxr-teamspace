@@ -213,6 +213,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "mustChangePassword": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -223,7 +226,8 @@
           "lastName",
           "role",
           "roles",
-          "permissions"
+          "permissions",
+          "mustChangePassword"
         ]
       },
       "AttendanceRecord": {

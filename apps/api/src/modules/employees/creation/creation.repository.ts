@@ -114,8 +114,8 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
     // Inactive until onboarding activates the account (D-20). Only the hash is stored; a generated
     // password is returned once in the create response and never persisted.
     const user = await tx.query<{ id: string }>(
-      `INSERT INTO users (employee_id, email, password_hash, is_active)
-       VALUES ($1, $2, $3, false) RETURNING id`,
+      `INSERT INTO users (employee_id, email, password_hash, is_active, must_change_password)
+       VALUES ($1, $2, $3, false, true) RETURNING id`,
       [row.id, dto.email, passwordHash],
     );
     const userId = (user.rows[0] as { id: string }).id;
