@@ -130,11 +130,15 @@ describe('first admin bootstrap against PostgreSQL', () => {
     expect(await count(`SELECT COUNT(*) AS n FROM users`)).toBe(before);
   });
 
-  it('the users table has no password column other than the hash', async () => {
-    const res = await outer.query<{ column_name: string }>(
-      `SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'users' AND column_name ILIKE '%password%'`,
+  it('the users table keeps no password itself: only its hash and a yes/no flag', async () => {
+    const res = await outer.query<{ column_name: string; data_type: string }>(
+      `SELECT column_name, data_type FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name ILIKE '%password%'
+        ORDER BY column_name`,
     );
-    expect(res.rows.map((r) => r.column_name)).toEqual(['password_hash']);
+    expect(res.rows.map((r) => [r.column_name, r.data_type])).toEqual([
+      ['must_change_password', 'boolean'],
+      ['password_hash', 'character varying'],
+    ]);
   });
 });
