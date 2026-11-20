@@ -1,3 +1,4 @@
+import { isDemoDataEnabled } from '@/lib/demo-data';
 import React, { useState, useEffect } from 'react';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
@@ -262,10 +263,14 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           onCancelRequest={async (id) => {
             await cancelRequest(id);
           }}
-          onEditRequest={(req) => {
-            setEditingRequest(req);
-            setIsApplyModalOpen(true);
-          }}
+          onEditRequest={
+            isDemoDataEnabled()
+              ? (req) => {
+                  setEditingRequest(req);
+                  setIsApplyModalOpen(true);
+                }
+              : undefined
+          }
           onApplyClick={() => {
             setEditingRequest(null);
             setIsApplyModalOpen(true);

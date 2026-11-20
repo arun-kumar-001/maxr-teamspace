@@ -1,3 +1,4 @@
+import { demoOr } from '@/lib/demo-data';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchDepartments, fetchDesignations, fetchEmployeeDirectory } from '../api/employees';
 import type { DepartmentItem, DesignationItem, EmployeeDirectoryItem } from '../types';
@@ -345,10 +346,10 @@ function writeStorage<T>(key: string, value: T): void {
 
 export function useHiringPipeline() {
   const [roles, setRoles] = useState<HiringRoleOpening[]>(() =>
-    readStorage(ROLES_STORAGE_KEY, DEFAULT_ROLES),
+    readStorage(ROLES_STORAGE_KEY, demoOr([], DEFAULT_ROLES)),
   );
   const [candidates, setCandidates] = useState<HiringCandidate[]>(() =>
-    readStorage(CANDIDATES_STORAGE_KEY, DEFAULT_CANDIDATES),
+    readStorage(CANDIDATES_STORAGE_KEY, demoOr([], DEFAULT_CANDIDATES)),
   );
   const [crmDepartments, setCrmDepartments] = useState<DepartmentItem[]>([]);
   const [crmDesignations, setCrmDesignations] = useState<DesignationItem[]>([]);
@@ -491,8 +492,8 @@ export function useHiringPipeline() {
   }, []);
 
   const resetHiringDemoData = useCallback(() => {
-    setRoles(DEFAULT_ROLES);
-    setCandidates(DEFAULT_CANDIDATES);
+    setRoles(demoOr([], DEFAULT_ROLES));
+    setCandidates(demoOr([], DEFAULT_CANDIDATES));
   }, []);
 
   return {

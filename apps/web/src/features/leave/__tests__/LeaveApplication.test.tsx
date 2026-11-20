@@ -391,7 +391,7 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       expect(screen.queryByTestId('leave-type-options-list')).not.toBeInTheDocument();
     });
 
-    it('renders fallback options gracefully when policies prop is empty', () => {
+    it('offers no invented leave types when the server returned no policies', () => {
       render(
         <ApplyLeaveModal
           isOpen={true}
@@ -403,14 +403,11 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
         />,
       );
 
-      const dropdownBtn = screen.getByTestId('leave-type-dropdown-btn');
-      fireEvent.click(dropdownBtn);
+      fireEvent.click(screen.getByTestId('leave-type-dropdown-btn'));
 
-      expect(screen.getByText('Annual Leave')).toBeInTheDocument();
-      expect(screen.getByText('Sick Leave')).toBeInTheDocument();
-      expect(screen.getByText('Casual Leave')).toBeInTheDocument();
-      expect(screen.getByText('Work From Home')).toBeInTheDocument();
-      expect(screen.getByText('Permission / Other')).toBeInTheDocument();
+      expect(screen.queryByText('Annual Leave')).not.toBeInTheDocument();
+      expect(screen.queryByText('Sick Leave')).not.toBeInTheDocument();
+      expect(screen.queryByText('Casual Leave')).not.toBeInTheDocument();
     });
 
     it('pre-populates existing request data and updates in edit mode', async () => {

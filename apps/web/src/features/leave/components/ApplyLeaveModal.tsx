@@ -1,3 +1,4 @@
+import { demoOr } from '@/lib/demo-data';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
 import { Modal, Button, FormField, Select } from '../../../components/ui';
@@ -40,7 +41,7 @@ function toDateInputValue(str?: string | null): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Fallback policies when none are loaded from the backend
+// Sample policies for the development demo
 const DEFAULT_LEAVE_TYPES: LeavePolicy[] = [
   {
     id: 'pol-annual',
@@ -120,10 +121,10 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   mode = 'create',
   onEditSubmit,
 }) => {
-  // Use active policies, or fall back to standard list if empty
+  // Only policies the server returned can be applied for; sample types exist for the demo only.
   const resolvedPolicies = useMemo(() => {
     const active = policies.filter((p) => p.isActive);
-    return active.length > 0 ? active : DEFAULT_LEAVE_TYPES;
+    return active.length > 0 ? active : demoOr([], DEFAULT_LEAVE_TYPES);
   }, [policies]);
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);

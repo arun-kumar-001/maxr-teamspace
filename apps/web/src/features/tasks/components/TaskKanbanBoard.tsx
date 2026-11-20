@@ -6,7 +6,7 @@ import { TASK_STATUS_LABELS } from '../types';
 export interface TaskKanbanBoardProps {
   columns: Record<TaskStatus, Task[]>;
   onSelectTask: (task: Task) => void;
-  onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onStatusChange?: (taskId: string, newStatus: TaskStatus) => void | Promise<unknown>;
   onToggleDailyDone?: (taskId: string) => void;
   onQuickCreateClick?: () => void;
   canCreate?: boolean;
@@ -69,7 +69,9 @@ export function TaskKanbanBoard({
     }
 
     setDropNotice(null);
-    onStatusChange(task.id, targetCol);
+    void Promise.resolve(onStatusChange(task.id, targetCol)).catch((err: unknown) => {
+      setDropNotice(err instanceof Error ? err.message : 'The status could not be changed.');
+    });
   };
 
   return (

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
@@ -7,9 +7,11 @@ import { AuthProvider } from '../../auth/AuthContext';
 import { AdminDashboard } from '../AdminDashboard';
 import { StaffDashboard } from '../StaffDashboard';
 import { FALLBACK_TASKS, notifyTaskStatusChanged } from '../../features/tasks';
+import * as tasksApi from '../../features/tasks/api/tasksApi';
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 beforeEach(() => {
@@ -44,6 +46,11 @@ describe('Dashboard Task Completion & Progress Updates (Issue #4)', () => {
   });
 
   it('AdminDashboard reflects live task completion and updates progress bar and counts', async () => {
+    // The dashboard shows what the server returns; the sample tasks here are this test's own data.
+    vi.spyOn(tasksApi, 'fetchTeamTasks').mockResolvedValue({
+      data: FALLBACK_TASKS,
+      meta: { page: 1, pageSize: 100, total: FALLBACK_TASKS.length },
+    });
     render(
       <MemoryRouter>
         <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
@@ -54,7 +61,8 @@ describe('Dashboard Task Completion & Progress Updates (Issue #4)', () => {
 
     expect(screen.getByTestId('admin-dashboard')).toBeTruthy();
 
-    // Initial tasks from FALLBACK_TASKS have 1 completed out of 3 (33%)
+    // The fixture has 1 completed out of 3 (33%)
+    expect(await screen.findByText(/1 \/ 3 Tasks/i)).toBeTruthy();
     expect(screen.getByText(/Task Overview/i)).toBeTruthy();
     expect(screen.getByText('Priority Tasks')).toBeTruthy();
 
@@ -74,5 +82,22 @@ describe('Dashboard Task Completion & Progress Updates (Issue #4)', () => {
 
     // Toggled back to in_progress, so now 1 / 3 Tasks
     expect(screen.getByText(/1 \/ 3 Tasks/i)).toBeTruthy();
+  });
+
+  it('AdminDashboard shows no tasks, not sample ones, when the server has none', async () => {
+    vi.spyOn(tasksApi, 'fetchTeamTasks').mockResolvedValue({
+      data: [],
+      meta: { page: 1, pageSize: 100, total: 0 },
+    });
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <AdminDashboard />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Priority Tasks')).toBeTruthy();
+    expect(screen.queryByText(FALLBACK_TASKS[0]!.title)).toBeNull();
   });
 });

@@ -12,12 +12,6 @@ export interface OpenRoleModalProps {
   onSubmit: (input: CreateRoleOpeningInput) => void;
 }
 
-const FALLBACK_DEPARTMENTS: DepartmentItem[] = [
-  { id: '30000000-0000-0000-0000-000000000001', name: 'Engineering', code: 'ENG' },
-  { id: '30000000-0000-0000-0000-000000000002', name: 'Human Resources', code: 'HR' },
-  { id: '30000000-0000-0000-0000-000000000003', name: 'Operations', code: 'OPS' },
-];
-
 export function OpenRoleModal({
   isOpen,
   onClose,
@@ -26,14 +20,12 @@ export function OpenRoleModal({
   employees,
   onSubmit,
 }: OpenRoleModalProps) {
-  const deptList = departments.length > 0 ? departments : FALLBACK_DEPARTMENTS;
-
   const [title, setTitle] = useState('');
-  const [departmentId, setDepartmentId] = useState(deptList[0]?.id ?? '');
+  const [departmentId, setDepartmentId] = useState(departments[0]?.id ?? '');
   const [designationId, setDesignationId] = useState('');
   const [contractType, setContractType] = useState<ContractType>('Full-time');
   const [workMode, setWorkMode] = useState<WorkMode>('Hybrid');
-  const [compensation, setCompensation] = useState('₹14L – ₹20L');
+  const [compensation, setCompensation] = useState('');
   const [hiresNeeded, setHiresNeeded] = useState('1');
   const [hiringManagerId, setHiringManagerId] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +33,7 @@ export function OpenRoleModal({
   useEffect(() => {
     if (!isOpen) return;
     setTitle('');
-    setDepartmentId(deptList[0]?.id ?? '');
+    setDepartmentId(departments[0]?.id ?? '');
     setDesignationId('');
     setContractType('Full-time');
     setWorkMode('Hybrid');
@@ -49,7 +41,7 @@ export function OpenRoleModal({
     setHiresNeeded('1');
     setHiringManagerId(employees[0]?.id ?? '');
     setError(null);
-  }, [isOpen, deptList, employees]);
+  }, [isOpen, departments, employees]);
 
   const handleDesignationSelect = (id: string) => {
     setDesignationId(id);
@@ -66,20 +58,24 @@ export function OpenRoleModal({
       return;
     }
 
-    const dept = deptList.find((d) => d.id === departmentId) ?? deptList[0];
+    const dept = departments.find((d) => d.id === departmentId);
+    if (!dept) {
+      setError('Choose a department.');
+      return;
+    }
     const mgr = employees.find((emp) => emp.id === hiringManagerId);
 
     onSubmit({
       title: title.trim(),
-      departmentId: dept?.id ?? departmentId,
-      departmentName: dept?.name ?? 'Engineering',
+      departmentId: dept.id,
+      departmentName: dept.name,
       designationId: designationId || undefined,
       contractType,
       workMode,
       compensation: compensation.trim() || 'Competitive',
       hiresNeeded: Math.max(1, Number(hiresNeeded) || 1),
       hiringManagerId: mgr?.id,
-      hiringManagerName: mgr ? `${mgr.firstName} ${mgr.lastName}` : 'Priya Sharma',
+      hiringManagerName: mgr ? `${mgr.firstName} ${mgr.lastName}` : 'Unassigned',
     });
     onClose();
   };
@@ -126,7 +122,7 @@ export function OpenRoleModal({
             <Select
               value={departmentId}
               onChange={(e) => setDepartmentId(e.target.value)}
-              options={deptList.map((d) => ({ value: d.id, label: d.name }))}
+              options={departments.map((d) => ({ value: d.id, label: d.name }))}
             />
           </FormField>
           <FormField label="Work mode">
