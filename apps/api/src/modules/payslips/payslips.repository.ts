@@ -441,7 +441,9 @@ export class PgPayslipsRepository implements IPayslipsRepository {
     const existing = await this.findById(id);
     if (!existing) return null;
 
-    await this.getPool().query(
+    // Only a draft can change; a published payslip is final. The status check sits in the UPDATE
+    // itself so a publish that lands between the read above and this write still wins.
+    const updated = await this.getPool().query(
       `UPDATE payslips SET
         designation = $2,
         uan = $3,
@@ -481,7 +483,7 @@ export class PgPayslipsRepository implements IPayslipsRepository {
         balance_tax_paise = $37,
         version = version + 1,
         updated_at = NOW()
-      WHERE id = $1`,
+      WHERE id = $1 AND status = 'draft'`,
       [
         id,
         dto.designation ?? existing.designation,
@@ -522,6 +524,7 @@ export class PgPayslipsRepository implements IPayslipsRepository {
         inrToPaise(dto.balanceTax ?? existing.balanceTax),
       ],
     );
+    if ((updated.rowCount ?? 0) === 0) return null;
 
     return this.findById(id);
   }

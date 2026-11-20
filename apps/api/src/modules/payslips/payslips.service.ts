@@ -1,5 +1,5 @@
 import { PaginatedResponse, ROLES } from '@maxr/shared';
-import { forbidden, notFound } from '../../http/errors';
+import { conflict, forbidden, notFound } from '../../http/errors';
 import { buildPage } from '../../http/pagination';
 import type { AuditLogger } from '../../platform/audit/types';
 import { renderPayslipPdf } from './payslips.pdf';
@@ -15,6 +15,29 @@ export class PayslipsService {
 
   private isPayrollAdmin(role: string): boolean {
     return role === ROLES.ADMIN || role === ROLES.HR_MANAGER;
+  }
+
+  /** Four eyes: nobody prepares, changes or publishes their own pay. */
+  private assertNotOwnPayslip(payslipEmployeeId: string, caller: PayslipCaller): void {
+    if (caller.employeeId && payslipEmployeeId === caller.employeeId) {
+      throw forbidden('You cannot create, change or publish your own payslip');
+    }
+  }
+
+  /** Names of the fields an update really changes. Amounts are never written to the audit trail. */
+  private changedFields(existing: PayslipRecord, input: UpdatePayslipInput): string[] {
+    const current = existing as unknown as Record<string, unknown>;
+    return Object.entries(input)
+      .filter(([key, value]) => {
+        if (value === undefined || key === 'status') return false;
+        const next =
+          key === 'leaveBalances'
+            ? { ...(current.leaveBalances as object), ...(value as object) }
+            : value;
+        return JSON.stringify(current[key]) !== JSON.stringify(next);
+      })
+      .map(([key]) => key)
+      .sort();
   }
 
   async listMine(
@@ -74,6 +97,7 @@ export class PayslipsService {
   }
 
   async create(input: CreatePayslipInput, caller: PayslipCaller): Promise<PayslipRecord> {
+    this.assertNotOwnPayslip(input.employeeId, caller);
     const created = await this.repo.create(input, caller.employeeId ?? caller.actorId);
 
     await this.audit?.tryRecord({
@@ -100,9 +124,17 @@ export class PayslipsService {
     input: UpdatePayslipInput,
     caller: PayslipCaller,
   ): Promise<PayslipRecord> {
+    const existing = await this.repo.findById(id);
+    if (!existing) {
+      throw notFound('Payslip not found');
+    }
+    this.assertNotOwnPayslip(existing.employeeId, caller);
+
+    // The repository only changes a draft, so a published payslip (also one published a moment ago
+    // by someone else) comes back empty.
     const updated = await this.repo.update(id, input);
     if (!updated) {
-      throw notFound('Payslip not found');
+      throw conflict('A published payslip cannot be changed');
     }
 
     await this.audit?.tryRecord({
@@ -112,7 +144,11 @@ export class PayslipsService {
       actorRole: caller.actorRole,
       entityType: 'payslip',
       entityId: updated.id,
-      metadata: { payMonth: updated.payMonth, payYear: updated.payYear },
+      metadata: {
+        payMonth: updated.payMonth,
+        payYear: updated.payYear,
+        changedFields: this.changedFields(existing, input),
+      },
       requestId: caller.requestId,
     });
 
@@ -120,6 +156,12 @@ export class PayslipsService {
   }
 
   async publish(id: string, caller: PayslipCaller): Promise<PayslipRecord> {
+    const existing = await this.repo.findById(id);
+    if (!existing) {
+      throw notFound('Payslip not found');
+    }
+    this.assertNotOwnPayslip(existing.employeeId, caller);
+
     const published = await this.repo.publish(id, caller.employeeId ?? caller.actorId);
     if (!published) {
       throw notFound('Payslip not found');
