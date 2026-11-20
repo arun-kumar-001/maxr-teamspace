@@ -23,7 +23,7 @@ async function setup() {
   });
   const app = express();
   app.use(requestIdMiddleware);
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' })); // as in app.ts, so the logo's own limit is what answers
   app.use('/api/v1/auth', kit.auth.router);
   app.use('/api/v1/settings', settings.router);
   app.use(notFoundHandler);
@@ -39,6 +39,7 @@ describe('settings API access', () => {
     for (const [method, path] of [
       ['get', '/api/v1/settings'],
       ['get', '/api/v1/settings/basic'],
+      ['get', '/api/v1/settings/logo'],
       ['put', '/api/v1/settings'],
     ] as const) {
       expect((await request(app)[method](path).send({})).status, `${method} ${path}`).toBe(401);
@@ -113,5 +114,110 @@ describe('settings API access', () => {
   ])('rejects %s with 400', async (_label, body) => {
     const { as } = await setup();
     expect((await as.admin.put('/api/v1/settings', body)).status).toBe(400);
+  });
+
+  describe('late-deduction policy, permission policy and company logo', () => {
+    const LOGO = 'data:image/png;base64,iVBORw0KGgo=';
+    const LATE = {
+      enabled: true,
+      graceMinutes: 10,
+      deductionType: 'half_day_salary',
+      deductionAmount: 0,
+      freeLateLimitCount: 3,
+      halfDayCutoffMinutes: 90,
+    };
+    const PERMISSION = {
+      enabled: true,
+      maxPermissionsPerMonth: 2,
+      maxHoursPerPermission: 2,
+      approvalFlow: 'hr_only',
+    };
+
+    it('starts as never configured, not as invented defaults', async () => {
+      const { as } = await setup();
+      const body = (await as.admin.get('/api/v1/settings')).body.data;
+      expect(body).toMatchObject({
+        companyLogo: null,
+        lateDeductionPolicy: null,
+        permissionPolicy: null,
+      });
+    });
+
+    it('are saved by the Admin, read back by the Admin, and the logo is seen by every role', async () => {
+      const { as, auditStore } = await setup();
+      const put = await as.admin.put('/api/v1/settings', {
+        companyLogo: LOGO,
+        lateDeductionPolicy: LATE,
+        permissionPolicy: PERMISSION,
+      });
+      expect(put.status).toBe(200);
+
+      const all = (await as.admin.get('/api/v1/settings')).body.data;
+      expect(all).toMatchObject({
+        companyLogo: LOGO,
+        lateDeductionPolicy: LATE,
+        permissionPolicy: PERMISSION,
+      });
+      for (const role of ALL_ROLES) {
+        const res = await as[role].get('/api/v1/settings/logo');
+        expect(res.status, role).toBe(200);
+        expect(res.body.data).toEqual({ companyLogo: LOGO });
+      }
+      // The audit trail names the fields, never the values (the logo is large).
+      const audit = auditStore.list().find((e) => e.action === 'settings.update');
+      expect(JSON.stringify(audit)).toContain('lateDeductionPolicy');
+      expect(JSON.stringify(audit)).not.toContain('iVBORw0KGgo');
+    });
+
+    it('keeps the policies when only another field is changed', async () => {
+      const { as } = await setup();
+      await as.admin.put('/api/v1/settings', { lateDeductionPolicy: LATE });
+      await as.admin.put('/api/v1/settings', { timezone: 'UTC' });
+      expect((await as.admin.get('/api/v1/settings')).body.data.lateDeductionPolicy).toEqual(LATE);
+    });
+
+    it('removes the logo when null is sent', async () => {
+      const { as } = await setup();
+      await as.admin.put('/api/v1/settings', { companyLogo: LOGO });
+      await as.admin.put('/api/v1/settings', { companyLogo: null });
+      expect((await as.staff.get('/api/v1/settings/logo')).body.data.companyLogo).toBeNull();
+    });
+
+    it.each(['hr_manager', 'team_lead', 'staff'] as const)(
+      '%s cannot change them, and nothing changes',
+      async (role) => {
+        const { as } = await setup();
+        const res = await as[role].put('/api/v1/settings', {
+          companyLogo: LOGO,
+          lateDeductionPolicy: LATE,
+        });
+        expect(res.status).toBe(403);
+        expect((await as.admin.get('/api/v1/settings')).body.data.companyLogo).toBeNull();
+      },
+    );
+
+    it.each([
+      [
+        'an SVG logo, which can carry script',
+        { companyLogo: 'data:image/svg+xml;base64,PHN2Zz4=' },
+      ],
+      ['a logo that is a web address', { companyLogo: 'https://example.com/logo.png' }],
+      ['a script URL as the logo', { companyLogo: 'javascript:alert(1)' }],
+      [
+        'a logo over the size limit',
+        { companyLogo: `data:image/png;base64,${'A'.repeat(300_001)}` },
+      ],
+      ['a negative grace period', { lateDeductionPolicy: { ...LATE, graceMinutes: -1 } }],
+      ['an unknown deduction type', { lateDeductionPolicy: { ...LATE, deductionType: 'seize' } }],
+      ['an extra policy field', { lateDeductionPolicy: { ...LATE, admin: true } }],
+      [
+        'a permission longer than a day',
+        { permissionPolicy: { ...PERMISSION, maxHoursPerPermission: 30 } },
+      ],
+      ['an unknown approval flow', { permissionPolicy: { ...PERMISSION, approvalFlow: 'nobody' } }],
+    ])('rejects %s with 400', async (_label, body) => {
+      const { as } = await setup();
+      expect((await as.admin.put('/api/v1/settings', body)).status).toBe(400);
+    });
   });
 });

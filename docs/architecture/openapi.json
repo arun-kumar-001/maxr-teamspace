@@ -1989,12 +1989,31 @@
             },
             "required": ["email", "sms", "calendarSync", "payrollExport"]
           },
+          "companyLogo": {
+            "type": "string",
+            "nullable": true
+          },
+          "lateDeductionPolicy": {
+            "$ref": "#/components/schemas/LateDeductionPolicy"
+          },
+          "permissionPolicy": {
+            "$ref": "#/components/schemas/PermissionPolicy"
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
           }
         },
-        "required": ["companyName", "timezone", "workWeek", "integrations", "updatedAt"]
+        "required": [
+          "companyName",
+          "timezone",
+          "workWeek",
+          "integrations",
+          "companyLogo",
+          "lateDeductionPolicy",
+          "permissionPolicy",
+          "updatedAt"
+        ]
       },
       "WorkWeek": {
         "type": "object",
@@ -2017,6 +2036,92 @@
         },
         "required": ["start", "end", "days"]
       },
+      "LateDeductionPolicy": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "graceMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240
+          },
+          "deductionType": {
+            "type": "string",
+            "enum": ["fixed_amount", "half_day_salary", "hourly_rate", "none"]
+          },
+          "deductionAmount": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "freeLateLimitCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 31
+          },
+          "halfDayCutoffMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 720
+          }
+        },
+        "required": [
+          "enabled",
+          "graceMinutes",
+          "deductionType",
+          "deductionAmount",
+          "freeLateLimitCount",
+          "halfDayCutoffMinutes"
+        ],
+        "additionalProperties": false
+      },
+      "PermissionPolicy": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "maxPermissionsPerMonth": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 31
+          },
+          "maxHoursPerPermission": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 12
+          },
+          "totalMonthlyPermissionHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "advanceNoticeHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 168
+          },
+          "requiresCompensation": {
+            "type": "boolean"
+          },
+          "approvalFlow": {
+            "type": "string",
+            "enum": ["lead_only", "hr_only", "auto_approved"]
+          },
+          "allowLateArrival": {
+            "type": "boolean"
+          },
+          "allowEarlyDeparture": {
+            "type": "boolean"
+          }
+        },
+        "required": ["enabled", "maxPermissionsPerMonth", "maxHoursPerPermission"],
+        "additionalProperties": false
+      },
       "BasicSettings": {
         "type": "object",
         "properties": {
@@ -2031,6 +2136,16 @@
           }
         },
         "required": ["companyName", "timezone", "workWeek"]
+      },
+      "CompanyLogo": {
+        "type": "object",
+        "properties": {
+          "companyLogo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["companyLogo"]
       },
       "Shift": {
         "type": "object",
@@ -15788,6 +15903,18 @@
                       }
                     },
                     "additionalProperties": false
+                  },
+                  "companyLogo": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 300000,
+                    "pattern": "^data:image\\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$"
+                  },
+                  "lateDeductionPolicy": {
+                    "$ref": "#/components/schemas/LateDeductionPolicy"
+                  },
+                  "permissionPolicy": {
+                    "$ref": "#/components/schemas/PermissionPolicy"
                   }
                 },
                 "additionalProperties": false
@@ -15900,6 +16027,81 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/BasicSettings"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/logo": {
+      "get": {
+        "tags": ["Settings"],
+        "summary": "The company logo for the app header (every signed-in role)",
+        "description": "Required permission: `settings.read_basic`",
+        "responses": {
+          "200": {
+            "description": "A PNG, JPEG or WebP data URL, or null when no logo was uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CompanyLogo"
                     }
                   },
                   "required": ["data"]

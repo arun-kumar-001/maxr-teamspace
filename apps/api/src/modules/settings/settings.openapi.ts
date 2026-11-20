@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
 import {
   basicSettingsSchema,
+  companyLogoSchema,
   companySettingsSchema,
   updateSettingsSchema,
 } from './settings.schemas';
@@ -31,6 +32,19 @@ registerRoute({
     status: 200,
     description: 'The part of the settings every module and screen may use',
     schema: z.object({ data: basicSettingsSchema }),
+  },
+});
+
+registerRoute({
+  method: 'get',
+  path: '/settings/logo',
+  tags,
+  summary: 'The company logo for the app header (every signed-in role)',
+  permission: 'settings.read_basic',
+  success: {
+    status: 200,
+    description: 'A PNG, JPEG or WebP data URL, or null when no logo was uploaded',
+    schema: z.object({ data: companyLogoSchema }),
   },
 });
 

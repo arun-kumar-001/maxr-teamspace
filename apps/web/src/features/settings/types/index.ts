@@ -29,8 +29,34 @@ export interface BasicCompanySettings {
   workWeek: WorkWeek;
 }
 
+export interface PermissionPolicyConfig {
+  enabled: boolean;
+  maxPermissionsPerMonth: number;
+  maxHoursPerPermission: number;
+  totalMonthlyPermissionHours?: number;
+  advanceNoticeHours?: number;
+  requiresCompensation?: boolean;
+  approvalFlow?: 'lead_only' | 'hr_only' | 'auto_approved';
+  allowLateArrival?: boolean;
+  allowEarlyDeparture?: boolean;
+}
+
+export interface LateDeductionConfig {
+  enabled: boolean;
+  graceMinutes: number;
+  deductionType: 'fixed_amount' | 'half_day_salary' | 'hourly_rate' | 'none';
+  deductionAmount: number;
+  freeLateLimitCount: number;
+  halfDayCutoffMinutes: number;
+}
+
 export interface CompanySettings extends BasicCompanySettings {
   integrations: IntegrationToggles;
+  /** A PNG, JPEG or WebP data URL kept on the server, or null. */
+  companyLogo: string | null;
+  /** null until an Admin has saved one; the screen then shows its defaults. */
+  lateDeductionPolicy: LateDeductionConfig | null;
+  permissionPolicy: PermissionPolicyConfig | null;
   updatedAt: string;
 }
 
@@ -42,6 +68,10 @@ export interface UpdateSettingsPayload {
     end: DayName;
   };
   integrations?: Partial<IntegrationToggles>;
+  /** null removes the logo. */
+  companyLogo?: string | null;
+  lateDeductionPolicy?: LateDeductionConfig;
+  permissionPolicy?: PermissionPolicyConfig;
 }
 
 /**

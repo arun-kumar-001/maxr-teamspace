@@ -108,3 +108,17 @@ export async function getBasicSettings(): Promise<BasicCompanySettings> {
   const json = (await response.json()) as { data: BasicCompanySettings };
   return json.data;
 }
+
+/** The logo for the app header: readable by every signed-in role, unlike the full settings. */
+export async function getCompanyLogo(): Promise<string | null> {
+  const response = await apiFetch('/api/v1/settings/logo');
+  if (!response.ok) {
+    throw new SettingsApiError(
+      `Failed to fetch the company logo (status ${response.status})`,
+      response.status,
+      'FETCH_LOGO_FAILED',
+    );
+  }
+  const json = (await response.json()) as { data: { companyLogo: string | null } };
+  return json.data.companyLogo;
+}

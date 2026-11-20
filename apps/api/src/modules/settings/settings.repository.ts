@@ -4,12 +4,15 @@ import {
   CompanySettings,
   DayName,
   IntegrationToggles,
+  LateDeductionPolicy,
+  PermissionPolicy,
   UpdateSettingsDto,
   workDays,
 } from './settings.types';
 
 export interface ISettingsRepository {
   get(): Promise<CompanySettings>;
+  getLogo(): Promise<string | null>;
   update(dto: UpdateSettingsDto): Promise<CompanySettings>;
 }
 
@@ -19,6 +22,9 @@ interface SettingsRow {
   work_week_start: DayName;
   work_week_end: DayName;
   integrations: IntegrationToggles;
+  company_logo: string | null;
+  late_deduction_policy: LateDeductionPolicy | null;
+  permission_policy: PermissionPolicy | null;
   updated_at: Date | string;
 }
 
@@ -31,10 +37,14 @@ const toSettings = (row: SettingsRow): CompanySettings => ({
     days: workDays(row.work_week_start, row.work_week_end),
   },
   integrations: row.integrations,
+  companyLogo: row.company_logo,
+  lateDeductionPolicy: row.late_deduction_policy,
+  permissionPolicy: row.permission_policy,
   updatedAt: new Date(row.updated_at).toISOString(),
 });
 
-const COLUMNS = `company_name, timezone, work_week_start, work_week_end, integrations, updated_at`;
+const COLUMNS = `company_name, timezone, work_week_start, work_week_end, integrations,
+  company_logo, late_deduction_policy, permission_policy, updated_at`;
 
 /** The single settings row; the migration creates it and a CHECK keeps it the only one. */
 export class PgSettingsRepository implements ISettingsRepository {
@@ -49,6 +59,17 @@ export class PgSettingsRepository implements ISettingsRepository {
       throw new Error('company_settings row is missing; run the database migrations');
     }
     return toSettings(res.rows[0]);
+  }
+
+  async getLogo(): Promise<string | null> {
+    const res = await this.getPool().query<{ company_logo: string | null }>(
+      `SELECT company_logo FROM company_settings WHERE id = $1`,
+      [COMPANY_SETTINGS_ID],
+    );
+    if (!res.rows[0]) {
+      throw new Error('company_settings row is missing; run the database migrations');
+    }
+    return res.rows[0].company_logo;
   }
 
   async update(dto: UpdateSettingsDto): Promise<CompanySettings> {
@@ -67,6 +88,13 @@ export class PgSettingsRepository implements ISettingsRepository {
     // Merging with `||` keeps the toggles the caller did not mention.
     if (dto.integrations !== undefined) {
       add('integrations = integrations || ?::jsonb', JSON.stringify(dto.integrations));
+    }
+    if (dto.companyLogo !== undefined) add('company_logo = ?', dto.companyLogo);
+    if (dto.lateDeductionPolicy !== undefined) {
+      add('late_deduction_policy = ?::jsonb', JSON.stringify(dto.lateDeductionPolicy));
+    }
+    if (dto.permissionPolicy !== undefined) {
+      add('permission_policy = ?::jsonb', JSON.stringify(dto.permissionPolicy));
     }
     const res = await this.getPool().query<SettingsRow>(
       `UPDATE company_settings SET ${sets.join(', ')}, updated_at = NOW()

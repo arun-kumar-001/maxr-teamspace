@@ -8,6 +8,9 @@ export class MemorySettingsRepository implements ISettingsRepository {
     timezone: 'Asia/Kolkata',
     workWeek: { start: 'Monday', end: 'Friday', days: workDays('Monday', 'Friday') },
     integrations: { email: true, sms: false, calendarSync: false, payrollExport: false },
+    companyLogo: null,
+    lateDeductionPolicy: null,
+    permissionPolicy: null,
     updatedAt: '2026-10-30T00:00:00.000Z',
   };
   reads = 0;
@@ -15,6 +18,10 @@ export class MemorySettingsRepository implements ISettingsRepository {
   async get(): Promise<CompanySettings> {
     this.reads += 1;
     return structuredClone(this.settings);
+  }
+
+  async getLogo(): Promise<string | null> {
+    return this.settings.companyLogo;
   }
 
   async update(dto: UpdateSettingsDto): Promise<CompanySettings> {
@@ -27,6 +34,9 @@ export class MemorySettingsRepository implements ISettingsRepository {
     if (dto.integrations !== undefined) {
       next.integrations = { ...next.integrations, ...dto.integrations };
     }
+    if (dto.companyLogo !== undefined) next.companyLogo = dto.companyLogo;
+    if (dto.lateDeductionPolicy !== undefined) next.lateDeductionPolicy = dto.lateDeductionPolicy;
+    if (dto.permissionPolicy !== undefined) next.permissionPolicy = dto.permissionPolicy;
     next.updatedAt = new Date().toISOString();
     this.settings = next;
     return structuredClone(next);

@@ -1,3 +1,4 @@
+import { prepareLogo } from './prepare-logo';
 import { useState, useRef, type ChangeEvent } from 'react';
 import { Button } from '../../../components/ui/Button';
 
@@ -82,49 +83,23 @@ export function CompanyLogoSection({
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setErrorMessage(null);
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setErrorMessage('Please select a valid image file (PNG, JPG, SVG, WEBP).');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('Logo file exceeds 5MB limit. Please choose a smaller image.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        onUpdateLogo(result);
-        try {
-          localStorage.setItem('maxr_company_logo', result);
-          window.dispatchEvent(new Event('storage'));
-        } catch {
-          // fallback
-        }
-        onNotify?.('Company logo updated successfully!');
-      }
-    };
-    reader.onerror = () => {
-      setErrorMessage('Failed to read the selected file. Please try again.');
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    prepareLogo(file)
+      .then((dataUrl) => {
+        onUpdateLogo(dataUrl);
+        onNotify?.('Logo chosen. Save the settings to apply it for everyone.');
+      })
+      .catch((err: unknown) => {
+        setErrorMessage(err instanceof Error ? err.message : 'The logo could not be used.');
+      });
   };
 
   const handleResetDefault = () => {
     setErrorMessage(null);
     onUpdateLogo(null);
-    try {
-      localStorage.removeItem('maxr_company_logo');
-      window.dispatchEvent(new Event('storage'));
-    } catch {
-      // fallback
-    }
-    onNotify?.('Company logo reset to default brand symbol.');
+    onNotify?.('Logo removed. Save the settings to apply it for everyone.');
   };
 
   const activeLogo = logoUrl || '/maxr-symbol.png';
@@ -199,7 +174,7 @@ export function CompanyLogoSection({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+            accept="image/png,image/jpeg,image/webp"
             className="hidden"
             onChange={handleFileChange}
             aria-label="Upload Company Logo"
@@ -235,7 +210,8 @@ export function CompanyLogoSection({
           </div>
 
           <p className="text-[11px] text-text-subtle max-w-xs">
-            Recommended: Transparent PNG or SVG at least 256x256px. Max file size: 5MB.
+            Recommended: transparent PNG at least 256x256px. PNG, JPG or WEBP; larger images are
+            scaled down automatically.
           </p>
         </div>
       </div>

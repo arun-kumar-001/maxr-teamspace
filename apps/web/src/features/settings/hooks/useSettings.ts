@@ -1,3 +1,4 @@
+import { isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSettings, updateSettings, SettingsApiError } from '../api/settingsApi';
 import { setStaffPayslipsEnabled } from '../../../shell/navigation';
@@ -5,6 +6,8 @@ import {
   type CompanySettings,
   type DayName,
   type IntegrationToggles,
+  type LateDeductionConfig,
+  type PermissionPolicyConfig,
   type UpdateSettingsPayload,
   calculateWorkDays,
 } from '../types';
@@ -72,26 +75,7 @@ export interface LeavePolicyProfile {
   assignedEmployeesCount?: number;
 }
 
-export interface PermissionPolicyConfig {
-  enabled: boolean;
-  maxPermissionsPerMonth: number;
-  maxHoursPerPermission: number;
-  totalMonthlyPermissionHours?: number;
-  advanceNoticeHours?: number;
-  requiresCompensation?: boolean;
-  approvalFlow?: 'lead_only' | 'hr_only' | 'auto_approved';
-  allowLateArrival?: boolean;
-  allowEarlyDeparture?: boolean;
-}
-
-export interface LateDeductionConfig {
-  enabled: boolean;
-  graceMinutes: number;
-  deductionType: 'fixed_amount' | 'half_day_salary' | 'hourly_rate' | 'none';
-  deductionAmount: number;
-  freeLateLimitCount: number;
-  halfDayCutoffMinutes: number;
-}
+export type { LateDeductionConfig, PermissionPolicyConfig };
 
 export const DEFAULT_LATE_DEDUCTION: LateDeductionConfig = {
   enabled: true,
@@ -230,7 +214,6 @@ export interface SettingsDraft {
 }
 
 export const CONFIG_STORAGE_KEY = 'maxr_company_config';
-export const LOGO_STORAGE_KEY = 'maxr_company_logo';
 
 export interface ExtendedCompanyConfig {
   companyLogo?: string | null;
@@ -271,14 +254,17 @@ export const DEFAULT_EXTENDED_CONFIG: ExtendedCompanyConfig = {
   permissionPolicy: DEFAULT_PERMISSION_POLICY,
 };
 
-export function loadStoredExtendedConfig(): ExtendedCompanyConfig {
-  let logo: string | null = null;
-  try {
-    logo = localStorage.getItem(LOGO_STORAGE_KEY);
-  } catch {
-    // Browser storage can be unavailable
-  }
+/** What may be cached in this browser: the navigation only needs the integration toggles. */
+function cacheable(settings: CompanySettings): CompanySettings {
+  return { ...settings, companyLogo: null, lateDeductionPolicy: null, permissionPolicy: null };
+}
 
+/**
+ * The part of the company configuration that is still kept in this browser only (shift times,
+ * leave quotas and similar). The logo and the late-deduction and permission policies are NOT here:
+ * they are saved on the server, so every user sees the same ones.
+ */
+export function loadStoredExtendedConfig(): ExtendedCompanyConfig {
   let parsed: Partial<ExtendedCompanyConfig> = {};
   try {
     const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
@@ -292,29 +278,41 @@ export function loadStoredExtendedConfig(): ExtendedCompanyConfig {
   return {
     ...DEFAULT_EXTENDED_CONFIG,
     ...parsed,
-    companyLogo: logo ?? parsed.companyLogo ?? null,
-    lateDeductionPolicy: parsed.lateDeductionPolicy
-      ? { ...DEFAULT_LATE_DEDUCTION, ...parsed.lateDeductionPolicy }
+    companyLogo: null,
+    lateDeductionPolicy: DEFAULT_LATE_DEDUCTION,
+    permissionPolicy: DEFAULT_PERMISSION_POLICY,
+  };
+}
+
+/** The server-held settings as the screen edits them; defaults stand in for "never configured". */
+export function serverBackedConfig(
+  s: Pick<CompanySettings, 'companyLogo' | 'lateDeductionPolicy' | 'permissionPolicy'>,
+): Pick<ExtendedCompanyConfig, 'companyLogo' | 'lateDeductionPolicy' | 'permissionPolicy'> {
+  return {
+    companyLogo: s.companyLogo ?? null,
+    lateDeductionPolicy: s.lateDeductionPolicy
+      ? { ...DEFAULT_LATE_DEDUCTION, ...s.lateDeductionPolicy }
       : DEFAULT_LATE_DEDUCTION,
-    permissionPolicy: parsed.permissionPolicy
-      ? { ...DEFAULT_PERMISSION_POLICY, ...parsed.permissionPolicy }
+    permissionPolicy: s.permissionPolicy
+      ? { ...DEFAULT_PERMISSION_POLICY, ...s.permissionPolicy }
       : DEFAULT_PERMISSION_POLICY,
   };
 }
 
 export function persistExtendedConfig(config: ExtendedCompanyConfig) {
+  // The logo and the two policies belong to the server; they are not copied into this browser.
+  const {
+    companyLogo: _logo,
+    lateDeductionPolicy: _late,
+    permissionPolicy: _perm,
+    ...local
+  } = config;
   try {
-    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-    if (config.companyLogo) {
-      localStorage.setItem(LOGO_STORAGE_KEY, config.companyLogo);
-    } else {
-      localStorage.removeItem(LOGO_STORAGE_KEY);
-    }
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new Event('maxr:company-config-updated'));
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(local));
   } catch {
     // Browser storage can be unavailable
   }
+  window.dispatchEvent(new Event('maxr:company-config-updated'));
 }
 
 export interface UseSettingsResult {
@@ -343,7 +341,7 @@ export function useSettings(): UseSettingsResult {
   const [error, setError] = useState<string | null>(null);
 
   const initDraft = useCallback((s: CompanySettings): SettingsDraft => {
-    const ext = loadStoredExtendedConfig();
+    const ext = { ...loadStoredExtendedConfig(), ...serverBackedConfig(s) };
     setSavedExtended(ext);
     return {
       companyName: s.companyName,
@@ -363,7 +361,7 @@ export function useSettings(): UseSettingsResult {
       setSettings(data);
       setDraft(initDraft(data));
       try {
-        localStorage.setItem('maxr_company_settings', JSON.stringify(data));
+        localStorage.setItem('maxr_company_settings', JSON.stringify(cacheable(data)));
       } catch {
         // Browser storage can be unavailable while API settings remain usable.
       }
@@ -371,10 +369,11 @@ export function useSettings(): UseSettingsResult {
         setStaffPayslipsEnabled(data.integrations.payrollExport);
       }
     } catch (err) {
-      // In development or when database is offline, fallback to cached settings or baseline defaults
+      // Only the development demo may show cached or invented settings. In production a failed
+      // load is an error: stale values would look current and an Admin could save over real ones.
       let fallbackSettings: CompanySettings | null = null;
       try {
-        const stored = localStorage.getItem('maxr_company_settings');
+        const stored = isDemoDataEnabled() ? localStorage.getItem('maxr_company_settings') : null;
         if (stored) {
           fallbackSettings = JSON.parse(stored);
         }
@@ -382,7 +381,7 @@ export function useSettings(): UseSettingsResult {
         // Browser storage access error
       }
 
-      if (!fallbackSettings && import.meta.env.DEV) {
+      if (!fallbackSettings && isDemoDataEnabled()) {
         fallbackSettings = {
           companyName: 'MAXR Global Technologies',
           timezone: 'Asia/Kolkata',
@@ -397,6 +396,9 @@ export function useSettings(): UseSettingsResult {
             calendarSync: true,
             payrollExport: false,
           },
+          companyLogo: null,
+          lateDeductionPolicy: null,
+          permissionPolicy: null,
           updatedAt: new Date().toISOString(),
         };
       }
@@ -468,7 +470,8 @@ export function useSettings(): UseSettingsResult {
     if (draft.integrations.payrollExport !== settings.integrations.payrollExport) return true;
 
     // Extended config differences
-    if ((draft.companyLogo ?? null) !== (savedExtended.companyLogo ?? null)) return true;
+    const server = serverBackedConfig(settings);
+    if ((draft.companyLogo ?? null) !== server.companyLogo) return true;
     if ((draft.shiftStartTime ?? '09:00') !== (savedExtended.shiftStartTime ?? '09:00'))
       return true;
     if ((draft.shiftEndTime ?? '18:00') !== (savedExtended.shiftEndTime ?? '18:00')) return true;
@@ -497,15 +500,9 @@ export function useSettings(): UseSettingsResult {
       JSON.stringify(savedExtended.customLeaveTypes || [])
     )
       return true;
-    if (
-      JSON.stringify(draft.permissionPolicy || {}) !==
-      JSON.stringify(savedExtended.permissionPolicy || {})
-    )
+    if (JSON.stringify(draft.permissionPolicy) !== JSON.stringify(server.permissionPolicy))
       return true;
-    if (
-      JSON.stringify(draft.lateDeductionPolicy || {}) !==
-      JSON.stringify(savedExtended.lateDeductionPolicy || {})
-    )
+    if (JSON.stringify(draft.lateDeductionPolicy) !== JSON.stringify(server.lateDeductionPolicy))
       return true;
 
     return false;
@@ -556,6 +553,23 @@ export function useSettings(): UseSettingsResult {
       payload.integrations = changedIntegrations;
     }
 
+    const server = serverBackedConfig(settings);
+    if ((draft.companyLogo ?? null) !== server.companyLogo) {
+      payload.companyLogo = draft.companyLogo ?? null;
+    }
+    if (
+      draft.lateDeductionPolicy &&
+      JSON.stringify(draft.lateDeductionPolicy) !== JSON.stringify(server.lateDeductionPolicy)
+    ) {
+      payload.lateDeductionPolicy = draft.lateDeductionPolicy;
+    }
+    if (
+      draft.permissionPolicy &&
+      JSON.stringify(draft.permissionPolicy) !== JSON.stringify(server.permissionPolicy)
+    ) {
+      payload.permissionPolicy = draft.permissionPolicy;
+    }
+
     return payload;
   }, [settings, draft]);
 
@@ -578,7 +592,7 @@ export function useSettings(): UseSettingsResult {
           updatedSettings = await updateSettings(payload);
           setSettings(updatedSettings);
         } catch (apiErr) {
-          if (!import.meta.env.DEV) throw apiErr;
+          if (!isDemoDataEnabled()) throw apiErr;
           if (settings) {
             updatedSettings = {
               ...settings,
@@ -628,7 +642,7 @@ export function useSettings(): UseSettingsResult {
       if (updatedSettings) {
         setDraft(initDraft(updatedSettings));
         try {
-          localStorage.setItem('maxr_company_settings', JSON.stringify(updatedSettings));
+          localStorage.setItem('maxr_company_settings', JSON.stringify(cacheable(updatedSettings)));
         } catch {
           // Browser storage can be unavailable while API settings remain usable.
         }

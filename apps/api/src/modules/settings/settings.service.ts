@@ -18,6 +18,10 @@ export class SettingsService {
     return this.repository.get();
   }
 
+  getLogo(): Promise<string | null> {
+    return this.repository.getLogo();
+  }
+
   getBasic(): Promise<BasicSettings> {
     return this.reader.getBasic();
   }
