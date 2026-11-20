@@ -75,7 +75,7 @@ export function createAttendanceRouter(options: AttendanceRouterOptions): Router
 
   router.get(
     '/team-calendar',
-    requirePermission('attendance.read_own'),
+    requirePermission('attendance.list'),
     validate({ query: teamCalendarQuerySchema }),
     asyncHandler(controller.getTeamCalendar),
   );

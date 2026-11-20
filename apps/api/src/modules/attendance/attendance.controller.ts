@@ -105,7 +105,11 @@ export class AttendanceController {
 
   getTeamCalendar = async (req: Request, res: Response): Promise<void> => {
     const { query } = validated(req, { query: teamCalendarQuerySchema });
-    const data = await this.service.getTeamCalendar(query, this.context(req));
+    const data = await this.service.getTeamCalendar(
+      query,
+      this.context(req),
+      accessFor(req).filter,
+    );
     res.status(200).json({ data });
   };
 }

@@ -17,7 +17,8 @@ import {
 
 export interface TeamCalendarParams {
   callerEmployeeId: string;
-  callerRole: string;
+  /** Whose attendance the caller may see: decided by RBAC, not by the role name. */
+  scope: ScopeFilter;
   startDate: string;
   endDate: string;
   departmentId?: string;
@@ -350,27 +351,26 @@ export class PgAttendanceRepository implements IAttendanceRepository {
 
   async getTeamCalendar(params: TeamCalendarParams): Promise<TeamCalendarData> {
     const pool = this.getPool();
-    const callerRes = await pool.query<{
-      department_id: string | null;
-      manager_id: string | null;
-    }>(`SELECT department_id, manager_id FROM employees WHERE id = $1`, [params.callerEmployeeId]);
-    const callerDeptId = callerRes.rows[0]?.department_id ?? null;
-    const callerManagerId = callerRes.rows[0]?.manager_id ?? null;
-
     const empConditions: string[] = [`e.status = 'active'`];
     const empValues: unknown[] = [];
     let p = 1;
 
-    if (params.callerRole === 'team_lead') {
-      empConditions.push(`(e.id = $${p} OR e.manager_id = $${p})`);
-      empValues.push(params.callerEmployeeId);
-      p++;
-    } else if (params.callerRole !== 'admin' && params.callerRole !== 'hr_manager') {
-      empConditions.push(
-        `(e.id = $${p} OR ($${p + 1}::uuid IS NOT NULL AND e.department_id = $${p + 1}::uuid) OR ($${p + 2}::uuid IS NOT NULL AND e.manager_id = $${p + 2}::uuid))`,
-      );
-      empValues.push(params.callerEmployeeId, callerDeptId, callerManagerId);
-      p += 3;
+    switch (params.scope.kind) {
+      case 'all':
+        break;
+      case 'team':
+        // A Team Lead sees themselves and their direct reports.
+        empConditions.push(`(e.id = $${p} OR e.manager_id = $${p})`);
+        empValues.push(params.scope.managerId);
+        p++;
+        break;
+      case 'own':
+        empConditions.push(`e.id = $${p}`);
+        empValues.push(params.scope.employeeId);
+        p++;
+        break;
+      default:
+        empConditions.push('FALSE');
     }
 
     if (params.departmentId) {

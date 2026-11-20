@@ -178,4 +178,48 @@ describe('PgAttendanceRepository (PostgreSQL Integration - Issue #34)', () => {
     const noIds = await queryWithScope({ kind: 'none' });
     expect(noIds).toEqual([]);
   });
+
+  describe('team calendar scope (who can be listed)', () => {
+    const calendar = async (scope: ScopeFilter) => {
+      const res = await repo.getTeamCalendar({
+        callerEmployeeId: ids.lead!,
+        scope,
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+      });
+      return res.employees.map((e) => e.employeeId).filter((id) => Object.values(ids).includes(id));
+    };
+
+    it('lists everyone for the company-wide scope, but never a deactivated employee', async () => {
+      const all = await calendar({ kind: 'all' });
+      expect(all).toEqual(expect.arrayContaining([ids.lead, ids.anna, ids.ben, ids.carl]));
+      expect(all).not.toContain(ids.dave);
+    });
+
+    it('lists a Team Lead and their direct reports, and nobody else', async () => {
+      const team = await calendar({ kind: 'team', managerId: ids.lead! });
+      expect(team.sort()).toEqual([ids.lead, ids.anna, ids.ben].sort());
+      expect(team).not.toContain(ids.carl);
+    });
+
+    it('lists only the caller for the own scope, never a colleague in the same department', async () => {
+      const own = await calendar({ kind: 'own', employeeId: ids.anna! });
+      expect(own).toEqual([ids.anna]);
+    });
+
+    it('lists nobody for a denied scope', async () => {
+      expect(await calendar({ kind: 'none' })).toEqual([]);
+    });
+
+    it('does not let a filter widen the scope: asking for another employee returns nothing', async () => {
+      const res = await repo.getTeamCalendar({
+        callerEmployeeId: ids.anna!,
+        scope: { kind: 'own', employeeId: ids.anna! },
+        startDate: '2026-01-01',
+        endDate: '2026-12-31',
+        employeeId: ids.carl,
+      });
+      expect(res.employees).toEqual([]);
+    });
+  });
 });

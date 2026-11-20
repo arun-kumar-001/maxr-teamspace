@@ -350,7 +350,11 @@ export class AttendanceService {
     return updated;
   }
 
-  async getTeamCalendar(query: TeamCalendarQuery, ctx: RequestContext): Promise<TeamCalendarData> {
+  async getTeamCalendar(
+    query: TeamCalendarQuery,
+    ctx: RequestContext,
+    scope: ScopeFilter,
+  ): Promise<TeamCalendarData> {
     if (!ctx.employeeId) {
       return { employees: [], departments: [], holidays: [], entries: [] };
     }
@@ -363,7 +367,7 @@ export class AttendanceService {
 
     return this.repo.getTeamCalendar({
       callerEmployeeId: ctx.employeeId,
-      callerRole: ctx.actorRole,
+      scope,
       startDate: query.startDate ?? defaultStart,
       endDate: query.endDate ?? defaultEnd,
       departmentId: query.departmentId,
