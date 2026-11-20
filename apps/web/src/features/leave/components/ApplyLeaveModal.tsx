@@ -1,8 +1,9 @@
-import { demoOr } from '@/lib/demo-data';
+import { demoOr, isDemoDataEnabled } from '@/lib/demo-data';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
 import { Modal, Button, FormField, Select } from '../../../components/ui';
 import { fetchLeaveApprovalRoute } from '../api/leave';
+import { getConfiguredLeavePolicies } from '../lib/configuredPolicies';
 import type { LeaveApprovalRoute } from '../types';
 
 export interface InitialLeaveRequest {
@@ -124,7 +125,10 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   // Only policies the server returned can be applied for; sample types exist for the demo only.
   const resolvedPolicies = useMemo(() => {
     const active = policies.filter((p) => p.isActive);
-    return active.length > 0 ? active : demoOr([], DEFAULT_LEAVE_TYPES);
+    if (active.length > 0) return active;
+    const configured = getConfiguredLeavePolicies();
+    if (configured && configured.length > 0) return configured;
+    return demoOr([], DEFAULT_LEAVE_TYPES);
   }, [policies]);
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -167,9 +171,14 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       },
       () => {
         if (!controller.signal.aborted) {
-          setRouteError(true);
-          if (mode === 'edit') {
+          if (isDemoDataEnabled()) {
+            setApprovalRoute({ approverRoles: ['hr_manager', 'team_lead', 'admin'] });
             setApproverRole('hr_manager');
+          } else {
+            setRouteError(true);
+            if (mode === 'edit') {
+              setApproverRole('hr_manager');
+            }
           }
         }
       },
@@ -199,7 +208,11 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           initialRequest.reason && initialRequest.reason !== '—' ? initialRequest.reason : '',
         );
       } else {
-        setLeaveTypeId((prev) => (prev ? prev : (resolvedPolicies[0]?.id ?? '')));
+        setLeaveTypeId((prev) =>
+          prev && resolvedPolicies.some((p) => p.id === prev)
+            ? prev
+            : (resolvedPolicies[0]?.id ?? ''),
+        );
         setStartDate(todayStr);
         setEndDate(todayStr);
         setHalfDay(false);
@@ -625,7 +638,11 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           helperText={
             selectedBalance
               ? `${selectedBalance.remaining} days available out of ${selectedBalance.allotted + selectedBalance.carriedForward} total days.`
-              : 'Select policy to request leave.'
+              : selectedPolicy?.hasBalance
+                ? `${selectedPolicy.annualDays} days available out of ${selectedPolicy.annualDays} total days.`
+                : isPermission
+                  ? 'Permission request (up to 2 hours).'
+                  : 'Select policy to request leave.'
           }
         >
           <div ref={dropdownRef} className="relative w-full" data-testid="leave-type-combobox">
