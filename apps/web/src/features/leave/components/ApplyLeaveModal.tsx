@@ -903,7 +903,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         </div>
 
         {/* Row 3: Half-Day Option & Duration strip */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-tile bg-surface-muted border border-border text-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-3.5 py-2.5 rounded-input bg-surface border border-border text-xs">
           {selectedPolicy?.allowHalfDay && !isPermission ? (
             <label
               htmlFor="apply-half-day-toggle"
@@ -916,7 +916,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                 checked={halfDay}
                 disabled={isSubmitting}
                 onChange={(e) => handleHalfDayToggle(e.target.checked)}
-                className="h-4 w-4 rounded border-border-strong text-primary-deep focus:ring-primary-strong"
+                className="h-4 w-4 rounded-md border-border-strong text-primary-deep focus:ring-primary-strong accent-primary-deep cursor-pointer"
               />
               <span>
                 Half-Day Leave (0.5 day)
@@ -926,9 +926,10 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               </span>
             </label>
           ) : (
-            <span className="text-xs text-text-subtle font-medium">
-              {isPermission ? 'Short permission' : 'Standard working day request'}
-            </span>
+            <div className="flex items-center gap-2 text-xs text-text-subtle font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-strong/70 shrink-0" />
+              <span>{isPermission ? 'Short permission' : 'Standard working day request'}</span>
+            </div>
           )}
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -936,7 +937,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               {isPermission ? 'Permission:' : 'Calculated Duration:'}
             </span>
             <span
-              className="text-xs font-bold text-primary-deep font-mono px-2 py-0.5 rounded-full bg-primary-soft border border-primary-strong/20"
+              className="text-xs font-bold text-primary-deep font-mono px-2.5 py-1 rounded-input bg-primary-soft border border-primary-strong/20"
               data-testid="estimated-days-badge"
             >
               {isPermission
@@ -963,7 +964,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               disabled={isSubmitting}
               placeholder="Provide context for your team lead and approvers..."
-              className="w-full rounded-input border border-border bg-surface p-2.5 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none transition-colors"
+              className="w-full rounded-input border border-border bg-surface p-2.5 text-sm text-text placeholder:text-xs placeholder:text-text-subtle/70 focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none transition-colors"
             />
           </FormField>
 
