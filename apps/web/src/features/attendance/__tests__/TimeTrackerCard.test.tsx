@@ -89,7 +89,7 @@ describe('TimeTrackerCard & AttendanceCaptureModal (Issue #2)', () => {
         mode="check-in"
         onClose={onCloseMock}
         onConfirm={onConfirmMock}
-      />
+      />,
     );
 
     expect(screen.getByText('Check In Verification')).toBeDefined();

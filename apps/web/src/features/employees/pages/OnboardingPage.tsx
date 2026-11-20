@@ -46,7 +46,7 @@ export function OnboardingPage() {
 
   if (statusCode === 403) {
     return (
-      <div className="p-4 sm:p-6 space-y-6" data-testid="onboarding-page">
+      <div className="space-y-6 w-full min-w-0" data-testid="onboarding-page">
         <ForbiddenState
           title="Access Restricted"
           message="You do not have permission to view or manage employee onboarding."
@@ -57,7 +57,7 @@ export function OnboardingPage() {
 
   if (error && !isLoading && checklists.length === 0 && activeTab === 'onboarding') {
     return (
-      <div className="p-4 sm:p-6 space-y-6" data-testid="onboarding-page">
+      <div className="space-y-6 w-full min-w-0" data-testid="onboarding-page">
         <ErrorState title="Failed to Load Onboarding" message={error} onRetry={refetch} />
       </div>
     );
@@ -67,7 +67,7 @@ export function OnboardingPage() {
 
   if (activeEmployeeId) {
     return (
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto" data-testid="onboarding-detail-view">
+      <div className="space-y-6 w-full min-w-0" data-testid="onboarding-detail-view">
         <OnboardingChecklistDetail
           employeeId={activeEmployeeId}
           onBack={() => {
@@ -108,7 +108,7 @@ export function OnboardingPage() {
   const effectiveDepartments = crmDepartments.length > 0 ? crmDepartments : departments;
 
   return (
-    <div className="space-y-5" data-testid="onboarding-page">
+    <div className="space-y-5 w-full min-w-0" data-testid="onboarding-page">
       {/* Header & Contextual Primary Action */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

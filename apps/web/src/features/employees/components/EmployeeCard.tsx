@@ -26,9 +26,13 @@ export function EmployeeCard({
     (typeof window !== 'undefined' && window.localStorage
       ? localStorage.getItem(`maxr_avatar_${employee.id}`) ||
         ((employee as unknown as { userId?: string }).userId
-          ? localStorage.getItem(`maxr_avatar_${(employee as unknown as { userId: string }).userId}`)
+          ? localStorage.getItem(
+              `maxr_avatar_${(employee as unknown as { userId: string }).userId}`,
+            )
           : null) ||
-        (employee.email ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`) : null)
+        (employee.email
+          ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`)
+          : null)
       : null);
 
   const statusVariant =
@@ -149,9 +153,7 @@ export function EmployeeCard({
                 }}
               />
             ) : null}
-            <span className={photo ? 'sr-only' : undefined}>
-              {initials || '?'}
-            </span>
+            <span className={photo ? 'sr-only' : undefined}>{initials || '?'}</span>
           </div>
 
           {/* Status Indicator Dot on Avatar Ring (Image 2 Reference) */}

@@ -112,10 +112,7 @@ export function EmployeeDetailPage() {
 
   if (isLoading) {
     return (
-      <div
-        className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6"
-        data-testid="employee-detail-loading"
-      >
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-loading">
         <div className="flex items-center gap-3">
           <Skeleton className="w-24 h-8 rounded-md" />
         </div>
@@ -137,7 +134,7 @@ export function EmployeeDetailPage() {
 
   if (isForbidden) {
     return (
-      <div className="p-4 sm:p-6 max-w-dashboard mx-auto" data-testid="employee-detail-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-forbidden">
         <ForbiddenState
           title="Access Restricted"
           message="You do not have permission to view this employee record."
@@ -150,7 +147,7 @@ export function EmployeeDetailPage() {
 
   if (isNotFound || !employee) {
     return (
-      <div className="p-4 sm:p-6 max-w-dashboard mx-auto" data-testid="employee-detail-not-found">
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-not-found">
         <ErrorState
           title="Employee Not Found"
           message={
@@ -171,9 +168,13 @@ export function EmployeeDetailPage() {
     (typeof window !== 'undefined' && window.localStorage
       ? localStorage.getItem(`maxr_avatar_${employee.id}`) ||
         ((employee as unknown as { userId?: string }).userId
-          ? localStorage.getItem(`maxr_avatar_${(employee as unknown as { userId: string }).userId}`)
+          ? localStorage.getItem(
+              `maxr_avatar_${(employee as unknown as { userId: string }).userId}`,
+            )
           : null) ||
-        (employee.email ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`) : null)
+        (employee.email
+          ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`)
+          : null)
       : null);
 
   const statusVariant =
@@ -193,7 +194,7 @@ export function EmployeeDetailPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-dashboard mx-auto" data-testid="employee-detail-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-page">
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -248,9 +249,7 @@ export function EmployeeDetailPage() {
                 }}
               />
             ) : null}
-            <span className={employeeAvatar ? 'sr-only' : undefined}>
-              {initials}
-            </span>
+            <span className={employeeAvatar ? 'sr-only' : undefined}>{initials}</span>
           </div>
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">

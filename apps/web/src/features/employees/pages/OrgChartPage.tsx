@@ -109,7 +109,7 @@ export function OrgChartPage() {
   // Forbidden state
   if (rootError && rootError.isForbidden) {
     return (
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto" data-testid="org-chart-forbidden">
+      <div className="space-y-6 w-full min-w-0" data-testid="org-chart-forbidden">
         <ForbiddenState
           message="You do not have permission to view the organization chart."
           actionLabel="Back to Employee Directory"
@@ -120,7 +120,7 @@ export function OrgChartPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6" data-testid="org-chart-page">
+    <div className="space-y-6 w-full min-w-0" data-testid="org-chart-page">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div>

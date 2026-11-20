@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useInRouterContext } from 'react-router-dom';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
@@ -10,9 +10,8 @@ import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
 import { AddHolidayModal } from '../components/AddHolidayModal';
 import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
-import { RunAccrualModal } from '../components/RunAccrualModal';
 import { ApplyLeaveModal } from '../components/ApplyLeaveModal';
-import { LeaveRequestsTable } from '../components/LeaveRequestsTable';
+import { LeaveRequestsTable, type DisplayLeaveItem } from '../components/LeaveRequestsTable';
 import { LeaveCalendarView } from '../components/LeaveCalendarView';
 import { LeaveApprovalsTab } from '../components/LeaveApprovalsTab';
 
@@ -27,8 +26,12 @@ interface LeaveManagementPageContentProps extends LeaveManagementPageProps {
 
 function LeaveManagementPageContent({
   initialTab = 'requests',
-  navigate,
+  navigate: propNavigate,
 }: LeaveManagementPageContentProps) {
+  const inRouter = useInRouterContext();
+  const routerNavigate = inRouter ? useNavigate() : null;
+  const location = inRouter ? useLocation() : null;
+  const navigate = propNavigate || routerNavigate;
   const { role } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   const canReviewApprovals =
@@ -41,9 +44,7 @@ function LeaveManagementPageContent({
       ? 'requests'
       : initialTab === 'approvals' && !canReviewApprovals
         ? 'requests'
-        : initialTab === 'calendar'
-          ? 'requests'
-          : initialTab,
+        : initialTab,
   );
 
   useEffect(() => {
@@ -53,26 +54,40 @@ function LeaveManagementPageContent({
           ? 'requests'
           : initialTab === 'approvals' && !canReviewApprovals
             ? 'requests'
-            : initialTab === 'calendar'
-              ? 'requests'
-              : initialTab,
+            : initialTab,
       );
     }
   }, [initialTab, canManage, canReviewApprovals]);
 
-  const handleTabChange = (val: string) => {
-    const targetTab = val as 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies';
-    setActiveTab(targetTab);
-    const routeMap: Record<string, string> = {
-      requests: '/leave',
-      approvals: '/leave/approvals',
-      balances: '/leave/balances',
-      holidays: '/leave/holidays',
-      policies: '/leave/policies',
-    };
-    if (routeMap[val] && navigate) {
-      navigate(routeMap[val]);
+  // Synchronize active tab from route pathname changes
+  useEffect(() => {
+    if (location?.pathname) {
+      const path = location.pathname;
+      if (path === '/leave/approvals' && canReviewApprovals) {
+        setActiveTab('approvals');
+      } else if (path === '/leave/balances') {
+        setActiveTab('balances');
+      } else if (path === '/leave/calendar') {
+        setActiveTab('calendar');
+      } else if (path === '/leave/holidays' || path === '/hr/holidays') {
+        setActiveTab('holidays');
+      } else if ((path === '/leave/policies' || path === '/hr/leave') && canManage) {
+        setActiveTab('policies');
+      } else if (path === '/leave' || path === '/leave/requests' || path === '/staff/leave') {
+        setActiveTab('requests');
+      }
     }
+  }, [location?.pathname, canManage, canReviewApprovals]);
+
+  const handleTabChange = (
+    tab: 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies',
+  ) => {
+    setActiveTab(tab);
+    if (navigate) {
+      const targetPath = tab === 'requests' ? '/leave/requests' : `/leave/${tab}`;
+      if (location?.pathname !== targetPath) {
+        navigate(targetPath);
+      }
   };
 
   const {
@@ -94,21 +109,21 @@ function LeaveManagementPageContent({
     requestsError,
     calendarError,
     applyLeave,
+    editLeave,
     cancelRequest,
     createPolicy,
     updatePolicy,
     createHoliday,
     deleteHoliday,
-    runAccrual,
   } = useLeave();
 
   // Modals
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<DisplayLeaveItem | null>(null);
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [selectedPolicyForEdit, setSelectedPolicyForEdit] = useState<LeavePolicy | null>(null);
 
   const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false);
-  const [isAccrualModalOpen, setIsAccrualModalOpen] = useState(false);
 
   const handleOpenCreatePolicy = () => {
     setSelectedPolicyForEdit(null);
@@ -124,15 +139,13 @@ function LeaveManagementPageContent({
     { value: 'requests', label: 'My Requests' },
     ...(canReviewApprovals ? [{ value: 'approvals', label: 'Leave Approvals' }] : []),
     { value: 'balances', label: 'My Balances' },
+    { value: 'calendar', label: 'Leave Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
     ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
 
   return (
-    <div
-      className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6"
-      data-testid="leave-management-page"
-    >
+    <div className="space-y-6 w-full min-w-0" data-testid="leave-management-page">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -184,7 +197,11 @@ function LeaveManagementPageContent({
       <div className="border-b border-border pb-4 overflow-x-auto max-w-full">
         <SegmentedControl
           value={activeTab}
-          onChange={handleTabChange}
+onChange={(val) =>
+            handleTabChange(
+              val as 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies',
+            )
+          }
           options={tabOptions}
           ariaLabel="Leave and holiday navigation tabs"
         />
@@ -250,18 +267,14 @@ function LeaveManagementPageContent({
           onCancelRequest={async (id) => {
             await cancelRequest(id);
           }}
-          onEditRequest={async (id, payload) => {
-            const req = requests.find((r) => r.id === id);
-            await cancelRequest(id);
-            await applyLeave({
-              leaveTypeId: req?.leaveTypeId || '',
-              startDate: payload.startDate,
-              endDate: payload.endDate,
-              halfDay: payload.halfDay,
-              reason: payload.reason,
-            });
+onEditRequest={(req) => {
+            setEditingRequest(req);
+            setIsApplyModalOpen(true);
           }}
-          onApplyClick={() => setIsApplyModalOpen(true)}
+          onApplyClick={() => {
+            setEditingRequest(null);
+            setIsApplyModalOpen(true);
+          }}
         />
       )}
 
@@ -318,12 +331,21 @@ function LeaveManagementPageContent({
       {/* Modals */}
       <ApplyLeaveModal
         isOpen={isApplyModalOpen}
-        onClose={() => setIsApplyModalOpen(false)}
+        onClose={() => {
+          setIsApplyModalOpen(false);
+          setEditingRequest(null);
+        }}
         policies={policies}
         balances={balances}
         holidays={holidays}
+        initialRequest={editingRequest}
+        mode={editingRequest ? 'edit' : 'create'}
         onSubmit={async (payload) => {
-          await applyLeave(payload);
+          if (editingRequest) {
+            await editLeave(editingRequest.id, payload);
+          } else {
+            await applyLeave(payload);
+          }
         }}
       />
 
@@ -346,13 +368,6 @@ function LeaveManagementPageContent({
         onSubmit={async (data) => {
           await createHoliday(data);
         }}
-        defaultYear={selectedYear}
-      />
-
-      <RunAccrualModal
-        isOpen={isAccrualModalOpen}
-        onClose={() => setIsAccrualModalOpen(false)}
-        onRunAccrual={runAccrual}
         defaultYear={selectedYear}
       />
     </div>

@@ -3,9 +3,19 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+/* Lock root viewport to prevent outer window scrolling or layout offset */
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
   margin: 0;
-  min-height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+body {
   background-color: var(--bg);
   color: var(--text);
   font-family:
@@ -14,13 +24,6 @@ body {
     -apple-system,
     sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-
-/* Ensure no horizontal overflow on small devices without creating a body vertical scrollbox */
-html,
-body {
-  overflow-x: clip;
-  max-width: 100%;
 }
 
 /* Hide native number input up/down spinner arrows across the entire app */

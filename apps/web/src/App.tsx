@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useContext, type ReactNode } from 'react';
 import {
   BrowserRouter,
   MemoryRouter,
@@ -13,6 +13,10 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { AppShell } from './shell/AppShell';
 import { RouteGuard } from './shell/RouteGuard';
+import {
+  NavigationBlockerProvider,
+  NavigationBlockerContext,
+} from './shell/NavigationBlockerContext';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
 import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
@@ -52,16 +56,28 @@ export interface AppProps {
   persistSession?: boolean;
 }
 
-function ShellLayout({ children }: { children: ReactNode }) {
+function ShellLayoutInner({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const blockerCtx = useContext(NavigationBlockerContext);
   const navigate = useNavigate();
+  const handleNav = blockerCtx ? blockerCtx.navigateWithBlockCheck : navigate;
 
   return (
-    <RouteGuard currentPath={location.pathname} onNavigate={(path) => navigate(path)}>
-      <AppShell currentPath={location.pathname} onNavigate={(path) => navigate(path)}>
+    <RouteGuard currentPath={location.pathname} onNavigate={handleNav}>
+      <AppShell currentPath={location.pathname} onNavigate={handleNav}>
         {children}
       </AppShell>
     </RouteGuard>
+  );
+}
+
+function ShellLayout({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+
+  return (
+    <NavigationBlockerProvider onNavigate={(path) => navigate(path)}>
+      <ShellLayoutInner>{children}</ShellLayoutInner>
+    </NavigationBlockerProvider>
   );
 }
 
@@ -752,14 +768,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/leave/:id"
-        element={
-          <ShellLayout>
-            <LeaveManagementPage initialTab="requests" />
-          </ShellLayout>
-        }
-      />
-      <Route
         path="/leave/requests"
         element={
           <ShellLayout>
@@ -780,6 +788,14 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <LeaveManagementPage initialTab="balances" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/calendar"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="calendar" />
           </ShellLayout>
         }
       />
@@ -812,6 +828,14 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <LeaveManagementPage initialTab="holidays" />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/leave/:id"
+        element={
+          <ShellLayout>
+            <LeaveManagementPage initialTab="requests" />
           </ShellLayout>
         }
       />

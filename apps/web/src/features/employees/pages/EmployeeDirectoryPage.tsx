@@ -413,20 +413,33 @@ function DepartmentBadge({ name = '' }: { name?: string }) {
 }
 
 function getEmployeePhoto(emp: EmployeeDirectoryItem): string | undefined {
-  const localAvatar =
-    (emp.id ? localStorage.getItem(`maxr_avatar_${emp.id}`) : null) ||
-    (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null) ||
-    (emp.employeeCode ? localStorage.getItem(`maxr_avatar_${emp.employeeCode}`) : null);
-  if (localAvatar) return localAvatar;
   if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
     return (emp as unknown as { avatarUrl: string }).avatarUrl;
+  }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const localAvatar =
+      localStorage.getItem(`maxr_avatar_${emp.id}`) ||
+      ((emp as unknown as { userId?: string }).userId
+        ? localStorage.getItem(`maxr_avatar_${(emp as unknown as { userId: string }).userId}`)
+        : null) ||
+      (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null) ||
+      (emp.employeeCode ? localStorage.getItem(`maxr_avatar_${emp.employeeCode}`) : null);
+    if (localAvatar) return localAvatar;
   }
   return undefined;
 }
 
-function getEmploymentType(emp: EmployeeDirectoryItem): string | undefined {
-  if ((emp as unknown as { employmentType?: string }).employmentType) {
-    return (emp as unknown as { employmentType: string }).employmentType;
+function getEmploymentType(
+  emp: EmployeeDirectoryItem,
+): 'Full-Time' | 'Contract' | 'Internship' | undefined {
+  if (
+    (emp as unknown as { employmentType?: 'Full-Time' | 'Contract' | 'Internship' }).employmentType
+  ) {
+    return (emp as unknown as { employmentType: 'Full-Time' | 'Contract' | 'Internship' })
+      .employmentType;
+  }
+  return undefined;
+}
   }
   return undefined;
 }
@@ -623,7 +636,7 @@ export function EmployeeDirectoryPage() {
   if (isForbidden || statusCode === 403) {
     return (
       <div
-        className="p-4 sm:p-6 space-y-6 max-w-dashboard mx-auto"
+        className="space-y-6 max-w-dashboard w-full min-w-0"
         data-testid="employee-directory-page"
       >
         <div data-testid="directory-forbidden-view">
@@ -639,7 +652,7 @@ export function EmployeeDirectoryPage() {
   if (error && !isLoading && employees.length === 0) {
     return (
       <div
-        className="p-4 sm:p-6 space-y-6 max-w-dashboard mx-auto"
+        className="space-y-6 max-w-dashboard w-full min-w-0"
         data-testid="employee-directory-page"
       >
         <div data-testid="directory-error-view">
@@ -655,7 +668,7 @@ export function EmployeeDirectoryPage() {
 
   return (
     <div
-      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans"
+      className="space-y-6 max-w-dashboard w-full min-w-0 font-sans"
       data-testid="employee-directory-page"
     >
       {/* Scoped CSS for Smooth Animations & Zero Hex Compliance */}

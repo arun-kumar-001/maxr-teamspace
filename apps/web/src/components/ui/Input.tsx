@@ -36,7 +36,7 @@ export function Input({
           disabled={disabled}
           aria-invalid={Boolean(error)}
           aria-describedby={[errorId, helperId].filter(Boolean).join(' ') || undefined}
-          className={`w-full min-h-[44px] px-3 py-2 text-sm text-text bg-surface border rounded-input transition-colors
+          className={`w-full min-h-[44px] px-3 py-2 text-sm text-text bg-surface border rounded-input transition-colors placeholder:text-xs placeholder:text-text-subtle/70 placeholder:font-normal
             ${leftIcon ? 'pl-10' : ''}
             ${rightIcon ? 'pr-10' : ''}
             ${

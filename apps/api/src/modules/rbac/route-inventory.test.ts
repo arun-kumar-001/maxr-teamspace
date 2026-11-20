@@ -18,7 +18,11 @@ const PUBLIC = [
  * Routes any signed-in user may call without a permission: a user's own session and password
  * only. Everything else needs `requirePermission`. Adding a route here is a TL decision.
  */
-const AUTHENTICATED_ONLY = ['GET /api/v1/auth/me', 'POST /api/v1/auth/change-password'];
+const AUTHENTICATED_ONLY = [
+  'GET /api/v1/auth/me',
+  'POST /api/v1/auth/change-password',
+  'POST /api/v1/auth/verify-password',
+];
 
 describe('route inventory (every route declares its access rule)', () => {
   const routes = listRoutes(makeApp().app);

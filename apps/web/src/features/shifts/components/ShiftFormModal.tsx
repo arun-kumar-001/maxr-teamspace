@@ -154,11 +154,7 @@ export const ShiftFormModal: React.FC<ShiftFormModalProps> = ({
           label="Shift Code"
           htmlFor="shift-code"
           required={!isEditing}
-          helperText={
-            isEditing
-              ? 'Shift code is immutable once created.'
-              : 'Unique identifier.'
-          }
+          helperText={isEditing ? 'Shift code is immutable once created.' : 'Unique identifier.'}
         >
           <input
             id="shift-code"

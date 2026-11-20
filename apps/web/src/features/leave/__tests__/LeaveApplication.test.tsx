@@ -156,6 +156,8 @@ const mockCalendarEntries: LeaveCalendarEntry[] = [
 
 describe('Leave Application & Management Suite (Issue #39)', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-16T10:00:00Z'));
     vi.clearAllMocks();
     vi.mocked(leaveApi.fetchLeaveApprovalRoute).mockResolvedValue({
       approverRoles: ['hr_manager', 'team_lead', 'admin'],
@@ -163,6 +165,7 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
@@ -410,6 +413,55 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       expect(screen.getByText('Work From Home')).toBeInTheDocument();
       expect(screen.getByText('Permission / Other')).toBeInTheDocument();
     });
+
+    it('pre-populates existing request data and updates in edit mode', async () => {
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const onEditSubmit = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <ApplyLeaveModal
+          isOpen={true}
+          mode="edit"
+          initialRequest={{
+            id: 'req-001',
+            requestCode: 'LR-0001',
+            leaveTypeId: 'pol-001',
+            startDate: '2026-11-10',
+            endDate: '2026-11-12',
+            halfDay: false,
+            reason: 'Family vacation updated',
+          }}
+          onClose={vi.fn()}
+          policies={mockPolicies}
+          balances={mockBalances}
+          holidays={mockHolidays}
+          onSubmit={onSubmit}
+          onEditSubmit={onEditSubmit}
+        />,
+      );
+
+      expect(screen.getByText('Edit Leave Request (LR-0001)')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Family vacation updated')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
+
+      const reasonInput = screen.getByDisplayValue('Family vacation updated');
+      fireEvent.change(reasonInput, { target: { value: 'Revised holiday plan' } });
+
+      const select = screen.getByRole('combobox', { name: 'Send request to' });
+      await screen.findByRole('option', { name: 'HR Manager' });
+      fireEvent.change(select, { target: { value: 'hr_manager' } });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+      await waitFor(() => {
+        expect(onEditSubmit).toHaveBeenCalledWith(
+          'req-001',
+          expect.objectContaining({
+            reason: 'Revised holiday plan',
+          }),
+        );
+      });
+    });
   });
 
   describe('LeaveRequestCard', () => {
@@ -444,6 +496,76 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       fireEvent.click(screen.getByTestId('filter-status-pending'));
       expect(screen.getAllByText('Family vacation')[0]).toBeInTheDocument();
       expect(screen.queryByText('Doctor appointment')).not.toBeInTheDocument();
+    });
+
+    it('triggers onEditRequest when edit button is clicked on a pending request', () => {
+      const onEditRequest = vi.fn();
+      render(
+        <LeaveRequestsTable
+          requests={mockRequests}
+          onCancelRequest={vi.fn()}
+          onEditRequest={onEditRequest}
+        />,
+      );
+
+      const editBtn = screen.getByTestId('edit-leave-btn-req-001');
+      fireEvent.click(editBtn);
+      expect(onEditRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'req-001',
+          leaveTypeName: 'Paid Time Off',
+          reason: 'Family vacation',
+        }),
+      );
+    });
+
+    it('triggers onCancelRequest and immediately updates status to cancelled', async () => {
+      const onCancelRequest = vi.fn().mockResolvedValue(undefined);
+      render(
+        <LeaveRequestsTable
+          requests={mockRequests}
+          onCancelRequest={onCancelRequest}
+          onEditRequest={vi.fn()}
+        />,
+      );
+
+      const cancelBtn = screen.getByTestId('table-cancel-leave-btn-req-001');
+      fireEvent.click(cancelBtn);
+
+      await waitFor(() => {
+        expect(onCancelRequest).toHaveBeenCalledWith('req-001');
+      });
+
+      // The status should now be updated to Cancelled
+      await waitFor(() => {
+        expect(screen.getAllByText('Cancelled')[0]).toBeInTheDocument();
+      });
+    });
+
+    it('allows edit and cancel from the details modal', async () => {
+      const onEditRequest = vi.fn();
+      const onCancelRequest = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <LeaveRequestsTable
+          requests={mockRequests}
+          onCancelRequest={onCancelRequest}
+          onEditRequest={onEditRequest}
+        />,
+      );
+
+      // Open view details modal
+      fireEvent.click(screen.getByTestId('view-leave-btn-req-001'));
+      expect(screen.getByTestId('leave-detail-modal')).toBeInTheDocument();
+
+      // Modal should show Edit Request button for pending leave
+      const modalEditBtn = screen.getByTestId('modal-edit-leave-btn');
+      fireEvent.click(modalEditBtn);
+      expect(onEditRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'req-001',
+        }),
+      );
     });
   });
 

@@ -244,7 +244,9 @@ export function AttendanceCaptureModal({
   };
 
   const title = mode === 'check-in' ? 'Check In Verification' : 'Check Out Verification';
-  const canConfirm = !isSubmitting;
+  const canConfirm = Boolean(
+    photoDataUrl && (location || locationStatus === 'error') && !isSubmitting,
+  );
 
   return (
     <Modal

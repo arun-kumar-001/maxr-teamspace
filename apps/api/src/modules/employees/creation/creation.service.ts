@@ -47,8 +47,7 @@ export class EmployeeCreationService {
     });
     const events = new EventCollector();
     // Outside the transaction: hashing is slow and needs no database.
-    const rawPassword =
-      dto.password?.trim() || `Maxr#${randomBytes(6).toString('base64url')}1!`;
+    const rawPassword = dto.password?.trim() || `Maxr#${randomBytes(6).toString('base64url')}1!`;
     const passwordHash = await this.hasher.hash(rawPassword);
     try {
       const created = await this.repository.transaction(async (tx) => {

@@ -373,9 +373,7 @@ export function Sidebar({
                     }}
                   />
                 ) : null}
-                <span className={user.avatarUrl ? 'sr-only' : undefined}>
-                  {user.initials}
-                </span>
+                <span className={user.avatarUrl ? 'sr-only' : undefined}>{user.initials}</span>
               </button>
             ) : (
               <>
@@ -394,9 +392,7 @@ export function Sidebar({
                       }}
                     />
                   ) : null}
-                  <span className={user.avatarUrl ? 'sr-only' : undefined}>
-                    {user.initials}
-                  </span>
+                  <span className={user.avatarUrl ? 'sr-only' : undefined}>{user.initials}</span>
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-semibold text-sidebar-strong truncate">

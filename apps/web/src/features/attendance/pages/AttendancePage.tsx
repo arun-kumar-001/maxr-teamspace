@@ -110,12 +110,9 @@ function EmployeeAttendanceWorkspace({
   } = useAttendanceCorrections();
 
   return (
-    <div
-      className="relative rounded-card p-4 sm:p-6 md:p-7 border border-border/80 space-y-5 bg-white shadow-xs"
-      data-testid="attendance-page"
-    >
+    <div className="space-y-6 w-full min-w-0 font-sans select-none" data-testid="attendance-page">
       {/* Top Clean White Header & Sub-Navigation */}
-      <div className="pb-4 border-b border-border/80 space-y-4">
+      <div className="rounded-card p-4 sm:p-6 md:p-7 border border-border/80 space-y-4 bg-white shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-widest text-primary-strong">
@@ -259,7 +256,10 @@ function AttendanceOpsWorkspace({
         setActiveTab('timesheets');
       } else if (location.pathname === '/attendance/check-in-out') {
         setActiveTab('check-in-out');
-      } else if (location.pathname === '/attendance' || location.pathname === '/attendance/on-duty') {
+      } else if (
+        location.pathname === '/attendance' ||
+        location.pathname === '/attendance/on-duty'
+      ) {
         setActiveTab('on-duty');
       }
     }
@@ -347,6 +347,14 @@ function AttendanceOpsWorkspace({
     void loadData();
   }, [loadData, role]);
 
+  useEffect(() => {
+    const handleSync = () => {
+      void loadData();
+    };
+    window.addEventListener('maxr:attendance-updated', handleSync);
+    return () => window.removeEventListener('maxr:attendance-updated', handleSync);
+  }, [loadData]);
+
   const formattedSelectedDate = (() => {
     try {
       const d = new Date(`${selectedDate}T00:00:00`);
@@ -383,10 +391,7 @@ function AttendanceOpsWorkspace({
   })();
 
   return (
-    <div
-      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
-      data-testid="attendance-page"
-    >
+    <div className="space-y-6 w-full min-w-0 font-sans select-none" data-testid="attendance-page">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div className="space-y-1">
           <div className="text-xs text-text-muted flex items-center gap-1.5 font-medium">

@@ -281,6 +281,67 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 </>
               )}
             </button>
+
+            {/* Quick Demo Sign-In Helper for Local Development */}
+            {import.meta.env.DEV && (
+              <div className="mt-4 pt-3.5 border-t border-border/80 w-full text-center space-y-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle block">
+                  Quick Demo Login (Click to fill)
+                </span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('admin@maxr.internal');
+                      setPassword('Password123!');
+                    }}
+                    className="p-1.5 rounded-lg bg-surface border border-border hover:border-primary-strong text-text font-medium transition-colors cursor-pointer text-left px-2.5 shadow-xs"
+                  >
+                    <span className="block font-bold text-teal-800">Admin</span>
+                    <span className="text-[10px] text-text-muted">admin@maxr.internal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('shajitha@maxr.internal');
+                      setPassword('Password123!');
+                    }}
+                    className="p-1.5 rounded-lg bg-surface border border-border hover:border-primary-strong text-text font-medium transition-colors cursor-pointer text-left px-2.5 shadow-xs"
+                  >
+                    <span className="block font-bold text-indigo-800">HR Manager</span>
+                    <span className="text-[10px] text-text-muted">shajitha@maxr.internal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('teamlead@maxr.internal');
+                      setPassword('Password123!');
+                    }}
+                    className="p-1.5 rounded-lg bg-surface border border-border hover:border-primary-strong text-text font-medium transition-colors cursor-pointer text-left px-2.5 shadow-xs"
+                  >
+                    <span className="block font-bold text-blue-800">Team Lead</span>
+                    <span className="text-[10px] text-text-muted">teamlead@maxr.internal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('arunkumar@maxr.internal');
+                      setPassword('Password123!');
+                    }}
+                    className="p-1.5 rounded-lg bg-surface border border-border hover:border-primary-strong text-text font-medium transition-colors cursor-pointer text-left px-2.5 shadow-xs"
+                  >
+                    <span className="block font-bold text-emerald-800">Staff Member</span>
+                    <span className="text-[10px] text-text-muted">arunkumar@maxr.internal</span>
+                  </button>
+                </div>
+                <div className="text-[10px] text-text-muted">
+                  Default password:{' '}
+                  <code className="bg-surface-muted px-1.5 py-0.5 rounded font-mono font-semibold text-text">
+                    Password123!
+                  </code>
+                </div>
+              </div>
+            )}
           </form>
         </div>
       </div>

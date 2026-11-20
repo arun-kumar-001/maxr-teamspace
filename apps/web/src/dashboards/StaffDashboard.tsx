@@ -537,7 +537,9 @@ export function StaffDashboard() {
               <h2 className="text-base font-bold font-display text-white leading-tight drop-shadow-sm">
                 {user?.name || 'Lora Piterson'}
               </h2>
-              <p className="text-xs text-white/80 drop-shadow-sm">{user?.title || 'UX/UI Designer'}</p>
+              <p className="text-xs text-white/80 drop-shadow-sm">
+                {user?.title || 'UX/UI Designer'}
+              </p>
             </div>
 
             {/* Floating $1,200 salary badge */}

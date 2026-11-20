@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import type { LeavePolicy, Holiday, LeaveBalance } from '../types';
 import { LeavePolicyCard } from '../components/LeavePolicyCard';
 import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
@@ -25,6 +26,10 @@ vi.mock('../api/leave', () => ({
   fetchMyLeaveRequests: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
   fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
   runYearlyAccrual: vi.fn(),
+  fetchMyLeaveRequests: vi
+    .fn()
+    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 10, total: 0 } }),
+  fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../../../auth/AuthContext', () => ({
@@ -263,6 +268,50 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       fireEvent.click(screen.getByRole('radio', { name: 'Leave Policies' }));
       expect(screen.getByText('Configured Leave Policies')).toBeInTheDocument();
       expect(screen.getByText('New Policy')).toBeInTheDocument();
+    });
+
+    it('synchronizes URL route on tab click when router context is present', async () => {
+      vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValue(mockPolicies);
+      vi.mocked(leaveApi.fetchHolidays).mockResolvedValue(mockHolidays);
+      vi.mocked(leaveApi.fetchMyLeaveBalances).mockResolvedValue(mockBalances);
+
+      function LocationDisplay() {
+        const location = useLocation();
+        return <div data-testid="location-display">{location.pathname}</div>;
+      }
+
+      render(
+        <MemoryRouter initialEntries={['/leave/requests']}>
+          <LocationDisplay />
+          <LeaveManagementPage initialTab="requests" />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Leave & Holiday Management')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/requests');
+
+      // Click "My Balances"
+      fireEvent.click(screen.getByRole('radio', { name: 'My Balances' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/balances');
+
+      // Click "Leave Calendar"
+      fireEvent.click(screen.getByRole('radio', { name: 'Leave Calendar' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/calendar');
+
+      // Click "Holiday Calendar"
+      fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/holidays');
+
+      // Click "Leave Policies"
+      fireEvent.click(screen.getByRole('radio', { name: 'Leave Policies' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/policies');
+
+      // Click "My Requests"
+      fireEvent.click(screen.getByRole('radio', { name: 'My Requests' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/requests');
     });
   });
 });

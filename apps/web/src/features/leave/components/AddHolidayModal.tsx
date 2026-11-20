@@ -113,11 +113,7 @@ export const AddHolidayModal: React.FC<AddHolidayModalProps> = ({
           />
         </FormField>
 
-        <FormField
-          label="Holiday Name"
-          htmlFor="holiday-name"
-          required
-        >
+        <FormField label="Holiday Name" htmlFor="holiday-name" required>
           <input
             id="holiday-name"
             data-testid="holiday-name-input"

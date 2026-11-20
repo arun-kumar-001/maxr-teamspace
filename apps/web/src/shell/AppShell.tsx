@@ -43,6 +43,18 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     };
   }, []);
 
+  // Ensure outer document window is locked at (0, 0) so only inner <main> scrolls
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    handleWindowScroll();
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [currentPath]);
+
   const groups = role ? getSidebarGroupsForRole(role) : [];
   const roleNavItems = role ? getNavItemsForRole(role) : [];
   // 4 primary items for mobile bottom nav (DESIGN.md §5)
@@ -70,17 +82,32 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     ),
   };
 
-  const activeNavPath =
-    currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance'
-      ? '/attendance'
-      : currentPath === '/leave/requests'
-        ? '/leave'
-        : currentPath;
+  const activeNavPath = (() => {
+    if (currentPath === '/attendance/on-duty' || currentPath === '/lead/attendance') {
+      return '/attendance';
+    }
+    if (currentPath === '/leave/requests' || currentPath === '/staff/leave') {
+      return role === 'staff' ? '/staff/leave' : '/leave';
+    }
+    if (currentPath === '/leave') {
+      return role === 'staff' ? '/staff/leave' : '/leave';
+    }
+    if (currentPath === '/leave/balances') {
+      return role === 'staff' ? '/staff/leave' : '/leave';
+    }
+    if (currentPath === '/hr/leave') {
+      return '/leave/policies';
+    }
+    if (currentPath === '/hr/holidays' || currentPath === '/leave/calendar') {
+      return '/leave/holidays';
+    }
+    return currentPath;
+  })();
 
   const sidebarUser = user
     ? {
         name: user.name,
-        role: user.role,
+        role: user.title || user.role,
         initials: user.avatarInitials,
         avatarUrl:
           user.avatarUrl ||
@@ -130,14 +157,14 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Header
           onToggleMobileNav={() => setIsMobileNavOpen(true)}
           activePath={currentPath}
           onNavigate={onNavigate}
         />
 
-        <main className="flex-1 pb-20 md:pb-12">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-12">
           <PageContainer maxWidth="dashboard" className="py-6 sm:py-8">
             {children}
           </PageContainer>

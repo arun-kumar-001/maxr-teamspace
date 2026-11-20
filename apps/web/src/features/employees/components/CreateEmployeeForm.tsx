@@ -1669,13 +1669,17 @@ export function CreateEmployeeForm({
         </FormField>
 
         {/* Sign-in Password Configuration */}
-        <div className="space-y-4 pt-4 border-t border-border/70" data-testid="password-config-section">
+        <div
+          className="space-y-4 pt-4 border-t border-border/70"
+          data-testid="password-config-section"
+        >
           <div>
             <label className="block text-xs font-bold text-text mb-1">
               Initial Sign-in Password <span className="text-danger">*</span>
             </label>
             <p className="text-xs text-text-muted">
-              Configure initial credentials for the employee. Choose automatic generation or specify a custom password.
+              Configure initial credentials for the employee. Choose automatic generation or specify
+              a custom password.
             </p>
           </div>
 
@@ -1746,7 +1750,13 @@ export function CreateEmployeeForm({
                   className="text-xs font-semibold text-primary-deep hover:text-primary-ink flex items-center gap-1.5 transition-colors cursor-pointer"
                   data-testid="regenerate-password-btn"
                 >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
                   </svg>
                   Regenerate
@@ -1770,12 +1780,24 @@ export function CreateEmployeeForm({
                     data-testid="toggle-show-auto-password"
                   >
                     {showPassword ? (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
@@ -1795,7 +1817,13 @@ export function CreateEmployeeForm({
                     </>
                   ) : (
                     <>
-                      <svg className="w-3.5 h-3.5 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        className="w-3.5 h-3.5 text-text-muted"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                       </svg>
@@ -1805,12 +1833,18 @@ export function CreateEmployeeForm({
                 </button>
               </div>
               <p className="text-[11px] text-text-muted">
-                This password will be securely assigned to the user account. Administrators can view or copy it anytime from User Accounts.
+                This password will be securely assigned to the user account. Administrators can view
+                or copy it anytime from User Accounts.
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              <FormField label="Custom Password" htmlFor="create-emp-custom-password" required error={errors.password}>
+              <FormField
+                label="Custom Password"
+                htmlFor="create-emp-custom-password"
+                required
+                error={errors.password}
+              >
                 <div className="relative">
                   <Input
                     id="create-emp-custom-password"
@@ -1830,12 +1864,24 @@ export function CreateEmployeeForm({
                     data-testid="toggle-show-custom-password"
                   >
                     {showPassword ? (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                         <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
