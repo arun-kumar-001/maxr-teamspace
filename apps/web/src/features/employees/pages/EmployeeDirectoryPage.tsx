@@ -458,7 +458,7 @@ const DEFAULT_AVATARS = [
   'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
 ];
 
-function getEmployeePhoto(emp: EmployeeDirectoryItem): string {
+function getEmployeePhoto(emp: EmployeeDirectoryItem): string | undefined {
   if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
     return (emp as unknown as { avatarUrl: string }).avatarUrl;
   }
@@ -471,22 +471,19 @@ function getEmployeePhoto(emp: EmployeeDirectoryItem): string {
       (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null);
     if (localAvatar) return localAvatar;
   }
-  if (AVATAR_SEEDS[emp.employeeCode]) return AVATAR_SEEDS[emp.employeeCode]!;
-  const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return DEFAULT_AVATARS[hash % DEFAULT_AVATARS.length]!;
+  return undefined;
 }
 
-function getEmploymentType(emp: EmployeeDirectoryItem): 'Full-Time' | 'Contract' | 'Internship' {
+function getEmploymentType(
+  emp: EmployeeDirectoryItem,
+): 'Full-Time' | 'Contract' | 'Internship' | undefined {
   if (
     (emp as unknown as { employmentType?: 'Full-Time' | 'Contract' | 'Internship' }).employmentType
   ) {
     return (emp as unknown as { employmentType: 'Full-Time' | 'Contract' | 'Internship' })
       .employmentType;
   }
-  if (emp.employeeCode === 'E-011' || emp.firstName === 'Yovtri') return 'Contract';
-  const hash = emp.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  if (hash % 6 === 5) return 'Internship';
-  return 'Full-Time';
+  return undefined;
 }
 
 function DirectoryEmployeePhoto({
@@ -1081,11 +1078,13 @@ export function EmployeeDirectoryPage() {
                     {emp.department?.name || 'MAXR Team'}
                   </p>
 
-                  <div className="mt-2.5">
-                    <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600">
-                      {getEmploymentType(emp)}
-                    </span>
-                  </div>
+                  {getEmploymentType(emp) && (
+                    <div className="mt-2.5">
+                      <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600">
+                        {getEmploymentType(emp)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Thin Horizontal Divider */}
