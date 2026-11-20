@@ -43,6 +43,12 @@ export interface IApprovalsRepository {
   lockBySubject(tx: ApprovalTx, subjectType: string, subjectId: string): Promise<Approval | null>;
   saveDecision(tx: ApprovalTx, id: string, input: SaveDecisionInput): Promise<Approval>;
   markCancelled(tx: ApprovalTx, id: string): Promise<Approval>;
+  /** Whether another active employee, not `excludeEmployeeId`, holds one of `roles`. */
+  existsOtherActiveWithRole(
+    roles: readonly string[],
+    excludeEmployeeId: string,
+    tx?: ApprovalTx,
+  ): Promise<boolean>;
 }
 
 interface ApprovalRow {
@@ -209,6 +215,25 @@ export class PgApprovalsRepository implements IApprovalsRepository {
       paging,
     );
     return { items: res.rows.map(toApproval), total: count.rows[0]?.count ?? 0 };
+  }
+
+  async existsOtherActiveWithRole(
+    roles: readonly string[],
+    excludeEmployeeId: string,
+    tx?: ApprovalTx,
+  ): Promise<boolean> {
+    const res = await (tx ?? this.getPool()).query<{ present: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1
+           FROM users u
+           JOIN employees e ON e.id = u.employee_id AND e.status = 'active'
+           JOIN user_roles ur ON ur.user_id = u.id
+           JOIN roles r ON r.id = ur.role_id
+          WHERE u.is_active AND r.key = ANY($1::text[]) AND e.id <> $2
+       ) AS present`,
+      [roles, excludeEmployeeId],
+    );
+    return res.rows[0]?.present ?? false;
   }
 
   async lockById(tx: ApprovalTx, id: string): Promise<Approval | null> {

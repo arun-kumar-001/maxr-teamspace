@@ -54,7 +54,7 @@ registerRoute({
   params: approvalIdParamsSchema,
   body: approveBodySchema,
   extraResponses: {
-    403: 'Your own request, an earlier step you decided, or a step that is not yours',
+    403: 'Your own request (unless you are the only person who could decide it), an earlier step you decided, or a step that is not yours',
     409: 'The request was already rejected or cancelled',
   },
   success: { status: 200, description: 'The approval after the decision', schema: one },
@@ -69,7 +69,7 @@ registerRoute({
   params: approvalIdParamsSchema,
   body: rejectBodySchema,
   extraResponses: {
-    403: 'Your own request, an earlier step you decided, or a step that is not yours',
+    403: 'Your own request (unless you are the only person who could decide it), an earlier step you decided, or a step that is not yours',
     409: 'The request was already approved or cancelled',
   },
   success: { status: 200, description: 'The approval after the decision', schema: one },

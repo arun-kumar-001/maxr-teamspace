@@ -43,7 +43,9 @@ export function createApprovalsRouter(
     validate({ params: approvalIdParamsSchema }),
     asyncHandler(async (req: Request, res: Response) => {
       const { params } = validated(req, { params: approvalIdParamsSchema });
-      res.status(200).json({ data: await service.get(params.id, accessFor(req).filter) });
+      res
+        .status(200)
+        .json({ data: await service.get(params.id, accessFor(req).filter, caller(req)) });
     }),
   );
 

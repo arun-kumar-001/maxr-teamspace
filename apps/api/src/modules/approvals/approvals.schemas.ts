@@ -49,5 +49,6 @@ export const approvalSchema = z
     decisions: z.array(decisionSchema),
     createdAt: z.string().datetime(),
     decidedAt: z.string().datetime().nullable(),
+    canDecideAsSoleApprover: z.boolean().optional(),
   })
   .meta({ id: 'Approval' });

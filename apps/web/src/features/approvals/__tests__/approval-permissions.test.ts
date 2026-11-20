@@ -31,3 +31,23 @@ it('requires the assigned Team Lead and blocks self-approval and repeat decision
   expect(canDecideApproval(approval, 'staff', ['hr_manager'])).toBe(false);
   expect(canDecideApproval({ ...approval, status: 'approved' }, 'hr', ['hr_manager'])).toBe(false);
 });
+
+it('offers an own request for decision only when the server says nobody else could decide it', () => {
+  const own: Approval = { ...approval, requesterEmployeeId: 'admin', stages: ['admin'] };
+  expect(canDecideApproval(own, 'admin', ['admin'])).toBe(false);
+  expect(canDecideApproval({ ...own, canDecideAsSoleApprover: false }, 'admin', ['admin'])).toBe(
+    false,
+  );
+  expect(canDecideApproval({ ...own, canDecideAsSoleApprover: true }, 'admin', ['admin'])).toBe(
+    true,
+  );
+  // The hint never helps with a request that is not yours, or one that is already decided.
+  expect(canDecideApproval({ ...approval, canDecideAsSoleApprover: true }, 'staff2', [])).toBe(
+    false,
+  );
+  expect(
+    canDecideApproval({ ...own, status: 'approved', canDecideAsSoleApprover: true }, 'admin', [
+      'admin',
+    ]),
+  ).toBe(false);
+});

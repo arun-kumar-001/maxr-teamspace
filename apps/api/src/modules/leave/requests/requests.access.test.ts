@@ -229,12 +229,29 @@ describe('leave requests API: access', () => {
     expect(approvalsRepo.approvals).toHaveLength(0);
   });
 
-  it('blocks an Admin from approving their own Admin-routed leave', async () => {
+  it('blocks an Admin from approving their own Admin-routed leave while another Admin exists', async () => {
     const { as, apply, week, approvalsRepo } = await setup();
+    approvalsRepo.requesters['e-second-admin'] = {
+      name: 'Second Admin',
+      managerId: null,
+      roles: [ROLES.ADMIN],
+    };
     expect((await apply('admin', week({ approverRole: 'admin' }))).status).toBe(201);
     const id = approvalsRepo.approvals[0]?.id;
     expect(id).toBeDefined();
     expect((await as.admin.post(`/api/v1/approvals/${id}/approve`)).status).toBe(403);
+  });
+
+  it('lets the only Admin approve their own Admin-routed leave, so it is never stuck', async () => {
+    const { as, apply, week, approvalsRepo } = await setup();
+    const created = await apply('admin', week({ approverRole: 'admin' }));
+    expect(created.status).toBe(201);
+    const id = approvalsRepo.approvals[0]?.id;
+    expect(id).toBeDefined();
+    expect((await as.admin.post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
+    expect(
+      (await as.admin.get(`/api/v1/leave-requests/${created.body.data.id}`)).body.data.status,
+    ).toBe('approved');
   });
 
   it('every route answers 401 without a session', async () => {

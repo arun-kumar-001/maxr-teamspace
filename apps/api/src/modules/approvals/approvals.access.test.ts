@@ -60,6 +60,12 @@ async function setup() {
     roles: [ROLES.HR_MANAGER],
   };
 
+  repo.requesters[kit.users.admin.employeeId] = {
+    name: 'Ada Admin',
+    managerId: null,
+    roles: [ROLES.ADMIN],
+  };
+
   const open = (n: number, requester: string, stages: ApprovalStage[]): Promise<Approval> =>
     repo.transaction((tx) =>
       approvals.service.submit(tx, {
@@ -232,5 +238,89 @@ describe('approvals API: deciding', () => {
   it('rejects a malformed id with 400', async () => {
     const { as } = await setup();
     expect((await as.admin.post('/api/v1/approvals/not-a-uuid/approve')).status).toBe(400);
+  });
+
+  describe('the only person who could decide may decide their own request', () => {
+    const adminOf = (s: Awaited<ReturnType<typeof setup>>) => s.kit.users.admin.employeeId;
+
+    it('is refused while another Admin exists, and no hint is shown', async () => {
+      const s = await setup();
+      s.repo.requesters['e-second-admin'] = {
+        name: 'Second Admin',
+        managerId: null,
+        roles: [ROLES.ADMIN],
+      };
+      const own = await s.open(1, adminOf(s), ['admin']);
+
+      expect((await s.as.admin.post(`/api/v1/approvals/${own.id}/approve`)).status).toBe(403);
+      const seen = (await s.as.admin.get(`/api/v1/approvals/${own.id}`)).body.data;
+      expect(seen.canDecideAsSoleApprover).toBeUndefined();
+      expect(s.applied).toHaveLength(0);
+    });
+
+    it('is allowed when they are the only Admin, shown as a hint, and audited as such', async () => {
+      const s = await setup();
+      const own = await s.open(1, adminOf(s), ['admin']);
+
+      const hint = (await s.as.admin.get(`/api/v1/approvals/${own.id}`)).body.data;
+      expect(hint.canDecideAsSoleApprover).toBe(true);
+      const listed = (await s.as.admin.get('/api/v1/approvals')).body.data.find(
+        (a: Approval) => a.id === own.id,
+      );
+      expect(listed.canDecideAsSoleApprover).toBe(true);
+
+      const res = await s.as.admin.post(`/api/v1/approvals/${own.id}/approve`);
+      expect(res.status).toBe(200);
+      expect(res.body.data.status).toBe('approved');
+      expect(s.applied).toEqual([`${subject(1)}:approved`]);
+      const entry = s.auditStore.find((e) => e.action === 'approvals.approve')[0];
+      expect(entry?.metadata).toMatchObject({ soleApprover: true });
+      expect(
+        (await s.as.admin.get(`/api/v1/approvals/${own.id}`)).body.data.canDecideAsSoleApprover,
+      ).toBeUndefined();
+    });
+
+    it('does not mark ordinary decisions as sole-approver decisions', async () => {
+      const s = await setup();
+      const a = await s.open(1, s.staffEmployee, ['manager']);
+      await s.as.team_lead.post(`/api/v1/approvals/${a.id}/approve`);
+      const entry = s.auditStore.find((e) => e.action === 'approvals.approve')[0];
+      expect(entry?.metadata).not.toHaveProperty('soleApprover');
+    });
+
+    it('does not help someone who lacks the role the stage needs', async () => {
+      const s = await setup();
+      // No Admin exists at all, and the HR Manager asks for a stage that needs one.
+      delete s.repo.requesters[s.kit.users.admin.employeeId];
+      const own = await s.open(1, s.kit.users.hr_manager.employeeId, ['admin']);
+      expect((await s.as.hr_manager.post(`/api/v1/approvals/${own.id}/approve`)).status).toBe(403);
+      expect(
+        (await s.as.hr_manager.get(`/api/v1/approvals/${own.id}`)).body.data
+          .canDecideAsSoleApprover,
+      ).toBeUndefined();
+    });
+
+    it('does not let the sole approver decide two stages of the same route', async () => {
+      const s = await setup();
+      const own = await s.open(1, adminOf(s), ['admin', 'admin']);
+      const first = await s.as.admin.post(`/api/v1/approvals/${own.id}/approve`);
+      expect(first.body.data).toMatchObject({ status: 'pending', currentStage: 1 });
+      expect((await s.as.admin.post(`/api/v1/approvals/${own.id}/approve`)).status).toBe(403);
+      expect(s.applied).toHaveLength(0);
+    });
+
+    it('never lets anyone decide the same request twice', async () => {
+      const s = await setup();
+      const own = await s.open(1, adminOf(s), ['admin']);
+      await s.as.admin.post(`/api/v1/approvals/${own.id}/approve`);
+      expect(
+        (
+          await s.as.admin.post(`/api/v1/approvals/${own.id}/reject`, {
+            comment: 'changed my mind',
+          })
+        ).status,
+      ).toBe(403);
+      expect(s.applied).toHaveLength(1);
+    });
   });
 });

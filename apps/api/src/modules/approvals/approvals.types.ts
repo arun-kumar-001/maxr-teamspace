@@ -43,6 +43,11 @@ export interface Approval {
   decisions: ApprovalDecision[];
   createdAt: string;
   decidedAt: string | null;
+  /**
+   * Present (true) only for the requester themself, on a pending approval nobody else could
+   * decide: they may then decide it, and the decision is audited as a sole-approver decision.
+   */
+  canDecideAsSoleApprover?: boolean;
 }
 
 export interface SubmitApprovalInput {

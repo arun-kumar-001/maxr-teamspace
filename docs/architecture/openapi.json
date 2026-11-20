@@ -1564,6 +1564,9 @@
             "type": "string",
             "nullable": true,
             "format": "date-time"
+          },
+          "canDecideAsSoleApprover": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -13826,7 +13829,7 @@
             }
           },
           "403": {
-            "description": "Your own request, an earlier step you decided, or a step that is not yours",
+            "description": "Your own request (unless you are the only person who could decide it), an earlier step you decided, or a step that is not yours",
             "content": {
               "application/json": {
                 "schema": {
@@ -13961,7 +13964,7 @@
             }
           },
           "403": {
-            "description": "Your own request, an earlier step you decided, or a step that is not yours",
+            "description": "Your own request (unless you are the only person who could decide it), an earlier step you decided, or a step that is not yours",
             "content": {
               "application/json": {
                 "schema": {

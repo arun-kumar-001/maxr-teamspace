@@ -38,6 +38,9 @@ function build() {
   const { platform, auditStore } = createTestPlatform({ logger: silent });
   const repo = new MemoryApprovalsRepository([], {
     [E.staff]: { name: 'Sam Staff', managerId: E.lead, roles: [ROLES.STAFF] },
+    // Other people hold the approver roles, so nobody is the *only* approver (see the sole-approver tests).
+    [E.hr]: { name: 'Hana HR', managerId: null, roles: [ROLES.HR_MANAGER] },
+    [E.admin]: { name: 'Ada Admin', managerId: null, roles: [ROLES.ADMIN] },
   });
   const service = new ApprovalsService(repo, platform);
   const applied: Array<{ outcome: ApprovalOutcome; by: string; subjectId: string }> = [];
