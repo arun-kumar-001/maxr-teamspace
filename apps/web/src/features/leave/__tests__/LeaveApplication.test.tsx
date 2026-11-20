@@ -155,6 +155,8 @@ const mockCalendarEntries: LeaveCalendarEntry[] = [
 
 describe('Leave Application & Management Suite (Issue #39)', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-16T10:00:00Z'));
     vi.clearAllMocks();
     vi.mocked(leaveApi.fetchLeaveApprovalRoute).mockResolvedValue({
       approverRoles: ['hr_manager', 'team_lead', 'admin'],
@@ -162,6 +164,7 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
