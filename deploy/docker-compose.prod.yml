@@ -36,6 +36,25 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     networks: [internal]
 
+  # Virus scanner for uploads (receipts, documents, attachments). The API refuses to start with
+  # STORAGE_REQUIRE_SCAN=true unless it can reach this service, and rejects a file it cannot scan.
+  # The first start downloads the signature database (database.clamav.net) and needs about 2 GB of
+  # memory; the health check only passes once the daemon is ready, which can take several minutes.
+  clamav:
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ['CMD', '/usr/local/bin/clamdcheck.sh']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 360s
+    security_opt:
+      - no-new-privileges:true
+    networks: [internal]
+
   api:
     build:
       context: ..
@@ -45,6 +64,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      clamav:
         condition: service_healthy
     env_file: .env.production
     environment:
@@ -63,7 +84,9 @@ services:
       SMTP_HOST: ${SMTP_HOST:-localhost}
       SMTP_PORT: ${SMTP_PORT:-1025}
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
-      STORAGE_REQUIRE_SCAN: ${STORAGE_REQUIRE_SCAN:-false}
+      STORAGE_REQUIRE_SCAN: ${STORAGE_REQUIRE_SCAN:-true}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: '3310'
       APP_URL: ${APP_URL:-https://localhost}
     volumes:
       - uploads_data:/data/uploads
@@ -114,6 +137,7 @@ volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  clamav_data:
 
 networks:
   internal:

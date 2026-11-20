@@ -48,7 +48,7 @@ SMTP_HOST=localhost
 SMTP_PORT=1025
 
 STORAGE_DRIVER=local
-STORAGE_REQUIRE_SCAN=false
+STORAGE_REQUIRE_SCAN=true
 EOF
   chmod 600 "$ENV_FILE"
   echo "      Generated $ENV_FILE with secure credentials."
@@ -70,7 +70,12 @@ else
     echo "APP_URL=https://localhost" >> "$ENV_FILE"
   fi
   if ! grep -q "^STORAGE_REQUIRE_SCAN=" "$ENV_FILE"; then
-    echo "STORAGE_REQUIRE_SCAN=false" >> "$ENV_FILE"
+    echo "STORAGE_REQUIRE_SCAN=true" >> "$ENV_FILE"
+  fi
+  # Older versions of this script wrote false here. It is not changed for you: that file is yours.
+  if grep -q "^STORAGE_REQUIRE_SCAN=false" "$ENV_FILE"; then
+    echo "      WARNING: $ENV_FILE has STORAGE_REQUIRE_SCAN=false, so uploads are stored unscanned." >&2
+    echo "      Set STORAGE_REQUIRE_SCAN=true (the stack now runs a ClamAV scanner) and redeploy." >&2
   fi
 fi
 
