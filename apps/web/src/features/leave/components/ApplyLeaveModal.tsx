@@ -139,6 +139,28 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   const [halfDay, setHalfDay] = useState<boolean>(false);
   const [reason, setReason] = useState<string>('');
 
+  // Document attachment state
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (file: File) => {
+    setFileError(null);
+    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxSizeBytes) {
+      setFileError('File size must be under 5 MB');
+      return;
+    }
+    const allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext || !allowedExtensions.includes(ext)) {
+      setFileError('Supported formats: PDF, PNG, JPG, DOCX');
+      return;
+    }
+    setAttachment(file);
+  };
+
   // Dropdown & Search state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -219,6 +241,8 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         setReason('');
       }
       setError(null);
+      setAttachment(null);
+      setFileError(null);
       setSearchQuery('');
       setIsDropdownOpen(false);
       setHighlightedIndex(0);
@@ -422,13 +446,27 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         setError('Select who should approve your leave request.');
         return;
       }
+      let effectiveReason: string | undefined = undefined;
+      const trimmedReason = reason.trim();
+      const attachmentTag = attachment ? `[Attachment: ${attachment.name}]` : '';
+
+      if (trimmedReason && attachmentTag) {
+        effectiveReason = `${trimmedReason} ${attachmentTag}`;
+      } else if (trimmedReason) {
+        effectiveReason = trimmedReason;
+      } else if (attachmentTag) {
+        effectiveReason = attachmentTag;
+      } else if (isPermission) {
+        effectiveReason = 'Permission request';
+      }
+
       const payload: ApplyForLeavePayload = {
         approverRole,
         leaveTypeId,
         startDate,
         endDate: isPermission ? startDate : endDate,
         halfDay: isPermission ? false : halfDay,
-        reason: reason.trim() ? reason.trim() : isPermission ? 'Permission request' : undefined,
+        reason: effectiveReason,
       };
       if (mode === 'edit' && initialRequest && onEditSubmit) {
         await onEditSubmit(initialRequest.id, payload);
@@ -879,24 +917,151 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           </div>
         </div>
 
-        {/* Row 4: Reason / Notes */}
-        <FormField
-          label="Reason / Notes (Optional)"
-          htmlFor="apply-reason"
-          helperText={`${reason.length}/500 characters`}
-        >
-          <textarea
-            id="apply-reason"
-            data-testid="apply-reason-input"
-            rows={2}
-            maxLength={500}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            disabled={isSubmitting}
-            placeholder="Provide context for your team lead and approvers..."
-            className="w-full rounded-control border border-border bg-surface p-2.5 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none"
-          />
-        </FormField>
+        {/* Row 4: Reason and Supporting Document in a responsive 2-column grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+          {/* Left Column: Reason / Notes */}
+          <FormField
+            label="Reason / Notes (Optional)"
+            htmlFor="apply-reason"
+            helperText={`${reason.length}/500 characters`}
+          >
+            <textarea
+              id="apply-reason"
+              data-testid="apply-reason-input"
+              rows={3}
+              maxLength={500}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              disabled={isSubmitting}
+              placeholder="Provide context for your team lead and approvers..."
+              className="w-full rounded-control border border-border bg-surface p-2.5 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong resize-none transition-colors"
+            />
+          </FormField>
+
+          {/* Right Column: Supporting Document Upload */}
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="leave-document-upload"
+                className="text-xs font-semibold text-text flex items-center gap-1.5"
+              >
+                <span>Attach Document</span>
+                <span className="text-[11px] font-normal text-text-subtle">(Optional)</span>
+              </label>
+              {attachment && (
+                <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Attached
+                </span>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              id="leave-document-upload"
+              data-testid="leave-document-upload"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
+              disabled={isSubmitting}
+            />
+
+            {!attachment ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleFile(file);
+                }}
+                className={`relative flex flex-col items-center justify-center p-3 rounded-control border-2 border-dashed cursor-pointer transition-all min-h-[92px] text-center ${
+                  isDragging
+                    ? 'border-primary-strong bg-primary-soft/60 ring-2 ring-primary-soft'
+                    : 'border-border hover:border-primary-strong/60 hover:bg-surface-muted/60 bg-surface'
+                }`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                aria-label="Upload supporting document or certificate"
+              >
+                <div className="flex items-center gap-2 text-text-muted mb-1">
+                  <svg
+                    className="w-4 h-4 text-primary-strong"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <span className="text-xs font-semibold text-text">
+                    Drop file here or <span className="text-primary-deep underline">browse</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-text-subtle">PDF, PNG, JPG, DOCX (Max 5 MB)</p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3 rounded-control border border-border bg-surface-muted min-h-[92px]">
+                <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+                  <div className="w-9 h-9 rounded-xl bg-primary-soft text-primary-deep flex items-center justify-center shrink-0 border border-primary-strong/20 font-bold text-xs font-mono uppercase">
+                    {attachment.name.split('.').pop() || 'DOC'}
+                  </div>
+                  <div className="min-w-0 truncate">
+                    <p className="text-xs font-semibold text-text truncate font-medium">
+                      {attachment.name}
+                    </p>
+                    <p className="text-[11px] text-text-subtle mt-0.5">
+                      {(attachment.size / 1024).toFixed(1)} KB • Ready to submit
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAttachment(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-rose-50 transition-colors shrink-0"
+                  aria-label="Remove uploaded document"
+                  title="Remove document"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {fileError && (
+              <p className="mt-1 text-xs text-danger" role="alert">
+                {fileError}
+              </p>
+            )}
+          </div>
+        </div>
       </form>
     </Modal>
   );
