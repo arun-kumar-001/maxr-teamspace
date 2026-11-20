@@ -25,6 +25,8 @@ COPY --from=build --chown=node:node /app/packages/shared/package.json ./packages
 COPY --from=build --chown=node:node /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build --chown=node:node /app/apps/api/package.json ./apps/api/
 COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
+# The payslip PDF draws this logo and looks for it at apps/web/public/maxr.png (payslips.pdf.ts).
+COPY --chown=node:node apps/web/public/maxr.png ./apps/web/public/maxr.png
 # Private upload directory (mount a volume here; STORAGE_LOCAL_PATH points to it).
 RUN mkdir -p /data/uploads && chown node:node /data/uploads
 USER node

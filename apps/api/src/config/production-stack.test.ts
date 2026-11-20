@@ -9,6 +9,16 @@ const read = (file: string) => fs.readFileSync(path.join(DEPLOY, file), 'utf8');
 describe('production stack (deploy/)', () => {
   const compose = read('docker-compose.prod.yml');
 
+  describe('payslip PDF', () => {
+    it('ships the logo the PDF draws into the API image, where the PDF code looks for it', () => {
+      const dockerfile = read('Dockerfile.api');
+      expect(dockerfile).toContain(
+        'COPY --chown=node:node apps/web/public/maxr.png ./apps/web/public/maxr.png',
+      );
+      expect(fs.existsSync(path.resolve(DEPLOY, '../apps/web/public/maxr.png'))).toBe(true);
+    });
+  });
+
   describe('encryption of identity and bank numbers', () => {
     it('refuses to start the API without a field encryption key', () => {
       expect(compose).toContain('FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?');
