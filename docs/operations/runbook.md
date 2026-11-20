@@ -57,16 +57,28 @@ Private file uploads reside in dedicated volume `uploads_data` (`/data/uploads`)
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production up -d postgres redis
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production run --rm migrate
    ```
-5. **Start Full Stack:**
+5. **Create the First Administrator (new installations only):**
+   The development seed is blocked in production and no migration creates a user, so a new database has nobody who can sign in. Run this once. It reads the password from your shell, not the command line, so it stays out of shell history and the process list:
+   ```bash
+   read -rsp "Admin password (12+ characters): " ADMIN_PASSWORD; echo
+   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production run --rm \
+     -e ADMIN_EMAIL=admin@your-company.example -e ADMIN_PASSWORD \
+     migrate node apps/api/dist/db/create-admin.js
+   unset ADMIN_PASSWORD
+   ```
+   Optional: `-e ADMIN_FIRST_NAME=...`, `-e ADMIN_LAST_NAME=...`, `-e ADMIN_EMPLOYEE_CODE=...`. The command does nothing if an active Admin already exists, so running it again is safe. Sign in and change the password straight away; it is audited as `users.bootstrap_admin`.
+6. **Start Full Stack:**
    ```bash
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production up -d --build
    ```
-6. **Verify Health:**
+7. **Verify Health:**
    ```bash
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production ps
    curl -fsSk https://127.0.0.1:8443/api/v1/health
    curl -fsS http://127.0.0.1:8080/healthz
    ```
+
+> **Upgrading an existing installation (migration `20261120000001`):** earlier versions stored each account's initial password in plain text in `users.temporary_password` and showed it in the Users list. The migration drops that column, which removes the stored copies. Treat any password that was created that way as exposed: ask those users to change it, or reset it. A generated password is now shown once, in the response that creates the account.
 
 ---
 
