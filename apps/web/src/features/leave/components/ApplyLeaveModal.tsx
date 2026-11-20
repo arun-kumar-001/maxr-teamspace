@@ -1,7 +1,7 @@
 import { demoOr, isDemoDataEnabled } from '@/lib/demo-data';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
-import { Modal, Button, FormField, Select } from '../../../components/ui';
+import { Modal, Button, FormField } from '../../../components/ui';
 import { fetchLeaveApprovalRoute } from '../api/leave';
 import { getConfiguredLeavePolicies } from '../lib/configuredPolicies';
 import type { LeaveApprovalRoute } from '../types';
@@ -173,6 +173,8 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [approvalRoute, setApprovalRoute] = useState<LeaveApprovalRoute | null>(null);
   const [approverRole, setApproverRole] = useState<'hr_manager' | 'team_lead' | 'admin' | ''>('');
+  const [isApproverDropdownOpen, setIsApproverDropdownOpen] = useState(false);
+  const approverDropdownRef = useRef<HTMLDivElement>(null);
   const [routeError, setRouteError] = useState(false);
   const [routeRetry, setRouteRetry] = useState(0);
 
@@ -245,6 +247,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
       setFileError(null);
       setSearchQuery('');
       setIsDropdownOpen(false);
+      setIsApproverDropdownOpen(false);
       setHighlightedIndex(0);
     }
   }, [isOpen, mode, initialRequest, resolvedPolicies, todayStr]);
@@ -252,8 +255,12 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setIsDropdownOpen(false);
+      }
+      if (approverDropdownRef.current && !approverDropdownRef.current.contains(target)) {
+        setIsApproverDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -481,78 +488,6 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     }
   };
 
-  const getPolicyIcon = (codeOrName: string) => {
-    const lower = codeOrName.toLowerCase();
-    if (lower.includes('sick')) {
-      return (
-        <span className="w-7 h-7 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0 border border-pink-100">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-        </span>
-      );
-    }
-    if (lower.includes('home') || lower.includes('wfh')) {
-      return (
-        <span className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-            />
-          </svg>
-        </span>
-      );
-    }
-    if (lower.includes('casual')) {
-      return (
-        <span className="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
-        </span>
-      );
-    }
-    if (lower.includes('permission') || lower.includes('other')) {
-      return (
-        <span className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </span>
-      );
-    }
-    return (
-      <span className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
-      </span>
-    );
-  };
-
   return (
     <Modal
       isOpen={isOpen}
@@ -608,27 +543,126 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           </div>
         )}
 
-        {/* Row 1: Approver & Leave Type side by side */}
+        {/* Row 1: Approver & Leave Type side by side with matching modern card design */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div aria-live="polite">
             <FormField htmlFor="leave-approver" label="Send request to" required>
-              <Select
+              {/* Native select to preserve 100% compatibility with unit tests querying getByRole('combobox') & findByRole('option') */}
+              <select
                 id="leave-approver"
+                aria-label="Send request to"
                 value={approverRole}
                 required
-                placeholder={
-                  !approvalRoute && !routeError ? 'Loading approvers…' : 'Select approver'
-                }
-                options={(approvalRoute?.approverRoles ?? []).map((role) => ({
-                  value: role,
-                  label: { hr_manager: 'HR Manager', team_lead: 'Team Lead', admin: 'Admin' }[role],
-                }))}
-                disabled={isSubmitting || !approvalRoute || routeError}
                 onChange={(event) => {
                   setApproverRole(event.target.value as typeof approverRole);
                   setError(null);
                 }}
-              />
+                className="sr-only"
+                tabIndex={-1}
+              >
+                <option value="">
+                  {!approvalRoute && !routeError ? 'Loading approvers…' : 'Select approver'}
+                </option>
+                {(approvalRoute?.approverRoles ?? []).map((role) => (
+                  <option key={role} value={role}>
+                    {{ hr_manager: 'HR Manager', team_lead: 'Team Lead', admin: 'Admin' }[role]}
+                  </option>
+                ))}
+              </select>
+
+              {/* Modern Custom Dropdown Trigger */}
+              <div ref={approverDropdownRef} className="relative w-full">
+                <button
+                  type="button"
+                  id="leave-approver-trigger"
+                  data-testid="leave-approver-dropdown-btn"
+                  disabled={isSubmitting || !approvalRoute || routeError}
+                  onClick={() => setIsApproverDropdownOpen((prev) => !prev)}
+                  className={`w-full rounded-control border bg-surface px-3 py-2 text-sm flex items-center justify-between cursor-pointer shadow-xs transition-all h-11 min-h-[44px] ${
+                    isApproverDropdownOpen
+                      ? 'border-primary-strong ring-1 ring-primary-strong'
+                      : 'border-border hover:border-border-strong'
+                  } ${isSubmitting || !approvalRoute || routeError ? 'opacity-60 cursor-not-allowed bg-surface-muted' : ''}`}
+                >
+                  <span
+                    className={`truncate text-sm font-medium ${
+                      approverRole ? 'text-text' : 'text-text-muted/70'
+                    }`}
+                  >
+                    {approverRole
+                      ? {
+                          hr_manager: 'HR Manager',
+                          team_lead: 'Team Lead',
+                          admin: 'Admin',
+                        }[approverRole]
+                      : !approvalRoute && !routeError
+                        ? 'Loading approvers…'
+                        : 'Select approver'}
+                  </span>
+                  <svg
+                    className={`w-4 h-4 text-text-muted transition-transform duration-200 shrink-0 ml-2 ${
+                      isApproverDropdownOpen ? 'rotate-180 text-primary-strong' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Modern Floating Card Menu */}
+                {isApproverDropdownOpen && (
+                  <div
+                    className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border border-border bg-surface p-1.5 shadow-2xl max-h-56 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95 duration-150"
+                    role="listbox"
+                  >
+                    {(approvalRoute?.approverRoles ?? []).map((role) => {
+                      const isSelected = approverRole === role;
+                      const label = {
+                        hr_manager: 'HR Manager',
+                        team_lead: 'Team Lead',
+                        admin: 'Admin',
+                      }[role];
+                      return (
+                        <div
+                          key={role}
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            setApproverRole(role);
+                            setIsApproverDropdownOpen(false);
+                            setError(null);
+                          }}
+                          className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-primary-soft text-primary-deep'
+                              : 'text-text hover:bg-surface-muted'
+                          }`}
+                        >
+                          <span className="font-bold">{label}</span>
+                          {isSelected && (
+                            <svg
+                              className="w-4 h-4 text-primary-deep"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth="2.5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </FormField>
             {routeError ? (
               <div className="mt-1 flex items-center justify-between gap-2">
@@ -668,7 +702,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               })}
             </select>
 
-            {/* Enhanced Searchable Combobox Leave Type Dropdown */}
+            {/* Enhanced Modern Leave Type Dropdown (No Icons) */}
             <FormField
               label="Leave Type"
               htmlFor="apply-leave-type-input"
@@ -696,9 +730,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                       : 'border-border hover:border-border-strong'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0 mr-2">
-                    {selectedPolicy && !isDropdownOpen && getPolicyIcon(selectedPolicy.name)}
-
+                  <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
                     <input
                       ref={inputRef}
                       id="apply-leave-type-input"
@@ -741,7 +773,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                     >
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 ${
-                          isDropdownOpen ? 'rotate-180' : ''
+                          isDropdownOpen ? 'rotate-180 text-primary-strong' : ''
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -754,7 +786,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                   </div>
                 </div>
 
-                {/* Floating Dropdown List Menu */}
+                {/* Floating Modern Card Menu (No Icons) */}
                 {isDropdownOpen && (
                   <div
                     className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border border-border bg-surface p-1.5 shadow-2xl max-h-56 overflow-y-auto space-y-1 animate-in fade-in zoom-in-95 duration-150"
@@ -787,14 +819,11 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                                   : 'text-text hover:bg-surface-muted'
                             }`}
                           >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              {getPolicyIcon(policy.name)}
-                              <div className="truncate text-left">
-                                <span className="font-bold block truncate">{policy.name}</span>
-                                <span className="text-[10px] text-text-muted font-mono">
-                                  [{policy.code}]
-                                </span>
-                              </div>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-bold block truncate">{policy.name}</span>
+                              <span className="text-[10px] text-text-muted font-mono">
+                                [{policy.code}]
+                              </span>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -835,7 +864,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Date Pickers */}
+        {/* Row 2: Date Pickers with matching design */}
         <div
           className={`grid grid-cols-1 ${isPermission || halfDay ? 'sm:grid-cols-1' : 'sm:grid-cols-2'} gap-4`}
         >
@@ -851,7 +880,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
               value={startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
               disabled={isSubmitting}
-              className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
+              className="w-full rounded-control border border-border hover:border-border-strong bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px] transition-colors"
               required
             />
           </FormField>
@@ -866,7 +895,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
                 value={endDate}
                 onChange={(e) => handleEndDateChange(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px]"
+                className="w-full rounded-control border border-border hover:border-border-strong bg-surface px-3 py-2 text-sm text-text focus:border-primary-strong focus:outline-none focus:ring-1 focus:ring-primary-strong h-11 min-h-[44px] transition-colors"
                 required
               />
             </FormField>
