@@ -195,6 +195,7 @@ jobs:
         env:
           DB_PASSWORD: ci
           REDIS_PASSWORD: ci
+          FIELD_ENCRYPTION_KEY: dGVzdC1maWVsZC1lbmNyeXB0aW9uLWtleS1mb3ItY2ktMDEyMzQ=
 
       - name: Build API image
         run: docker build -f deploy/Dockerfile.api -t maxr-api:ci .
