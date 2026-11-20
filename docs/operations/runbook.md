@@ -50,6 +50,7 @@ Private file uploads reside in dedicated volume `uploads_data` (`/data/uploads`)
    ```bash
    openssl rand -base64 48 | tr -d '\n'
    ```
+   `FIELD_ENCRYPTION_KEY` is different: it must be exactly 32 random bytes in base64 (`openssl rand -base64 32`). It encrypts Aadhaar, PAN and bank account numbers in the database. **Copy it to your password manager or secret vault now, separately from the database backups.** If it is lost, those numbers cannot be recovered, and changing it makes every stored number unreadable. The API will not start without it in production.
 3. **TLS Certificate Placement:**
    Store `fullchain.pem` and `privkey.pem` in `TLS_CERT_DIR` (e.g. `/etc/maxr/certs`).
    Set permissions: `chmod 600 /etc/maxr/certs/privkey.pem` and `chmod 644 /etc/maxr/certs/fullchain.pem` (owned by root).
@@ -68,11 +69,18 @@ Private file uploads reside in dedicated volume `uploads_data` (`/data/uploads`)
    unset ADMIN_PASSWORD
    ```
    Optional: `-e ADMIN_FIRST_NAME=...`, `-e ADMIN_LAST_NAME=...`, `-e ADMIN_EMPLOYEE_CODE=...`. The command does nothing if an active Admin already exists, so running it again is safe. Sign in and change the password straight away; it is audited as `users.bootstrap_admin`.
-6. **Start Full Stack:**
+6. **Encrypt existing identity and bank numbers (installations that predate field encryption only):**
+   New values are encrypted as they are saved, and old plain values stay readable meanwhile, so this can be run while the API is up. It is safe to run again; it only touches values still stored as plain text:
+   ```bash
+   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production run --rm \
+     migrate node apps/api/dist/db/encrypt-fields.js
+   ```
+   It prints how many values it encrypted per column. A new installation has nothing to convert.
+7. **Start Full Stack:**
    ```bash
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production up -d --build
    ```
-7. **Verify Health:**
+8. **Verify Health:**
    ```bash
    docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production ps
    curl -fsSk https://127.0.0.1:8443/api/v1/health
@@ -138,6 +146,7 @@ When executing manual or emergency updates on the host:
   0 2 * * * /opt/maxr-teamspace/deploy/scripts/backup.sh >> /var/log/maxr-backup.log 2>&1
   ```
 - **Encryption & Hashing:**
+  - Aadhaar, PAN and bank account numbers are also encrypted inside the database (AES-256-GCM, `FIELD_ENCRYPTION_KEY`), so a dump or backup shows only ciphertext for them. Keep that key in the vault, never in the backup directory or the same place as the backups; a restore needs both.
   - Database dumps are encrypted using AES-256-CBC with PBKDF2 (`200,000` iterations).
   - SHA256 checksum is generated alongside each archive (`.sha256`).
   - Passphrase file stored strictly outside backup directories at `/etc/maxr/backup.pass` (permissions `0600`).
@@ -213,6 +222,7 @@ When executing manual or emergency updates on the host:
 - [x] OWASP ASVS 4.0.3 Level 2 verified and signed off (`docs/security/asvs-checklist.md`).
 - [x] STRIDE threat model mitigations in place (`docs/security/threat-model.md`).
 - [x] Fail-closed ClamAV virus scanning adapter implemented for document uploads.
+- [x] Aadhaar, PAN and bank account numbers encrypted at rest (`FIELD_ENCRYPTION_KEY`, backed up separately from the database).
 - [x] Zero hardcoded secrets, test credentials, or API keys in git history (Gitleaks verified).
 - [x] Role-based scope isolation tested across all 4 roles (Admin, HR Manager, Team Lead, Staff).
 

@@ -9,6 +9,23 @@ const read = (file: string) => fs.readFileSync(path.join(DEPLOY, file), 'utf8');
 describe('production stack (deploy/)', () => {
   const compose = read('docker-compose.prod.yml');
 
+  describe('encryption of identity and bank numbers', () => {
+    it('refuses to start the API without a field encryption key', () => {
+      expect(compose).toContain('FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?');
+    });
+
+    it('generates a key for a new install, and never replaces one that is already set', () => {
+      const script = read('server-deploy.sh');
+      expect(script).toMatch(/^FIELD_ENCRYPTION_KEY=\$\{FIELD_KEY\}$/m);
+      // Only added when missing or empty: replacing it would make stored numbers unreadable.
+      expect(script).toContain('! grep -q "^FIELD_ENCRYPTION_KEY=." "$ENV_FILE"');
+    });
+
+    it('lists the key, empty, in the production env template', () => {
+      expect(read('.env.production.example')).toMatch(/^FIELD_ENCRYPTION_KEY=$/m);
+    });
+  });
+
   describe('virus scanning of uploads', () => {
     it('runs a ClamAV service on the internal network only, with its signatures kept', () => {
       const service = compose.slice(compose.indexOf('\n  clamav:'), compose.indexOf('\n  api:'));

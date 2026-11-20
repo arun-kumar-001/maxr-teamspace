@@ -1,3 +1,5 @@
+import { getFieldCipher } from '../../security/field-cipher';
+import type { FieldCipher } from '../../security/field-crypto';
 import type { Pool } from 'pg';
 import { conflict, notFound } from '../../http/errors';
 import {
@@ -88,7 +90,11 @@ const iso = (v: Date | string | null): string | null => {
   return v instanceof Date ? v.toISOString() : new Date(v).toISOString();
 };
 
-function toPayslipRecord(row: PayslipDbRow): PayslipRecord {
+// Column names double as the cipher's authenticated context.
+const PAN_COLUMN = 'payslips.pan';
+const ACCOUNT_COLUMN = 'payslips.account_number';
+
+function toPayslipRecord(row: PayslipDbRow, cipher: FieldCipher): PayslipRecord {
   const basicSalary = paiseToInr(row.basic_current_paise);
   const basicArrears = paiseToInr(row.basic_arrears_paise);
   const hra = paiseToInr(row.hra_current_paise);
@@ -121,9 +127,9 @@ function toPayslipRecord(row: PayslipDbRow): PayslipRecord {
     status: row.status as PayslipStatus,
     designation: row.designation,
     uan: row.uan,
-    pan: row.pan,
+    pan: cipher.decrypt(row.pan, PAN_COLUMN) ?? '',
     bankName: row.bank_name,
-    accountNumber: row.account_number,
+    accountNumber: cipher.decrypt(row.account_number, ACCOUNT_COLUMN) ?? '',
     beneficiaryId: row.beneficiary_id,
     workLocation: row.location || row.work_location,
     baseBranch: row.base_branch,
@@ -228,7 +234,10 @@ const SELECT_PAYSLIP = `
 `;
 
 export class PgPayslipsRepository implements IPayslipsRepository {
-  constructor(private readonly getPool: () => Pool) {}
+  constructor(
+    private readonly getPool: () => Pool,
+    private readonly cipher: FieldCipher = getFieldCipher(),
+  ) {}
 
   async listMine(
     employeeId: string,
@@ -263,7 +272,7 @@ export class PgPayslipsRepository implements IPayslipsRepository {
       [...values, filter.pageSize, offset],
     );
 
-    return { items: rowsRes.rows.map(toPayslipRecord), total };
+    return { items: rowsRes.rows.map((r) => toPayslipRecord(r, this.cipher)), total };
   }
 
   async listAll(filter: ListPayslipsFilter): Promise<{ items: PayslipRecord[]; total: number }> {
@@ -304,12 +313,12 @@ export class PgPayslipsRepository implements IPayslipsRepository {
       [...values, filter.pageSize, offset],
     );
 
-    return { items: rowsRes.rows.map(toPayslipRecord), total };
+    return { items: rowsRes.rows.map((r) => toPayslipRecord(r, this.cipher)), total };
   }
 
   async findById(id: string): Promise<PayslipRecord | null> {
     const res = await this.getPool().query<PayslipDbRow>(`${SELECT_PAYSLIP} WHERE p.id = $1`, [id]);
-    return res.rows[0] ? toPayslipRecord(res.rows[0]) : null;
+    return res.rows[0] ? toPayslipRecord(res.rows[0], this.cipher) : null;
   }
 
   async findByIdForEmployee(id: string, employeeId: string): Promise<PayslipRecord | null> {
@@ -317,7 +326,7 @@ export class PgPayslipsRepository implements IPayslipsRepository {
       `${SELECT_PAYSLIP} WHERE p.id = $1 AND p.employee_id = $2 AND p.status = 'published'`,
       [id, employeeId],
     );
-    return res.rows[0] ? toPayslipRecord(res.rows[0]) : null;
+    return res.rows[0] ? toPayslipRecord(res.rows[0], this.cipher) : null;
   }
 
   async create(dto: UpsertPayslipDto, actorEmployeeId?: string): Promise<PayslipRecord> {
@@ -385,9 +394,9 @@ export class PgPayslipsRepository implements IPayslipsRepository {
           empMeta.employee_code,
           dto.designation ?? empMeta.designation ?? '',
           dto.uan ?? '',
-          dto.pan ?? '',
+          this.cipher.encrypt(dto.pan ?? '', PAN_COLUMN),
           dto.bankName ?? '',
-          dto.accountNumber ?? '',
+          this.cipher.encrypt(dto.accountNumber ?? '', ACCOUNT_COLUMN),
           dto.daysPaid ?? 30,
           dto.leaveBalances?.sl ?? 0,
           dto.leaveBalances?.el ?? 0,
@@ -488,9 +497,9 @@ export class PgPayslipsRepository implements IPayslipsRepository {
         id,
         dto.designation ?? existing.designation,
         dto.uan ?? existing.uan,
-        dto.pan ?? existing.pan,
+        this.cipher.encrypt(dto.pan ?? existing.pan, PAN_COLUMN),
         dto.bankName ?? existing.bankName,
-        dto.accountNumber ?? existing.accountNumber,
+        this.cipher.encrypt(dto.accountNumber ?? existing.accountNumber, ACCOUNT_COLUMN),
         dto.beneficiaryId ?? existing.beneficiaryId,
         dto.workLocation ?? existing.workLocation,
         dto.baseBranch ?? existing.baseBranch,

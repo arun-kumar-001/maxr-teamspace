@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { parseCorsOrigin } from '../http/cors-origin';
+import { DEV_FIELD_ENCRYPTION_KEY, parseFieldEncryptionKey } from '../security/field-crypto';
 
 // Load .env from root or apps/api if present
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -20,6 +21,7 @@ export interface EnvironmentConfig {
   REDIS_PORT: number;
   SESSION_SECRET: string;
   SESSION_MAX_AGE_MS: number;
+  FIELD_ENCRYPTION_KEY: string;
   LOG_LEVEL: string;
   STORAGE_DRIVER: 's3' | 'local';
   S3_ENDPOINT: string;
@@ -92,6 +94,21 @@ export function loadAndValidateConfig(): EnvironmentConfig {
     }
   }
 
+  // Encrypts Aadhaar, PAN and bank account numbers at rest. Losing it makes those values
+  // unreadable, so production must set its own and keep it with the backups' separate secrets.
+  let fieldEncryptionKey = process.env.FIELD_ENCRYPTION_KEY;
+  if (!fieldEncryptionKey) {
+    if (nodeEnv === 'production') {
+      throw new Error('[Config Error] FIELD_ENCRYPTION_KEY is strictly required in production.');
+    }
+    fieldEncryptionKey = DEV_FIELD_ENCRYPTION_KEY;
+  } else if (nodeEnv === 'production' && fieldEncryptionKey === DEV_FIELD_ENCRYPTION_KEY) {
+    throw new Error(
+      '[Config Error] FIELD_ENCRYPTION_KEY is the development key; set a random one.',
+    );
+  }
+  parseFieldEncryptionKey(fieldEncryptionKey);
+
   const sessionMaxAgeMs = parseInt(process.env.SESSION_MAX_AGE_MS || '86400000', 10);
   const logLevel = getEnvVar('LOG_LEVEL', 'info');
 
@@ -120,6 +137,7 @@ export function loadAndValidateConfig(): EnvironmentConfig {
     REDIS_PORT: redisPort,
     SESSION_SECRET: sessionSecret,
     SESSION_MAX_AGE_MS: sessionMaxAgeMs,
+    FIELD_ENCRYPTION_KEY: fieldEncryptionKey,
     LOG_LEVEL: logLevel,
     STORAGE_DRIVER: storageDriver,
     S3_ENDPOINT: s3Endpoint,

@@ -22,6 +22,7 @@ if [ ! -f "$ENV_FILE" ]; then
   REDIS_PASS=$(openssl rand -hex 16 2>/dev/null || date +%s | sha256sum | head -c 32)
   SESSION_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
   STORAGE_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
+  FIELD_KEY=$(openssl rand -base64 32)
   
   mkdir -p "$CERT_DIR"
   
@@ -38,6 +39,7 @@ TLS_CERT_DIR=${CERT_DIR}
 
 SESSION_SECRET=${SESSION_SEC}
 STORAGE_SIGNING_SECRET=${STORAGE_SEC}
+FIELD_ENCRYPTION_KEY=${FIELD_KEY}
 CORS_ORIGIN=https://localhost
 APP_URL=https://localhost
 LOG_LEVEL=info
@@ -62,6 +64,12 @@ else
   if ! grep -q "^STORAGE_SIGNING_SECRET=" "$ENV_FILE" || grep -q "^STORAGE_SIGNING_SECRET=$" "$ENV_FILE"; then
     STORAGE_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
     sed -i "s/^STORAGE_SIGNING_SECRET=.*/STORAGE_SIGNING_SECRET=${STORAGE_SEC}/" "$ENV_FILE" || echo "STORAGE_SIGNING_SECRET=${STORAGE_SEC}" >> "$ENV_FILE"
+  fi
+  # Never regenerated once set: a new key would make every stored Aadhaar, PAN and bank number unreadable.
+  if ! grep -q "^FIELD_ENCRYPTION_KEY=." "$ENV_FILE"; then
+    sed -i "/^FIELD_ENCRYPTION_KEY=/d" "$ENV_FILE"
+    echo "FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> "$ENV_FILE"
+    echo "      Generated FIELD_ENCRYPTION_KEY. Back it up now, separately from the database."
   fi
   if ! grep -q "^CORS_ORIGIN=" "$ENV_FILE" || grep -q "^CORS_ORIGIN=$" "$ENV_FILE"; then
     echo "CORS_ORIGIN=https://localhost" >> "$ENV_FILE"

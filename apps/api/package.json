@@ -11,6 +11,7 @@
     "db:migrate": "node dist/db/migrator.js",
     "db:seed": "node dist/db/seeder.js",
     "db:create-admin": "node dist/db/create-admin.js",
+    "db:encrypt-fields": "node dist/db/encrypt-fields.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
