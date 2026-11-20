@@ -1,3 +1,4 @@
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@maxr/shared';
 import { z } from 'zod';
 
 export const listOnboardingQuerySchema = z.object({
@@ -21,5 +22,5 @@ export const employeeStepSchema = z.object({
 
 export const setPasswordSchema = z.object({
   token: z.string().min(16).max(256),
-  newPassword: z.string().min(12).max(128),
+  newPassword: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH),
 });

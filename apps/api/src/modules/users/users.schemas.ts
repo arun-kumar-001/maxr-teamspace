@@ -1,4 +1,12 @@
-import { idParamSchema, MAX_PAGE_SIZE, ROLES, type Role, uuidString } from '@maxr/shared';
+import {
+  idParamSchema,
+  MAX_PAGE_SIZE,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  ROLES,
+  type Role,
+  uuidString,
+} from '@maxr/shared';
 import { z } from 'zod';
 
 const roleKey = z.enum(Object.values(ROLES) as [Role, ...Role[]]);
@@ -42,7 +50,11 @@ export const createUserSchema = z
       .min(1, 'An account needs at least one role')
       .max(Object.keys(ROLES).length)
       .refine((roles) => new Set(roles).size === roles.length, 'Each role may be listed once'),
-    password: z.string().min(12, 'Password must be at least 12 characters').max(128).optional(),
+    password: z
+      .string()
+      .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+      .max(MAX_PASSWORD_LENGTH)
+      .optional(),
     isActive: z.boolean().default(true),
     departmentId: uuidString.optional(),
     designationId: uuidString.optional(),

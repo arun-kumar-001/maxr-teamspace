@@ -1,3 +1,4 @@
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@maxr/shared';
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, FormField, Input } from '../../../components/ui';
@@ -25,13 +26,13 @@ export function SetPasswordPage() {
       return;
     }
 
-    if (password.length < 12) {
-      setError('Password must be at least 12 characters.');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
-    if (password.length > 128) {
-      setError('Password must be at most 128 characters.');
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      setError(`Password must be at most ${MAX_PASSWORD_LENGTH} characters.`);
       return;
     }
 

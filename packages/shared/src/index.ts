@@ -1,5 +1,6 @@
 // Constants & Enums
 export * from './constants/roles';
+export * from './constants/password';
 export * from './constants/status';
 export * from './constants/tokens';
 
