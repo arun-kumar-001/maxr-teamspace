@@ -320,6 +320,71 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       });
     });
 
+    it('adapts form specifically for permission policy (single date, hides half-day, permission calculation)', async () => {
+      const permissionPolicy: LeavePolicy = {
+        id: 'pol-perm',
+        code: 'PM',
+        name: 'Short Permission',
+        hasBalance: false,
+        isActive: true,
+        annualDays: 0,
+        carryForwardMax: 0,
+        allowHalfDay: false,
+        maxBackdateDays: 2,
+        version: 1,
+        updatedAt: '2026-01-01T00:00:00Z',
+      };
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+
+      render(
+        <ApplyLeaveModal
+          isOpen={true}
+          onClose={vi.fn()}
+          policies={[...mockPolicies, permissionPolicy]}
+          balances={mockBalances}
+          holidays={mockHolidays}
+          onSubmit={onSubmit}
+        />,
+      );
+
+      // Select Approver
+      const select = screen.getByRole('combobox', { name: 'Send request to' });
+      await screen.findByRole('option', { name: 'HR Manager' });
+      fireEvent.change(select, { target: { value: 'hr_manager' } });
+
+      // Select Permission policy
+      const dropdownBtn = screen.getByTestId('leave-type-dropdown-btn');
+      fireEvent.click(dropdownBtn);
+      fireEvent.click(screen.getByTestId('leave-type-option-pol-perm'));
+
+      // Half-day checkbox should be absent for permission
+      expect(screen.queryByTestId('apply-half-day-toggle')).not.toBeInTheDocument();
+
+      // Only single date field labeled Permission Date, End Date is hidden
+      expect(screen.getByText('Permission Date')).toBeInTheDocument();
+      expect(screen.queryByTestId('apply-end-date-input')).not.toBeInTheDocument();
+
+      // Duration preview shows Permission (Up to 2 hrs)
+      expect(screen.getByText(/Permission \(Up to 2 hrs\)/i)).toBeInTheDocument();
+
+      const startDateInput = screen.getByTestId('apply-start-date-input');
+      fireEvent.change(startDateInput, { target: { value: '2026-11-25' } });
+
+      const submitBtn = screen.getByTestId('submit-leave-request-btn');
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({
+          approverRole: 'hr_manager',
+          leaveTypeId: 'pol-perm',
+          startDate: '2026-11-25',
+          endDate: '2026-11-25',
+          halfDay: false,
+          reason: 'Permission request',
+        });
+      });
+    });
+
     it('opens dropdown, filters on typing, and selects option with mouse', async () => {
       const onSubmit = vi.fn().mockResolvedValue(undefined);
       const onClose = vi.fn();

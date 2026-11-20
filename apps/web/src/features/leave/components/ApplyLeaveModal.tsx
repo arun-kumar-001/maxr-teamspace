@@ -228,6 +228,15 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     [resolvedPolicies, leaveTypeId],
   );
 
+  const isPermission = useMemo(() => {
+    if (!selectedPolicy) return false;
+    return (
+      selectedPolicy.code === 'PERMISSION' ||
+      selectedPolicy.code === 'PM' ||
+      selectedPolicy.name.toLowerCase().includes('permission')
+    );
+  }, [selectedPolicy]);
+
   const selectedBalance = useMemo(
     () => balances.find((b) => b.leaveTypeId === leaveTypeId),
     [balances, leaveTypeId],
@@ -252,6 +261,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   // Calculate estimated working days excluding weekend days and holidays
   const estimatedDays = useMemo(() => {
     if (!startDate || !endDate || endDate < startDate) return 0;
+    if (isPermission) return 0.25;
     if (halfDay) return 0.5;
 
     let count = 0;
@@ -272,11 +282,11 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
     }
 
     return count;
-  }, [startDate, endDate, halfDay, holidays]);
+  }, [startDate, endDate, halfDay, holidays, isPermission]);
 
   const handleStartDateChange = (val: string) => {
     setStartDate(val);
-    if (halfDay || val > endDate) {
+    if (isPermission || halfDay || val > endDate) {
       setEndDate(val);
     }
     if (error) setError(null);
@@ -297,6 +307,16 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
 
   const handleSelectPolicy = (id: string) => {
     setLeaveTypeId(id);
+    const target = resolvedPolicies.find((p) => p.id === id);
+    if (
+      target &&
+      (target.code === 'PERMISSION' ||
+        target.code === 'PM' ||
+        target.name.toLowerCase().includes('permission'))
+    ) {
+      setHalfDay(false);
+      setEndDate(startDate);
+    }
     setSearchQuery('');
     setIsDropdownOpen(false);
     if (error) setError(null);
@@ -393,9 +413,9 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         approverRole,
         leaveTypeId,
         startDate,
-        endDate,
-        halfDay,
-        reason: reason.trim() ? reason.trim() : undefined,
+        endDate: isPermission ? startDate : endDate,
+        halfDay: isPermission ? false : halfDay,
+        reason: reason.trim() ? reason.trim() : isPermission ? 'Permission request' : undefined,
       };
       if (mode === 'edit' && initialRequest && onEditSubmit) {
         await onEditSubmit(initialRequest.id, payload);
@@ -757,7 +777,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         </FormField>
 
         {/* Half Day Toggle */}
-        {selectedPolicy?.allowHalfDay && (
+        {selectedPolicy?.allowHalfDay && !isPermission && (
           <div className="flex items-center gap-3 p-3 rounded-tile bg-surface-muted border border-border">
             <input
               id="apply-half-day-toggle"
@@ -781,9 +801,11 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         )}
 
         {/* Date Pickers */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div
+          className={`grid grid-cols-1 ${isPermission || halfDay ? 'sm:grid-cols-1' : 'sm:grid-cols-2'} gap-4`}
+        >
           <FormField
-            label={halfDay ? 'Date' : 'Start Date'}
+            label={isPermission ? 'Permission Date' : halfDay ? 'Date' : 'Start Date'}
             htmlFor="apply-start-date"
             required
             helperText="Format: YYYY-MM-DD"
@@ -800,7 +822,7 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
             />
           </FormField>
 
-          {!halfDay && (
+          {!halfDay && !isPermission && (
             <FormField
               label="End Date"
               htmlFor="apply-end-date"
@@ -825,15 +847,23 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
         {/* Dynamic Duration Calculation Preview */}
         <div className="p-3 rounded-tile bg-surface-muted border border-border flex items-center justify-between text-xs">
           <div>
-            <span className="text-text-subtle block font-semibold">Calculated Duration</span>
-            <span className="text-xs text-text-muted">Excludes weekends and company holidays</span>
+            <span className="text-text-subtle block font-semibold">
+              {isPermission ? 'Permission Request' : 'Calculated Duration'}
+            </span>
+            <span className="text-xs text-text-muted">
+              {isPermission
+                ? 'Short permission on a single working day'
+                : 'Excludes weekends and company holidays'}
+            </span>
           </div>
           <div className="text-right">
             <span
               className="text-sm font-bold text-primary-deep font-mono"
               data-testid="estimated-days-badge"
             >
-              {estimatedDays} {estimatedDays === 1 ? 'day' : 'days'}
+              {isPermission
+                ? 'Permission (Up to 2 hrs)'
+                : `${estimatedDays} ${estimatedDays === 1 ? 'day' : 'days'}`}
             </span>
           </div>
         </div>
