@@ -113,9 +113,14 @@ fi
 echo "[4/6] Starting PostgreSQL and Redis containers..."
 docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" up -d postgres redis
 
+# The user and database name come from the env file the stack itself uses, so a renamed database
+# is waited for under its own name.
+DB_USER_NAME="$(grep -E '^DB_USER=' "$ENV_FILE" | head -1 | cut -d= -f2-)"
+DB_DATABASE="$(grep -E '^DB_NAME=' "$ENV_FILE" | head -1 | cut -d= -f2-)"
+
 echo "      Waiting for PostgreSQL to accept connections..."
 for i in {1..30}; do
-  if docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" exec -T postgres pg_isready -U maxr -d maxr_teamspace >/dev/null 2>&1; then
+  if docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" exec -T postgres pg_isready -U "${DB_USER_NAME:-maxr}" -d "${DB_DATABASE:-maxr_teamspace}" >/dev/null 2>&1; then
     echo "      PostgreSQL is ready!"
     break
   fi
