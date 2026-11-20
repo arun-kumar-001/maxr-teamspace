@@ -86,7 +86,6 @@ export class MemoryUsersRepository implements IUsersRepository {
       roles: [...input.roles].sort(),
       lastLoginAt: null,
       createdAt: new Date().toISOString(),
-      tempCredential: input.temporaryPassword ?? null,
     };
     this.users.push(created);
     return { status: 'created', user: created };

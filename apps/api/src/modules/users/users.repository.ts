@@ -42,7 +42,6 @@ interface UserRow {
   roles: string[];
   last_login_at: Date | string | null;
   created_at: Date | string;
-  temporary_password?: string | null;
 }
 
 const toAccount = (row: UserRow): UserAccount => ({
@@ -55,14 +54,12 @@ const toAccount = (row: UserRow): UserAccount => ({
   roles: row.roles as Role[],
   lastLoginAt: row.last_login_at ? new Date(row.last_login_at).toISOString() : null,
   createdAt: new Date(row.created_at).toISOString(),
-  tempCredential: row.temporary_password ?? null,
 });
 
 const SELECT_ACCOUNT = `
   SELECT u.id, u.employee_id, e.employee_code,
          TRIM(CONCAT(e.first_name, ' ', e.last_name)) AS name,
          u.email, u.is_active, u.last_login_at, u.created_at,
-         u.temporary_password,
          COALESCE(array_agg(r.key ORDER BY r.key) FILTER (WHERE r.key IS NOT NULL), '{}') AS roles
     FROM users u
     JOIN employees e ON e.id = u.employee_id
@@ -294,10 +291,10 @@ export class PgUsersRepository implements IUsersRepository {
       const employeeId = empRes.rows[0]?.id as string;
 
       const userRes = await client.query<{ id: string }>(
-        `INSERT INTO users (employee_id, email, password_hash, is_active, temporary_password)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO users (employee_id, email, password_hash, is_active)
+         VALUES ($1, $2, $3, $4)
          RETURNING id`,
-        [employeeId, email, input.passwordHash, isActive, input.temporaryPassword ?? null],
+        [employeeId, email, input.passwordHash, isActive],
       );
       const userId = userRes.rows[0]?.id as string;
 

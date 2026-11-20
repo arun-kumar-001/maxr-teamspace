@@ -130,6 +130,29 @@ describe('UsersPage Component Suite (Issue #27)', () => {
     expect(screen.getByTestId('assign-roles-btn-card-u-1')).toBeInTheDocument();
   });
 
+  it('never shows a password, even if the server sent one', async () => {
+    setupAuth('admin');
+    const leaked = 'Leaked#Password-1234';
+    const withSecret = {
+      ...mockUsersResponse,
+      data: mockUsersResponse.data.map((u) => ({ ...u, tempCredential: leaked })),
+    };
+    vi.spyOn(usersApi, 'getUsers').mockResolvedValue(withSecret as UserListResponse);
+    vi.spyOn(usersApi, 'getRoles').mockResolvedValue(mockRoles);
+    vi.spyOn(usersApi, 'getPermissions').mockResolvedValue(mockPermissions);
+
+    const { container } = render(
+      <MemoryRouter>
+        <UsersPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(screen.getAllByText('Eleanor Vance').length).toBeGreaterThan(0));
+
+    expect(container.textContent).not.toContain(leaked);
+    expect(screen.queryByText('Password')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/view password|copy password/i)).not.toBeInTheDocument();
+  });
+
   it('hides Manage Roles action for HR Manager (read-only view for HR)', async () => {
     setupAuth('hr_manager');
     vi.spyOn(usersApi, 'getUsers').mockResolvedValue(mockUsersResponse);

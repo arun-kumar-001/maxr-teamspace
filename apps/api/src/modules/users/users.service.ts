@@ -149,7 +149,6 @@ export class UsersService {
         isActive: input.isActive,
         departmentId: input.departmentId,
         designationId: input.designationId,
-        temporaryPassword: rawPassword,
       });
       switch (result.status) {
         case 'duplicate_email':
