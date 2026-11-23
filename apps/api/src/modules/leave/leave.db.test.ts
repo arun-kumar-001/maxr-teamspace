@@ -520,5 +520,37 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
       expect((await balancesOf(later, 2026)).RESET?.allotted).toBe(4);
       expect((await balancesOf(first, 2026)).RESET).toMatchObject({ allotted: 4, used: 1 });
     });
+
+    it('hides a switched-off type from my balances, unless some of it was used', async () => {
+      const worker = await employee(`c${randomUUID().slice(0, 4)}`, '2024-01-10');
+      const svc = service();
+      const make = (code: string) =>
+        svc.create(
+          {
+            code,
+            name: code,
+            hasBalance: true,
+            annualDays: 5,
+            carryForwardMax: 0,
+            allowHalfDay: true,
+            maxBackdateDays: 0,
+          },
+          caller,
+        );
+      const unused = await make('HIDEME');
+      const used = await make('KEEPME');
+      await outer.query(
+        `UPDATE leave_balances SET used = 2 WHERE employee_id = $1 AND leave_type_id = $2`,
+        [worker, used.id],
+      );
+      expect((await balancesOf(worker, 2026)).HIDEME).toBeDefined();
+
+      await svc.update(unused.id, { isActive: false, version: unused.version }, caller);
+      await svc.update(used.id, { isActive: false, version: used.version }, caller);
+
+      const shown = await balancesOf(worker, 2026);
+      expect(shown.HIDEME).toBeUndefined();
+      expect(shown.KEEPME).toMatchObject({ allotted: 5, used: 2 });
+    });
   });
 });

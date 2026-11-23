@@ -283,6 +283,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       {activeTab === 'balances' && (
         <LeaveBalancesSummary
           balances={balances}
+          policies={policies}
           year={selectedYear}
           onYearChange={setSelectedYear}
           isLoading={isLoadingBalances}

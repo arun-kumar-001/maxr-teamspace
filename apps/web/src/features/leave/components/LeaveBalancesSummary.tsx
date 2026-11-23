@@ -1,8 +1,10 @@
 import React from 'react';
-import type { LeaveBalance } from '../types';
+import type { LeaveBalance, LeavePolicy } from '../types';
 
 export interface LeaveBalancesSummaryProps {
   balances: LeaveBalance[];
+  /** The leave types set up in Leave Setup. Each active one gets a card, with or without a balance. */
+  policies?: LeavePolicy[];
   year: number;
   onYearChange?: (year: number) => void;
   isLoading?: boolean;
@@ -32,20 +34,69 @@ const YearArrow: React.FC<{ direction: 'prev' | 'next' }> = ({ direction }) => (
   </svg>
 );
 
+interface LeaveCard {
+  key: string;
+  code: string;
+  name: string;
+  balance: LeaveBalance | null;
+  note: string | null;
+}
+
+/**
+ * One card per active leave type from Leave Setup. A type with no yearly balance (a short
+ * permission, unpaid leave) still shows, so the page matches what can be applied for. A type that
+ * was switched off stays only while some of it was used.
+ */
+function buildCards(balances: LeaveBalance[], policies?: LeavePolicy[]): LeaveCard[] {
+  const fromBalance = (b: LeaveBalance): LeaveCard => ({
+    key: b.leaveTypeId,
+    code: b.code,
+    name: b.name,
+    balance: b,
+    note: null,
+  });
+  if (!policies) return balances.map(fromBalance);
+
+  const cards: LeaveCard[] = [];
+  const seen = new Set<string>();
+  for (const policy of policies.filter((p) => p.isActive)) {
+    const balance = balances.find((b) => b.leaveTypeId === policy.id || b.code === policy.code);
+    seen.add(policy.code);
+    if (balance) cards.push(fromBalance(balance));
+    else
+      cards.push({
+        key: policy.id,
+        code: policy.code,
+        name: policy.name,
+        balance: null,
+        note: policy.hasBalance
+          ? 'No balance allotted for this year yet'
+          : 'No yearly limit. Apply when needed; approval is required.',
+      });
+  }
+  for (const balance of balances) {
+    if (!seen.has(balance.code) && balance.used > 0) cards.push(fromBalance(balance));
+  }
+  return cards.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /**
  * Every number here comes from the server's balances, which exist only for leave types created in
  * Leave Setup. Nothing is invented: no balances means an honest empty state.
  */
 export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
   balances,
+  policies,
   year,
   onYearChange,
   isLoading = false,
   onApplyClick,
 }) => {
-  const totalDays = balances.reduce((sum, b) => sum + totalOf(b), 0);
-  const usedDays = balances.reduce((sum, b) => sum + b.used, 0);
-  const availableDays = balances.reduce((sum, b) => sum + remainingOf(b), 0);
+  const cards = buildCards(balances, policies);
+  const counted = cards.flatMap((c) => (c.balance ? [c.balance] : []));
+  const totalDays = counted.reduce((sum, b) => sum + totalOf(b), 0);
+  const usedDays = counted.reduce((sum, b) => sum + b.used, 0);
+  const availableDays = counted.reduce((sum, b) => sum + remainingOf(b), 0);
 
   return (
     <div className="space-y-6" data-testid="leave-balances-summary">
@@ -89,11 +140,11 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
         )}
       </div>
 
-      {isLoading && balances.length === 0 ? (
+      {isLoading && cards.length === 0 ? (
         <p role="status" className="text-sm text-text-muted" data-testid="leave-balances-loading">
           Loading your leave balances…
         </p>
-      ) : balances.length === 0 ? (
+      ) : cards.length === 0 ? (
         <div
           className="p-8 bg-surface rounded-card border border-dashed border-border text-center space-y-2"
           data-testid="leave-balances-empty"
@@ -138,42 +189,49 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
               Leave Entitlements & Balances
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-              {balances.map((balance) => {
-                const total = totalOf(balance);
-                const usedPercent = percent(balance.used, total);
+              {cards.map((card) => {
+                const { balance } = card;
+                const total = balance ? totalOf(balance) : 0;
+                const usedPercent = balance ? percent(balance.used, total) : 0;
                 return (
                   <div
-                    key={balance.leaveTypeId}
+                    key={card.key}
                     className="p-4 bg-surface rounded-tile border border-border shadow-xs space-y-2"
-                    data-testid={`leave-balance-card-${balance.code}`}
+                    data-testid={`leave-balance-card-${card.code}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm text-text">{balance.name}</span>
+                      <span className="font-bold text-sm text-text">{card.name}</span>
                       <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-surface-muted text-text-muted border border-border">
-                        {balance.code}
+                        {card.code}
                       </span>
                     </div>
-                    <div className="text-xs font-bold text-primary-ink font-mono">
-                      {remainingOf(balance)} days left
-                    </div>
-                    <div
-                      role="progressbar"
-                      aria-label={`${balance.name} used`}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={usedPercent}
-                      className="h-2 rounded-full bg-surface-muted overflow-hidden"
-                    >
-                      <div
-                        className="h-full bg-primary"
-                        style={{ width: `${usedPercent}%` }}
-                        data-testid={`leave-balance-bar-${balance.code}`}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[11px] text-text-muted pt-1 border-t border-border/60">
-                      <span>Used: {balance.used}d</span>
-                      <span>Total: {total}d</span>
-                    </div>
+                    {balance ? (
+                      <>
+                        <div className="text-xs font-bold text-primary-ink font-mono">
+                          {remainingOf(balance)} days left
+                        </div>
+                        <div
+                          role="progressbar"
+                          aria-label={`${balance.name} used`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={usedPercent}
+                          className="h-2 rounded-full bg-surface-muted overflow-hidden"
+                        >
+                          <div
+                            className="h-full bg-primary"
+                            style={{ width: `${usedPercent}%` }}
+                            data-testid={`leave-balance-bar-${card.code}`}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[11px] text-text-muted pt-1 border-t border-border/60">
+                          <span>Used: {balance.used}d</span>
+                          <span>Total: {total}d</span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-text-muted">{card.note}</p>
+                    )}
                   </div>
                 );
               })}

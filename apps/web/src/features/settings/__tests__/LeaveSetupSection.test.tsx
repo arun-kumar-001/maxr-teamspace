@@ -114,4 +114,24 @@ describe('LeaveSetupSection: leave types are stored on the server', () => {
       permissionPolicy: expect.objectContaining({ maxPermissionsPerMonth: 3 }),
     });
   });
+
+  it('Create Permission starts a leave type without a yearly balance', async () => {
+    vi.mocked(leaveApi.createLeavePolicy).mockResolvedValue(sick);
+    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
+    await screen.findByText('No Leave Types Configured');
+
+    fireEvent.click(screen.getByTestId('create-permission-btn'));
+    fireEvent.click(await screen.findByTestId('submit-leave-policy-btn'));
+
+    await waitFor(() =>
+      expect(leaveApi.createLeavePolicy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'PM',
+          name: 'Short Permission',
+          hasBalance: false,
+          annualDays: 0,
+        }),
+      ),
+    );
+  });
 });

@@ -241,6 +241,35 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
     });
 
+    it('shows one card per active leave type from Leave Setup, including a permission with no balance', () => {
+      const policy = (over: Partial<LeavePolicy>): LeavePolicy => ({
+        id: 'x',
+        code: 'X',
+        name: 'X',
+        hasBalance: true,
+        isActive: true,
+        annualDays: 0,
+        carryForwardMax: 0,
+        allowHalfDay: false,
+        maxBackdateDays: 0,
+        version: 1,
+        updatedAt: '2026-01-01T00:00:00Z',
+        ...over,
+      });
+      const policies = [
+        policy({ id: 'pol-001', code: 'PTO', name: 'Paid Time Off', annualDays: 20 }),
+        policy({ id: 'pm', code: 'PM', name: 'Short Permission', hasBalance: false }),
+        policy({ id: 'old', code: 'OLD', name: 'Old Leave', isActive: false }),
+      ];
+      render(<LeaveBalancesSummary balances={mockBalances} policies={policies} year={2026} />);
+
+      expect(screen.getByTestId('leave-balance-card-PTO')).toHaveTextContent('15 days left');
+      expect(screen.getByTestId('leave-balance-card-PM')).toHaveTextContent('No yearly limit');
+      expect(screen.queryByTestId('leave-balance-card-OLD')).not.toBeInTheDocument();
+      const totals = within(screen.getByTestId('leave-balances-totals'));
+      expect(totals.getByText('Available').nextElementSibling).toHaveTextContent('15');
+    });
+
     it('computes totals from the balances it is given, not from fixed numbers', () => {
       const two: LeaveBalance[] = [
         {

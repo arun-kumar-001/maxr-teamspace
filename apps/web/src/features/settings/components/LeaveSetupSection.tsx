@@ -41,6 +41,7 @@ export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSe
   const [actionError, setActionError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<LeavePolicy | null>(null);
+  const [withoutBalance, setWithoutBalance] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -58,13 +59,15 @@ export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSe
     void load();
   }, [load]);
 
-  const openCreate = () => {
+  const openCreate = (noBalance = false) => {
     setEditing(null);
+    setWithoutBalance(noBalance);
     setIsFormOpen(true);
   };
 
   const openEdit = (policy: LeavePolicy) => {
     setEditing(policy);
+    setWithoutBalance(false);
     setIsFormOpen(true);
   };
 
@@ -110,16 +113,28 @@ export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSe
             in the apply-for-leave form.
           </p>
         </div>
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          onClick={openCreate}
-          disabled={disabled}
-          data-testid="create-leave-type-btn"
-        >
-          Create Leave Type
-        </Button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => openCreate(true)}
+            disabled={disabled}
+            data-testid="create-permission-btn"
+          >
+            Create Permission
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => openCreate()}
+            disabled={disabled}
+            data-testid="create-leave-type-btn"
+          >
+            Create Leave Type
+          </Button>
+        </div>
       </div>
 
       {actionError && (
@@ -244,6 +259,7 @@ export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSe
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         policy={editing}
+        withoutBalance={withoutBalance}
         onSubmit={handleSubmit}
       />
     </div>
