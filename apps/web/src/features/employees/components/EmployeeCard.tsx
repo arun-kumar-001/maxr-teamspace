@@ -20,20 +20,8 @@ export function EmployeeCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
-  const photo =
-    photoUrl ||
-    (employee as unknown as { avatarUrl?: string }).avatarUrl ||
-    (typeof window !== 'undefined' && window.localStorage
-      ? localStorage.getItem(`maxr_avatar_${employee.id}`) ||
-        ((employee as unknown as { userId?: string }).userId
-          ? localStorage.getItem(
-              `maxr_avatar_${(employee as unknown as { userId: string }).userId}`,
-            )
-          : null) ||
-        (employee.email
-          ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`)
-          : null)
-      : null);
+  // The photo comes from the server (a stable, authenticated URL), never from this browser's storage.
+  const photo = photoUrl || employee.photoUrl || null;
 
   const statusVariant =
     employee.status === 'active'

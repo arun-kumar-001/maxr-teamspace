@@ -75,6 +75,7 @@ export function createTestAuth(
       lastName: 'Tester',
       roles: [role],
       mustChangePassword: false,
+      photoVersion: null,
     };
     users[role] = user;
     repo.users.set(user.id, user);

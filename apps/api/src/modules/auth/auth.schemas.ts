@@ -37,6 +37,8 @@ export const profileSchema = z
     permissions: z.array(z.string()),
     /** While true, every request except /auth/me, /auth/change-password and /auth/logout answers 403 PASSWORD_CHANGE_REQUIRED. */
     mustChangePassword: z.boolean(),
+    /** Stable, authenticated URL of the person's photo, or null. */
+    photoUrl: z.string().nullable(),
   })
   .meta({ id: 'AuthProfile' });
 

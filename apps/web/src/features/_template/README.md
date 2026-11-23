@@ -31,4 +31,3 @@ features/<module>/
    - Desktop (1024–1535px): Multi-column layouts, full tables.
    - Ultrawide (≥1536px): Expanded grids, capped readable text lines (≈70ch).
    - No horizontal page scroll at any resolution.
-

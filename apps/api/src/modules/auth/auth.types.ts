@@ -14,6 +14,8 @@ export interface AuthUser {
   roles: string[];
   /** The password was set by someone else; its owner must change it before doing anything else. */
   mustChangePassword: boolean;
+  /** When the profile photo last changed, or null if there is none. */
+  photoVersion: number | null;
 }
 
 export interface FailureWindow {
@@ -44,6 +46,8 @@ export interface Profile {
   permissions: string[];
   /** True until the person has replaced a password someone else set for them. */
   mustChangePassword: boolean;
+  /** Stable, authenticated URL of the person's photo, or null. */
+  photoUrl: string | null;
 }
 
 export interface RequestMeta {

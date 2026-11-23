@@ -1,3 +1,4 @@
+import { employeePhotoUrl } from '../employees/photo/photo.types';
 import { ERROR_CODES, ROLES, type Role } from '@maxr/shared';
 import { AppError } from '../../http/app-error';
 import { forbidden, unauthorized, unprocessable } from '../../http/errors';
@@ -244,6 +245,7 @@ export class AuthService {
       roles,
       permissions: permissionsForRoles(roles),
       mustChangePassword: user.mustChangePassword,
+      photoUrl: employeePhotoUrl(user.employeeId, user.photoVersion),
     };
   }
 }

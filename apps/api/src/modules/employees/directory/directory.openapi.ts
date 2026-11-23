@@ -31,6 +31,8 @@ export const employeeDirectoryItemSchema = z
     joiningDate: z.string(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
+    /** Stable, authenticated URL of the profile photo; null when there is none. */
+    photoUrl: z.string().nullable(),
   })
   .meta({ id: 'EmployeeDirectoryItem' });
 

@@ -1,3 +1,4 @@
+import { employeePhotoUrl } from '../photo/photo.types';
 import { getFieldCipher } from '../../../security/field-cipher';
 import type { FieldCipher } from '../../../security/field-crypto';
 import type { Role } from '@maxr/shared';
@@ -67,6 +68,7 @@ interface Row {
   user_active: boolean | null;
   last_login_at: Date | string | null;
   roles: string[];
+  photo_version: string | null;
 }
 
 const iso = (value: Date | string): string => new Date(value).toISOString();
@@ -93,6 +95,7 @@ const toDetail = (row: Row, withAccount: boolean, cipher: FieldCipher): Employee
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
   version: row.version,
+  photoUrl: employeePhotoUrl(row.id, row.photo_version === null ? null : Number(row.photo_version)),
   additionalEmails: row.additional_emails ?? [],
   additionalPhones: row.additional_phones ?? [],
   permanentAddress: row.permanent_address,
@@ -121,6 +124,7 @@ const SELECT = `
   SELECT e.id, e.employee_code, e.first_name, e.last_name, e.email, e.phone, e.status,
          to_char(e.joining_date, 'YYYY-MM-DD') AS joining_date,
          e.created_at, e.updated_at, e.version,
+         CASE WHEN e.profile_photo_key IS NULL THEN NULL ELSE (EXTRACT(EPOCH FROM e.profile_photo_updated_at) * 1000)::bigint END AS photo_version,
          e.additional_emails, e.additional_phones, e.permanent_address, e.current_address,
          e.blood_group, e.pan_number, e.aadhaar_number,
          e.bank_account_holder, e.bank_name, e.bank_account_number, e.bank_ifsc_code, e.bank_branch,

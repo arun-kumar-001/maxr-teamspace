@@ -37,6 +37,8 @@ export interface EmployeeDirectoryItem {
   joiningDate: string;
   createdAt: string;
   updatedAt: string;
+  /** Stable, authenticated URL of the profile photo; null when there is none. */
+  photoUrl: string | null;
 }
 
 export type EmployeeDirectoryQuery = z.infer<typeof employeeDirectoryQuerySchema>;

@@ -110,3 +110,51 @@ export async function updateProfilePhone(
   const body = await handleResponse<ProfileApiResponse>(res);
   return body.data;
 }
+
+/** The server accepts PNG and JPEG up to 2 MB, scanned and stored privately. */
+const PHOTO_TYPES = ['image/png', 'image/jpeg'];
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
+export function checkPhotoFile(file: File): string | null {
+  if (!PHOTO_TYPES.includes(file.type)) return 'Please choose a PNG or JPG image.';
+  if (file.size > MAX_PHOTO_BYTES) return 'The photo must be 2 MB or smaller.';
+  return null;
+}
+
+/** Sets your own profile photo and returns its stable URL. */
+export async function uploadMyPhoto(file: File): Promise<string> {
+  const problem = checkPhotoFile(file);
+  if (problem) throw new ProfileApiError(problem, 400, 'INVALID_PHOTO');
+  const res = await apiFetch('/api/v1/employees/me/photo', {
+    method: 'PUT',
+    // The server checks the file's real type; the name only needs a matching extension.
+    headers: {
+      'Content-Type': file.type,
+      'X-Filename': file.type === 'image/png' ? 'profile.png' : 'profile.jpg',
+    },
+    body: file,
+  });
+  const body = (await res.json().catch(() => null)) as {
+    data?: { photoUrl?: string };
+    error?: { message?: string; code?: string };
+  } | null;
+  if (!res.ok || !body?.data?.photoUrl) {
+    throw new ProfileApiError(
+      body?.error?.message ?? 'The photo could not be saved.',
+      res.status,
+      body?.error?.code,
+    );
+  }
+  return body.data.photoUrl;
+}
+
+export async function deleteMyPhoto(): Promise<void> {
+  const res = await apiFetch('/api/v1/employees/me/photo', { method: 'DELETE' });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    throw new ProfileApiError(
+      body?.error?.message ?? 'The photo could not be removed.',
+      res.status,
+    );
+  }
+}

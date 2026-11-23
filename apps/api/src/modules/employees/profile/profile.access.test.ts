@@ -33,6 +33,7 @@ const person = (id: string, role: Role): EmployeeDetail => ({
   createdAt: '2026-01-15T00:00:00.000Z',
   updatedAt: '2026-01-15T00:00:00.000Z',
   version: 1,
+  photoUrl: null,
   account: { userId: `u-${role}`, isActive: true, lastLoginAt: null, roles: [role] },
 });
 

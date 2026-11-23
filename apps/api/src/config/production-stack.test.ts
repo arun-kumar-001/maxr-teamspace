@@ -19,6 +19,21 @@ describe('production stack (deploy/)', () => {
     });
   });
 
+  describe('nginx', () => {
+    const nginx = read('nginx/nginx.conf');
+
+    it('lets a page of employee photos load at once, with a larger burst than other API calls', () => {
+      const block = nginx.slice(nginx.indexOf('location ~ ^/api/v1/employees/'));
+      expect(block).toMatch(/location ~ \^\/api\/v1\/employees\/\[0-9a-f-\]\{36\}\/photo\$ \{/);
+      expect(block.slice(0, 300)).toContain('limit_req zone=api burst=200 nodelay;');
+      expect(block.slice(0, 300)).toContain('include /etc/nginx/api-proxy.conf;');
+    });
+
+    it('still accepts the largest upload the API takes', () => {
+      expect(nginx).toMatch(/client_max_body_size 12m;/);
+    });
+  });
+
   describe('email', () => {
     it('does not default SMTP_HOST to this machine, so a missing value is caught at start-up', () => {
       expect(compose).toContain('SMTP_HOST: ${SMTP_HOST:-}');

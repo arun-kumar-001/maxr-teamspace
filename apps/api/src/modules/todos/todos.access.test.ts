@@ -44,6 +44,7 @@ async function setup() {
     lastName: 'Two',
     roles: [ROLES.STAFF],
     mustChangePassword: false,
+    photoVersion: null,
   };
   kit.repo.users.set(staffB.id, staffB);
 

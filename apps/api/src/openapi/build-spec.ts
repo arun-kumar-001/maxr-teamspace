@@ -25,6 +25,7 @@ import '../modules/employees/detail/detail.openapi';
 import '../modules/employees/documents/documents.openapi';
 import '../modules/settings/settings.openapi';
 import '../modules/todos/todos.openapi';
+import '../modules/employees/photo/photo.openapi';
 import '../modules/shifts/shifts.openapi';
 import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';

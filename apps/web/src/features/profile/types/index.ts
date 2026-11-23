@@ -29,6 +29,8 @@ export interface EmployeeAccountInfo {
 }
 
 export interface EmployeeProfile {
+  /** Stable, authenticated URL of the profile photo; null when there is none. */
+  photoUrl?: string | null;
   id: string;
   employeeCode: string;
   firstName: string;
