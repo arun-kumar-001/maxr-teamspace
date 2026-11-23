@@ -374,57 +374,6 @@ export function ProfilePortalPage() {
         </div>
       </div>
 
-      {/* Header Status Badges Row */}
-      <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 mb-6 pb-2">
-        <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
-          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
-        >
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'rgb(16, 185, 129)' }} />
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
-            Status:
-          </span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-            Active Account
-          </span>
-        </div>
-
-        <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
-          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
-        >
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
-            Role:
-          </span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-            {displayRole}
-          </span>
-        </div>
-
-        <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
-          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
-        >
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
-            Shift:
-          </span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-            General (09:00 - 18:00)
-          </span>
-        </div>
-
-        <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-xs"
-          style={{ backgroundColor: 'rgb(255, 255, 255)', borderColor: 'rgba(8, 11, 12, 0.08)' }}
-        >
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
-            Workspace:
-          </span>
-          <span className="text-xs font-semibold" style={{ color: 'rgb(13, 148, 136)' }}>
-            MAXR Teamspace
-          </span>
-        </div>
-      </div>
 
       {/* Row 1: Four Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
