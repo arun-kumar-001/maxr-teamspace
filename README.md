@@ -199,7 +199,7 @@ curl http://localhost:4000/api/health
 | `npm run docker:logs` | Streams logs from all Docker services |
 | `npm run db:migrate` | Runs pending plain SQL migrations on PostgreSQL |
 | `npm run db:seed` | Populates database with repeatable local development seed data |
-| `npm run dev` | Starts all workspace development servers |
+| `npm run dev` | Starts the API (4000) and the web app (3000) together |
 | `npm run dev:api` | Starts the Express backend API (`apps/api`) |
 | `npm run dev:web` | Starts the Vite React frontend (`apps/web`) |
 | `npm run build` | Builds shared package, API, and web in dependency order |
