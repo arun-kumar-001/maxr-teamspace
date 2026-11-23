@@ -14,6 +14,7 @@ import type {
   LeaveCalendarEntry,
 } from '../types';
 import * as leaveApi from '../api/leave';
+import { todayIso } from '../lib/calendar-dates';
 
 const FALLBACK_POLICIES: LeavePolicy[] = [
   {
@@ -292,6 +293,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
+  const [todayEntries, setTodayEntries] = useState<LeaveCalendarEntry[]>([]);
+  const [todayError, setTodayError] = useState<string | null>(null);
 
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [holidayError, setHolidayError] = useState<string | null>(null);
@@ -368,12 +371,25 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     }
   }, []);
 
+  /** Who is on leave today, kept apart from the month on screen so paging never empties it. */
+  const loadToday = useCallback(async () => {
+    const now = new Date();
+    const today = todayIso(now);
+    try {
+      setTodayError(null);
+      setTodayEntries(await leaveApi.fetchLeaveCalendar(today, today));
+    } catch (err) {
+      setTodayError(err instanceof Error ? err.message : 'Failed to fetch who is on leave today');
+    }
+  }, []);
+
   const handleApplyLeave = async (payload: ApplyForLeavePayload) => {
     try {
       const created = await leaveApi.applyForLeave(payload);
       setRequests((prev) => [created, ...prev]);
       // Refresh balances after successful leave submission
       await loadBalances(selectedYear);
+      void loadToday();
       return created;
     } catch (err) {
       // A request the server did not accept must never appear in the list as if it had been.
@@ -577,7 +593,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     loadHolidays(selectedYear);
     loadBalances(selectedYear);
     loadMyRequests();
-  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, selectedYear]);
+    void loadToday();
+  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadToday, selectedYear]);
 
   return {
     policies,
@@ -585,6 +602,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     balances,
     requests,
     calendarEntries,
+    todayEntries,
+    todayError,
     selectedYear,
     setSelectedYear: handleYearChange,
     isLoadingPolicies,

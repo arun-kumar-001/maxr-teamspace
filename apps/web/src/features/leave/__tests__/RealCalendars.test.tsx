@@ -137,4 +137,85 @@ describe('LeaveCalendarView shows real leave for the month it is on', () => {
     expect(list.getByText(/2 days · Approved/)).toBeInTheDocument();
     vi.useRealTimers();
   });
+
+  describe('the On leave today panel', () => {
+    const NOW = new Date(2026, 10, 23);
+
+    it('lists who is on leave today with type, half or full day and status', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(NOW);
+      render(
+        <LeaveCalendarView
+          entries={[]}
+          todayEntries={[
+            entry({
+              requestId: 't1',
+              employeeName: 'Zoya Khan',
+              startDate: '2026-11-23',
+              endDate: '2026-11-23',
+              days: 1,
+            }),
+            entry({
+              requestId: 't2',
+              employeeName: 'Arun Das',
+              leaveTypeName: 'Casual Leave',
+              startDate: '2026-11-23',
+              endDate: '2026-11-23',
+              halfDay: true,
+              days: 0.5,
+              status: 'pending',
+            }),
+          ]}
+        />,
+      );
+
+      const panel = within(screen.getByTestId('leave-today-panel'));
+      expect(panel.getByTestId('leave-today-count')).toHaveTextContent('2 people on leave');
+      const rows = panel.getAllByRole('listitem');
+      expect(rows[0]).toHaveTextContent('Arun Das');
+      expect(rows[0]).toHaveTextContent('Casual Leave · Half day · Pending');
+      expect(rows[1]).toHaveTextContent('Zoya Khan');
+      expect(rows[1]).toHaveTextContent('Sick Leave · Full day · Approved');
+      vi.useRealTimers();
+    });
+
+    it('says nobody is on leave, and shows a holiday today', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(NOW);
+      render(
+        <LeaveCalendarView
+          entries={[]}
+          holidays={[
+            { id: 'h', date: '2026-11-23', name: 'Founders Day' },
+            { id: 'later', date: '2026-12-25', name: 'Year End Day' },
+          ]}
+        />,
+      );
+      expect(screen.getByTestId('leave-today-empty')).toBeInTheDocument();
+      expect(screen.getByTestId('leave-today-holiday')).toHaveTextContent(
+        'Holiday today: Founders Day',
+      );
+      vi.useRealTimers();
+    });
+
+    it('does not change when another month is shown', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(NOW);
+      render(
+        <LeaveCalendarView
+          entries={[]}
+          todayEntries={[entry({ startDate: '2026-11-23', endDate: '2026-11-23' })]}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Next month' }));
+      expect(screen.getByTestId('leave-today-count')).toHaveTextContent('1 person on leave');
+      vi.useRealTimers();
+    });
+
+    it('shows the failure instead of claiming nobody is on leave', () => {
+      render(<LeaveCalendarView entries={[]} todayError="Could not load" />);
+      expect(screen.getByTestId('leave-today-error')).toHaveTextContent('Could not load');
+      expect(screen.queryByTestId('leave-today-empty')).not.toBeInTheDocument();
+    });
+  });
 });

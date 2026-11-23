@@ -74,6 +74,8 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
     balances,
     requests,
     calendarEntries,
+    todayEntries,
+    todayError,
     selectedYear,
     setSelectedYear,
     isLoadingHolidays,
@@ -239,6 +241,9 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           entries={calendarEntries}
           isLoading={isLoadingCalendar}
           onRangeChange={loadCalendar}
+          todayEntries={todayEntries}
+          todayError={todayError}
+          holidays={holidays}
         />
       )}
 
