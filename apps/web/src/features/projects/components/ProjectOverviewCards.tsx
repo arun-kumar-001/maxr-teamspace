@@ -1,11 +1,20 @@
 import type { ProjectsSummary } from '../types';
 
+export type OverviewCardId = 'total-assigned' | 'in-progress' | 'completed' | 'upcoming';
+
 export interface ProjectOverviewCardsProps {
   summary: ProjectsSummary;
   loading?: boolean;
+  activeCardId?: OverviewCardId;
+  onCardClick?: (cardId: OverviewCardId) => void;
 }
 
-export function ProjectOverviewCards({ summary, loading = false }: ProjectOverviewCardsProps) {
+export function ProjectOverviewCards({
+  summary,
+  loading = false,
+  activeCardId,
+  onCardClick,
+}: ProjectOverviewCardsProps) {
   const cards = [
     {
       id: 'total-assigned',
@@ -94,19 +103,40 @@ export function ProjectOverviewCards({ summary, loading = false }: ProjectOvervi
       className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
       data-testid="projects-overview-cards"
     >
-      {cards.map((card) => (
-        <div
-          key={card.id}
-          className="flex flex-col gap-3 p-5 border transition-all duration-200 hover:-translate-y-0.5"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.72)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
-            borderColor: 'rgba(255, 255, 255, 0.75)',
-            boxShadow: '0 10px 30px rgba(85, 205, 179, 0.08), 0 2px 6px rgba(8, 11, 12, 0.04)',
-            borderRadius: '20px',
-          }}
-        >
+      {cards.map((card) => {
+        const isClickable = Boolean(onCardClick);
+        const isSelected = activeCardId === card.id;
+        return (
+          <div
+            key={card.id}
+            onClick={isClickable ? () => onCardClick?.(card.id as OverviewCardId) : undefined}
+            onKeyDown={
+              isClickable
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onCardClick?.(card.id as OverviewCardId);
+                    }
+                  }
+                : undefined
+            }
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-pressed={isClickable ? isSelected : undefined}
+            className={`flex flex-col gap-3 p-5 border transition-all duration-200 hover:-translate-y-0.5 ${
+              isClickable ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong' : ''
+            } ${isSelected ? 'ring-2 ring-primary border-primary-strong' : ''}`}
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.72)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              borderColor: isSelected ? undefined : 'rgba(255, 255, 255, 0.75)',
+              boxShadow: isSelected
+                ? '0 12px 32px rgba(85, 205, 179, 0.16)'
+                : '0 10px 30px rgba(85, 205, 179, 0.08), 0 2px 6px rgba(8, 11, 12, 0.04)',
+              borderRadius: '20px',
+            }}
+          >
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
               {card.label}
@@ -134,7 +164,8 @@ export function ProjectOverviewCards({ summary, loading = false }: ProjectOvervi
 
           <span className="text-xs text-text-muted">{card.caption}</span>
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 }

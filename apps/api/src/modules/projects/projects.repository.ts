@@ -314,13 +314,15 @@ export class PgProjectsRepository implements IProjectsRepository {
         completed: string;
         upcoming: string;
         on_hold: string;
+        archived: string;
       }>(
         `SELECT
            COUNT(*) FILTER (WHERE p.status = 'active') AS total_assigned,
            COUNT(*) FILTER (WHERE p.status = 'active' AND p.workflow_status = 'in_progress') AS in_progress,
            COUNT(*) FILTER (WHERE p.status = 'active' AND p.workflow_status = 'completed') AS completed,
            COUNT(*) FILTER (WHERE p.status = 'active' AND p.workflow_status = 'not_started') AS upcoming,
-           COUNT(*) FILTER (WHERE p.status = 'active' AND p.workflow_status = 'on_hold') AS on_hold
+           COUNT(*) FILTER (WHERE p.status = 'active' AND p.workflow_status = 'on_hold') AS on_hold,
+           COUNT(*) FILTER (WHERE p.status = 'archived') AS archived
          FROM projects p
          WHERE ${scope.clause}`,
         scope.values,
@@ -344,6 +346,7 @@ export class PgProjectsRepository implements IProjectsRepository {
         completed: Number(sumRow?.completed ?? 0),
         upcoming: Number(sumRow?.upcoming ?? 0),
         onHold: Number(sumRow?.on_hold ?? 0),
+        archived: Number(sumRow?.archived ?? 0),
       },
     };
   }

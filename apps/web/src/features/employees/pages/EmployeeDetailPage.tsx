@@ -11,7 +11,6 @@ import {
 } from '../../../components/ui';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
-import { EmployeeDocumentsTab } from '../components/EmployeeDocumentsTab';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
 import type { EmployeeDetail, EmployeePatch } from '../types';
@@ -73,9 +72,7 @@ export function EmployeeDetailPage() {
   const { employee, isLoading, isSaving, error, isNotFound, isForbidden, refetch, updateEmployee } =
     useEmployeeDetail(id);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'personal' | 'account' | 'documents'>(
-    'overview',
-  );
+  const [activeTab, setActiveTab] = useState<'overview' | 'personal' | 'account'>('overview');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [isChangeManagerOpen, setIsChangeManagerOpen] = useState(false);
@@ -188,13 +185,12 @@ export function EmployeeDetailPage() {
         : 'neutral';
 
   const tabOptions: Array<{
-    value: 'overview' | 'personal' | 'account' | 'documents';
+    value: 'overview' | 'personal' | 'account';
     label: string;
   }> = [
     { value: 'overview', label: 'Job & Overview' },
     { value: 'personal', label: 'Personal Information' },
     ...(employee.account ? [{ value: 'account' as const, label: 'Account & Security' }] : []),
-    { value: 'documents', label: 'Documents' },
   ];
 
   return (
@@ -625,21 +621,6 @@ export function EmployeeDetailPage() {
           </div>
 
           <BankAccountDetailsSection employee={employee} />
-        </div>
-      )}
-
-      {activeTab === 'documents' && (
-        <div
-          className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card"
-          data-testid="tab-documents"
-        >
-          <EmployeeDocumentsTab
-            employeeId={employee.id}
-            employeeName={`${employee.firstName} ${employee.lastName}`}
-            canUpload={true}
-            canDelete={isAdmin || isHR}
-            canSetSensitive={isAdmin || isHR}
-          />
         </div>
       )}
 

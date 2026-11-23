@@ -1,7 +1,17 @@
-let inMemoryCsrfToken: string | null = null;
+let inMemoryCsrfToken: string | null =
+  typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined'
+    ? sessionStorage.getItem('maxr_csrf_token')
+    : null;
 
 export function setCsrfToken(token: string | null): void {
   inMemoryCsrfToken = token;
+  if (typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+    if (token) {
+      sessionStorage.setItem('maxr_csrf_token', token);
+    } else {
+      sessionStorage.removeItem('maxr_csrf_token');
+    }
+  }
 }
 
 export function getCsrfToken(): string | null {

@@ -169,6 +169,14 @@ export class ProjectsService implements ProjectReader {
         scope: input.scope === undefined ? current.scope : input.scope,
         technologies: input.technologies === undefined ? current.technologies : input.technologies,
       };
+      if (
+        next.workflowStatus === 'completed' &&
+        (input.progressPercent === undefined || next.progressPercent < 100)
+      ) {
+        next.progressPercent = 100;
+      } else if (next.progressPercent === 100 && input.workflowStatus === undefined) {
+        next.workflowStatus = 'completed';
+      }
       if (next.startDate && next.endDate && next.endDate < next.startDate) {
         throw unprocessable('The end date must be on or after the start date');
       }

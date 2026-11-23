@@ -102,21 +102,17 @@ export class TasksService {
       requestId: caller.requestId,
     });
     const events = new EventCollector();
+    const assigneeId = input.assigneeEmployeeId || caller.employeeId;
     const id = await this.repository.transaction(async (tx) => {
-      await this.assertAssignable(tx, caller.employeeId, input.assigneeEmployeeId, viewer.all);
+      await this.assertAssignable(tx, caller.employeeId, assigneeId, viewer.all);
       if (input.projectId) {
-        await this.assertProjectUsable(
-          input.projectId,
-          caller.employeeId,
-          input.assigneeEmployeeId,
-          viewer.all,
-        );
+        await this.assertProjectUsable(input.projectId, caller.employeeId, assigneeId, viewer.all);
       }
       const taskId = await this.repository.insert(tx, {
         title: input.title,
         description: input.description ?? null,
         projectId: input.projectId ?? null,
-        assigneeEmployeeId: input.assigneeEmployeeId,
+        assigneeEmployeeId: assigneeId,
         assignerEmployeeId: caller.employeeId,
         priority: input.priority,
         dueDate: input.dueDate ?? null,
@@ -130,7 +126,7 @@ export class TasksService {
           entityType: 'task',
           entityId: taskId,
           changes: {
-            assigneeEmployeeId: input.assigneeEmployeeId,
+            assigneeEmployeeId: assigneeId,
             priority: input.priority,
             projectId: input.projectId ?? null,
             dueDate: input.dueDate ?? null,
@@ -142,7 +138,7 @@ export class TasksService {
         type: 'tasks.assigned',
         payload: {
           taskId,
-          assigneeEmployeeId: input.assigneeEmployeeId,
+          assigneeEmployeeId: assigneeId,
           assignerEmployeeId: caller.employeeId,
         },
         actorId: caller.actorId,

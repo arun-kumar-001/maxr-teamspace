@@ -1,5 +1,5 @@
+import { useState, useEffect } from 'react';
 import { isDemoDataEnabled } from '@/lib/demo-data';
-import React, { useState, useEffect } from 'react';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
@@ -17,15 +17,21 @@ type LeaveTab = 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays';
 
 export interface LeaveManagementPageProps {
   initialTab?: LeaveTab;
+  onNavigate?: (path: string) => void;
 }
 
-export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
-  initialTab = 'requests',
-}) => {
-  const inRouter = useInRouterContext();
-  const navigate = inRouter ? useNavigate() : null;
-  const location = inRouter ? useLocation() : null;
+interface LeaveManagementPageContentProps extends LeaveManagementPageProps {
+  navigate?: (path: string) => void;
+}
 
+function LeaveManagementPageContent({
+  initialTab = 'requests',
+  navigate: propNavigate,
+}: LeaveManagementPageContentProps) {
+  const inRouter = useInRouterContext();
+  const routerNavigate = inRouter ? useNavigate() : null;
+  const location = inRouter ? useLocation() : null;
+  const navigate = propNavigate || routerNavigate;
   const { role, user } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   const canReviewApprovals =
@@ -291,4 +297,22 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
       />
     </div>
   );
-};
+}
+
+function RouterLeaveManagementPage(props: LeaveManagementPageProps) {
+  const routerNavigate = useNavigate();
+  const navigate = props.onNavigate || routerNavigate;
+  return <LeaveManagementPageContent {...props} navigate={navigate} />;
+}
+
+function StaticLeaveManagementPage(props: LeaveManagementPageProps) {
+  return <LeaveManagementPageContent {...props} navigate={props.onNavigate} />;
+}
+
+export function LeaveManagementPage(props: LeaveManagementPageProps) {
+  const inRouter = useInRouterContext();
+  if (inRouter) {
+    return <RouterLeaveManagementPage {...props} />;
+  }
+  return <StaticLeaveManagementPage {...props} />;
+}

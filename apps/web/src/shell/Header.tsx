@@ -112,9 +112,17 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-tile-peach text-sidebar text-xs font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden relative"
                   title={`${user.name} (${user.email})`}
                 >
-                  {user.avatarUrl ? (
+                  {user.avatarUrl ||
+                  (typeof window !== 'undefined' &&
+                    (localStorage.getItem(`maxr_avatar_${user.id}`) ||
+                      localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`))) ? (
                     <img
-                      src={user.avatarUrl}
+                      src={
+                        user.avatarUrl ||
+                        localStorage.getItem(`maxr_avatar_${user.id}`) ||
+                        localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`) ||
+                        ''
+                      }
                       alt={user.name}
                       className="w-full h-full object-cover"
                       data-testid="header-avatar-img"
@@ -124,7 +132,14 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
                     />
                   ) : null}
                   <span
-                    className={user.avatarUrl ? 'sr-only' : undefined}
+                    className={
+                      user.avatarUrl ||
+                      (typeof window !== 'undefined' &&
+                        (localStorage.getItem(`maxr_avatar_${user.id}`) ||
+                          localStorage.getItem(`maxr_avatar_${user.email.toLowerCase()}`)))
+                        ? 'sr-only'
+                        : undefined
+                    }
                     data-testid="header-avatar-initials"
                   >
                     {user.avatarInitials}

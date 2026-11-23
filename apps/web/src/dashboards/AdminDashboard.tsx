@@ -487,7 +487,7 @@ export function AdminDashboard() {
     // 1. Persist locally immediately so this approval never shows as pending again
     saveApprovedId(id);
 
-    // 2. Optimistic UI update
+    // 2. Optimistic UI update - mark as approved for smooth feedback
     setApprovals((prev) =>
       prev.map((item) => (item.id === id ? { ...item, status: 'approved' } : item)),
     );

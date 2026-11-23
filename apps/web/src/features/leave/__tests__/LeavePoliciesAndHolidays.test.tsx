@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
@@ -20,12 +21,10 @@ vi.mock('../api/leave', () => ({
   createHoliday: vi.fn(),
   deleteHoliday: vi.fn(),
   fetchMyLeaveBalances: vi.fn(),
-  fetchLeaveBalances: vi.fn(),
-  runYearlyAccrual: vi.fn(),
-  fetchMyLeaveRequests: vi
-    .fn()
-    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 10, total: 0 } }),
+  fetchLeaveBalances: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchMyLeaveRequests: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
   fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
+  runYearlyAccrual: vi.fn(),
 }));
 
 vi.mock('../../../auth/AuthContext', () => ({

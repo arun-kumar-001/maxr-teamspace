@@ -76,7 +76,7 @@ const MATRIX: Array<[PermissionKey, Partial<Record<Role, RecordScope>>]> = [
   ['leave.apply', { admin: 'own', hr_manager: 'own', team_lead: 'own', staff: 'own' }],
   ['leave.read_team', { admin: 'all', team_lead: 'team' }],
   ['leave.approve', { admin: 'all', hr_manager: 'hr', team_lead: 'team' }],
-  ['tasks.create', { admin: 'all', team_lead: 'team' }],
+  ['tasks.create', { admin: 'all', team_lead: 'team', staff: 'own' }],
   ['tasks.update_status', { admin: 'all', hr_manager: 'own', team_lead: 'team', staff: 'own' }],
   ['audit_logs.list', { admin: 'all' }],
   ['users.assign_role', { admin: 'all' }],

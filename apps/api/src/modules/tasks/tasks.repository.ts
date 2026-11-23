@@ -211,7 +211,7 @@ export class PgTasksRepository implements ITasksRepository {
       where = 'TRUE';
     } else {
       const me = add(params.viewer.employeeId);
-      where = `(t.assigner_employee_id = ${me} OR ${MANAGES(me)})`;
+      where = `(t.assigner_employee_id = ${me} OR t.assignee_employee_id = ${me} OR ${MANAGES(me)})`;
     }
     if (params.status) where += ` AND t.status = ${add(params.status)}`;
     if (params.priority) where += ` AND t.priority = ${add(params.priority)}`;

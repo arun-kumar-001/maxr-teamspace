@@ -2,6 +2,9 @@ import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../auth/AuthContext';
 import { downloadPayslipPdf, fetchMyPayslips } from '../features/payslips/api/payslips';
 import type { PayslipRecord } from '../features/payslips/types';
+import { changeTaskStatus, fetchMyTasks } from '../features/tasks/api/tasksApi';
+import type { Task } from '../features/tasks/types';
+import { fetchProjects } from '../features/projects/api/projectsApi';
 
 export function StaffDashboard() {
   const auth = useContext(AuthContext);
@@ -13,6 +16,22 @@ export function StaffDashboard() {
   const [liveTime, setLiveTime] = useState('12:35:00 PM');
   const [selectedDay, setSelectedDay] = useState(24);
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
+  const [realTasks, setRealTasks] = useState<Task[]>([]);
+  const [projectsCount, setProjectsCount] = useState(0);
+
+  const toggleRealTask = async (task: Task) => {
+    const nextStatus = task.status === 'completed' ? 'in_progress' : 'completed';
+    try {
+      const updated = await changeTaskStatus(task.id, nextStatus);
+      setRealTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+    } catch {
+      setRealTasks((prev) =>
+        prev.map((t) =>
+          t.id === task.id ? { ...t, status: nextStatus, version: t.version + 1 } : t,
+        ),
+      );
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -25,6 +44,28 @@ export function StaffDashboard() {
       .catch(() => {
         // Offline/test fallback preserves static preview cards
       });
+
+    void fetchMyTasks({ pageSize: 20 })
+      .then((res) => {
+        if (active && res.data) {
+          setRealTasks(res.data);
+        }
+      })
+      .catch(() => {});
+
+    void fetchProjects({ pageSize: 50 })
+      .then((res) => {
+        if (active && res.data) {
+          const activeProj = res.data.filter(
+            (p) =>
+              (p.status as string) !== 'delivered' &&
+              (p.status as string) !== 'completed' &&
+              (p as unknown as { workflowStatus?: string }).workflowStatus !== 'completed',
+          ).length;
+          setProjectsCount(activeProj || res.data.length);
+        }
+      })
+      .catch(() => {});
     return () => {
       active = false;
     };
@@ -222,8 +263,11 @@ export function StaffDashboard() {
     });
   };
 
-  const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
-  const totalTasksCount = 8;
+  const completedTasksCount =
+    realTasks.length > 0
+      ? realTasks.filter((t) => t.status === 'completed').length
+      : onboardingTasks.filter((t) => t.completed).length;
+  const totalTasksCount = realTasks.length > 0 ? realTasks.length : 8;
   const completionPercentage = Math.round((completedTasksCount / totalTasksCount) * 100);
 
   return (
@@ -343,7 +387,7 @@ export function StaffDashboard() {
                   className="text-2xl sm:text-3xl font-light font-display leading-none"
                   style={{ color: 'rgb(8, 11, 12)' }}
                 >
-                  56
+                  {realTasks.filter((t) => t.status !== 'completed').length}
                 </p>
                 <p className="text-[11px] leading-tight" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
                   Active Tasks
@@ -379,10 +423,10 @@ export function StaffDashboard() {
                   className="text-2xl sm:text-3xl font-light font-display leading-none"
                   style={{ color: 'rgb(8, 11, 12)' }}
                 >
-                  203
+                  {projectsCount}
                 </p>
                 <p className="text-[11px] leading-tight" style={{ color: 'rgba(8, 11, 12, 0.65)' }}>
-                  Total Projects
+                  Active Projects
                 </p>
               </div>
             </div>
@@ -1207,61 +1251,135 @@ export function StaffDashboard() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-white">My Tasks</span>
             <span className="text-xl font-light font-display text-white">
-              {completedTasksCount}/8
+              {realTasks.filter((t) => t.status === 'completed').length}/{realTasks.length}
             </span>
           </div>
 
           {/* Task Items */}
           <div className="space-y-3">
-            {onboardingTasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => toggleTask(task.id)}
-                className="flex items-center justify-between gap-2 text-xs cursor-pointer select-none group transition-transform active:scale-95 duration-150"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      color: 'rgb(85, 205, 179)',
-                    }}
-                  >
-                    {task.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={`text-xs font-medium truncate transition-colors ${
-                        task.completed ? 'text-white' : 'text-stone-300 group-hover:text-white'
-                      }`}
-                    >
-                      {task.title}
-                    </p>
-                    <p className="text-[10px] text-white/50">{task.date}</p>
-                  </div>
-                </div>
-
-                {/* Circle Checkbox */}
-                <div className="shrink-0">
-                  {task.completed ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
-                      style={{
-                        backgroundColor: 'rgb(85, 205, 179)',
-                        color: 'rgb(8, 11, 12)',
-                      }}
-                    >
-                      ✓
-                    </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
-                      style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
-                    />
-                  )}
-                </div>
+            {realTasks.length === 0 && onboardingTasks.length === 0 ? (
+              <div className="text-xs text-white/50 text-center py-6">
+                No assigned tasks found.
               </div>
-            ))}
+            ) : realTasks.length > 0 ? (
+              realTasks.slice(0, 8).map((task) => {
+                const isCompleted = task.status === 'completed';
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => void toggleRealTask(task)}
+                    className="flex items-center justify-between gap-2 text-xs cursor-pointer select-none group transition-transform active:scale-95 duration-150"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          color: 'rgb(85, 205, 179)',
+                        }}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.8"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-xs font-medium truncate transition-colors ${
+                            isCompleted ? 'text-white/60 line-through' : 'text-stone-300 group-hover:text-white'
+                          }`}
+                        >
+                          {task.title}
+                        </p>
+                        <p className="text-[10px] text-white/50">{task.dueDate || 'No due date'}</p>
+                      </div>
+                    </div>
+
+                    {/* Circle Checkbox */}
+                    <div className="shrink-0">
+                      {isCompleted ? (
+                        <div
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
+                          style={{
+                            backgroundColor: 'rgb(85, 205, 179)',
+                            color: 'rgb(8, 11, 12)',
+                          }}
+                        >
+                          ✓
+                        </div>
+                      ) : (
+                        <div
+                          className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
+                          style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              onboardingTasks.map((task) => {
+                const isCompleted = task.completed;
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => toggleTask(task.id)}
+                    className="flex items-center justify-between gap-2 text-xs cursor-pointer select-none group transition-transform active:scale-95 duration-150"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          color: 'rgb(85, 205, 179)',
+                        }}
+                      >
+                        {task.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-xs font-medium truncate transition-colors ${
+                            isCompleted ? 'text-white/60 line-through' : 'text-stone-300 group-hover:text-white'
+                          }`}
+                        >
+                          {task.title}
+                        </p>
+                        <p className="text-[10px] text-white/50">{task.date}</p>
+                      </div>
+                    </div>
+
+                    {/* Circle Checkbox */}
+                    <div className="shrink-0">
+                      {isCompleted ? (
+                        <div
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
+                          style={{
+                            backgroundColor: 'rgb(85, 205, 179)',
+                            color: 'rgb(8, 11, 12)',
+                          }}
+                        >
+                          ✓
+                        </div>
+                      ) : (
+                        <div
+                          className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
+                          style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div
@@ -1271,7 +1389,9 @@ export function StaffDashboard() {
               color: 'rgba(255, 255, 255, 0.5)',
             }}
           >
-            <span>Completed {completedTasksCount} of 8 tasks</span>
+            <span>
+              Completed {completedTasksCount} of {realTasks.length || onboardingTasks.length} tasks
+            </span>
           </div>
         </div>
       </div>

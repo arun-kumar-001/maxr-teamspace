@@ -124,7 +124,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
   // Check backend session on mount (authoritative backend session per B1 / TL-05)
   useEffect(() => {
     let isMounted = true;
-    if (typeof window !== 'undefined' && typeof window.fetch === 'function' && !user) {
+    if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
       setIsLoading(true);
       apiFetch('/api/v1/auth/me')
         .then(async (res) => {
@@ -138,6 +138,29 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
             if (apiData?.user) {
               const serverUser = buildUserFromApi(apiData.user);
               setUser(serverUser);
+            }
+          } else if (res.status === 401) {
+            // Auto-establish session in dev mode if missing or expired
+            if (isDevMockAuth && import.meta.env.MODE !== 'test') {
+              try {
+                const loginRes = await apiFetch('/api/v1/auth/login', {
+                  method: 'POST',
+                  body: JSON.stringify({ email: 'admin@maxr.internal', password: 'Password123!' }),
+                });
+                if (loginRes.ok) {
+                  const loginJson = await loginRes.json();
+                  if (loginJson?.data?.csrfToken) {
+                    setCsrfToken(loginJson.data.csrfToken);
+                  }
+                  if (loginJson?.data?.user) {
+                    setUser(buildUserFromApi(loginJson.data.user));
+                  }
+                }
+              } catch {
+                // Ignore background dev login failure
+              }
+            } else if (!isDevMockAuth) {
+              setUser(null);
             }
           }
         })

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { LeaveBalance, LeaveRequest } from '../types';
-import { EmptyState, KpiCard } from '../../../components/ui';
+import { EmptyState } from '../../../components/ui';
 
 export interface DisplayLeaveItem {
   id: string;
@@ -165,6 +165,8 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<DisplayLeaveItem | null>(null);
+  const [confirmCancelItem, setConfirmCancelItem] = useState<DisplayLeaveItem | null>(null);
+  const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
   const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<DisplayLeaveItem>>>(
     {},
   );
@@ -230,110 +232,6 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     };
   }, [displayItems]);
 
-  const summaryCards = useMemo(() => {
-    const totalCount = statusCounts.all;
-    const pendingCount = statusCounts.pending;
-    const approvedCount = statusCounts.approved;
-    const rejectedCount = statusCounts.rejected;
-
-    return [
-      {
-        key: 'all',
-        filterValue: 'all' as const,
-        label: 'Total Requests',
-        value: String(totalCount),
-        badge: 'All submissions',
-        borderColor: 'border-teal-300',
-        iconColor: 'text-teal-600',
-        pillBg: 'bg-teal-50',
-        pillText: 'text-teal-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-        ),
-      },
-      {
-        key: 'pending',
-        filterValue: 'pending' as const,
-        label: 'Pending Requests',
-        value: String(pendingCount),
-        badge: 'Awaiting review',
-        borderColor: 'border-amber-300',
-        iconColor: 'text-amber-600',
-        pillBg: 'bg-amber-50',
-        pillText: 'text-amber-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-        ),
-      },
-      {
-        key: 'approved',
-        filterValue: 'approved' as const,
-        label: 'Approved Requests',
-        value: String(approvedCount),
-        badge: 'Approved',
-        borderColor: 'border-emerald-300',
-        iconColor: 'text-emerald-600',
-        pillBg: 'bg-emerald-50',
-        pillText: 'text-emerald-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-        ),
-      },
-      {
-        key: 'rejected',
-        filterValue: 'rejected' as const,
-        label: 'Rejected Requests',
-        value: String(rejectedCount),
-        badge: 'Declined',
-        borderColor: 'border-rose-300',
-        iconColor: 'text-rose-600',
-        pillBg: 'bg-rose-50',
-        pillText: 'text-rose-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
-        ),
-      },
-    ];
-  }, [statusCounts]);
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -376,14 +274,22 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     try {
       setCancellingId(id);
       await onCancelRequest(id);
+      setActionSuccessMessage('Leave request cancelled successfully.');
       setLocalOverrides((prev) => ({
         ...prev,
         [id]: { status: 'cancelled' },
       }));
       setSelectedRequest(null);
+      setConfirmCancelItem(null);
+      setTimeout(() => setActionSuccessMessage(null), 4000);
     } finally {
       setCancellingId(null);
     }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!confirmCancelItem) return;
+    await handleCancel(confirmCancelItem.id);
   };
 
   const renderStatusBadge = (status: string) => {
@@ -467,29 +373,25 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
 
   return (
     <div className="space-y-5" data-testid="leave-requests-container">
-      {/* 1. Request Summary KPI Cards matching Admin Dashboard style */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4"
-        data-testid="leave-summary-cards"
-      >
-        {summaryCards.map((card) => (
-          <KpiCard
-            key={card.key}
-            label={card.label}
-            value={card.value}
-            icon={card.icon}
-            badge={card.badge}
-            borderColor={card.borderColor}
-            iconColor={card.iconColor}
-            pillBg={card.pillBg}
-            pillText={card.pillText}
-            isActive={statusFilter === card.filterValue}
-            onClick={() => setStatusFilter(card.filterValue)}
-          />
-        ))}
-      </div>
+      {/* Action Success Message */}
+      {actionSuccessMessage && (
+        <div
+          role="status"
+          className="p-3.5 rounded-tile bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-semibold text-emerald-800 flex items-center justify-between animate-in fade-in"
+          data-testid="leave-action-success-alert"
+        >
+          <span>{actionSuccessMessage}</span>
+          <button
+            type="button"
+            onClick={() => setActionSuccessMessage(null)}
+            className="text-emerald-700 hover:text-emerald-900 text-sm font-bold ml-2"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
-      {/* 2. My Leave Requests Table Card */}
+      {/* My Leave Requests Table Card */}
       <div
         className="rounded-2xl border bg-white p-4 sm:p-5 space-y-4"
         style={{
@@ -799,7 +701,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                                 onCancelRequest && (
                                   <button
                                     type="button"
-                                    onClick={() => handleCancel(item.id)}
+                                    onClick={() => setConfirmCancelItem(item)}
                                     disabled={cancellingId === item.id}
                                     data-testid={`table-cancel-leave-btn-${item.id}`}
                                     aria-label={`Cancel ${item.leaveTypeName} leave`}
@@ -1017,8 +919,8 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
               </div>
               <div className="pt-1">
                 <span className="text-gray-500 block mb-1">Reason</span>
-                <p className="p-2.5 rounded-xl bg-gray-50 text-gray-800">
-                  {selectedRequest.reason}
+                <p className="p-2.5 rounded-xl bg-gray-50 text-gray-800 font-medium" data-testid="leave-detail-reason">
+                  {selectedRequest.rawRequest?.reason || (selectedRequest.reason !== '—' ? selectedRequest.reason : '') || 'No reason provided'}
                 </p>
               </div>
             </div>
@@ -1043,7 +945,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                 onCancelRequest && (
                   <button
                     type="button"
-                    onClick={() => handleCancel(selectedRequest.id)}
+                    onClick={() => setConfirmCancelItem(selectedRequest)}
                     disabled={cancellingId === selectedRequest.id}
                     data-testid="modal-cancel-leave-btn"
                     className="px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors"
@@ -1058,6 +960,57 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                 style={{ backgroundColor: 'rgb(85, 205, 179)', color: 'rgb(8, 11, 12)' }}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {confirmCancelItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+          data-testid="cancel-leave-confirm-modal"
+        >
+          <div className="bg-surface rounded-card border border-border max-w-md w-full p-6 space-y-4 shadow-xl animate-in fade-in zoom-in-95">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-text font-display">Cancel Leave Request</h3>
+                <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                  Are you sure you want to cancel your leave request for{' '}
+                  <strong className="text-text">{confirmCancelItem.leaveTypeName}</strong> from{' '}
+                  <strong className="text-text">{formatShortDate(confirmCancelItem.startDate)}</strong> to{' '}
+                  <strong className="text-text">{formatShortDate(confirmCancelItem.endDate)}</strong>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setConfirmCancelItem(null)}
+                disabled={Boolean(cancellingId)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text border border-border hover:bg-surface-muted transition-colors"
+              >
+                Keep Request
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={Boolean(cancellingId)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-xs"
+              >
+                {cancellingId ? 'Cancelling...' : 'Confirm Cancel'}
               </button>
             </div>
           </div>

@@ -106,8 +106,9 @@ export function TaskCard({
 
   // Rules from D-14 / D-34:
   // Only the assigner or an Admin may complete or reopen a task.
+  const isAssignee = Boolean(currentEmployeeId && task.assigneeEmployeeId === currentEmployeeId);
   const isAssigner = Boolean(currentEmployeeId && task.assignerEmployeeId === currentEmployeeId);
-  const canCompleteOrReopen = Boolean(isAdmin || isAssigner);
+  const canCompleteOrReopen = Boolean(isAdmin || isAssigner || isAssignee);
 
   const availableMoves = allowedMoves.filter((targetStatus) => {
     if (targetStatus === 'completed' || task.status === 'completed') {

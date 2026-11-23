@@ -134,9 +134,8 @@ describe('LeaveCalendarView shows real leave for the month it is on', () => {
     const grid = within(screen.getByTestId('leave-calendar-grid'));
     expect(grid.getAllByText('Priya · SICK')).toHaveLength(2); // 10 and 11 Nov
     expect(grid.getByText('Pending: Arun · SICK ½')).toBeInTheDocument();
-    const list = within(screen.getByTestId('leave-calendar-list'));
-    expect(list.getByText(/Half day · Pending/)).toBeInTheDocument();
-    expect(list.getByText(/2 days · Approved/)).toBeInTheDocument();
+    expect(grid.getByTitle('Arun Das: Sick Leave (Pending)')).toBeInTheDocument();
+    expect(grid.getAllByTitle('Priya Raman: Sick Leave (Approved)')).toHaveLength(2);
     vi.useRealTimers();
   });
 
@@ -226,11 +225,11 @@ describe('LeaveCalendarView shows real leave for the month it is on', () => {
       expect(screen.queryByTestId('leave-only-mine')).not.toBeInTheDocument();
 
       rerender(<LeaveCalendarView entries={[mine, other]} myEmployeeId="me" />);
-      const list = within(screen.getByTestId('leave-calendar-list'));
-      expect(list.getByText('Somebody Else')).toBeInTheDocument();
+      const grid = within(screen.getByTestId('leave-calendar-grid'));
+      expect(grid.getAllByText('Somebody · SICK')).toHaveLength(2);
       fireEvent.click(screen.getByTestId('leave-only-mine'));
-      expect(list.queryByText('Somebody Else')).not.toBeInTheDocument();
-      expect(list.getByText('Me Myself')).toBeInTheDocument();
+      expect(grid.queryByText('Somebody · SICK')).not.toBeInTheDocument();
+      expect(grid.getAllByText('Me · SICK')).toHaveLength(2);
       vi.useRealTimers();
     });
   });

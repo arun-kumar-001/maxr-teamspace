@@ -16,6 +16,7 @@ export interface ProjectsSummary {
   completed: number;
   upcoming: number;
   onHold: number;
+  archived?: number;
 }
 
 export interface ProjectMilestone {

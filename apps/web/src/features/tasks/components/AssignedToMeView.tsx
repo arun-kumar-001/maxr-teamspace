@@ -49,10 +49,13 @@ export function AssignedToMeView({
       ) : (
         <ul className="divide-y divide-border">
           {items.map((task) => {
+            const isAssignee = Boolean(
+              currentEmployeeId && task.assigneeEmployeeId === currentEmployeeId,
+            );
             const isAssigner = Boolean(
               currentEmployeeId && task.assignerEmployeeId === currentEmployeeId,
             );
-            const canCompleteOrReopen = Boolean(isAdmin || isAssigner);
+            const canCompleteOrReopen = Boolean(isAdmin || isAssigner || isAssignee);
             const nextMove = (TASK_TRANSITIONS[task.status] || []).find((target) => {
               if (target === 'completed' || task.status === 'completed') {
                 return canCompleteOrReopen;

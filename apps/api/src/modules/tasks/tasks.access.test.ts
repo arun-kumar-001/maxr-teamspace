@@ -130,10 +130,20 @@ describe('tasks API: access', () => {
       ['admin', 201],
       ['team_lead', 201],
       ['hr_manager', 403],
-      ['staff', 403],
+      ['staff', 201],
     ] as Array<[Role, number]>)('%s creating a task gets %i', async (role, status) => {
       const { create, body } = await setup();
       expect((await create(role, body('staff'))).status).toBe(status);
+    });
+
+    it('enforces automatic self-assignment for staff-created tasks, ignoring forged assignee ID', async () => {
+      const { create, body, id } = await setup();
+      // Staff attempts to create task with admin as assignee
+      const res = await create('staff', body('admin', { title: 'Staff personal task' }));
+      expect(res.status).toBe(201);
+      expect(res.body.data.assigneeEmployeeId).toBe(id('staff'));
+      expect(res.body.data.assignerEmployeeId).toBe(id('staff'));
+      expect(res.body.data.title).toBe('Staff personal task');
     });
 
     it('creates a todo task with medium priority, records the assigner from the session, and announces it', async () => {
@@ -545,6 +555,48 @@ describe('tasks API: access', () => {
       expect(await titles('admin')).toHaveLength(4);
       const forStaff = await as.team_lead.get(`/api/v1/tasks?assigneeEmployeeId=${id('staff')}`);
       expect(forStaff.body.data).toHaveLength(2);
+    });
+
+    it('enforces centralized task visibility: Admin sees all, Team Lead sees team & self-assigned, Staff sees own', async () => {
+      const { as, create, body } = await setup();
+      // 1. Staff creates a self-assigned task
+      const staffSelfTask = await create('staff', { title: 'Staff personal self-task' });
+      expect(staffSelfTask.status).toBe(201);
+
+      // 2. Team Lead creates a self-assigned task
+      const leadSelfTask = await create(
+        'team_lead',
+        body('team_lead', { title: 'Lead self-task' }),
+      );
+      expect(leadSelfTask.status).toBe(201);
+
+      // 3. Admin creates task for someone in another department (e.g. HR)
+      const hrTask = await create('admin', body('hr_manager', { title: 'HR private task' }));
+      expect(hrTask.status).toBe(201);
+
+      // Admin sees ALL tasks
+      const adminTasks = (await as.admin.get('/api/v1/tasks')).body.data.map(
+        (t: { title: string }) => t.title,
+      );
+      expect(adminTasks).toContain('Staff personal self-task');
+      expect(adminTasks).toContain('Lead self-task');
+      expect(adminTasks).toContain('HR private task');
+
+      // Team Lead sees their own self-task and team staff member self-task, but NOT HR task
+      const leadTasks = (await as.team_lead.get('/api/v1/tasks')).body.data.map(
+        (t: { title: string }) => t.title,
+      );
+      expect(leadTasks).toContain('Lead self-task');
+      expect(leadTasks).toContain('Staff personal self-task');
+      expect(leadTasks).not.toContain('HR private task');
+
+      // Staff member sees only their own task, not Lead self-task or HR task
+      const myTasks = (await as.staff.get('/api/v1/tasks/me')).body.data.map(
+        (t: { title: string }) => t.title,
+      );
+      expect(myTasks).toContain('Staff personal self-task');
+      expect(myTasks).not.toContain('Lead self-task');
+      expect(myTasks).not.toContain('HR private task');
     });
 
     it('shows one task to its assignee, its assigner, the assignee’s manager and an Admin, and to nobody else', async () => {

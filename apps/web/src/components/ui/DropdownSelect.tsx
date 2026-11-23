@@ -163,7 +163,8 @@ export function DropdownSelect({
                   role="option"
                   aria-selected={isSelected}
                   disabled={opt.disabled}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (opt.disabled) return;
                     onChange(opt.value);
                     setOpen(false);

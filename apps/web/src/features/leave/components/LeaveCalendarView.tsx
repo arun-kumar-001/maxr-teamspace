@@ -25,13 +25,63 @@ export interface LeaveCalendarViewProps {
 const NAV_BUTTON =
   'min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-border bg-surface-raised text-text-muted hover:text-text hover:bg-surface-muted transition-colors';
 
-function daysLabel(entry: LeaveCalendarEntry): string {
-  if (entry.halfDay) return 'Half day';
-  return `${entry.days} ${entry.days === 1 ? 'day' : 'days'}`;
-}
-
 function statusLabel(status: LeaveCalendarEntry['status']): string {
   return status === 'approved' ? 'Approved' : 'Pending';
+}
+
+export function getLeaveColorClass(code: string, status: 'approved' | 'pending'): string {
+  if (status === 'pending') {
+    return 'bg-tile-yellow text-text border border-dashed border-border-strong';
+  }
+  const upper = (code || '').toUpperCase().trim();
+  if (upper.includes('SICK') || upper === 'SL' || upper.includes('MED')) {
+    return 'bg-negative-soft text-negative-ink';
+  }
+  if (upper.includes('CASUAL') || upper === 'CL') {
+    return 'bg-tile-yellow text-text';
+  }
+  if (upper.includes('WFH') || upper.includes('HOME') || upper.includes('REMOTE')) {
+    return 'bg-tile-blue text-text';
+  }
+  if (upper.includes('PERM') || upper.includes('SHORT')) {
+    return 'bg-positive-soft text-positive-ink';
+  }
+  if (
+    upper.includes('MATERN') ||
+    upper.includes('PATERN') ||
+    upper.includes('PARENT') ||
+    upper.includes('LOP') ||
+    upper.includes('UNPAID')
+  ) {
+    return 'bg-tile-peach text-text';
+  }
+  return 'bg-primary-soft text-primary-ink';
+}
+
+export function getLeaveAvatarClass(code: string): string {
+  const upper = (code || '').toUpperCase().trim();
+  if (upper.includes('SICK') || upper === 'SL' || upper.includes('MED')) {
+    return 'bg-negative-soft text-negative-ink';
+  }
+  if (upper.includes('CASUAL') || upper === 'CL') {
+    return 'bg-tile-yellow text-text';
+  }
+  if (upper.includes('WFH') || upper.includes('HOME') || upper.includes('REMOTE')) {
+    return 'bg-tile-blue text-text';
+  }
+  if (upper.includes('PERM') || upper.includes('SHORT')) {
+    return 'bg-positive-soft text-positive-ink';
+  }
+  if (
+    upper.includes('MATERN') ||
+    upper.includes('PATERN') ||
+    upper.includes('PARENT') ||
+    upper.includes('LOP') ||
+    upper.includes('UNPAID')
+  ) {
+    return 'bg-tile-peach text-text';
+  }
+  return 'bg-primary-soft text-primary-ink';
 }
 
 /**
@@ -215,13 +265,23 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
                 >
                   <span
                     aria-hidden="true"
-                    className="w-10 h-10 shrink-0 rounded-full bg-primary-soft text-primary-ink text-sm font-bold flex items-center justify-center"
+                    className={`w-10 h-10 shrink-0 rounded-full text-sm font-bold flex items-center justify-center ${getLeaveAvatarClass(
+                      entry.leaveTypeCode,
+                    )}`}
                   >
                     {initials(entry.employeeName)}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-sm text-text truncate">{entry.employeeName}</p>
                     <p className="text-xs text-text-muted truncate">
+                      <span
+                        className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold mr-1.5 ${getLeaveColorClass(
+                          entry.leaveTypeCode,
+                          entry.status,
+                        )}`}
+                      >
+                        {entry.leaveTypeCode}
+                      </span>
                       {entry.leaveTypeName} · {entry.halfDay ? 'Half day' : 'Full day'} ·{' '}
                       {statusLabel(entry.status)}
                     </p>
@@ -240,7 +300,7 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
           </p>
         )}
 
-        <div className="hidden md:block p-4 bg-surface rounded-card border border-border shadow-card space-y-4">
+        <div className="block p-4 bg-surface rounded-card border border-border shadow-card space-y-4">
           <div>
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-text-muted mb-1">
               {WEEKDAY_SHORT.map((d) => (
@@ -286,11 +346,10 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
                       {people.slice(0, 3).map((e) => (
                         <li
                           key={`${e.requestId}-${iso}`}
-                          className={`truncate rounded px-1 text-[11px] ${
-                            e.status === 'approved'
-                              ? 'bg-primary-soft text-primary-ink'
-                              : 'bg-tile-yellow text-text border border-dashed border-border-strong'
-                          }`}
+                          className={`truncate rounded px-1 text-[11px] font-medium ${getLeaveColorClass(
+                            e.leaveTypeCode,
+                            e.status,
+                          )}`}
                           title={`${e.employeeName}: ${e.leaveTypeName} (${statusLabel(e.status)})`}
                         >
                           {e.status === 'pending' ? 'Pending: ' : ''}
@@ -309,34 +368,72 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
           </div>
 
           <ul
-            className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted"
+            className="flex flex-wrap items-center gap-x-3.5 gap-y-2 text-xs text-text-muted pt-2 border-t border-border/60"
             aria-label="Legend"
             data-testid="leave-calendar-legend"
           >
-            <li>
-              <span className="inline-block px-1.5 rounded bg-primary-soft text-primary-ink">
-                Name · TYPE
-              </span>{' '}
-              Approved leave
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary-soft text-primary-ink">
+                ANNUAL
+              </span>
+              <span>Annual</span>
             </li>
-            <li>
-              <span className="inline-block px-1.5 rounded bg-tile-yellow border border-dashed border-border-strong">
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-negative-soft text-negative-ink">
+                SICK
+              </span>
+              <span>Sick</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tile-yellow text-text">
+                CASUAL
+              </span>
+              <span>Casual</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tile-blue text-text">
+                WFH
+              </span>
+              <span>Work from Home</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-positive-soft text-positive-ink">
+                PERM
+              </span>
+              <span>Permission</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tile-peach text-text">
+                OTHER
+              </span>
+              <span>Special</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tile-yellow text-text border border-dashed border-border-strong">
                 Pending: Name
-              </span>{' '}
-              Waiting for approval
+              </span>
+              <span>Waiting for approval</span>
             </li>
-            <li>
-              <span className="inline-block px-1.5 rounded bg-tile-blue text-text">Holiday</span>{' '}
-              Company holiday
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-tile-blue text-text">
+                Holiday
+              </span>
+              <span>Company holiday</span>
             </li>
-            <li>
-              <span className="inline-block px-1.5 rounded bg-surface-muted border border-border">
+            <li className="flex items-center gap-1.5">
+              <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-muted border border-border">
                 Sat, Sun
-              </span>{' '}
-              Weekend
+              </span>
+              <span>Weekend</span>
             </li>
-            <li>½ Half day</li>
+            <li className="font-medium text-text-subtle">½ Half day</li>
           </ul>
+
+          {sorted.length === 0 && (
+            <p className="text-xs text-text-muted text-center pt-2" data-testid="leave-calendar-empty">
+              Nobody is on leave in {MONTH_NAMES[monthIndex]}.
+            </p>
+          )}
 
           {selected && (
             <div
@@ -364,7 +461,17 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
                 <ul className="divide-y divide-border">
                   {onDay(selected).map((e) => (
                     <li key={e.requestId} className="py-2">
-                      <p className="font-semibold text-sm text-text">{e.employeeName}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-sm text-text">{e.employeeName}</p>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-semibold ${getLeaveColorClass(
+                            e.leaveTypeCode,
+                            e.status,
+                          )}`}
+                        >
+                          {e.leaveTypeCode}
+                        </span>
+                      </div>
                       <p className="text-xs text-text-muted">
                         {e.leaveTypeName} · {e.halfDay ? 'Half day' : 'Full day'} ·{' '}
                         {statusLabel(e.status)}
@@ -376,40 +483,6 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
             </div>
           )}
         </div>
-
-        <section
-          className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card"
-          aria-label="Leave this month"
-        >
-          <h3 className="text-base font-bold font-display text-text mb-3">
-            Leave in {MONTH_NAMES[monthIndex]}
-          </h3>
-          {sorted.length === 0 ? (
-            <p className="text-sm text-text-muted" data-testid="leave-calendar-empty">
-              Nobody is on leave in {MONTH_NAMES[monthIndex]}.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border" data-testid="leave-calendar-list">
-              {sorted.map((entry) => (
-                <li
-                  key={entry.requestId}
-                  className="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
-                >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm text-text">{entry.employeeName}</p>
-                    <p className="text-xs text-text-muted">
-                      {entry.leaveTypeName} · {formatDay(entry.startDate)}
-                      {entry.endDate !== entry.startDate ? ` to ${formatDay(entry.endDate)}` : ''}
-                    </p>
-                  </div>
-                  <p className="text-xs font-semibold text-text-subtle">
-                    {daysLabel(entry)} · {statusLabel(entry.status)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
     </div>
   );
