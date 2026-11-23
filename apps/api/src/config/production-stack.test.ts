@@ -23,10 +23,23 @@ describe('production stack (deploy/)', () => {
     const nginx = read('nginx/nginx.conf');
 
     it('lets a page of employee photos load at once, with a larger burst than other API calls', () => {
-      const block = nginx.slice(nginx.indexOf('location ~ ^/api/v1/employees/'));
-      expect(block).toMatch(/location ~ \^\/api\/v1\/employees\/\[0-9a-f-\]\{36\}\/photo\$ \{/);
+      const block = nginx.slice(nginx.indexOf('location ~ "^/api/v1/employees/'));
+      // Braces inside an unquoted regex make nginx fail with "unknown directive": it must be quoted.
+      expect(block).toContain('location ~ "^/api/v1/employees/[0-9a-f-]{36}/photo$" {');
       expect(block.slice(0, 300)).toContain('limit_req zone=api burst=200 nodelay;');
       expect(block.slice(0, 300)).toContain('include /etc/nginx/api-proxy.conf;');
+    });
+
+    it('quotes every regex location that contains braces (unquoted, nginx fails to start)', () => {
+      const regexLocations = nginx
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => /^location\s+~\*?\s/.test(line));
+      expect(regexLocations.length).toBeGreaterThan(0);
+      for (const line of regexLocations) {
+        const pattern = line.replace(/^location\s+~\*?\s+/, '').replace(/\s*\{\s*$/, '');
+        if (/[{}]/.test(pattern)) expect(pattern, line).toMatch(/^(".*"|'.*')$/);
+      }
     });
 
     it('still accepts the largest upload the API takes', () => {
