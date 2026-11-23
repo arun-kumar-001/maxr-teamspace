@@ -24,6 +24,10 @@ export interface ILeavePoliciesRepository {
   insert(tx: LeaveTx, input: NewLeavePolicy): Promise<LeavePolicy>;
   /** Writes the new values and bumps the version. A 409 when the name is taken. */
   update(tx: LeaveTx, id: string, values: LeavePolicyValues): Promise<LeavePolicy>;
+  /** Leave requests of this type, plus balances that have days used: the history that blocks a delete. */
+  countHistory(tx: LeaveTx, id: string): Promise<number>;
+  /** Removes the type, its policy and its untouched balances. A 409 when something else still refers to it. */
+  remove(tx: LeaveTx, id: string): Promise<void>;
 }
 
 interface Row {
@@ -165,5 +169,27 @@ export class PgLeavePoliciesRepository implements ILeavePoliciesRepository {
     );
     const res = await tx.query<Row>(`${SELECT} WHERE t.id = $1`, [id]);
     return toPolicy(res.rows[0] as Row);
+  }
+
+  async countHistory(tx: LeaveTx, id: string): Promise<number> {
+    const res = await tx.query<{ n: string }>(
+      `SELECT (SELECT COUNT(*) FROM leave_requests WHERE leave_type_id = $1)
+            + (SELECT COUNT(*) FROM leave_balances WHERE leave_type_id = $1 AND used > 0) AS n`,
+      [id],
+    );
+    return Number(res.rows[0]?.n ?? 0);
+  }
+
+  async remove(tx: LeaveTx, id: string): Promise<void> {
+    try {
+      await tx.query('DELETE FROM leave_balances WHERE leave_type_id = $1', [id]);
+      await tx.query('DELETE FROM leave_policies WHERE leave_type_id = $1', [id]);
+      await tx.query('DELETE FROM leave_types WHERE id = $1', [id]);
+    } catch (err) {
+      if ((err as { code?: string }).code === '23503') {
+        throw conflict('This leave type is still in use. Deactivate it instead');
+      }
+      throw err;
+    }
   }
 }

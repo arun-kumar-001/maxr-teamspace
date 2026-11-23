@@ -107,6 +107,35 @@ describe('Dynamic LeaveSetupSection Suite', () => {
     expect(screen.getByTitle('Delete leave type')).toBeInTheDocument();
   });
 
+  it('remembers a deleted leave type so saving deletes it on the server too', () => {
+    const handleUpdate = vi.fn();
+    const casual = {
+      id: 'cl-1',
+      name: 'Casual Leave',
+      code: 'CL',
+      category: 'casual' as const,
+      frequency: 'monthly' as const,
+      quota: 12,
+      isPaid: true,
+      isActive: true,
+    };
+    const sick = { ...casual, id: 'sl-1', name: 'Sick Leave', code: 'SL' };
+    render(
+      <LeaveSetupSection
+        draft={{ ...baseDraft, customLeaveTypes: [casual, sick] }}
+        onUpdate={handleUpdate}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText(/Actions for Casual Leave/i));
+    fireEvent.click(screen.getByTitle('Delete leave type'));
+
+    expect(handleUpdate).toHaveBeenCalledWith({
+      customLeaveTypes: [sick],
+      removedLeaveTypes: [{ id: 'cl-1', code: 'CL' }],
+    });
+  });
+
   it('opens permission modal and allows configuring short permission', () => {
     const handleUpdate = vi.fn();
     render(<LeaveSetupSection draft={baseDraft} onUpdate={handleUpdate} />);

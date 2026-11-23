@@ -552,5 +552,76 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
       expect(shown.HIDEME).toBeUndefined();
       expect(shown.KEEPME).toMatchObject({ allotted: 5, used: 2 });
     });
+
+    describe('deleting a leave type', () => {
+      const make = (code: string) =>
+        service().create(
+          {
+            code,
+            name: code,
+            hasBalance: true,
+            annualDays: 5,
+            carryForwardMax: 0,
+            allowHalfDay: true,
+            maxBackdateDays: 0,
+          },
+          caller,
+        );
+      const exists = async (id: string) =>
+        (await outer.query('SELECT 1 FROM leave_types WHERE id = $1', [id])).rowCount === 1;
+
+      it('removes the type, its policy and its untouched balances', async () => {
+        const worker = await employee(`d${randomUUID().slice(0, 4)}`, '2024-01-10');
+        const type = await make('GONE1');
+        expect((await balancesOf(worker, 2026)).GONE1?.allotted).toBe(5);
+
+        await service().remove(type.id, caller);
+
+        expect(await exists(type.id)).toBe(false);
+        expect(
+          (await outer.query('SELECT 1 FROM leave_policies WHERE leave_type_id = $1', [type.id]))
+            .rowCount,
+        ).toBe(0);
+        expect(
+          (await outer.query('SELECT 1 FROM leave_balances WHERE leave_type_id = $1', [type.id]))
+            .rowCount,
+        ).toBe(0);
+        expect((await balancesOf(worker, 2026)).GONE1).toBeUndefined();
+      });
+
+      it('refuses a type with used days and keeps everything', async () => {
+        const worker = await employee(`e${randomUUID().slice(0, 4)}`, '2024-01-10');
+        const type = await make('KEEP1');
+        await outer.query(
+          `UPDATE leave_balances SET used = 1 WHERE employee_id = $1 AND leave_type_id = $2`,
+          [worker, type.id],
+        );
+
+        await expect(service().remove(type.id, caller)).rejects.toMatchObject({ statusCode: 409 });
+
+        expect(await exists(type.id)).toBe(true);
+        expect((await balancesOf(worker, 2026)).KEEP1).toMatchObject({ allotted: 5, used: 1 });
+      });
+
+      it('refuses a type that has a leave request even when no days were used', async () => {
+        const worker = await employee(`f${randomUUID().slice(0, 4)}`, '2024-01-10');
+        const type = await make('REQ1');
+        await outer.query(
+          `INSERT INTO leave_requests (employee_id, leave_type_id, start_date, end_date, days, status)
+         VALUES ($1, $2, '2026-12-01', '2026-12-01', 1, 'cancelled')`,
+          [worker, type.id],
+        );
+
+        await expect(service().remove(type.id, caller)).rejects.toMatchObject({ statusCode: 409 });
+
+        expect(await exists(type.id)).toBe(true);
+      });
+
+      it('is a not found for a type that does not exist', async () => {
+        await expect(service().remove(randomUUID(), caller)).rejects.toMatchObject({
+          statusCode: 404,
+        });
+      });
+    });
   });
 });

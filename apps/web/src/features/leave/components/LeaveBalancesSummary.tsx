@@ -27,6 +27,23 @@ function percent(part: number, whole: number): number {
   return whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 0;
 }
 
+/** One colour per leave type, in the order of the cards. Full class names so Tailwind keeps them. */
+const TYPE_COLORS = [
+  { fill: 'bg-chart-1', ink: 'text-chart-ink-1' },
+  { fill: 'bg-chart-2', ink: 'text-chart-ink-2' },
+  { fill: 'bg-chart-3', ink: 'text-chart-ink-3' },
+  { fill: 'bg-chart-4', ink: 'text-chart-ink-4' },
+  { fill: 'bg-chart-5', ink: 'text-chart-ink-5' },
+  { fill: 'bg-chart-6', ink: 'text-chart-ink-6' },
+  { fill: 'bg-chart-7', ink: 'text-chart-ink-7' },
+] as const;
+
+const colorAt = (index: number) =>
+  TYPE_COLORS[index % TYPE_COLORS.length] as (typeof TYPE_COLORS)[number];
+
+const DONUT_RADIUS = 40;
+const DONUT_LENGTH = 2 * Math.PI * DONUT_RADIUS;
+
 const YearArrow: React.FC<{ direction: 'prev' | 'next' }> = ({ direction }) => (
   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path
@@ -288,30 +305,133 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
         </div>
       ) : (
         <>
-          <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-testid="leave-balances-totals">
-            {[
-              { label: 'Total entitlement', value: totalDays },
-              { label: 'Used', value: usedDays },
-              { label: 'Available', value: availableDays },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="p-4 bg-surface rounded-card border border-border shadow-card"
-              >
-                <dt className="text-xs font-bold text-text-muted">{item.label}</dt>
-                <dd className="text-2xl font-extrabold text-text font-display mt-1">
-                  {item.value} <span className="text-sm font-semibold text-text-muted">days</span>
-                </dd>
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] gap-4">
+            <section
+              className="p-5 bg-surface rounded-card border border-border shadow-card"
+              aria-label="Leave overview"
+              data-testid="leave-balances-donut"
+            >
+              <h3 className="text-base font-bold text-text font-display mb-4">Leave overview</h3>
+              <div className="flex flex-col items-center gap-5">
+                <div className="relative w-40 h-40 shrink-0">
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="w-40 h-40 -rotate-90"
+                    role="img"
+                    aria-label={`${usedDays} days used, ${availableDays} days balance, of ${totalDays}`}
+                  >
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r={DONUT_RADIUS}
+                      fill="none"
+                      strokeWidth="12"
+                      className="stroke-chart-2"
+                      strokeOpacity={totalDays > 0 ? 1 : 0.2}
+                    />
+                    {totalDays > 0 && usedDays > 0 && (
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={DONUT_RADIUS}
+                        fill="none"
+                        strokeWidth="12"
+                        strokeLinecap="butt"
+                        className="stroke-chart-5"
+                        strokeDasharray={`${Math.min(1, usedDays / totalDays) * DONUT_LENGTH} ${DONUT_LENGTH}`}
+                        data-testid="leave-donut-used"
+                      />
+                    )}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span className="text-3xl font-extrabold font-display text-text leading-none">
+                      {availableDays}
+                    </span>
+                    <span className="text-[11px] font-semibold text-text-muted mt-1">
+                      days balance
+                    </span>
+                  </div>
+                </div>
+                <dl className="w-full space-y-2.5" data-testid="leave-balances-totals">
+                  {[
+                    { label: 'Used', value: usedDays, dot: 'bg-chart-5' },
+                    { label: 'Balance', value: availableDays, dot: 'bg-chart-2' },
+                    { label: 'Total entitlement', value: totalDays, dot: 'bg-border-strong' },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between gap-3">
+                      <dt className="flex items-center gap-2 text-sm text-text-muted">
+                        <span
+                          aria-hidden="true"
+                          className={`w-2.5 h-2.5 rounded-full ${item.dot}`}
+                        />
+                        {item.label}
+                      </dt>
+                      <dd className="text-sm font-extrabold text-text font-display">
+                        {item.value} <span className="font-semibold text-text-muted">days</span>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
-            ))}
-          </dl>
+            </section>
+
+            <section
+              className="p-5 bg-surface rounded-card border border-border shadow-card"
+              aria-label="Leave by type"
+              data-testid="leave-balances-bars"
+            >
+              <h3 className="text-base font-bold text-text font-display mb-4">Leave by type</h3>
+              <ul className="space-y-4">
+                {cards.map((card, index) => {
+                  const color = colorAt(index);
+                  const { balance } = card;
+                  const total = balance ? totalOf(balance) : 0;
+                  return (
+                    <li key={card.key} data-testid={`leave-type-bar-${card.code}`}>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="flex items-center gap-2 font-semibold text-text min-w-0">
+                          <span
+                            aria-hidden="true"
+                            className={`w-3 h-3 rounded-full shrink-0 ${color.fill}`}
+                          />
+                          <span className="truncate">{card.name}</span>
+                        </span>
+                        <span className="shrink-0 text-xs font-semibold text-text-muted">
+                          {balance
+                            ? `${balance.used} used · ${remainingOf(balance)} left of ${total}`
+                            : 'No yearly limit'}
+                        </span>
+                      </div>
+                      {balance && (
+                        <div
+                          className="mt-1.5 h-3 rounded-full bg-surface-muted overflow-hidden"
+                          role="progressbar"
+                          aria-label={`${card.name} used`}
+                          aria-valuemin={0}
+                          aria-valuemax={total}
+                          aria-valuenow={balance.used}
+                        >
+                          <div
+                            className={`h-full rounded-full ${color.fill}`}
+                            style={{ width: `${percent(balance.used, total)}%` }}
+                            data-testid={`leave-type-fill-${card.code}`}
+                          />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          </div>
 
           <div className="pt-4 border-t border-border/80">
             <h3 className="text-base font-bold text-text font-display mb-3">
               Leave Entitlements & Balances
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-              {cards.map((card) => {
+              {cards.map((card, index) => {
+                const color = colorAt(index);
                 const { balance } = card;
                 const total = balance ? totalOf(balance) : 0;
                 const usedPercent = balance ? percent(balance.used, total) : 0;
@@ -322,7 +442,13 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
                     data-testid={`leave-balance-card-${card.code}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm text-text">{card.name}</span>
+                      <span className="flex items-center gap-2 font-bold text-sm text-text">
+                        <span
+                          aria-hidden="true"
+                          className={`w-2.5 h-2.5 rounded-full ${color.fill}`}
+                        />
+                        {card.name}
+                      </span>
                       <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-surface-muted text-text-muted border border-border">
                         {card.code}
                       </span>
@@ -341,7 +467,7 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
                           className="h-2 rounded-full bg-surface-muted overflow-hidden"
                         >
                           <div
-                            className="h-full bg-primary"
+                            className={`h-full ${color.fill}`}
                             style={{ width: `${usedPercent}%` }}
                             data-testid={`leave-balance-bar-${card.code}`}
                           />

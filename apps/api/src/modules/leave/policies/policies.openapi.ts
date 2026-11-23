@@ -56,7 +56,7 @@ registerRoute({
   path: '/leave-policies',
   tags,
   summary:
-    'Add a leave type with its policy (HR Manager, Admin). Run the yearly accrual afterwards to create balances for existing employees',
+    'Add a leave type with its policy (HR Manager, Admin). Balances are created for every active employee straight away',
   permission: 'leave_policies.manage',
   idempotent: true,
   body: createLeavePolicySchema,
@@ -78,4 +78,16 @@ registerRoute({
     422: 'A type without a balance cannot have annual days or carry forward',
   },
   success: { status: 200, description: 'The policy after the change', schema: one },
+});
+
+registerRoute({
+  method: 'delete',
+  path: '/leave-policies/{id}',
+  tags,
+  summary:
+    'Delete a leave type nobody has used (HR Manager, Admin). One with leave history can only be deactivated',
+  permission: 'leave_policies.manage',
+  params: leavePolicyIdParamsSchema,
+  extraResponses: { 409: 'The leave type has leave requests or used days; deactivate it instead' },
+  success: { status: 204, description: 'The leave type was deleted' },
 });

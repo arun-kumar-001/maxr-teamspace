@@ -127,7 +127,7 @@ describe('leave setup API: access', () => {
     const routes = listRoutes(app).filter((r) =>
       /^\/api\/v1\/(leave-policies|holidays|leave-balances)/.test(r.path),
     );
-    expect(routes).toHaveLength(11);
+    expect(routes).toHaveLength(12);
     for (const route of routes) expect(route.access, `${route.method} ${route.path}`).toBeDefined();
   });
 
@@ -156,13 +156,16 @@ describe('leave setup API: access', () => {
         name: 'Christmas',
       });
       const removed = await as[role].delete(`/api/v1/holidays/${MISSING}`);
+      const deletedType = await as[role].delete(`/api/v1/leave-policies/${MISSING}`);
       const accrued = await as[role].post('/api/v1/leave-balances/accrual', { year: 2026 });
       if (manages) {
         expect([created.status, updated.status, holiday.status, accrued.status]).toEqual([
           201, 200, 201, 200,
         ]);
         expect(removed.status).toBe(404);
+        expect(deletedType.status).toBe(404);
       } else {
+        expect(deletedType.status).toBe(403);
         expect([
           created.status,
           updated.status,
@@ -251,6 +254,55 @@ describe('leave setup API: access', () => {
       const { keyed, auditStore } = await setup();
       await keyed('hr_manager', '/api/v1/leave-policies', newType);
       expect(auditStore.find((e) => e.action === 'leave_policy.create')).toHaveLength(1);
+    });
+  });
+
+  describe('deleting a leave type', () => {
+    it('deletes one nobody has used, audits it, and it is gone from the list', async () => {
+      const { as, keyed, auditStore, policiesRepo } = await setup();
+      const created = await keyed('hr_manager', '/api/v1/leave-policies', newType);
+
+      const res = await as.hr_manager.delete(`/api/v1/leave-policies/${created.body.data.id}`);
+
+      expect(res.status).toBe(204);
+      expect(policiesRepo.policies.some((p) => p.id === created.body.data.id)).toBe(false);
+      const entry = auditStore.find((e) => e.action === 'leave_policy.delete')[0];
+      expect(entry?.entityId).toBe(created.body.data.id);
+      expect(entry?.changes).toEqual({ code: newType.code.toUpperCase(), name: newType.name });
+      expect((await as.staff.get('/api/v1/leave-policies')).body.data).toHaveLength(1);
+    });
+
+    it('refuses one with leave history and leaves it as it was', async () => {
+      const { as, auditStore, policiesRepo } = await setup();
+      policiesRepo.history.set(ANNUAL, 2);
+
+      const res = await as.hr_manager.delete(`/api/v1/leave-policies/${ANNUAL}`);
+
+      expect(res.status).toBe(409);
+      expect(policiesRepo.policies.some((p) => p.id === ANNUAL)).toBe(true);
+      expect(auditStore.find((e) => e.action === 'leave_policy.delete')).toHaveLength(0);
+    });
+
+    it('is a 404 the second time, and for an id that never existed', async () => {
+      const { as, keyed } = await setup();
+      const created = await keyed('admin', '/api/v1/leave-policies', newType);
+      const url = `/api/v1/leave-policies/${created.body.data.id}`;
+      expect((await as.admin.delete(url)).status).toBe(204);
+      expect((await as.admin.delete(url)).status).toBe(404);
+    });
+
+    it.each(['staff', 'team_lead'] as const)(
+      'is forbidden to %s, who cannot manage policies',
+      async (role) => {
+        const { as, policiesRepo } = await setup();
+        expect((await as[role].delete(`/api/v1/leave-policies/${ANNUAL}`)).status).toBe(403);
+        expect(policiesRepo.policies.some((p) => p.id === ANNUAL)).toBe(true);
+      },
+    );
+
+    it('rejects an id that is not a UUID', async () => {
+      const { as } = await setup();
+      expect((await as.admin.delete('/api/v1/leave-policies/not-a-uuid')).status).toBe(400);
     });
   });
 

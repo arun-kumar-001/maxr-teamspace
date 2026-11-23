@@ -145,4 +145,30 @@ export class LeavePoliciesService {
       return updated;
     });
   }
+
+  /**
+   * Deletes a leave type nobody has used. One with leave requests or used days keeps its history, so
+   * it can only be deactivated.
+   */
+  async remove(id: string, caller: PolicyCaller): Promise<void> {
+    const audit = this.platform.audit.withContext(caller);
+    await this.repository.transaction(async (tx) => {
+      const current = await this.repository.findForUpdate(tx, id);
+      if (!current) throw notFound('Leave type not found');
+      if ((await this.repository.countHistory(tx, id)) > 0) {
+        throw conflict('This leave type has leave history. Deactivate it instead of deleting it');
+      }
+      await this.repository.remove(tx, id);
+      await audit.record(
+        {
+          action: 'leave_policy.delete',
+          outcome: 'success',
+          entityType: 'leave_policy',
+          entityId: id,
+          changes: { code: current.code, name: current.name },
+        },
+        { transaction: tx },
+      );
+    });
+  }
 }

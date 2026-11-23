@@ -251,7 +251,7 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       expect(screen.getByTestId('leave-balance-card-PM')).toHaveTextContent('No yearly limit');
       expect(screen.queryByTestId('leave-balance-card-OLD')).not.toBeInTheDocument();
       const totals = within(screen.getByTestId('leave-balances-totals'));
-      expect(totals.getByText('Available').nextElementSibling).toHaveTextContent('15');
+      expect(totals.getByText('Balance').nextElementSibling).toHaveTextContent('15');
     });
 
     it('computes totals from the balances it is given, not from fixed numbers', () => {
@@ -282,17 +282,18 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       const totals = within(screen.getByTestId('leave-balances-totals'));
       expect(totals.getByText('Total entitlement').nextElementSibling).toHaveTextContent('16');
       expect(totals.getByText('Used').nextElementSibling).toHaveTextContent('5');
-      expect(totals.getByText('Available').nextElementSibling).toHaveTextContent('11');
+      expect(totals.getByText('Balance').nextElementSibling).toHaveTextContent('11');
       expect(screen.getByTestId('leave-balance-bar-SICK')).toHaveStyle({ width: '17%' });
     });
 
     it('renders balance metrics and breakdown', () => {
       render(<LeaveBalancesSummary balances={mockBalances} year={2026} />);
 
-      expect(screen.getByText('Paid Time Off')).toBeInTheDocument();
-      expect(screen.getByText('15 days left')).toBeInTheDocument();
-      expect(screen.getByText('Used: 5d')).toBeInTheDocument();
-      expect(screen.getByText('Total: 20d')).toBeInTheDocument();
+      const card = within(screen.getByTestId('leave-balance-card-PTO'));
+      expect(card.getByText('Paid Time Off')).toBeInTheDocument();
+      expect(card.getByText('15 days left')).toBeInTheDocument();
+      expect(card.getByText('Used: 5d')).toBeInTheDocument();
+      expect(card.getByText('Total: 20d')).toBeInTheDocument();
     });
   });
 

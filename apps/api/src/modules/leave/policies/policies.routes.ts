@@ -76,5 +76,16 @@ export function createLeavePoliciesRouter(options: {
     }),
   );
 
+  router.delete(
+    '/:id',
+    requirePermission('leave_policies.manage'),
+    validate({ params: leavePolicyIdParamsSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: leavePolicyIdParamsSchema });
+      await service.remove(params.id, caller(req));
+      res.status(204).end();
+    }),
+  );
+
   return router;
 }

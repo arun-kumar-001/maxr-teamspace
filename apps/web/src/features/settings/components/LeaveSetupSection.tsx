@@ -527,13 +527,19 @@ export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSe
   const handleDeleteLeaveType = (id: string) => {
     const target = leaveTypes.find((t) => t.id === id);
     const updated = leaveTypes.filter((t) => t.id !== id);
+    // Remembered so saving settings deletes it on the server as well, not only from this list.
+    const removedLeaveTypes = [
+      ...(draft.removedLeaveTypes ?? []),
+      ...(target ? [{ id: target.id, code: target.code }] : []),
+    ];
     if (target && isPermissionType(target)) {
       onUpdate({
         customLeaveTypes: updated,
+        removedLeaveTypes,
         permissionPolicy: { ...permissionPolicy, enabled: false },
       });
     } else {
-      onUpdate({ customLeaveTypes: updated });
+      onUpdate({ customLeaveTypes: updated, removedLeaveTypes });
     }
   };
 

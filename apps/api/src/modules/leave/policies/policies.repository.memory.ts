@@ -12,6 +12,8 @@ import {
 /** In-memory leave policies for unit and HTTP tests (not shipped in the build). */
 export class MemoryLeavePoliciesRepository implements ILeavePoliciesRepository {
   approvalSettings: LeaveApprovalSettings = { approverRole: 'hr_manager', version: 1 };
+  /** Leave requests and used balances per leave type id, set by tests. */
+  history = new Map<string, number>();
   constructor(public policies: LeavePolicy[] = []) {}
 
   async getApprovalSettings(): Promise<LeaveApprovalSettings> {
@@ -83,5 +85,13 @@ export class MemoryLeavePoliciesRepository implements ILeavePoliciesRepository {
       updatedAt: new Date().toISOString(),
     });
     return { ...found };
+  }
+
+  async countHistory(_tx: LeaveTx, id: string): Promise<number> {
+    return this.history.get(id) ?? 0;
+  }
+
+  async remove(_tx: LeaveTx, id: string): Promise<void> {
+    this.policies = this.policies.filter((p) => p.id !== id);
   }
 }

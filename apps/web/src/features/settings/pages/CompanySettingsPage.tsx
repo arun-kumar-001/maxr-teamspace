@@ -129,6 +129,8 @@ export function CompanySettingsPage() {
     saveSettings,
     resetDraft,
     refetch,
+    leaveNotice,
+    clearLeaveNotice,
   } = useSettings();
 
   // Block in-app navigation when changes are unsaved
@@ -190,6 +192,7 @@ export function CompanySettingsPage() {
   }
 
   const handleSave = async () => {
+    clearLeaveNotice();
     const success = await saveSettings();
     if (success) {
       setShowToast(true);
@@ -208,6 +211,17 @@ export function CompanySettingsPage() {
             message="Company configuration, logo, work schedule, and policies updated successfully."
             autoDismissMs={4000}
             onClose={() => setShowToast(false)}
+          />
+        </div>
+      )}
+
+      {leaveNotice && (
+        <div className="fixed top-5 right-5 z-50">
+          <Toast
+            variant="warning"
+            title="Leave type not deleted"
+            message={leaveNotice}
+            onClose={clearLeaveNotice}
           />
         </div>
       )}

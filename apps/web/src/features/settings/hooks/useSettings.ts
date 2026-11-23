@@ -2,7 +2,13 @@ import { isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSettings, updateSettings, SettingsApiError } from '../api/settingsApi';
 import { setStaffPayslipsEnabled } from '../../../shell/navigation';
-import { fetchLeavePolicies, createLeavePolicy, updateLeavePolicy } from '../../leave/api/leave';
+import {
+  LeaveApiError,
+  fetchLeavePolicies,
+  createLeavePolicy,
+  updateLeavePolicy,
+  deleteLeavePolicy,
+} from '../../leave/api/leave';
 import type { LeavePolicy } from '../../leave/types';
 import {
   type CompanySettings,
@@ -194,6 +200,8 @@ export interface SettingsDraft {
   workWeekStart: DayName;
   workWeekEnd: DayName;
   integrations: IntegrationToggles;
+  /** Server leave types the admin deleted in Leave Setup; they are deleted on the server when settings are saved. */
+  removedLeaveTypes?: { id: string; code?: string }[];
   // Extended configuration
   companyLogo?: string | null;
   shiftStartTime?: string;
@@ -324,6 +332,9 @@ export interface UseSettingsResult {
   isSaving: boolean;
   error: string | null;
   isDirty: boolean;
+  /** Set after saving when a deleted leave type had history and was deactivated instead (or could not be deleted). */
+  leaveNotice: string | null;
+  clearLeaveNotice: () => void;
   hasWorkWeekError: boolean;
   workWeekErrorMessage: string | null;
   updateDraft: (updates: Partial<SettingsDraft>) => void;
@@ -341,6 +352,7 @@ export function useSettings(): UseSettingsResult {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [leaveNotice, setLeaveNotice] = useState<string | null>(null);
 
   const initDraft = useCallback(
     (s: CompanySettings, policies: LeavePolicy[] = []): SettingsDraft => {
@@ -674,6 +686,38 @@ export function useSettings(): UseSettingsResult {
       persistExtendedConfig(newExtended);
       setSavedExtended(newExtended);
 
+      // A leave type deleted in Leave Setup is deleted on the server too. One with leave history cannot
+      // be deleted, so it is deactivated and the admin is told.
+      const removed = draft.removedLeaveTypes ?? [];
+      if (removed.length > 0) {
+        const notes: string[] = [];
+        const backend = await fetchLeavePolicies().catch(() => [] as LeavePolicy[]);
+        for (const gone of removed) {
+          const match = backend.find(
+            (bp) =>
+              bp.id === gone.id || (gone.code && bp.code.toUpperCase() === gone.code.toUpperCase()),
+          );
+          if (!match) continue;
+          try {
+            await deleteLeavePolicy(match.id);
+          } catch (err) {
+            if (err instanceof LeaveApiError && err.status === 409) {
+              await updateLeavePolicy(match.id, { isActive: false, version: match.version }).catch(
+                () => {},
+              );
+              notes.push(
+                `"${match.name}" has leave history, so it was deactivated instead of deleted.`,
+              );
+            } else {
+              notes.push(`"${match.name}" could not be deleted. Try again.`);
+            }
+          }
+        }
+        setLeaveNotice(notes.length > 0 ? notes.join(' ') : null);
+      } else {
+        setLeaveNotice(null);
+      }
+
       // Synchronize configured leave types with the backend leave_policies table
       if (draft.customLeaveTypes && draft.customLeaveTypes.length > 0) {
         try {
@@ -767,6 +811,8 @@ export function useSettings(): UseSettingsResult {
     isLoading,
     isSaving,
     error,
+    leaveNotice,
+    clearLeaveNotice: () => setLeaveNotice(null),
     isDirty,
     hasWorkWeekError,
     workWeekErrorMessage,

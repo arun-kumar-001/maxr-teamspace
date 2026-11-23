@@ -81,6 +81,12 @@ export async function updateLeavePolicy(
   return json.data;
 }
 
+/** Deletes a leave type nobody has used. A 409 means it has leave history: deactivate it instead. */
+export async function deleteLeavePolicy(id: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/leave-policies/${id}`, { method: 'DELETE' });
+  if (!res.ok) await handleResponse<never>(res);
+}
+
 export async function fetchHolidays(year?: number): Promise<Holiday[]> {
   const params = new URLSearchParams();
   if (year) params.append('year', year.toString());
