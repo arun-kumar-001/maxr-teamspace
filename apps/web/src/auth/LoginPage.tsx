@@ -281,7 +281,6 @@ export function LoginPage({ onSuccess }: LoginPageProps) {
                 </>
               )}
             </button>
-
           </form>
         </div>
       </div>

@@ -1,6 +1,7 @@
-import { RECORD_SCOPES } from '@maxr/shared';
+import { RECORD_SCOPES, ROLES } from '@maxr/shared';
 import { Request, RequestHandler, Response, Router } from 'express';
 import { asyncHandler } from '../../http/async-handler';
+import { unprocessable } from '../../http/errors';
 import { IdempotencyStore, idempotent } from '../../http/idempotency';
 import { validate, validated } from '../../http/validate';
 import { requirePermission, resolveScope } from '../rbac';
@@ -53,7 +54,31 @@ export function createTasksRouter(options: {
     validate({ body: createTaskSchema }),
     asyncHandler(async (req: Request, res: Response) => {
       const { body } = validated(req, { body: createTaskSchema });
-      res.status(201).json({ data: await service.create(body, caller(req), viewer(req)) });
+      const actorRoles = req.actor?.roles ?? [];
+      const isStaffOnly =
+        actorRoles.includes(ROLES.STAFF) &&
+        !actorRoles.includes(ROLES.ADMIN) &&
+        !actorRoles.includes(ROLES.TEAM_LEAD);
+      const isSelfScoped = req.access?.scope === RECORD_SCOPES.OWN || isStaffOnly;
+
+      const input = {
+        ...body,
+        assigneeEmployeeId: isSelfScoped
+          ? req.actor!.employeeId
+          : (body.assigneeEmployeeId ?? req.actor!.employeeId),
+      };
+
+      if (!input.assigneeEmployeeId) {
+        throw unprocessable('Please select an assignee');
+      }
+
+      res.status(201).json({
+        data: await service.create(
+          input as typeof body & { assigneeEmployeeId: string },
+          caller(req),
+          viewer(req),
+        ),
+      });
     }),
   );
 

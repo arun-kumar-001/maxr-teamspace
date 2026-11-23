@@ -184,6 +184,29 @@ export const PayslipsPage: React.FC = () => {
   }, [canManage, isCreateOpen, formState.employeeId, formState.payYear]);
 
   useEffect(() => {
+    if (!canManage) return;
+    void (async () => {
+      try {
+        const res = await apiFetch('/api/v1/employees?pageSize=100');
+        if (res.ok) {
+          const json = (await res.json()) as { data?: DirectoryEmployeeOption[] };
+          const list = json.data ?? [];
+          if (list.length > 0) {
+            setEmployees(list);
+            setFormState((prev) => ({
+              ...prev,
+              employeeId: prev.employeeId || list[0]!.id,
+              designation: prev.designation || list[0]!.designation?.title || '',
+            }));
+          }
+        }
+      } catch {
+        // Directory load best-effort
+      }
+    })();
+  }, [canManage]);
+
+  useEffect(() => {
     if (!canManage || !isCreateOpen || employees.length > 0) return;
     void (async () => {
       try {
@@ -191,8 +214,8 @@ export const PayslipsPage: React.FC = () => {
         if (res.ok) {
           const json = (await res.json()) as { data?: DirectoryEmployeeOption[] };
           const list = json.data ?? [];
-          setEmployees(list);
-          if (list[0]) {
+          if (list.length > 0) {
+            setEmployees(list);
             setFormState((prev) => ({
               ...prev,
               employeeId: prev.employeeId || list[0]!.id,
@@ -798,11 +821,11 @@ export const PayslipsPage: React.FC = () => {
                         Employee
                       </span>
                       <div className="mt-1">
-                        <DropdownSelect
-                          ariaLabel="Employee"
-                          placeholder="Select Employee"
+                        <select
+                          aria-label="Employee"
                           value={formState.employeeId}
-                          onChange={(val) => {
+                          onChange={(e) => {
+                            const val = e.target.value;
                             const emp = employees.find((x) => x.id === val);
                             setFormState((prev) => ({
                               ...prev,
@@ -810,12 +833,21 @@ export const PayslipsPage: React.FC = () => {
                               designation: emp?.designation?.title ?? prev.designation,
                             }));
                           }}
-                          options={employees.map((emp) => ({
-                            value: emp.id,
-                            label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})`,
-                          }))}
-                          className="h-9"
-                        />
+                          className="h-9 w-full rounded-xl border border-border-strong bg-surface-raised px-3 text-xs text-text outline-none transition-colors focus:border-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
+                        >
+                          <option value="" disabled>
+                            Select Employee
+                          </option>
+                          {employees.map((emp) => {
+                            const fullName = [emp.firstName, emp.lastName].filter(Boolean).join(' ') || emp.id;
+                            const code = emp.employeeCode ? ` (${emp.employeeCode})` : '';
+                            return (
+                              <option key={emp.id} value={emp.id}>
+                                {fullName}{code}
+                              </option>
+                            );
+                          })}
+                        </select>
                       </div>
                     </div>
 

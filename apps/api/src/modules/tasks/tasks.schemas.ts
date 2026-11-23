@@ -30,7 +30,7 @@ export const createTaskSchema = z
   .object({
     title,
     description: description.optional(),
-    assigneeEmployeeId: uuidSchema,
+    assigneeEmployeeId: uuidSchema.optional(),
     priority: priority.default('medium'),
     dueDate: calendarDate.optional(),
     projectId: uuidSchema.optional(),

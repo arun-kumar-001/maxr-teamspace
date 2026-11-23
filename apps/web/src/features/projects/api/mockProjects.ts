@@ -376,6 +376,7 @@ function buildSummary(items: ProjectDetail[]): ProjectsSummary {
     completed: active.filter((p) => p.workflowStatus === 'completed').length,
     upcoming: active.filter((p) => p.workflowStatus === 'not_started').length,
     onHold: active.filter((p) => p.workflowStatus === 'on_hold').length,
+    archived: items.filter((p) => p.status === 'archived').length,
   };
 }
 
@@ -485,8 +486,16 @@ export function mockUpdateProject(id: string, input: UpdateProjectInput): Projec
     ...(input.startDate !== undefined ? { startDate: input.startDate } : {}),
     ...(input.endDate !== undefined ? { endDate: input.endDate } : {}),
     ...(input.priority !== undefined ? { priority: input.priority } : {}),
-    ...(input.workflowStatus !== undefined ? { workflowStatus: input.workflowStatus } : {}),
-    ...(input.progressPercent !== undefined ? { progressPercent: input.progressPercent } : {}),
+    ...(input.workflowStatus !== undefined
+      ? { workflowStatus: input.workflowStatus }
+      : input.progressPercent === 100
+        ? { workflowStatus: 'completed' as const }
+        : {}),
+    ...(input.progressPercent !== undefined
+      ? { progressPercent: input.progressPercent }
+      : input.workflowStatus === 'completed'
+        ? { progressPercent: 100 }
+        : {}),
     ...(input.objectives !== undefined ? { objectives: input.objectives } : {}),
     ...(input.scope !== undefined ? { scope: input.scope } : {}),
     ...(input.technologies !== undefined ? { technologies: input.technologies } : {}),

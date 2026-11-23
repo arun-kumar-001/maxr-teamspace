@@ -2,6 +2,7 @@ import type { Task, TaskStatus } from './types';
 
 export const TASK_STATUS_OVERRIDES_KEY = 'maxr_task_status_overrides';
 export const EVENT_TASK_STATUS_CHANGED = 'maxr:task-status-changed';
+export const EVENT_TASK_CREATED = 'maxr:task-created';
 
 export interface TaskStatusOverride {
   status: TaskStatus;
@@ -81,6 +82,33 @@ export function onTaskStatusChanged(
   window.addEventListener(EVENT_TASK_STATUS_CHANGED, handler);
   return () => {
     window.removeEventListener(EVENT_TASK_STATUS_CHANGED, handler);
+  };
+}
+
+export function notifyTaskCreated(task: Task): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent(EVENT_TASK_CREATED, {
+        detail: { task },
+      }),
+    );
+  } catch {
+    // Ignore
+  }
+}
+
+export function onTaskCreated(listener: (task: Task) => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (event: Event) => {
+    const custom = event as CustomEvent<{ task: Task }>;
+    if (custom.detail?.task) {
+      listener(custom.detail.task);
+    }
+  };
+  window.addEventListener(EVENT_TASK_CREATED, handler);
+  return () => {
+    window.removeEventListener(EVENT_TASK_CREATED, handler);
   };
 }
 

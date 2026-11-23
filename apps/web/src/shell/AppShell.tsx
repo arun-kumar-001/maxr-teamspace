@@ -19,14 +19,6 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   // The logo is a company setting kept on the server, so every user sees the same one.
   const [customLogo, setCustomLogo] = useState<string | null>(null);
 
-  const sidebarUser = user
-    ? {
-        name: user.name,
-        role: user.title || user.role,
-        initials: user.avatarInitials,
-        avatarUrl: user.avatarUrl,
-      }
-    : undefined;
 
   useEffect(() => {
     const handleNavChange = () => {
@@ -114,6 +106,21 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     }
     return currentPath;
   })();
+
+  const sidebarUser = user
+    ? {
+        name: user.name,
+        role: user.title || user.role,
+        initials: user.avatarInitials,
+        avatarUrl:
+          user.avatarUrl ||
+          (typeof window !== 'undefined' && window.localStorage
+            ? localStorage.getItem(`maxr_avatar_${user.id}`) ||
+              localStorage.getItem(`maxr_avatar_${user.email?.toLowerCase()}`) ||
+              undefined
+            : undefined),
+      }
+    : undefined;
 
   return (
     <div

@@ -79,16 +79,19 @@ export const LeaveApprovalsTab: React.FC<LeaveApprovalsTabProps> = ({ onDecision
 
   const handleConfirmDecision = async (comment: string) => {
     if (!selectedApproval || !decisionOutcome) return;
+    const decidedId = selectedApproval.id;
 
     try {
       if (decisionOutcome === 'approved') {
-        await approveRequest(selectedApproval.id, comment);
+        await approveRequest(decidedId, comment);
+        setApprovals((prev) => prev.filter((a) => a.id !== decidedId));
         setFeedback({
           message: `Leave request for ${selectedApproval.requesterName} was approved. Balances updated atomically.`,
           type: 'success',
         });
       } else {
-        await rejectRequest(selectedApproval.id, comment);
+        await rejectRequest(decidedId, comment);
+        setApprovals((prev) => prev.filter((a) => a.id !== decidedId));
         setFeedback({
           message: `Leave request for ${selectedApproval.requesterName} was rejected.`,
           type: 'success',

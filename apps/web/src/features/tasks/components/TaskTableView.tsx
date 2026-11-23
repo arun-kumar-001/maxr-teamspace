@@ -67,10 +67,13 @@ export function TaskTableView({
         </thead>
         <tbody className="divide-y divide-border text-sm">
           {sortedTasks.map((task) => {
+            const isAssignee = Boolean(
+              currentEmployeeId && task.assigneeEmployeeId === currentEmployeeId,
+            );
             const isAssigner = Boolean(
               currentEmployeeId && task.assignerEmployeeId === currentEmployeeId,
             );
-            const canCompleteOrReopen = Boolean(isAdmin || isAssigner);
+            const canCompleteOrReopen = Boolean(isAdmin || isAssigner || isAssignee);
             const allowedMoves = (TASK_TRANSITIONS[task.status] || []).filter((target) => {
               if (target === 'completed' || task.status === 'completed') {
                 return canCompleteOrReopen;
@@ -90,13 +93,24 @@ export function TaskTableView({
                 {/* Task Title */}
                 <td className="py-3.5 px-4 font-medium text-text group-hover:text-primary-ink transition-colors max-w-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center ${
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onStatusChange) {
+                          onStatusChange(
+                            task.id,
+                            task.status === 'completed' ? 'in_progress' : 'completed',
+                          );
+                        }
+                      }}
+                      className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center cursor-pointer transition-colors ${
                         task.status === 'completed'
                           ? 'bg-primary border-primary text-sidebar'
-                          : 'border-border-strong bg-surface'
+                          : 'border-border-strong bg-surface hover:border-primary'
                       }`}
-                      aria-hidden="true"
+                      aria-label={task.status === 'completed' ? 'Reopen task' : 'Complete task'}
+                      data-testid={`checkbox-complete-${task.id}`}
                     >
                       {task.status === 'completed' && (
                         <svg
@@ -113,7 +127,7 @@ export function TaskTableView({
                           />
                         </svg>
                       )}
-                    </span>
+                    </button>
                     <div className="flex flex-col min-w-0">
                       <span className="truncate font-semibold">{task.title}</span>
                       {task.isOverdue && (

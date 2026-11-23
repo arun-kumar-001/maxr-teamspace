@@ -230,7 +230,7 @@ export const PERMISSION_CATALOG = {
 
   'tasks.create': {
     description: 'Create and assign team task',
-    grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM },
+    grants: { [ADMIN]: ALL, [TEAM_LEAD]: TEAM, [STAFF]: OWN },
   },
   'tasks.read_own': { description: 'View own assigned tasks', grants: everyone(OWN) },
   'tasks.read_team': {

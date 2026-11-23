@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROLES } from '@maxr/shared';
 import * as authContext from '../../../auth/AuthContext';
 import * as notificationsApi from '../api/notificationsApi';
@@ -54,6 +55,10 @@ const mockListResponse: ListNotificationsResponse = {
 };
 
 describe('NotificationBell', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(notificationsApi.fetchNotifications).mockResolvedValue(mockListResponse);
@@ -118,6 +123,10 @@ describe('NotificationBell', () => {
 });
 
 describe('NotificationsInboxPage', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(notificationsApi.fetchNotifications).mockResolvedValue(mockListResponse);

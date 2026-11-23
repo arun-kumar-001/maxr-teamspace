@@ -170,7 +170,14 @@ export const NAVIGATION_REGISTRY: readonly NavItem[] = [
     label: 'Projects',
     path: '/projects',
     iconName: 'briefcase',
-    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD],
+    allowedRoles: [ROLES.ADMIN, ROLES.HR_MANAGER, ROLES.TEAM_LEAD, ROLES.STAFF],
+  },
+  {
+    id: 'staff-projects',
+    label: 'My Projects',
+    path: '/staff/projects',
+    iconName: 'briefcase',
+    allowedRoles: [ROLES.STAFF],
   },
   // Shared Expenses Route (Issue #29 - Available to all authenticated roles)
   {
@@ -303,7 +310,12 @@ export function isPathAuthorizedForRole(path: string, role: Role): boolean {
   }
 
   // Projects route (Issue #42) - accessible to all authenticated roles
-  if (path === '/projects' || path.startsWith('/projects/')) {
+  if (
+    path === '/projects' ||
+    path.startsWith('/projects/') ||
+    path === '/staff/projects' ||
+    path.startsWith('/staff/projects/')
+  ) {
     return true;
   }
 
@@ -632,12 +644,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           ],
         },
         {
-          id: '/expenses',
-          label: 'Expenses & Claims',
-          href: '/expenses',
-          icon: <NavSvgIcon name="file-text" />,
-        },
-        {
           id: '/admin/payslips',
           label: 'Payslips',
           href: '/admin/payslips',
@@ -930,6 +936,12 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
         label: 'My Tasks',
         href: '/staff/tasks',
         icon: <NavSvgIcon name="check" />,
+      },
+      {
+        id: '/staff/projects',
+        label: 'My Projects',
+        href: '/staff/projects',
+        icon: <NavSvgIcon name="briefcase" />,
       },
     ];
 

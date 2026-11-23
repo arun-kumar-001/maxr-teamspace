@@ -150,7 +150,7 @@ export function ProjectFormModal({
           endDate: endDate || undefined,
           priority,
           workflowStatus,
-          progressPercent: parsedProgress,
+          progressPercent: workflowStatus === 'completed' ? 100 : parsedProgress,
           ...(objectives.trim() ? { objectives: objectives.trim() } : {}),
           ...(scope.trim() ? { scope: scope.trim() } : {}),
           ...(parsedTech.length > 0 ? { technologies: parsedTech } : {}),
@@ -166,7 +166,7 @@ export function ProjectFormModal({
           endDate: endDate || null,
           priority,
           workflowStatus,
-          progressPercent: parsedProgress,
+          progressPercent: workflowStatus === 'completed' ? 100 : parsedProgress,
           objectives: objectives.trim() || null,
           scope: scope.trim() || null,
           technologies: parsedTech,
@@ -292,7 +292,15 @@ export function ProjectFormModal({
             <Select
               id="project-workflow-status"
               value={workflowStatus}
-              onChange={(e) => setWorkflowStatus(e.target.value as ProjectWorkflowStatus)}
+              onChange={(e) => {
+                const val = e.target.value as ProjectWorkflowStatus;
+                setWorkflowStatus(val);
+                if (val === 'completed' && Number(progressPercent) < 100) {
+                  setProgressPercent('100');
+                } else if (val === 'in_progress' && progressPercent === '100') {
+                  setProgressPercent('50');
+                }
+              }}
               disabled={submitting}
               options={[
                 { value: 'not_started', label: 'Not Started' },
@@ -310,7 +318,13 @@ export function ProjectFormModal({
               min={0}
               max={100}
               value={progressPercent}
-              onChange={(e) => setProgressPercent(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setProgressPercent(val);
+                if (Number(val) === 100 && workflowStatus !== 'completed') {
+                  setWorkflowStatus('completed');
+                }
+              }}
               disabled={submitting}
             />
           </FormField>

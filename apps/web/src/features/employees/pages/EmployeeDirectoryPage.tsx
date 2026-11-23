@@ -13,8 +13,10 @@ import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
 import { EmployeeFilters } from '../components/EmployeeFilters';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
+import { EditEmployeeModal } from '../components/EditEmployeeModal';
+import { fetchEmployeeDetail, updateEmployeeDetail } from '../api/detail';
 import { useEmployeeDirectory } from '../hooks/useEmployeeDirectory';
-import type { EmployeeDirectoryItem } from '../types';
+import type { EmployeeDirectoryItem, EmployeeDetail } from '../types';
 
 // --- Code-Based SVG Icons (Zero Raw Hex - ui-hex-regression test compliant) ---
 
@@ -410,19 +412,6 @@ function DepartmentBadge({ name = '' }: { name?: string }) {
   );
 }
 
-function getAvatarColors(name: string) {
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const colorSets = [
-    'bg-emerald-100 text-emerald-800',
-    'bg-sky-100 text-sky-800',
-    'bg-purple-100 text-purple-800',
-    'bg-amber-100 text-amber-800',
-    'bg-rose-100 text-rose-800',
-    'bg-teal-100 text-teal-800',
-  ];
-  return colorSets[hash % colorSets.length];
-}
-
 function getEmployeePhoto(emp: EmployeeDirectoryItem): string | undefined {
   if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
     return (emp as unknown as { avatarUrl: string }).avatarUrl;
@@ -433,7 +422,8 @@ function getEmployeePhoto(emp: EmployeeDirectoryItem): string | undefined {
       ((emp as unknown as { userId?: string }).userId
         ? localStorage.getItem(`maxr_avatar_${(emp as unknown as { userId: string }).userId}`)
         : null) ||
-      (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null);
+      (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null) ||
+      (emp.employeeCode ? localStorage.getItem(`maxr_avatar_${emp.employeeCode}`) : null);
     if (localAvatar) return localAvatar;
   }
   return undefined;
@@ -525,9 +515,39 @@ export function EmployeeDirectoryPage() {
   const [deactivatingEmployee, setDeactivatingEmployee] = useState<EmployeeDirectoryItem | null>(
     null,
   );
+  const [editingEmployeeDetail, setEditingEmployeeDetail] = useState<EmployeeDetail | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const handleOpenEdit = async (emp: EmployeeDirectoryItem) => {
+    try {
+      const detail = await fetchEmployeeDetail(emp.id);
+      setEditingEmployeeDetail(detail);
+    } catch {
+      setEditingEmployeeDetail({
+        id: emp.id,
+        employeeCode: emp.employeeCode,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        email: emp.email,
+        phone: emp.phone,
+        department: {
+          id: emp.department?.id || '',
+          name: emp.department?.name || '',
+          code: emp.department?.code || '',
+        },
+        designation: { id: emp.designation?.id || '', title: emp.designation?.title || '' },
+        manager: null,
+        status: emp.status,
+        joiningDate: emp.joiningDate,
+        createdAt: emp.joiningDate,
+        updatedAt: emp.joiningDate,
+        version: 1,
+      });
+    }
+  };
 
   // Workforce Calculated Metrics
   const totalEmployees = meta.total || employees.length || 0;
@@ -985,7 +1005,7 @@ export function EmployeeDirectoryPage() {
                             type="button"
                             onClick={() => {
                               setOpenMenuId(null);
-                              navigate(`/employees/${emp.id}`);
+                              handleOpenEdit(emp);
                             }}
                             className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
                           >
@@ -1210,7 +1230,6 @@ export function EmployeeDirectoryPage() {
               </thead>
               <tbody className="divide-y divide-border text-text">
                 {employees.map((emp) => {
-                  const avatarBg = getAvatarColors(`${emp.firstName} ${emp.lastName}`);
                   const initials =
                     `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
                   const isSelf = emp.id === user?.employeeId;
@@ -1237,7 +1256,7 @@ export function EmployeeDirectoryPage() {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative`}
+                            className="w-9 h-9 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative"
                           >
                             {getEmployeePhoto(emp) ? (
                               <img
@@ -1357,7 +1376,7 @@ export function EmployeeDirectoryPage() {
                           <button
                             type="button"
                             aria-label={`Edit ${emp.firstName} ${emp.lastName}`}
-                            onClick={() => navigate(`/employees/${emp.id}`)}
+                            onClick={() => handleOpenEdit(emp)}
                             className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
                           >
                             <IconEditPencil className="w-4 h-4" />
@@ -1477,6 +1496,40 @@ export function EmployeeDirectoryPage() {
           onSuccess={() => {
             refetch();
           }}
+        />
+      )}
+
+      {/* 12. Edit Employee Modal */}
+      {editingEmployeeDetail && (
+        <EditEmployeeModal
+          isOpen={Boolean(editingEmployeeDetail)}
+          onClose={() => setEditingEmployeeDetail(null)}
+          employee={editingEmployeeDetail}
+          onSave={async (patch) => {
+            try {
+              setIsSavingEdit(true);
+              await updateEmployeeDetail(editingEmployeeDetail.id, {
+                ...patch,
+                version: editingEmployeeDetail.version,
+              });
+              setEditingEmployeeDetail(null);
+              await refetch();
+              return { success: true };
+            } catch (err) {
+              return {
+                success: false,
+                error: err instanceof Error ? err.message : 'Failed to update employee',
+              };
+            } finally {
+              setIsSavingEdit(false);
+            }
+          }}
+          onReload={async () => {
+            const reloaded = await fetchEmployeeDetail(editingEmployeeDetail.id);
+            setEditingEmployeeDetail(reloaded);
+          }}
+          isAdmin={isAdmin}
+          isSaving={isSavingEdit}
         />
       )}
     </div>
