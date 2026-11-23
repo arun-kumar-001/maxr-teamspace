@@ -221,7 +221,7 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
 
       expect(screen.getByTestId('leave-balances-empty')).toBeInTheDocument();
       expect(screen.getByText('No leave balances yet')).toBeInTheDocument();
-      expect(screen.queryByTestId(/^leave-balance-card-/)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(/^leave-type-bar-/)).not.toBeInTheDocument();
       expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
     });
 
@@ -247,9 +247,9 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       ];
       render(<LeaveBalancesSummary balances={mockBalances} policies={policies} year={2026} />);
 
-      expect(screen.getByTestId('leave-balance-card-PTO')).toHaveTextContent('15 days left');
-      expect(screen.getByTestId('leave-balance-card-PM')).toHaveTextContent('No yearly limit');
-      expect(screen.queryByTestId('leave-balance-card-OLD')).not.toBeInTheDocument();
+      expect(screen.getByTestId('leave-type-bar-PTO')).toHaveTextContent('5 used · 15 left of 20');
+      expect(screen.getByTestId('leave-type-bar-PM')).toHaveTextContent('No yearly limit');
+      expect(screen.queryByTestId('leave-type-bar-OLD')).not.toBeInTheDocument();
       const totals = within(screen.getByTestId('leave-balances-totals'));
       expect(totals.getByText('Balance').nextElementSibling).toHaveTextContent('15');
     });
@@ -283,17 +283,17 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       expect(totals.getByText('Total entitlement').nextElementSibling).toHaveTextContent('16');
       expect(totals.getByText('Used').nextElementSibling).toHaveTextContent('5');
       expect(totals.getByText('Balance').nextElementSibling).toHaveTextContent('11');
-      expect(screen.getByTestId('leave-balance-bar-SICK')).toHaveStyle({ width: '17%' });
+      expect(screen.getByTestId('leave-type-fill-SICK')).toHaveStyle({ width: '17%' });
     });
 
     it('renders balance metrics and breakdown', () => {
       render(<LeaveBalancesSummary balances={mockBalances} year={2026} />);
 
-      const card = within(screen.getByTestId('leave-balance-card-PTO'));
-      expect(card.getByText('Paid Time Off')).toBeInTheDocument();
-      expect(card.getByText('15 days left')).toBeInTheDocument();
-      expect(card.getByText('Used: 5d')).toBeInTheDocument();
-      expect(card.getByText('Total: 20d')).toBeInTheDocument();
+      const row = within(screen.getByTestId('leave-type-bar-PTO'));
+      expect(row.getByText('Paid Time Off')).toBeInTheDocument();
+      expect(row.getByText('5 used · 15 left of 20')).toBeInTheDocument();
+      expect(screen.queryByText('Leave Entitlements & Balances')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('same-team-leave-balances')).not.toBeInTheDocument();
     });
   });
 
@@ -310,7 +310,7 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       });
 
       // Default balances tab content
-      expect(screen.getByText('Leave Entitlements & Balances')).toBeInTheDocument();
+      expect(screen.getByText('Leave overview')).toBeInTheDocument();
 
       // Switch to Holiday Calendar
       fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));

@@ -709,7 +709,13 @@ export function useSettings(): UseSettingsResult {
                 `"${match.name}" has leave history, so it was deactivated instead of deleted.`,
               );
             } else {
-              notes.push(`"${match.name}" could not be deleted. Try again.`);
+              const reason =
+                err instanceof LeaveApiError
+                  ? ` (${err.status ?? 'error'}: ${err.message})`
+                  : err instanceof Error
+                    ? ` (${err.message})`
+                    : '';
+              notes.push(`"${match.name}" could not be deleted${reason}. Try again.`);
             }
           }
         }

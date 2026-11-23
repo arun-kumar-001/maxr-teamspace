@@ -1,19 +1,9 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
 import type { LeaveBalance, LeavePolicy } from '../types';
-
-vi.mock('../../../auth/AuthContext', () => ({
-  useAuth: () => ({ user: null, role: 'staff', isAuthenticated: true }),
-}));
-vi.mock('../api/leave', () => ({
-  fetchLeaveBalances: vi.fn().mockResolvedValue({ data: [], meta: {} }),
-}));
-vi.mock('../../employees/api/employees', () => ({
-  fetchEmployeeDirectory: vi.fn().mockResolvedValue({ data: [], meta: {} }),
-}));
 
 afterEach(cleanup);
 

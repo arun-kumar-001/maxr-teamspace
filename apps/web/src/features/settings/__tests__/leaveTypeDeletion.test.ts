@@ -116,7 +116,18 @@ describe('a leave type deleted in Leave Setup is deleted on the server when sett
     await deleteCasualAndSave(hook);
 
     expect(leaveApi.updateLeavePolicy).not.toHaveBeenCalled();
-    expect(hook.result.current.leaveNotice).toMatch(/could not be deleted/);
+    expect(hook.result.current.leaveNotice).toMatch(/could not be deleted \(500: boom\)/);
+  });
+
+  it('shows why when the server route is missing, so an old API is easy to spot', async () => {
+    vi.mocked(leaveApi.deleteLeavePolicy).mockRejectedValue(
+      new leaveApi.LeaveApiError('Route DELETE /api/v1/leave-policies/x not found', 404),
+    );
+    const hook = await load();
+
+    await deleteCasualAndSave(hook);
+
+    expect(hook.result.current.leaveNotice).toMatch(/404: Route DELETE/);
   });
 
   it('never deletes a type the admin did not remove, even when the list could not be loaded', async () => {
