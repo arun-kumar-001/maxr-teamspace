@@ -2,6 +2,8 @@ import { isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSettings, updateSettings, SettingsApiError } from '../api/settingsApi';
 import { setStaffPayslipsEnabled } from '../../../shell/navigation';
+import { fetchLeavePolicies, createLeavePolicy, updateLeavePolicy } from '../../leave/api/leave';
+import type { LeavePolicy } from '../../leave/types';
 import {
   type CompanySettings,
   type DayName,
@@ -11,6 +13,55 @@ import {
   type UpdateSettingsPayload,
   calculateWorkDays,
 } from '../types';
+
+export interface CustomLeaveType {
+  id: string;
+  name: string;
+  code?: string;
+  category?:
+    | 'annual'
+    | 'casual'
+    | 'medical'
+    | 'parental'
+    | 'special'
+    | 'unpaid'
+    | 'compensatory'
+    | 'general'
+    | 'permission';
+  frequency: 'monthly' | 'yearly';
+  quota: number;
+  isPaid: boolean;
+  accrualMethod?: 'monthly' | 'yearly' | 'upfront' | 'manual';
+  monthlyCredit?: number;
+  annualEntitlement?: number;
+  maxBalance?: number;
+  creditStartDate?: string;
+  leaveYearType?: 'calendar' | 'financial' | 'anniversary';
+  proratedAllocation?: boolean;
+  probationEligibility?: 'eligible' | 'not_eligible' | 'reduced';
+  carryForwardEnabled?: boolean;
+  carryForwardMax?: number;
+  carryForwardExpiryMonths?: number;
+  encashmentEnabled?: boolean;
+  maxEncashableDays?: number;
+  encashmentBasis?: 'basic_salary' | 'gross_salary' | 'fixed_rate';
+  encashmentAtYearEnd?: boolean;
+  encashmentAtExit?: boolean;
+  allowHalfDay?: boolean;
+  allowNegativeBalance?: boolean;
+  maxNegativeDays?: number;
+  allowUnpaid?: boolean;
+  requireDocs?: boolean;
+  minDaysForDocs?: number;
+  noticePeriodDays?: number;
+  maxConsecutiveDays?: number;
+  allowProbation?: boolean;
+  maxBackdateDays?: number;
+  includeWeekends?: boolean;
+  includeHolidays?: boolean;
+  isActive?: boolean;
+  description?: string;
+}
 
 export interface LeavePolicyProfile {
   id: string;
@@ -36,6 +87,94 @@ export const DEFAULT_LATE_DEDUCTION: LateDeductionConfig = {
   freeLateLimitCount: 2,
   halfDayCutoffMinutes: 120,
 };
+
+/** Predefined templates available on demand for quick start, but never imposed as mandatory defaults */
+export const SAMPLE_LEAVE_TEMPLATES: CustomLeaveType[] = [
+  {
+    id: 'leave_sample_annual',
+    name: 'Earned / Annual Leave',
+    code: 'EL',
+    category: 'annual',
+    frequency: 'yearly',
+    quota: 18,
+    isPaid: true,
+    accrualMethod: 'yearly',
+    annualEntitlement: 18,
+    carryForwardEnabled: true,
+    carryForwardMax: 15,
+    carryForwardExpiryMonths: 12,
+    encashmentEnabled: true,
+    maxEncashableDays: 10,
+    encashmentBasis: 'basic_salary',
+    encashmentAtExit: true,
+    allowHalfDay: true,
+    allowNegativeBalance: false,
+    requireDocs: false,
+    noticePeriodDays: 3,
+    maxConsecutiveDays: 14,
+    allowProbation: false,
+    includeWeekends: false,
+    includeHolidays: false,
+    isActive: true,
+    description: 'Statutory earned annual leave with carry forward and encashment at separation',
+  },
+  {
+    id: 'leave_sample_casual',
+    name: 'Casual Leave',
+    code: 'CL',
+    category: 'casual',
+    frequency: 'monthly',
+    quota: 12,
+    isPaid: true,
+    accrualMethod: 'monthly',
+    monthlyCredit: 1.0,
+    annualEntitlement: 12,
+    carryForwardEnabled: false,
+    carryForwardMax: 0,
+    encashmentEnabled: false,
+    maxEncashableDays: 0,
+    allowHalfDay: true,
+    allowNegativeBalance: false,
+    requireDocs: false,
+    noticePeriodDays: 1,
+    maxConsecutiveDays: 3,
+    allowProbation: true,
+    includeWeekends: false,
+    includeHolidays: false,
+    isActive: true,
+    description: 'Monthly accrued personal and urgent leaves that lapse at year-end',
+  },
+  {
+    id: 'leave_sample_sick',
+    name: 'Sick / Medical Leave',
+    code: 'SL',
+    category: 'medical',
+    frequency: 'yearly',
+    quota: 12,
+    isPaid: true,
+    accrualMethod: 'yearly',
+    annualEntitlement: 12,
+    carryForwardEnabled: false,
+    carryForwardMax: 0,
+    encashmentEnabled: false,
+    maxEncashableDays: 0,
+    allowHalfDay: true,
+    allowNegativeBalance: true,
+    maxNegativeDays: 2,
+    requireDocs: true,
+    minDaysForDocs: 2,
+    noticePeriodDays: 0,
+    maxConsecutiveDays: 15,
+    allowProbation: true,
+    maxBackdateDays: 3,
+    includeWeekends: false,
+    includeHolidays: false,
+    isActive: true,
+    description: 'Medical and health recuperation. Medical slip required if > 2 consecutive days',
+  },
+];
+
+export const DEFAULT_LEAVE_TYPES: CustomLeaveType[] = [];
 
 export const DEFAULT_PERMISSION_POLICY: PermissionPolicyConfig = {
   enabled: true,
@@ -70,6 +209,7 @@ export interface SettingsDraft {
   leaveApprovalFlow?: 'lead_only' | 'hr_only' | 'two_tier';
   advanceNoticeDays?: number;
   excludeWeekendsFromLeave?: boolean;
+  customLeaveTypes?: CustomLeaveType[];
   leavePolicies?: LeavePolicyProfile[];
   lateDeductionPolicy?: LateDeductionConfig;
   permissionPolicy?: PermissionPolicyConfig;
@@ -92,6 +232,7 @@ export interface ExtendedCompanyConfig {
   leaveApprovalFlow?: 'lead_only' | 'hr_only' | 'two_tier';
   advanceNoticeDays?: number;
   excludeWeekendsFromLeave?: boolean;
+  customLeaveTypes?: CustomLeaveType[];
   leavePolicies?: LeavePolicyProfile[];
   lateDeductionPolicy?: LateDeductionConfig;
   permissionPolicy?: PermissionPolicyConfig;
@@ -109,6 +250,7 @@ export const DEFAULT_EXTENDED_CONFIG: ExtendedCompanyConfig = {
   leaveApprovalFlow: 'lead_only',
   advanceNoticeDays: 2,
   excludeWeekendsFromLeave: true,
+  customLeaveTypes: [], // Initially empty: every company starts with clear empty state
   leavePolicies: [], // Initially empty
   lateDeductionPolicy: DEFAULT_LATE_DEDUCTION,
   permissionPolicy: DEFAULT_PERMISSION_POLICY,
@@ -200,27 +342,59 @@ export function useSettings(): UseSettingsResult {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const initDraft = useCallback((s: CompanySettings): SettingsDraft => {
-    const ext = { ...loadStoredExtendedConfig(), ...serverBackedConfig(s) };
+  const initDraft = useCallback(
+    (s: CompanySettings, policies: LeavePolicy[] = []): SettingsDraft => {
+      const ext = { ...loadStoredExtendedConfig(), ...serverBackedConfig(s) };
 
-    setSavedExtended(ext);
-    return {
-      companyName: s.companyName,
-      timezone: s.timezone,
-      workWeekStart: s.workWeek.start,
-      workWeekEnd: s.workWeek.end,
-      integrations: { ...s.integrations },
-      ...ext,
-    };
-  }, []);
+      let effectiveLeaveTypes: CustomLeaveType[] = ext.customLeaveTypes ?? [];
+      if (policies && policies.length > 0) {
+        effectiveLeaveTypes = policies.map((p) => ({
+          id: p.id,
+          name: p.name,
+          code: p.code,
+          quota: p.annualDays,
+          annualEntitlement: p.annualDays,
+          isPaid: p.hasBalance,
+          allowHalfDay: p.allowHalfDay,
+          maxBackdateDays: p.maxBackdateDays,
+          carryForwardEnabled: p.carryForwardMax > 0,
+          carryForwardMax: p.carryForwardMax,
+          isActive: p.isActive,
+          category:
+            p.code === 'PM' ||
+            p.code === 'PERMISSION' ||
+            p.name.toLowerCase().includes('permission')
+              ? 'permission'
+              : 'general',
+          frequency: 'yearly',
+          accrualMethod: p.hasBalance ? 'yearly' : 'manual',
+        }));
+      }
+
+      const merged = { ...ext, customLeaveTypes: effectiveLeaveTypes };
+      setSavedExtended(merged);
+      return {
+        companyName: s.companyName,
+        timezone: s.timezone,
+        workWeekStart: s.workWeek.start,
+        workWeekEnd: s.workWeek.end,
+        integrations: { ...s.integrations },
+        ...merged,
+      };
+    },
+    [],
+  );
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getSettings();
+      const [data, policies] = await Promise.all([
+        getSettings(),
+        fetchLeavePolicies().catch(() => [] as LeavePolicy[]),
+      ]);
       setSettings(data);
-      setDraft(initDraft(data));
+      setDraft(initDraft(data, policies));
       try {
         localStorage.setItem('maxr_company_settings', JSON.stringify(cacheable(data)));
       } catch {
@@ -355,7 +529,12 @@ export function useSettings(): UseSettingsResult {
     )
       return true;
 
-    // Permission and late deduction policies
+    // Custom leave types, permission policies, and late deduction policy
+    if (
+      JSON.stringify(draft.customLeaveTypes || []) !==
+      JSON.stringify(savedExtended.customLeaveTypes || [])
+    )
+      return true;
     if (JSON.stringify(draft.permissionPolicy) !== JSON.stringify(server.permissionPolicy))
       return true;
     if (JSON.stringify(draft.lateDeductionPolicy) !== JSON.stringify(server.lateDeductionPolicy))
@@ -486,6 +665,7 @@ export function useSettings(): UseSettingsResult {
         leaveApprovalFlow: draft.leaveApprovalFlow ?? 'lead_only',
         advanceNoticeDays: draft.advanceNoticeDays ?? 2,
         excludeWeekendsFromLeave: draft.excludeWeekendsFromLeave ?? true,
+        customLeaveTypes: draft.customLeaveTypes ?? [],
         leavePolicies: draft.leavePolicies ?? [],
         permissionPolicy: draft.permissionPolicy ?? DEFAULT_PERMISSION_POLICY,
         lateDeductionPolicy: draft.lateDeductionPolicy ?? DEFAULT_LATE_DEDUCTION,
@@ -493,6 +673,68 @@ export function useSettings(): UseSettingsResult {
 
       persistExtendedConfig(newExtended);
       setSavedExtended(newExtended);
+
+      // Synchronize configured leave types with the backend leave_policies table
+      if (draft.customLeaveTypes && draft.customLeaveTypes.length > 0) {
+        try {
+          const currentBackend = await fetchLeavePolicies().catch(() => [] as LeavePolicy[]);
+          for (const item of draft.customLeaveTypes) {
+            const existing = currentBackend.find(
+              (bp) =>
+                bp.id === item.id ||
+                (item.code && bp.code.toUpperCase() === item.code.toUpperCase()),
+            );
+            const isPerm =
+              item.category === 'permission' ||
+              item.code === 'PM' ||
+              item.code === 'PERMISSION' ||
+              item.name.toLowerCase().includes('permission');
+            const hasBal = isPerm ? false : (item.isPaid ?? true);
+            const annualDays = hasBal ? item.quota || 0 : 0;
+            const carryForwardMax =
+              hasBal && item.carryForwardEnabled ? item.carryForwardMax || 0 : 0;
+
+            if (existing) {
+              const hasDiff =
+                existing.name !== item.name ||
+                existing.annualDays !== annualDays ||
+                existing.carryForwardMax !== carryForwardMax ||
+                existing.allowHalfDay !== (item.allowHalfDay ?? true) ||
+                existing.maxBackdateDays !== (item.maxBackdateDays ?? 0) ||
+                existing.isActive !== (item.isActive ?? true);
+              if (hasDiff) {
+                await updateLeavePolicy(existing.id, {
+                  name: item.name,
+                  annualDays,
+                  carryForwardMax,
+                  allowHalfDay: isPerm ? false : (item.allowHalfDay ?? true),
+                  maxBackdateDays: item.maxBackdateDays ?? 0,
+                  isActive: item.isActive ?? true,
+                  version: existing.version,
+                }).catch(() => {});
+              }
+            } else {
+              const rawCode =
+                (item.code || item.name.slice(0, 4))
+                  .trim()
+                  .toUpperCase()
+                  .replace(/[^A-Z0-9_]/g, '') || 'LV';
+              const cleanCode = rawCode.length >= 2 ? rawCode : `${rawCode}X`;
+              await createLeavePolicy({
+                code: cleanCode,
+                name: item.name,
+                hasBalance: hasBal,
+                annualDays,
+                carryForwardMax,
+                allowHalfDay: isPerm ? false : (item.allowHalfDay ?? true),
+                maxBackdateDays: item.maxBackdateDays ?? (isPerm ? 2 : 0),
+              }).catch(() => {});
+            }
+          }
+        } catch {
+          // Leave policy sync is best-effort alongside company settings
+        }
+      }
 
       if (updatedSettings) {
         setDraft(initDraft(updatedSettings));

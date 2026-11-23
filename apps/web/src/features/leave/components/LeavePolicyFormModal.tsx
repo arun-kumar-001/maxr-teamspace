@@ -6,8 +6,6 @@ export interface LeavePolicyFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   policy: LeavePolicy | null;
-  /** For a new type only: start without a yearly balance (a short permission, for example). */
-  withoutBalance?: boolean;
   onSubmit: (
     data: CreateLeavePolicyInput | (UpdateLeavePolicyInput & { id: string }),
   ) => Promise<void>;
@@ -17,7 +15,6 @@ export const LeavePolicyFormModal: React.FC<LeavePolicyFormModalProps> = ({
   isOpen,
   onClose,
   policy,
-  withoutBalance = false,
   onSubmit,
 }) => {
   const isEditing = Boolean(policy);
@@ -45,17 +42,17 @@ export const LeavePolicyFormModal: React.FC<LeavePolicyFormModalProps> = ({
       setMaxBackdateDays(policy.maxBackdateDays);
       setIsActive(policy.isActive);
     } else {
-      setCode(withoutBalance ? 'PM' : '');
-      setName(withoutBalance ? 'Short Permission' : '');
-      setHasBalance(!withoutBalance);
-      setAnnualDays(withoutBalance ? 0 : 12);
-      setCarryForwardMax(withoutBalance ? 0 : 5);
+      setCode('');
+      setName('');
+      setHasBalance(true);
+      setAnnualDays(12);
+      setCarryForwardMax(5);
       setAllowHalfDay(true);
       setMaxBackdateDays(3);
       setIsActive(true);
     }
     setError(null);
-  }, [policy, isOpen, withoutBalance]);
+  }, [policy, isOpen]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {

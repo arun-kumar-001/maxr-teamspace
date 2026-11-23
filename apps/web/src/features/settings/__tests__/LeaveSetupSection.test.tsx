@@ -1,137 +1,138 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
-import * as leaveApi from '../../leave/api/leave';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { cleanup, render, screen, fireEvent } from '@testing-library/react';
 import { LeaveSetupSection } from '../components/LeaveSetupSection';
 import type { SettingsDraft } from '../hooks/useSettings';
-import type { LeavePolicy } from '../../leave/types';
 
-vi.mock('../../leave/api/leave', () => ({
-  fetchLeavePolicies: vi.fn(),
-  createLeavePolicy: vi.fn(),
-  updateLeavePolicy: vi.fn(),
-}));
+afterEach(cleanup);
 
-const baseDraft: SettingsDraft = {
-  companyName: 'MAXR Technologies',
-  timezone: 'Asia/Kolkata',
-  workWeekStart: 'Monday',
-  workWeekEnd: 'Friday',
-  integrations: { email: true, sms: false, calendarSync: true, payrollExport: false },
-  leavePolicies: [],
-};
+describe('Dynamic LeaveSetupSection Suite', () => {
+  const baseDraft: SettingsDraft = {
+    companyName: 'MAXR Technologies',
+    timezone: 'Asia/Kolkata',
+    workWeekStart: 'Monday',
+    workWeekEnd: 'Friday',
+    integrations: {
+      email: true,
+      sms: false,
+      calendarSync: true,
+      payrollExport: false,
+    },
+    customLeaveTypes: [], // Starts empty!
+    leavePolicies: [],
+  };
 
-const sick: LeavePolicy = {
-  id: 'p-sick',
-  code: 'SICK',
-  name: 'Sick Leave',
-  hasBalance: true,
-  isActive: true,
-  annualDays: 8,
-  carryForwardMax: 0,
-  allowHalfDay: true,
-  maxBackdateDays: 3,
-  version: 2,
-  updatedAt: '2026-11-01T00:00:00Z',
-};
+  it('renders clean initial empty state when no leave types are configured', () => {
+    const handleUpdate = vi.fn();
+    render(<LeaveSetupSection draft={baseDraft} onUpdate={handleUpdate} />);
 
-beforeEach(() => {
-  vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValue([]);
-});
-
-afterEach(() => {
-  cleanup();
-  vi.resetAllMocks();
-});
-
-describe('LeaveSetupSection: leave types are stored on the server', () => {
-  it('shows an empty state when the server has no leave types', async () => {
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
-
-    expect(await screen.findByText('No Leave Types Configured')).toBeInTheDocument();
-    expect(screen.queryByTestId('leave-types-list')).not.toBeInTheDocument();
+    expect(screen.getByText('No Leave Types Configured')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Every company configures its leave types and policies independently/),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('create-leave-type-btn')).toBeInTheDocument();
   });
 
-  it('lists exactly the leave types the server returned', async () => {
-    vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValue([sick]);
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
+  it('displays summary metrics and leave type creation in unified single page', () => {
+    const handleUpdate = vi.fn();
+    render(<LeaveSetupSection draft={baseDraft} onUpdate={handleUpdate} />);
 
-    expect(await screen.findByTestId('leave-type-SICK')).toHaveTextContent('Sick Leave');
-    expect(screen.getByTestId('leave-type-SICK')).toHaveTextContent('8 days a year');
+    expect(screen.getByText('Dynamic Leave Policy & Quota Management')).toBeInTheDocument();
+    expect(screen.getByTestId('create-leave-type-btn')).toBeInTheDocument();
   });
 
-  it('creates a leave type through the server and reloads the list', async () => {
-    vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValueOnce([]).mockResolvedValue([sick]);
-    vi.mocked(leaveApi.createLeavePolicy).mockResolvedValue(sick);
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
-    await screen.findByText('No Leave Types Configured');
+  it('opens create leave type modal and creates a custom leave type', () => {
+    const handleUpdate = vi.fn();
+    render(<LeaveSetupSection draft={baseDraft} onUpdate={handleUpdate} />);
 
+    // Open modal
     fireEvent.click(screen.getByTestId('create-leave-type-btn'));
-    fireEvent.change(await screen.findByLabelText(/Code/i), { target: { value: 'SICK' } });
-    fireEvent.change(screen.getByLabelText(/Name/i), { target: { value: 'Sick Leave' } });
-    fireEvent.click(screen.getByTestId('submit-leave-policy-btn'));
+    expect(screen.getByText('Create Custom Leave Type')).toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(leaveApi.createLeavePolicy).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'SICK', name: 'Sick Leave', hasBalance: true }),
-      ),
-    );
-    expect(await screen.findByTestId('leave-type-SICK')).toBeInTheDocument();
-  });
-
-  it('deactivates a leave type with its current version', async () => {
-    vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValue([sick]);
-    vi.mocked(leaveApi.updateLeavePolicy).mockResolvedValue({ ...sick, isActive: false });
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Deactivate' }));
-
-    await waitFor(() =>
-      expect(leaveApi.updateLeavePolicy).toHaveBeenCalledWith('p-sick', {
-        isActive: false,
-        version: 2,
-      }),
-    );
-  });
-
-  it('says so when the leave types cannot be loaded, instead of showing an empty list', async () => {
-    vi.mocked(leaveApi.fetchLeavePolicies).mockRejectedValue(new Error('boom'));
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
-
-    expect(await screen.findByTestId('leave-types-error')).toHaveTextContent('boom');
-    expect(screen.queryByText('No Leave Types Configured')).not.toBeInTheDocument();
-  });
-
-  it('keeps the short-permission limits in the settings draft', async () => {
-    const onUpdate = vi.fn();
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={onUpdate} />);
-    await screen.findByText('No Leave Types Configured');
-
-    fireEvent.change(screen.getByLabelText(/Permissions per month/i), { target: { value: '3' } });
-
-    expect(onUpdate).toHaveBeenCalledWith({
-      permissionPolicy: expect.objectContaining({ maxPermissionsPerMonth: 3 }),
+    // Fill form
+    fireEvent.change(screen.getByLabelText(/Leave Type Name/i), {
+      target: { value: 'Casual Leave' },
     });
+    fireEvent.change(screen.getByLabelText(/Short Code/i), {
+      target: { value: 'CL' },
+    });
+
+    // Save
+    fireEvent.click(screen.getByRole('button', { name: 'Save Leave Type' }));
+
+    expect(handleUpdate).toHaveBeenCalledTimes(1);
+    const updatedPayload = handleUpdate.mock.calls[0]![0];
+    expect(updatedPayload.customLeaveTypes).toHaveLength(1);
+    expect(updatedPayload.customLeaveTypes[0].name).toBe('Casual Leave');
+    expect(updatedPayload.customLeaveTypes[0].code).toBe('CL');
   });
 
-  it('Create Permission starts a leave type without a yearly balance', async () => {
-    vi.mocked(leaveApi.createLeavePolicy).mockResolvedValue(sick);
-    render(<LeaveSetupSection draft={baseDraft} onUpdate={vi.fn()} />);
-    await screen.findByText('No Leave Types Configured');
+  it('renders table with actions when leave types exist', () => {
+    const handleUpdate = vi.fn();
+    const draftWithLeaves: SettingsDraft = {
+      ...baseDraft,
+      customLeaveTypes: [
+        {
+          id: 'cl-1',
+          name: 'Casual Leave',
+          code: 'CL',
+          category: 'casual',
+          frequency: 'monthly',
+          quota: 12,
+          isPaid: true,
+          accrualMethod: 'monthly',
+          carryForwardEnabled: false,
+          encashmentEnabled: false,
+          isActive: true,
+        },
+      ],
+    };
 
+    render(<LeaveSetupSection draft={draftWithLeaves} onUpdate={handleUpdate} />);
+
+    expect(screen.getByText('Casual Leave')).toBeInTheDocument();
+    expect(screen.getAllByText('CL')[0]).toBeInTheDocument();
+    expect(screen.getByText('Paid')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
+
+    // 3-dot action menu
+    const actionMenuBtn = screen.getByLabelText(/Actions for Casual Leave/i);
+    expect(actionMenuBtn).toBeInTheDocument();
+
+    // Clicking 3-dot button opens the actions dropdown
+    fireEvent.click(actionMenuBtn);
+    expect(screen.getByTitle('Edit leave type')).toBeInTheDocument();
+    expect(screen.getByTitle('Deactivate leave type')).toBeInTheDocument();
+    expect(screen.getByTitle('Delete leave type')).toBeInTheDocument();
+  });
+
+  it('opens permission modal and allows configuring short permission', () => {
+    const handleUpdate = vi.fn();
+    render(<LeaveSetupSection draft={baseDraft} onUpdate={handleUpdate} />);
+
+    // Click Create Permission button
     fireEvent.click(screen.getByTestId('create-permission-btn'));
-    fireEvent.click(await screen.findByTestId('submit-leave-policy-btn'));
+    expect(screen.getByText('Configure Permission')).toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(leaveApi.createLeavePolicy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          code: 'PM',
-          name: 'Short Permission',
-          hasBalance: false,
-          annualDays: 0,
-        }),
-      ),
-    );
+    // Fill custom permission name and code
+    const nameInput = screen.getByLabelText(/Permission Name/i);
+    const codeInput = screen.getByLabelText(/Short Code/i);
+    fireEvent.change(nameInput, { target: { value: 'Staff Permission' } });
+    fireEvent.change(codeInput, { target: { value: 'SP' } });
+
+    // Save Permission
+    fireEvent.click(screen.getByTestId('save-permission-modal-btn'));
+
+    expect(handleUpdate).toHaveBeenCalledTimes(1);
+    const updatedPayload = handleUpdate.mock.calls[0]![0];
+    expect(updatedPayload.permissionPolicy).toBeDefined();
+    expect(updatedPayload.permissionPolicy.enabled).toBe(true);
+    expect(updatedPayload.permissionPolicy.maxPermissionsPerMonth).toBe(2);
+    expect(updatedPayload.permissionPolicy.maxHoursPerPermission).toBe(2);
+    expect(updatedPayload.customLeaveTypes).toHaveLength(1);
+    expect(updatedPayload.customLeaveTypes[0].name).toBe('Staff Permission');
+    expect(updatedPayload.customLeaveTypes[0].code).toBe('SP');
+    expect(updatedPayload.customLeaveTypes[0].category).toBe('permission');
   });
 });
