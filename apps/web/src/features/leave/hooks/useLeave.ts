@@ -14,7 +14,6 @@ import type {
   LeaveCalendarEntry,
 } from '../types';
 import * as leaveApi from '../api/leave';
-import { getConfiguredLeavePolicies, getConfiguredLeaveBalances } from '../lib/configuredPolicies';
 
 const FALLBACK_POLICIES: LeavePolicy[] = [
   {
@@ -279,19 +278,9 @@ const FALLBACK_CALENDAR: LeaveCalendarEntry[] = [
 ];
 
 export function useLeave(initialYear: number = new Date().getFullYear()) {
-  const [policies, setPolicies] = useState<LeavePolicy[]>(() => {
-    const configured = getConfiguredLeavePolicies();
-    if (configured && configured.length > 0) return configured;
-    return demoOr([], FALLBACK_POLICIES);
-  });
+  const [policies, setPolicies] = useState<LeavePolicy[]>(demoOr([], FALLBACK_POLICIES));
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [balances, setBalances] = useState<LeaveBalance[]>(() => {
-    const configured = getConfiguredLeavePolicies();
-    if (configured && configured.length > 0) {
-      return getConfiguredLeaveBalances(configured, initialYear);
-    }
-    return demoOr([], FALLBACK_BALANCES);
-  });
+  const [balances, setBalances] = useState<LeaveBalance[]>(demoOr([], FALLBACK_BALANCES));
   const [requests, setRequests] = useState<LeaveRequest[]>(demoOr([], FALLBACK_REQUESTS));
   const [calendarEntries, setCalendarEntries] = useState<LeaveCalendarEntry[]>(
     demoOr([], FALLBACK_CALENDAR),
@@ -315,18 +304,10 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingPolicies(true);
       setPolicyError(null);
       const data = await leaveApi.fetchLeavePolicies();
-      if (data.length > 0) {
-        setPolicies(data);
-      } else {
-        const configured = getConfiguredLeavePolicies();
-        setPolicies(
-          configured && configured.length > 0 ? configured : demoOr(data, FALLBACK_POLICIES),
-        );
-      }
+      setPolicies(data.length > 0 ? data : demoOr(data, FALLBACK_POLICIES));
     } catch (err) {
       setPolicyError(err instanceof Error ? err.message : 'Failed to fetch leave policies');
-      const configured = getConfiguredLeavePolicies();
-      setPolicies(configured && configured.length > 0 ? configured : demoOr([], FALLBACK_POLICIES));
+      setPolicies(demoOr([], FALLBACK_POLICIES));
     } finally {
       setIsLoadingPolicies(false);
     }
@@ -350,24 +331,10 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingBalances(true);
       setBalanceError(null);
       const data = await leaveApi.fetchMyLeaveBalances(year);
-      if (data.length > 0) {
-        setBalances(data);
-      } else {
-        const configured = getConfiguredLeavePolicies();
-        if (configured && configured.length > 0) {
-          setBalances(getConfiguredLeaveBalances(configured, year));
-        } else {
-          setBalances(demoOr(data, FALLBACK_BALANCES));
-        }
-      }
+      setBalances(data.length > 0 ? data : demoOr(data, FALLBACK_BALANCES));
     } catch (err) {
       setBalanceError(err instanceof Error ? err.message : 'Failed to fetch leave balances');
-      const configured = getConfiguredLeavePolicies();
-      if (configured && configured.length > 0) {
-        setBalances(getConfiguredLeaveBalances(configured, year));
-      } else {
-        setBalances(demoOr([], FALLBACK_BALANCES));
-      }
+      setBalances(demoOr([], FALLBACK_BALANCES));
     } finally {
       setIsLoadingBalances(false);
     }

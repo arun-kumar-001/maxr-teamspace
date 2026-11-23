@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import type { LeavePolicy, Holiday, LeaveBalance } from '../types';
 import { LeavePolicyCard } from '../components/LeavePolicyCard';
@@ -232,6 +232,47 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
   });
 
   describe('LeaveBalancesSummary', () => {
+    it('shows an honest empty state, with no sample leave types, when nothing is set up', () => {
+      render(<LeaveBalancesSummary balances={[]} year={2026} />);
+
+      expect(screen.getByTestId('leave-balances-empty')).toBeInTheDocument();
+      expect(screen.getByText('No leave balances yet')).toBeInTheDocument();
+      expect(screen.queryByText(/Annual Leave|Sick Leave|Work from Home/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
+    });
+
+    it('computes totals from the balances it is given, not from fixed numbers', () => {
+      const two: LeaveBalance[] = [
+        {
+          leaveTypeId: 'pol-001',
+          code: 'PTO',
+          name: 'Paid Time Off',
+          year: 2026,
+          allotted: 10,
+          carriedForward: 0,
+          used: 4,
+          remaining: 6,
+        },
+        {
+          leaveTypeId: 'pol-002',
+          code: 'SICK',
+          name: 'Sick Leave',
+          year: 2026,
+          allotted: 5,
+          carriedForward: 1,
+          used: 1,
+          remaining: 5,
+        },
+      ];
+      render(<LeaveBalancesSummary balances={two} year={2026} />);
+
+      const totals = within(screen.getByTestId('leave-balances-totals'));
+      expect(totals.getByText('Total entitlement').nextElementSibling).toHaveTextContent('16');
+      expect(totals.getByText('Used').nextElementSibling).toHaveTextContent('5');
+      expect(totals.getByText('Available').nextElementSibling).toHaveTextContent('11');
+      expect(screen.getByTestId('leave-balance-bar-SICK')).toHaveStyle({ width: '17%' });
+    });
+
     it('renders balance metrics and breakdown', () => {
       render(<LeaveBalancesSummary balances={mockBalances} year={2026} />);
 
