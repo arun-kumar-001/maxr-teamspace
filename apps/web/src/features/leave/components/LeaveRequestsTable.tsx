@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { LeaveBalance, LeaveRequest } from '../types';
-import { EmptyState, KpiCard } from '../../../components/ui';
+import { EmptyState } from '../../../components/ui';
 
 export interface DisplayLeaveItem {
   id: string;
@@ -230,110 +230,6 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     };
   }, [displayItems]);
 
-  const summaryCards = useMemo(() => {
-    const totalCount = statusCounts.all;
-    const pendingCount = statusCounts.pending;
-    const approvedCount = statusCounts.approved;
-    const rejectedCount = statusCounts.rejected;
-
-    return [
-      {
-        key: 'all',
-        filterValue: 'all' as const,
-        label: 'Total Requests',
-        value: String(totalCount),
-        badge: 'All submissions',
-        borderColor: 'border-teal-300',
-        iconColor: 'text-teal-600',
-        pillBg: 'bg-teal-50',
-        pillText: 'text-teal-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-        ),
-      },
-      {
-        key: 'pending',
-        filterValue: 'pending' as const,
-        label: 'Pending Requests',
-        value: String(pendingCount),
-        badge: 'Awaiting review',
-        borderColor: 'border-amber-300',
-        iconColor: 'text-amber-600',
-        pillBg: 'bg-amber-50',
-        pillText: 'text-amber-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-        ),
-      },
-      {
-        key: 'approved',
-        filterValue: 'approved' as const,
-        label: 'Approved Requests',
-        value: String(approvedCount),
-        badge: 'Approved',
-        borderColor: 'border-emerald-300',
-        iconColor: 'text-emerald-600',
-        pillBg: 'bg-emerald-50',
-        pillText: 'text-emerald-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-        ),
-      },
-      {
-        key: 'rejected',
-        filterValue: 'rejected' as const,
-        label: 'Rejected Requests',
-        value: String(rejectedCount),
-        badge: 'Declined',
-        borderColor: 'border-rose-300',
-        iconColor: 'text-rose-600',
-        pillBg: 'bg-rose-50',
-        pillText: 'text-rose-800',
-        icon: (
-          <svg
-            className="w-7 h-7"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
-        ),
-      },
-    ];
-  }, [statusCounts]);
 
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -467,29 +363,7 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
 
   return (
     <div className="space-y-5" data-testid="leave-requests-container">
-      {/* 1. Request Summary KPI Cards matching Admin Dashboard style */}
-      <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4"
-        data-testid="leave-summary-cards"
-      >
-        {summaryCards.map((card) => (
-          <KpiCard
-            key={card.key}
-            label={card.label}
-            value={card.value}
-            icon={card.icon}
-            badge={card.badge}
-            borderColor={card.borderColor}
-            iconColor={card.iconColor}
-            pillBg={card.pillBg}
-            pillText={card.pillText}
-            isActive={statusFilter === card.filterValue}
-            onClick={() => setStatusFilter(card.filterValue)}
-          />
-        ))}
-      </div>
-
-      {/* 2. My Leave Requests Table Card */}
+      {/* My Leave Requests Table Card */}
       <div
         className="rounded-2xl border bg-white p-4 sm:p-5 space-y-4"
         style={{
