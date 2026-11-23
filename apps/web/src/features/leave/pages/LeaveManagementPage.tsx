@@ -16,10 +16,8 @@ import { LeaveApprovalsTab } from '../components/LeaveApprovalsTab';
 type LeaveTab = 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays';
 
 export interface LeaveManagementPageProps {
-export interface LeaveManagementPageProps {
   initialTab?: LeaveTab;
   onNavigate?: (path: string) => void;
-}
 }
 
 interface LeaveManagementPageContentProps extends LeaveManagementPageProps {
