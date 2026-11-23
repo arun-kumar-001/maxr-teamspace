@@ -109,10 +109,7 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
     if (currentPath === '/leave/balances') {
       return role === 'staff' ? '/staff/leave' : '/leave';
     }
-    if (currentPath === '/hr/leave') {
-      return '/leave/policies';
-    }
-    if (currentPath === '/hr/holidays' || currentPath === '/leave/calendar') {
+    if (currentPath === '/hr/holidays') {
       return '/leave/holidays';
     }
     return currentPath;

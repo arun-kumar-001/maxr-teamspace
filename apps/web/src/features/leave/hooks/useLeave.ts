@@ -577,27 +577,7 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     loadHolidays(selectedYear);
     loadBalances(selectedYear);
     loadMyRequests();
-
-    // Load initial 30 days of leave calendar
-    const today = new Date();
-    const fromStr = today.toISOString().slice(0, 10);
-    const toDate = new Date(today.getTime() + 30 * 86_400_000);
-    const toStr = toDate.toISOString().slice(0, 10);
-    loadCalendar(fromStr, toStr);
-  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadCalendar, selectedYear]);
-
-  useEffect(() => {
-    const handleSync = () => {
-      void loadPolicies();
-      void loadBalances(selectedYear);
-    };
-    window.addEventListener('maxr:company-config-updated', handleSync);
-    window.addEventListener('storage', handleSync);
-    return () => {
-      window.removeEventListener('maxr:company-config-updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
-  }, [loadPolicies, loadBalances, selectedYear]);
+  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, selectedYear]);
 
   return {
     policies,

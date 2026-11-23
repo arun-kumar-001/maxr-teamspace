@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import type { LeavePolicy, Holiday, LeaveBalance } from '../types';
-import { LeavePolicyCard } from '../components/LeavePolicyCard';
 import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { AddHolidayModal } from '../components/AddHolidayModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
@@ -99,24 +98,6 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
 
   afterEach(() => {
     cleanup();
-  });
-
-  describe('LeavePolicyCard', () => {
-    it('renders policy details, quotas, and edit button', () => {
-      const onEdit = vi.fn();
-      render(<LeavePolicyCard policy={mockPolicies[0]!} onEdit={onEdit} canManage={true} />);
-
-      expect(screen.getByText('PTO')).toBeInTheDocument();
-      expect(screen.getByText('Paid Time Off')).toBeInTheDocument();
-      expect(screen.getByText('Active')).toBeInTheDocument();
-      expect(screen.getByText('Quota Managed')).toBeInTheDocument();
-      expect(screen.getByText('18 days')).toBeInTheDocument();
-      expect(screen.getByText('5 days')).toBeInTheDocument();
-
-      const editBtn = screen.getByTestId('edit-policy-btn-pol-001');
-      fireEvent.click(editBtn);
-      expect(onEdit).toHaveBeenCalledWith(mockPolicies[0]!);
-    });
   });
 
   describe('LeavePolicyFormModal', () => {
@@ -331,10 +312,8 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
       expect(screen.getByText('Company Holiday Calendar')).toBeInTheDocument();
 
-      // Switch to Leave Policies
-      fireEvent.click(screen.getByRole('radio', { name: 'Leave Policies' }));
-      expect(screen.getByText('Configured Leave Policies')).toBeInTheDocument();
-      expect(screen.getByText('New Policy')).toBeInTheDocument();
+      // Leave types are created in Leave Setup, not on this page
+      expect(screen.queryByRole('radio', { name: 'Leave Policies' })).not.toBeInTheDocument();
     });
 
     it('synchronizes URL route on tab click when router context is present', async () => {
@@ -371,10 +350,6 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       // Click "Holiday Calendar"
       fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
       expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/holidays');
-
-      // Click "Leave Policies"
-      fireEvent.click(screen.getByRole('radio', { name: 'Leave Policies' }));
-      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/policies');
 
       // Click "My Requests"
       fireEvent.click(screen.getByRole('radio', { name: 'My Requests' }));

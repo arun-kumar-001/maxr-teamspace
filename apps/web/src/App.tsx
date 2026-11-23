@@ -871,22 +871,8 @@ function AppRoutes() {
           </ShellLayout>
         }
       />
-      <Route
-        path="/leave/policies"
-        element={
-          <ShellLayout>
-            <LeaveManagementPage initialTab="policies" />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/hr/leave"
-        element={
-          <ShellLayout>
-            <LeaveManagementPage initialTab="policies" />
-          </ShellLayout>
-        }
-      />
+      <Route path="/leave/policies" element={<Navigate to="/admin/settings?tab=leave" replace />} />
+      <Route path="/hr/leave" element={<Navigate to="/admin/settings?tab=leave" replace />} />
       <Route
         path="/hr/holidays"
         element={

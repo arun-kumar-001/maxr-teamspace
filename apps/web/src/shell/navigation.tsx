@@ -617,8 +617,8 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           children: [
             { id: '/leave', label: 'My Leave', href: '/leave' },
             { id: '/leave/approvals', label: 'Leave Approvals', href: '/leave/approvals' },
-            { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
-            { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
+            { id: '/leave/calendar', label: 'Leave Calendar', href: '/leave/calendar' },
+            { id: '/leave/holidays', label: 'Holiday Calendar', href: '/leave/holidays' },
           ],
         },
         {
@@ -745,8 +745,8 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           children: [
             { id: '/leave', label: 'My Leave', href: '/leave' },
             { id: '/leave/approvals', label: 'Leave Approvals', href: '/leave/approvals' },
-            { id: '/leave/holidays', label: 'Leave Calendar', href: '/leave/holidays' },
-            { id: '/leave/policies', label: 'Leave Policies', href: '/leave/policies' },
+            { id: '/leave/calendar', label: 'Leave Calendar', href: '/leave/calendar' },
+            { id: '/leave/holidays', label: 'Holiday Calendar', href: '/leave/holidays' },
           ],
         },
         {
