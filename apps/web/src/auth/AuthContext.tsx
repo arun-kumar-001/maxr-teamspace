@@ -143,9 +143,12 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
             // Auto-establish session in dev mode if missing or expired
             if (isDevMockAuth && import.meta.env.MODE !== 'test') {
               try {
+                const devEmail = import.meta.env.VITE_DEV_MOCK_EMAIL;
+                const devPassword = import.meta.env.VITE_DEV_MOCK_PASSWORD;
+                if (!devEmail || !devPassword) return;
                 const loginRes = await apiFetch('/api/v1/auth/login', {
                   method: 'POST',
-                  body: JSON.stringify({ email: 'admin@maxr.internal', password: 'Password123!' }),
+                  body: JSON.stringify({ email: devEmail, password: devPassword }),
                 });
                 if (loginRes.ok) {
                   const loginJson = await loginRes.json();

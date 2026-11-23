@@ -165,7 +165,7 @@ describe('Issue #11 - Same Team Leave Balances', () => {
     });
 
     // Filter to Sick Leave only
-    const sickFilterBtn = screen.getByTestId('team-leave-filter-sick');
+    const sickFilterBtn = screen.getByTestId('team-leave-filter-sl');
     fireEvent.click(sickFilterBtn);
 
     const section = screen.getByTestId('same-team-leave-balances');
@@ -200,5 +200,61 @@ describe('Issue #11 - Same Team Leave Balances', () => {
     fireEvent.change(searchInput, { target: { value: 'ENG-001' } });
     expect(screen.getByText('Sarah Connor')).toBeInTheDocument();
     expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
+  });
+
+  describe('the leave type filter follows the leave types that exist', () => {
+    const row = (employeeId: string, code: string, name: string) => ({
+      ...mockTeamBalances[0]!,
+      employeeId,
+      leaveTypeId: `lt-${code}`,
+      code,
+      name,
+    });
+    const directory = (ids: string[]) =>
+      ids.map((id) => ({
+        id,
+        email: `${id}@maxr.internal`,
+        employeeCode: id.toUpperCase(),
+        department: { id: 'dept-eng', name: 'Engineering', code: 'ENG' },
+      }));
+    const serve = async (rows: ReturnType<typeof row>[]) => {
+      vi.mocked(leaveApi.fetchLeaveBalances).mockResolvedValue({
+        data: rows as unknown as Awaited<ReturnType<typeof leaveApi.fetchLeaveBalances>>['data'],
+        meta: { page: 1, pageSize: 50, total: rows.length },
+      });
+      vi.mocked(employeeApi.fetchEmployeeDirectory).mockResolvedValue({
+        data: directory([...new Set(rows.map((r) => r.employeeId))]) as unknown as Awaited<
+          ReturnType<typeof employeeApi.fetchEmployeeDirectory>
+        >['data'],
+        meta: { page: 1, pageSize: 50, total: rows.length, totalPages: 1 },
+      });
+      render(<LeaveBalancesSummary balances={[]} year={2026} />);
+      await waitFor(() =>
+        expect(screen.getByTestId('same-team-leave-balances')).toBeInTheDocument(),
+      );
+    };
+
+    it('offers only the types in the data, with none of the old fixed ones', async () => {
+      await serve([row('emp-001', 'STUDY', 'Study Leave')]);
+      const section = within(screen.getByTestId('same-team-leave-balances'));
+      await waitFor(() =>
+        expect(section.getByTestId('team-leave-filter-study')).toBeInTheDocument(),
+      );
+      expect(section.getByRole('button', { name: 'Study Leave' })).toBeInTheDocument();
+      expect(section.queryByRole('button', { name: 'Annual Leave' })).not.toBeInTheDocument();
+      expect(section.queryByRole('button', { name: 'Sick Leave' })).not.toBeInTheDocument();
+      expect(section.queryByRole('button', { name: 'Casual Leave' })).not.toBeInTheDocument();
+    });
+
+    it('matches the type exactly: AL does not also pick up CASUAL', async () => {
+      await serve([row('emp-001', 'AL', 'Annual Leave'), row('emp-002', 'CASUAL', 'Casual Leave')]);
+      const section = within(screen.getByTestId('same-team-leave-balances'));
+      await waitFor(() => expect(section.getByTestId('team-leave-filter-al')).toBeInTheDocument());
+
+      fireEvent.click(section.getByTestId('team-leave-filter-al'));
+
+      expect(section.getByTestId('team-balance-row-emp-001-AL')).toBeInTheDocument();
+      expect(section.queryByTestId('team-balance-row-emp-002-CASUAL')).not.toBeInTheDocument();
+    });
   });
 });

@@ -975,6 +975,11 @@ export function CreateEmployeeForm({
             htmlFor="create-emp-department"
             required
             error={errors.departmentId || departmentError || undefined}
+            helperText={
+              !isLoadingDepartments && departmentOptions.length === 0 && !departmentError
+                ? 'No departments have been created yet.'
+                : undefined
+            }
           >
             <Select
               id="create-emp-department"

@@ -101,9 +101,7 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [leaveTypeFilter, setLeaveTypeFilter] = useState<'ALL' | 'ANNUAL' | 'SICK' | 'CASUAL'>(
-    'ALL',
-  );
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState<string>('ALL');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
@@ -189,16 +187,7 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
         }
       }
 
-      // Leave Type Filter
-      if (leaveTypeFilter !== 'ALL') {
-        const typeStr = `${tb.name} ${tb.code}`.toLowerCase();
-        if (leaveTypeFilter === 'ANNUAL' && !typeStr.includes('annual') && !typeStr.includes('al'))
-          return false;
-        if (leaveTypeFilter === 'SICK' && !typeStr.includes('sick') && !typeStr.includes('sl'))
-          return false;
-        if (leaveTypeFilter === 'CASUAL' && !typeStr.includes('casual') && !typeStr.includes('cl'))
-          return false;
-      }
+      if (leaveTypeFilter !== 'ALL' && tb.code !== leaveTypeFilter) return false;
 
       // Search Query Filter
       if (searchQuery.trim()) {
@@ -214,6 +203,15 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
       return true;
     });
   }, [teamBalances, employeeMap, adminDepartment, leaveTypeFilter, searchQuery]);
+
+  // The filter offers the leave types that exist in the team's balances, not a fixed list.
+  const leaveTypeOptions = useMemo(() => {
+    const byCode = new Map<string, string>();
+    for (const tb of teamBalances) byCode.set(tb.code, tb.name);
+    return [...byCode.entries()]
+      .map(([code, name]) => ({ id: code, label: name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [teamBalances]);
 
   // Compute cards and totals from active leave policies and user balances
   const cards = buildCards(balances, policies);
@@ -434,14 +432,7 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
             <span className="text-xs font-semibold text-text-muted mr-1 hidden md:inline">
               Type:
             </span>
-            {(
-              [
-                { id: 'ALL', label: 'All Types' },
-                { id: 'ANNUAL', label: 'Annual Leave' },
-                { id: 'SICK', label: 'Sick Leave' },
-                { id: 'CASUAL', label: 'Casual Leave' },
-              ] as const
-            ).map((filter) => {
+            {[{ id: 'ALL', label: 'All Types' }, ...leaveTypeOptions].map((filter) => {
               const active = leaveTypeFilter === filter.id;
               return (
                 <button

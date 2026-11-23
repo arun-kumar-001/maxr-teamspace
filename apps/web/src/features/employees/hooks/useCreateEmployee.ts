@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { demoOr } from '@/lib/demo-data';
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, ROLES, type Role } from '@maxr/shared';
 import {
   createEmployee,
@@ -249,8 +250,10 @@ export function useCreateEmployee({
   // Must regenerate whenever the payload changes, but reuse for retries of the same payload.
   const idempotencyKeyRef = useRef<string>(generateIdempotencyKey());
 
-  // Reference Data States (pre-seeded with standard defaults to ensure instant operability)
-  const [departments, setDepartments] = useState<DepartmentSelectOption[]>(DEFAULT_DEPARTMENTS);
+  // Reference data comes from the server. Sample options exist for the development demo only.
+  const [departments, setDepartments] = useState<DepartmentSelectOption[]>(
+    demoOr([], DEFAULT_DEPARTMENTS),
+  );
   const [isLoadingDepartments, setIsLoadingDepartments] = useState<boolean>(false);
   const [departmentError, setDepartmentError] = useState<string | null>(null);
 
@@ -258,7 +261,7 @@ export function useCreateEmployee({
   const [isLoadingDesignations, setIsLoadingDesignations] = useState<boolean>(false);
   const [designationError, setDesignationError] = useState<string | null>(null);
 
-  const [managers, setManagers] = useState<ManagerSelectOption[]>(DEFAULT_MANAGERS);
+  const [managers, setManagers] = useState<ManagerSelectOption[]>(demoOr([], DEFAULT_MANAGERS));
   const [isLoadingManagers, setIsLoadingManagers] = useState<boolean>(false);
   const [managerError, setManagerError] = useState<string | null>(null);
 
@@ -278,13 +281,15 @@ export function useCreateEmployee({
           fetchEligibleManagers(ac.signal),
         ]);
         if (!ac.signal.aborted) {
-          setDepartments(depts.length > 0 ? depts : DEFAULT_DEPARTMENTS);
-          setManagers(mgrs.length > 0 ? mgrs : DEFAULT_MANAGERS);
+          setDepartments(depts.length > 0 ? depts : demoOr(depts, DEFAULT_DEPARTMENTS));
+          setManagers(mgrs.length > 0 ? mgrs : demoOr(mgrs, DEFAULT_MANAGERS));
         }
       } catch {
         if (!ac.signal.aborted) {
-          setDepartments(DEFAULT_DEPARTMENTS);
-          setManagers(DEFAULT_MANAGERS);
+          setDepartments(demoOr([], DEFAULT_DEPARTMENTS));
+          setManagers(demoOr([], DEFAULT_MANAGERS));
+          setDepartmentError('Could not load departments. Check your connection and try again.');
+          setManagerError('Could not load managers. Check your connection and try again.');
         }
       } finally {
         if (!ac.signal.aborted) {
@@ -313,15 +318,24 @@ export function useCreateEmployee({
       try {
         const desigs = await fetchDesignationsByDepartment(formData.departmentId, ac.signal);
         if (!ac.signal.aborted) {
-          const fallback =
-            DEFAULT_DESIGNATIONS_MAP[formData.departmentId] || DEFAULT_GENERIC_DESIGNATIONS;
-          setDesignations(desigs.length > 0 ? desigs : fallback);
+          setDesignations(
+            desigs.length > 0
+              ? desigs
+              : demoOr(
+                  desigs,
+                  DEFAULT_DESIGNATIONS_MAP[formData.departmentId] || DEFAULT_GENERIC_DESIGNATIONS,
+                ),
+          );
         }
       } catch {
         if (!ac.signal.aborted) {
-          const fallback =
-            DEFAULT_DESIGNATIONS_MAP[formData.departmentId] || DEFAULT_GENERIC_DESIGNATIONS;
-          setDesignations(fallback);
+          setDesignations(
+            demoOr(
+              [],
+              DEFAULT_DESIGNATIONS_MAP[formData.departmentId] || DEFAULT_GENERIC_DESIGNATIONS,
+            ),
+          );
+          setDesignationError('Could not load designations. Check your connection and try again.');
         }
       } finally {
         if (!ac.signal.aborted) {
