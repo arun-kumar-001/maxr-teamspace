@@ -1,0 +1,464 @@
+import { PaginatedResponse } from '@maxr/shared';
+import { badRequest, conflict, forbidden, notFound } from '../../http/errors';
+import { buildPage, resolveSort, toOffsetLimit } from '../../http/pagination';
+import { AuditLogger } from '../../platform/audit/types';
+import type { StorageService } from '../../platform/storage/storage-service';
+import { ScopeFilter } from '../rbac';
+import {
+  ATTENDANCE_SORTABLE_FIELDS,
+  CheckInInput,
+  CheckOutInput,
+  ListAttendanceQuery,
+  TeamCalendarQuery,
+} from './attendance.schemas';
+import { IAttendanceRepository, type PhotoKind } from './attendance.repository';
+import {
+  AttendanceBreak,
+  AttendanceRecord,
+  AttendanceStatus,
+  TeamCalendarData,
+  TodayAttendanceSummary,
+} from './attendance.types';
+
+import { CompanySettingsReader } from '../settings';
+import type { ShiftResolver, ShiftSummary } from '../shifts';
+
+export interface RequestContext {
+  actorId: string;
+  actorRole: string;
+  employeeId?: string;
+  requestId?: string;
+}
+
+const DEFAULT_SETTINGS_READER: CompanySettingsReader = {
+  getBasic: async () => ({
+    companyName: 'MAXR Teamspace',
+    timezone: 'UTC',
+    workWeek: {
+      start: 'Monday',
+      end: 'Friday',
+      days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
+  }),
+};
+
+const toMinutes = (hhmm: string): number => {
+  const [h = '0', m = '0'] = hhmm.split(':');
+  return Number(h) * 60 + Number(m);
+};
+
+/** Minutes since local midnight in `timeZone`. */
+function localMinutes(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const part = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return part('hour') * 60 + part('minute');
+}
+
+/**
+ * `late` when the check-in is after the shift start plus its grace (D-13), judged on the company
+ * clock. A shift that runs past midnight needs no special case: its end is earlier than its start,
+ * so an early-morning check-in (the tail of yesterday's shift) is already before start plus grace.
+ * Everything else is `present`; half days and absences are worked out per day by the reports.
+ */
+export function checkInStatus(shift: ShiftSummary, now: Date, timeZone: string): AttendanceStatus {
+  const local = localMinutes(now, timeZone);
+  return local > toMinutes(shift.startTime) + shift.graceMinutes ? 'late' : 'present';
+}
+
+export class AttendanceService {
+  private readonly settingsReader: CompanySettingsReader;
+
+  constructor(
+    private readonly repo: IAttendanceRepository,
+    private readonly audit?: AuditLogger,
+    settingsReader?: CompanySettingsReader,
+    private readonly isEmployeeActive: (employeeId: string) => Promise<boolean> | boolean = (id) =>
+      repo.isEmployeeActive(id),
+    /** Without it every check-in is `present`. */
+    private readonly shiftResolver?: ShiftResolver,
+    /** Where photos are kept. Required whenever a check-in or check-out carries one. */
+    private readonly storage?: StorageService,
+  ) {
+    this.settingsReader = settingsReader ?? DEFAULT_SETTINGS_READER;
+  }
+
+  /**
+   * Puts a captured photo into private storage (type check, size limit, virus scan) and returns
+   * its key; the attendance row keeps only that key. No photo, no key.
+   */
+  private async storePhoto(
+    photoDataUrl: string | undefined,
+    kind: PhotoKind,
+    ctx: RequestContext,
+  ): Promise<string | undefined> {
+    if (!photoDataUrl) return undefined;
+    if (!this.storage) {
+      // A wiring mistake, not a client error: never drop the photo silently.
+      throw new Error('A photo was sent but the attendance service has no storage');
+    }
+    const match = /^data:image\/(jpeg|jpg|png);base64,(.+)$/s.exec(photoDataUrl);
+    if (!match) throw badRequest('The photo must be a PNG or JPEG image');
+    const isPng = match[1] === 'png';
+    const stored = await this.storage.upload({
+      category: 'attendancePhotos',
+      filename: `${kind}.${isPng ? 'png' : 'jpg'}`,
+      declaredType: isPng ? 'image/png' : 'image/jpeg',
+      body: Buffer.from(match[2]!.replace(/\s+/g, ''), 'base64'),
+      uploadedBy: ctx.actorId,
+    });
+    return stored.key;
+  }
+
+  private async discardPhoto(key: string | undefined): Promise<void> {
+    if (key) await this.storage?.delete(key).catch(() => undefined);
+  }
+
+  /** A short-lived link to one record's photo, after the caller's scope has been checked. */
+  async photoLink(
+    id: string,
+    which: PhotoKind,
+    ctx: RequestContext,
+    scope: ScopeFilter,
+  ): Promise<{ url: string; expiresAt: string | null }> {
+    // Out of scope looks exactly like missing.
+    const record = await this.repo.findById(id, scope);
+    const hasPhoto = which === 'check-in' ? record?.hasCheckInPhoto : record?.hasCheckOutPhoto;
+    if (!record || !hasPhoto) throw notFound('Photo not found');
+    const ref = await this.repo.findPhotoRef(id, which);
+    if (!ref) throw notFound('Photo not found');
+
+    await this.audit?.tryRecord({
+      action: 'attendance.view_photo',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: id,
+      metadata: { which },
+      requestId: ctx.requestId,
+    });
+
+    if (ref.key) {
+      if (!this.storage) throw new Error('The attendance service has no storage');
+      const link = await this.storage.createDownloadLink(ref.key, {
+        subject: ctx.actorId,
+        ttlSeconds: 120,
+      });
+      return { url: link.url, expiresAt: link.expiresAt };
+    }
+    // Written before photos moved to storage and not copied yet (npm run db:move-attendance-photos).
+    if (ref.legacyDataUrl) return { url: ref.legacyDataUrl, expiresAt: null };
+    throw notFound('Photo not found');
+  }
+
+  private async getWorkDate(date = new Date()): Promise<string> {
+    const { timezone } = await this.settingsReader.getBasic();
+    return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(date);
+  }
+
+  async getActiveSession(employeeId: string): Promise<AttendanceRecord | null> {
+    return this.repo.findActiveSession(employeeId);
+  }
+
+  async getTodaySummary(employeeId: string): Promise<TodayAttendanceSummary> {
+    const today = await this.getWorkDate();
+    const sessions = await this.repo.findTodaySessions(employeeId, today);
+    let activeSession = sessions.find((s) => s.checkOutTime === null) ?? null;
+    if (!activeSession) {
+      activeSession = await this.repo.findActiveSession(employeeId);
+    }
+
+    const totalDurationMinutes = sessions.reduce((acc, s) => {
+      if (s.durationMinutes) return acc + s.durationMinutes;
+      if (s.checkOutTime === null) {
+        const diffMs = Date.now() - new Date(s.checkInTime).getTime();
+        return acc + Math.max(0, Math.round(diffMs / 60000));
+      }
+      return acc;
+    }, 0);
+
+    return {
+      workDate: today,
+      totalDurationMinutes,
+      sessionsCount: sessions.length,
+      activeSession,
+      sessions,
+    };
+  }
+
+  private async statusFor(
+    employeeId: string,
+    workDate: string,
+    now: Date,
+  ): Promise<AttendanceStatus> {
+    if (!this.shiftResolver) return 'present';
+    const [shift, { timezone }] = await Promise.all([
+      this.shiftResolver.shiftOn(employeeId, workDate),
+      this.settingsReader.getBasic(),
+    ]);
+    return checkInStatus(shift, now, timezone);
+  }
+
+  async checkIn(
+    employeeId: string,
+    dto: CheckInInput,
+    ctx: RequestContext,
+  ): Promise<AttendanceRecord> {
+    const active = await this.isEmployeeActive(employeeId);
+    if (!active) {
+      throw forbidden('Deactivated employee cannot perform attendance check-in');
+    }
+
+    const openSession = await this.repo.findActiveSession(employeeId);
+    if (openSession) {
+      throw conflict('An open attendance session already exists. Please check out first.');
+    }
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const workDate = await this.getWorkDate(now);
+
+    const status = await this.statusFor(employeeId, workDate, now);
+    const photoKey = await this.storePhoto(dto.photoDataUrl, 'check-in', ctx);
+    let record: AttendanceRecord;
+    try {
+      record = await this.repo.createCheckIn(employeeId, workDate, dto, nowIso, status, photoKey);
+    } catch (err) {
+      await this.discardPhoto(photoKey);
+      throw err;
+    }
+
+    // Where someone checked in from is personal data and the audit trail is append-only, so it
+    // records only that a location was given and the work mode. The coordinates stay on the record.
+    await this.audit?.tryRecord({
+      action: 'attendance.check_in',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: record.id,
+      metadata: {
+        workDate,
+        checkInTime: nowIso,
+        status,
+        locationProvided: dto.location !== undefined,
+        workMode: dto.location?.workMode,
+      },
+      requestId: ctx.requestId,
+    });
+
+    return record;
+  }
+
+  async checkOut(
+    employeeId: string,
+    dto: CheckOutInput,
+    ctx: RequestContext,
+  ): Promise<AttendanceRecord> {
+    const active = await this.isEmployeeActive(employeeId);
+    if (!active) {
+      throw forbidden('Deactivated employee cannot perform attendance check-out');
+    }
+
+    const openSession = await this.repo.findActiveSession(employeeId);
+    if (!openSession) {
+      throw badRequest('No active attendance session found to check out');
+    }
+
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const existingBreaks: AttendanceBreak[] = [...(openSession.breaks ?? [])];
+    let totalBreakMinutes = openSession.breakMinutes ?? 0;
+
+    // Close any ongoing break automatically on checkout
+    const lastBreak = existingBreaks[existingBreaks.length - 1];
+    if (lastBreak && lastBreak.endTime === null) {
+      lastBreak.endTime = nowIso;
+      const addedBreak = Math.max(
+        0,
+        Math.round((now.getTime() - new Date(lastBreak.startTime).getTime()) / 60000),
+      );
+      totalBreakMinutes += addedBreak;
+      await this.repo.updateBreaks(openSession.id, existingBreaks, totalBreakMinutes);
+    }
+
+    const checkInMs = new Date(openSession.checkInTime).getTime();
+    const rawMinutes = Math.max(0, Math.round((now.getTime() - checkInMs) / 60000));
+    const durationMinutes = Math.max(0, rawMinutes - totalBreakMinutes);
+
+    const photoKey = await this.storePhoto(dto.photoDataUrl, 'check-out', ctx);
+    let updated: AttendanceRecord | null;
+    try {
+      updated = await this.repo.createCheckOut(
+        openSession.id,
+        nowIso,
+        durationMinutes,
+        dto.notes,
+        dto.location,
+        photoKey,
+      );
+    } catch (err) {
+      await this.discardPhoto(photoKey);
+      throw err;
+    }
+
+    if (!updated) {
+      await this.discardPhoto(photoKey);
+      // Closed by a concurrent request between the read and the write: the same answer as finding
+      // nothing open in the first place.
+      throw badRequest('No active attendance session found to check out');
+    }
+
+    await this.audit?.tryRecord({
+      action: 'attendance.check_out',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: updated.id,
+      metadata: { checkOutTime: nowIso, durationMinutes },
+      requestId: ctx.requestId,
+    });
+
+    return updated;
+  }
+
+  async list(
+    query: ListAttendanceQuery,
+    scope: ScopeFilter,
+  ): Promise<PaginatedResponse<AttendanceRecord>> {
+    const sort = resolveSort(query, ATTENDANCE_SORTABLE_FIELDS, {
+      column: 'workDate',
+      order: 'desc',
+    });
+    const { offset, limit } = toOffsetLimit(query);
+
+    const { items, total } = await this.repo.findMany(
+      {
+        offset,
+        limit,
+        sort,
+        employeeId: query.employeeId,
+        startDate: query.startDate,
+        endDate: query.endDate,
+        status: query.status,
+      },
+      scope,
+    );
+
+    return buildPage(items, total, query);
+  }
+
+  async listHistory(
+    employeeId: string,
+    query: ListAttendanceQuery,
+    scope: ScopeFilter,
+  ): Promise<PaginatedResponse<AttendanceRecord>> {
+    return this.list({ ...query, employeeId }, scope);
+  }
+
+  async startBreak(employeeId: string, ctx: RequestContext): Promise<AttendanceRecord> {
+    const activeSession = await this.repo.findActiveSession(employeeId);
+    if (!activeSession) {
+      throw badRequest('You must be checked in to start a break');
+    }
+
+    const breaks: AttendanceBreak[] = [...(activeSession.breaks ?? [])];
+    const openBreak = breaks.find((b) => b.endTime === null);
+    if (openBreak) {
+      throw conflict('A break is already in progress');
+    }
+
+    breaks.push({ startTime: new Date().toISOString(), endTime: null });
+    const updated = await this.repo.updateBreaks(
+      activeSession.id,
+      breaks,
+      activeSession.breakMinutes ?? 0,
+    );
+    if (!updated) {
+      throw badRequest('No active attendance session found');
+    }
+
+    await this.audit?.tryRecord({
+      action: 'attendance.break_start',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: updated.id,
+      requestId: ctx.requestId,
+    });
+
+    return updated;
+  }
+
+  async endBreak(employeeId: string, ctx: RequestContext): Promise<AttendanceRecord> {
+    const activeSession = await this.repo.findActiveSession(employeeId);
+    if (!activeSession) {
+      throw badRequest('You must be checked in to end a break');
+    }
+
+    const breaks: AttendanceBreak[] = [...(activeSession.breaks ?? [])];
+    const openIndex = breaks.findIndex((b) => b.endTime === null);
+    if (openIndex === -1) {
+      throw badRequest('No active break to end');
+    }
+
+    const now = new Date();
+    const current = breaks[openIndex]!;
+    breaks[openIndex] = { ...current, endTime: now.toISOString() };
+    const added = Math.max(
+      0,
+      Math.round((now.getTime() - new Date(current.startTime).getTime()) / 60000),
+    );
+    const totalBreakMinutes = (activeSession.breakMinutes ?? 0) + added;
+
+    const updated = await this.repo.updateBreaks(activeSession.id, breaks, totalBreakMinutes);
+    if (!updated) {
+      throw badRequest('No active attendance session found');
+    }
+
+    await this.audit?.tryRecord({
+      action: 'attendance.break_end',
+      outcome: 'success',
+      actorId: ctx.actorId,
+      actorRole: ctx.actorRole,
+      entityType: 'attendance_record',
+      entityId: updated.id,
+      metadata: { addedBreakMinutes: added, totalBreakMinutes },
+      requestId: ctx.requestId,
+    });
+
+    return updated;
+  }
+
+  async getTeamCalendar(
+    query: TeamCalendarQuery,
+    ctx: RequestContext,
+    scope: ScopeFilter,
+  ): Promise<TeamCalendarData> {
+    if (!ctx.employeeId) {
+      return { employees: [], departments: [], holidays: [], entries: [] };
+    }
+    const today = await this.getWorkDate();
+    const year = Number(today.slice(0, 4));
+    const month = Number(today.slice(5, 7));
+    const defaultStart = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const defaultEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    return this.repo.getTeamCalendar({
+      callerEmployeeId: ctx.employeeId,
+      scope,
+      startDate: query.startDate ?? defaultStart,
+      endDate: query.endDate ?? defaultEnd,
+      departmentId: query.departmentId,
+      employeeId: query.employeeId,
+    });
+  }
+}

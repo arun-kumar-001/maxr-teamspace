@@ -1,0 +1,244 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      # Catches lockfiles regenerated on Windows/macOS that dropped the Linux native packages.
+      - name: Lockfile has Linux native packages
+        run: node scripts/check-lockfile.mjs
+
+      # Fails if package-lock.json is out of sync with any package.json.
+      - name: Install (clean, lockfile-exact)
+        run: npm ci
+
+      # Builds packages/shared first; apps/api and apps/web depend on it.
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test --if-present
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci --ignore-scripts
+
+      # Production dependencies: any high or critical finding blocks the merge.
+      - name: Dependency audit (production)
+        run: npm audit --omit=dev --audit-level=high
+
+      # Dev dependencies too: build tooling runs on developer machines and in CI.
+      - name: Dependency audit (all)
+        run: |
+          set +e
+          npm audit --json > /tmp/maxr-audit.json
+          audit_status=$?
+          set -e
+          if [ "$audit_status" -gt 1 ]; then exit "$audit_status"; fi
+          node --test scripts/check-audit.test.mjs scripts/start-dev.test.mjs
+          node scripts/check-audit.mjs /tmp/maxr-audit.json
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+
+  database:
+    name: Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: maxr_teamspace
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d maxr_teamspace"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/maxr_teamspace
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # The migration runner is added by issue #4 (PR #56). Until it is merged
+      # these steps are skipped and the job passes; afterwards they run
+      # automatically on every PR.
+      - name: Migrations apply on a clean database
+        if: hashFiles('apps/api/src/db/migrator.ts') != ''
+        run: npm run db:migrate
+
+      - name: Migrations are idempotent (second run applies nothing)
+        if: hashFiles('apps/api/src/db/migrator.ts') != ''
+        run: npm run db:migrate --workspace=@maxr/api
+
+      - name: Dev seed runs twice without error
+        if: hashFiles('apps/api/src/db/seeder.ts') != ''
+        run: |
+          npm run db:seed
+          npm run db:seed
+
+      # Tests named *.db.test.ts need this real, migrated and seeded database; the Quality job skips them.
+      - name: Database integration tests
+        run: npm run test:db
+
+      # Verifies the encrypted backup and restore drill against the real migrated database (TL-15 / Issue #17)
+      - name: Backup and restore drill
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/backups /tmp/secret
+          openssl rand -base64 32 > /tmp/secret/backup.pass
+          chmod 600 /tmp/secret/backup.pass
+          export BACKUP_DIR=/tmp/backups
+          export BACKUP_PASSPHRASE_FILE=/tmp/secret/backup.pass
+          export PGUSER=postgres
+          export PGDATABASE=maxr_teamspace
+          # Use the matching PostgreSQL 16 container binary for pg_dump and pg_restore
+          PG_CONTAINER="$(docker ps -q --filter ancestor=postgres:16-alpine | head -1)"
+          export PG_EXEC="docker exec -i $PG_CONTAINER"
+          # 1. Run encrypted backup
+          ./deploy/scripts/backup.sh
+          # 2. Run verify-restore into ephemeral database
+          backup_file="$(ls -t /tmp/backups/maxr-db-*.dump.enc | head -1)"
+          ./deploy/scripts/verify-restore.sh "$backup_file"
+
+  # Deployment files are code too: build the images, test the Nginx config and boot the stack once.
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell scripts (shellcheck)
+        run: shellcheck -x -P SCRIPTDIR deploy/scripts/*.sh
+
+      - name: Production compose file is valid
+        run: |
+          cp deploy/.env.production.example deploy/.env.production
+          FIELD_ENCRYPTION_KEY="$(openssl rand -base64 32)" docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env.production config -q
+        env:
+          DB_PASSWORD: ci
+          REDIS_PASSWORD: ci
+
+      - name: Build API image
+        run: docker build -f deploy/Dockerfile.api -t maxr-api:ci .
+
+      - name: Build web image
+        run: docker build -f deploy/Dockerfile.web -t maxr-web:ci .
+
+      - name: Self-signed certificate (CI only)
+        run: |
+          mkdir certs
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj /CN=localhost \
+            -keyout certs/privkey.pem -out certs/fullchain.pem
+          chmod 644 certs/*.pem
+
+      - name: Nginx config test
+        run: docker run --rm --add-host api:127.0.0.1 -v "$PWD/certs:/etc/nginx/certs:ro" maxr-web:ci nginx -t
+
+      # The API refuses NODE_ENV=production until the SQL audit store (#6) exists, so the smoke test
+      # runs the image in development mode. The migrator is run with production settings.
+      - name: Smoke test (migrate, API, gateway)
+        run: |
+          set -euo pipefail
+          docker network create ci
+          docker run -d --name pg --network ci -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=app postgres:16-alpine
+          docker run -d --name rd --network ci redis:7-alpine
+          for i in $(seq 1 30); do docker exec pg pg_isready -U postgres -d app && break; sleep 2; done
+          DB=postgresql://postgres:postgres@pg:5432/app
+          CI_FIELD_KEY="$(openssl rand -base64 32)"
+          docker run --rm --network ci -e NODE_ENV=production -e CORS_ORIGIN=https://ci.example.com -e SESSION_SECRET="$(openssl rand -hex 24)" -e FIELD_ENCRYPTION_KEY="$CI_FIELD_KEY" -e DATABASE_URL=$DB maxr-api:ci node apps/api/dist/db/migrator.js
+          docker run -d --name api --network ci -e NODE_ENV=development -e DATABASE_URL=$DB -e REDIS_URL=redis://rd:6379 -e FIELD_ENCRYPTION_KEY="$CI_FIELD_KEY" -e TRUST_PROXY=1 maxr-api:ci
+          for i in $(seq 1 30); do [ "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy ] && break; sleep 2; done
+          test "$(docker inspect -f '{{.State.Health.Status}}' api)" = healthy
+          docker run -d --name web --network ci -p 8080:8080 -p 8443:8443 -v "$PWD/certs:/etc/nginx/certs:ro" maxr-web:ci
+          for i in $(seq 1 15); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fsSk https://127.0.0.1:8443/api/v1/health
+          curl -fsSk https://127.0.0.1:8443/ | grep -q 'id="root"'
+          curl -sk -D - -o /dev/null https://127.0.0.1:8443/ | grep -i 'strict-transport-security'
+          curl -sk -D - -o /dev/null https://127.0.0.1:8443/ | grep -i 'content-security-policy'
+          curl -sk -D - -o /dev/null https://127.0.0.1:8443/api/v1/health | grep -i 'x-content-type-options'
+          curl -sI http://127.0.0.1:8080/ | grep -q '301'
+          ! curl -sk -D - -o /dev/null https://127.0.0.1:8443/api/v1/health | grep -i 'x-powered-by'
+
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          docker logs api || true
+          docker logs web || true

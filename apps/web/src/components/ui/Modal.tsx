@@ -1,0 +1,124 @@
+import React, { useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { useDialogFocus } from './use-dialog-focus.js';
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  subtitle?: string;
+  headerIcon?: React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
+  position?: 'center' | 'drawer';
+}
+
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  subtitle,
+  headerIcon,
+  children,
+  footer,
+  maxWidth = 'md',
+  position = 'center',
+}: ModalProps) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(isOpen, dialogRef, onClose);
+
+  if (!isOpen) return null;
+
+  const widthClasses = {
+    sm: 'sm:max-w-sm',
+    md: 'sm:max-w-md',
+    lg: 'sm:max-w-lg',
+    xl: 'sm:max-w-xl',
+    '2xl': 'sm:max-w-2xl',
+    '3xl': 'sm:max-w-3xl',
+    '4xl': 'sm:max-w-4xl',
+    '5xl': 'sm:max-w-5xl',
+  };
+
+  const isDrawer = position === 'drawer';
+
+  const modalContent = (
+    <div
+      className={`fixed inset-0 z-[100] flex bg-overlay backdrop-blur-sm transition-opacity ${
+        isDrawer ? 'justify-end items-stretch p-0' : 'items-center justify-center p-4'
+      }`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
+    >
+      {/* Background click to dismiss */}
+      <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
+
+      {/* Modal Dialog or Right Slide-Over Drawer */}
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className={
+          isDrawer
+            ? `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-t-card sm:rounded-t-none sm:rounded-l-card shadow-raised overflow-hidden flex flex-col h-[92dvh] sm:h-full mt-auto sm:mt-0 z-10 border-t sm:border-t-0 sm:border-l border-border`
+            : `relative w-full ${widthClasses[maxWidth]} bg-surface rounded-card shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[85vh] z-10 border border-border`
+        }
+      >
+        {/* Mobile handle indicator */}
+        <div
+          className="sm:hidden w-10 h-1 bg-border rounded-full mx-auto my-2 shrink-0"
+          aria-hidden="true"
+        />
+
+        {/* Header */}
+        {title && (
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-border shrink-0 bg-surface-raised">
+            <div className="flex items-center gap-3 min-w-0">
+              {headerIcon}
+              <div className="min-w-0">
+                <h2
+                  id={titleId}
+                  className="text-base sm:text-lg font-bold text-text truncate font-display"
+                >
+                  {title}
+                </h2>
+                {subtitle && <p className="text-xs text-text-subtle mt-0.5 truncate">{subtitle}</p>}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md text-text-muted hover:bg-surface-muted hover:text-text min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 cursor-pointer"
+              aria-label="Close modal"
+            >
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="px-6 py-4 overflow-y-auto flex-1 text-text">{children}</div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="px-6 py-4 bg-surface border-t border-border flex justify-end gap-3">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
+}

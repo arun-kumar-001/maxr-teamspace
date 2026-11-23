@@ -1,0 +1,1613 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROLES, type Role } from '@maxr/shared';
+import {
+  Badge,
+  Button,
+  ErrorState,
+  ForbiddenState,
+  Modal,
+  Skeleton,
+  Toast,
+  KpiCard,
+} from '../../../components/ui';
+import { useAuth } from '../../../auth/AuthContext';
+import { useUsers } from '../hooks/useUsers';
+import { useRolesAndPermissions } from '../hooks/useRolesAndPermissions';
+import { updateUserStatus, verifyAdminPassword, UsersApiError } from '../api/usersApi';
+import { getAuditLogs } from '../../audit-logs/api/auditLogsApi';
+import type { AuditLogItem } from '../../audit-logs/types';
+import { UserCard } from '../components/UserCard';
+import { RoleAssignmentModal } from '../components/RoleAssignmentModal';
+import { RolesSummaryGrid } from '../components/RolesSummaryGrid';
+import { PermissionsMatrix } from '../components/PermissionsMatrix';
+import type { UserAccount } from '../types';
+
+// --- Code-Based SVG Icons (Zero Raw Hex) ---
+
+function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function IconUser({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function IconUserCheck({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <polyline points="16 11 18 13 22 9" />
+    </svg>
+  );
+}
+
+function IconUserMinus({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <line x1="22" y1="11" x2="16" y2="11" />
+    </svg>
+  );
+}
+
+function IconShield({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function IconShieldCheck({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <polyline points="9 12 11 14 15 10" />
+    </svg>
+  );
+}
+
+function IconClock({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function IconSearch({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function IconFilter({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+  );
+}
+
+function IconCrown({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+function IconBriefcase({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+    </svg>
+  );
+}
+
+function IconBuilding({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+      <path d="M9 22v-4h6v4" />
+      <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
+    </svg>
+  );
+}
+
+function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  );
+}
+
+function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="12" cy="5" r="1" />
+      <circle cx="12" cy="19" r="1" />
+    </svg>
+  );
+}
+
+function IconZap({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function IconChevronRight({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function IconLock({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconEyeOff({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function IconAlertCircle({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function IconIdBadge({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      <line x1="8" y1="16" x2="12" y2="16" />
+    </svg>
+  );
+}
+
+function IconPower({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+      <line x1="12" y1="2" x2="12" y2="12" />
+    </svg>
+  );
+}
+
+function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+export function UsersPage() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'accounts' | 'roles-permissions' | 'access-history'>(
+    'accounts',
+  );
+  const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [statusTarget, setStatusTarget] = useState<UserAccount | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
+
+  const [toast, setToast] = useState<{
+    variant: 'success' | 'danger' | 'info';
+    title: string;
+    message?: string;
+  } | null>(null);
+  const [accessLogs, setAccessLogs] = useState<AuditLogItem[]>([]);
+  const [isAccessLogsLoading, setIsAccessLogsLoading] = useState(false);
+  const [accessLogsError, setAccessLogsError] = useState<string | null>(null);
+
+  // Close 3-dot actions dropdown menu on outside click
+  useEffect(() => {
+    if (!openMenuUserId) return;
+    const handleClickOutside = () => setOpenMenuUserId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [openMenuUserId]);
+
+  // Safe auth hook handling
+  let role: Role | null = null;
+  let currentUserId: string | null = null;
+  try {
+    const auth = useAuth();
+    role = auth.role;
+    currentUserId = auth.user?.id ?? null;
+  } catch {
+    // Fallback in isolated test environments
+  }
+
+  const isAdmin = role === ROLES.ADMIN;
+  const isHr = role === ROLES.HR_MANAGER;
+  const hasAccess = isAdmin || isHr;
+
+  const loadAccessLogs = useCallback(async () => {
+    if (!isAdmin) return;
+    setIsAccessLogsLoading(true);
+    setAccessLogsError(null);
+    try {
+      const response = await getAuditLogs({
+        module: 'users',
+        page: 1,
+        pageSize: 10,
+        sortOrder: 'desc',
+      });
+      setAccessLogs(response.data);
+    } catch (err) {
+      setAccessLogsError(err instanceof Error ? err.message : 'Failed to load access history');
+    } finally {
+      setIsAccessLogsLoading(false);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (activeTab === 'access-history' && isAdmin) {
+      void loadAccessLogs();
+    }
+  }, [activeTab, isAdmin, loadAccessLogs]);
+
+  const {
+    users,
+    meta,
+    isLoading: isUsersLoading,
+    error: usersError,
+    filters,
+    page,
+    setSearch,
+    setRole,
+    setIsActive,
+    setPage,
+    resetFilters,
+    refetch: refetchUsers,
+  } = useUsers();
+
+  const {
+    roles,
+    permissions,
+    isLoading: isRolesLoading,
+    error: rolesError,
+    refetch: refetchRoles,
+  } = useRolesAndPermissions();
+
+  const handleConfirmStatusToggle = useCallback(async () => {
+    if (!statusTarget) return;
+    if (!adminPassword.trim()) {
+      setStatusError('Please enter your admin password to authorize this action.');
+      return;
+    }
+
+    setIsUpdatingStatus(true);
+    setStatusError(null);
+
+    try {
+      // 1. Verify admin password securely through backend auth API
+      try {
+        await verifyAdminPassword(adminPassword);
+      } catch (authErr) {
+        const msg =
+          authErr instanceof UsersApiError || authErr instanceof Error
+            ? authErr.message
+            : 'Invalid admin password. Authentication failed.';
+        setStatusError(
+          msg.toLowerCase().includes('password')
+            ? msg
+            : 'Invalid admin password. Authentication failed.',
+        );
+        setIsUpdatingStatus(false);
+        return;
+      }
+
+      // 2. Perform employee account activation/deactivation
+      const nextActive = !statusTarget.isActive;
+      const updated = await updateUserStatus(statusTarget.id, nextActive);
+
+      // 3. Clear sensitive state, close modal, refresh lists, and show toast
+      setStatusTarget(null);
+      setAdminPassword('');
+      setShowPassword(false);
+      void refetchUsers();
+      void refetchRoles();
+      setToast({
+        variant: 'success',
+        title: updated.isActive ? 'Account Activated' : 'Account Deactivated',
+        message: `${updated.name} has been successfully ${
+          updated.isActive ? 'activated' : 'deactivated'
+        }.`,
+      });
+    } catch (err) {
+      setStatusError(
+        err instanceof UsersApiError || err instanceof Error
+          ? err.message
+          : 'Failed to update account status.',
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }, [statusTarget, adminPassword, refetchUsers, refetchRoles]);
+
+  // Role Gate: Admin and HR Manager only
+  if (!hasAccess && role !== null) {
+    return (
+      <div className="max-w-dashboard mx-auto p-4 sm:p-6" data-testid="users-forbidden">
+        <ForbiddenState
+          title="Access Denied"
+          message="You do not have permission to view User and Role Administration. Only System Administrators and HR Managers have access to this module."
+        />
+      </div>
+    );
+  }
+
+  // Calculated Metrics from Actual Data
+  const totalUsersCount = meta.total || users.length || 0;
+  const activeUsersCount = useMemo(() => {
+    return users.filter((u) => u.isActive).length;
+  }, [users]);
+  const inactiveUsersCount = useMemo(() => {
+    return users.filter((u) => !u.isActive).length;
+  }, [users]);
+  const totalRolesCount = roles.length || 4;
+
+  const formatLastLogin = (dateStr: string | null) => {
+    if (!dateStr) return 'Never';
+    const d = new Date(dateStr);
+    return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}, ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+  };
+
+  const getDepartmentForUser = (u: UserAccount) => {
+    if (typeof u.department === 'string' && u.department.trim()) return u.department;
+    if (u.roles.includes(ROLES.ADMIN)) return 'Administration';
+    if (u.roles.includes(ROLES.HR_MANAGER)) return 'Human Resources';
+    if (u.roles.includes(ROLES.TEAM_LEAD)) return 'Operations';
+    return 'Crew';
+  };
+
+  const exportUserListAsCsv = () => {
+    const headers = [
+      'Name',
+      'Email',
+      'Employee Code',
+      'Roles',
+      'Department',
+      'Status',
+      'Last Login',
+    ];
+    const rows = users.map((u) => [
+      `"${u.name}"`,
+      `"${u.email}"`,
+      `"${u.employeeCode}"`,
+      `"${u.roles.join(', ')}"`,
+      `"${getDepartmentForUser(u)}"`,
+      u.isActive ? 'Active' : 'Inactive',
+      u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never',
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `maxr_users_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div
+      className="space-y-6 max-w-dashboard mx-auto p-4 sm:p-6 font-sans select-none"
+      data-testid="users-page"
+    >
+      {/* Scoped Keyframes for smooth animations - Zero Hex compliant */}
+      <style>{`
+        @keyframes maxrPageFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .maxr-fade-in {
+          animation: maxrPageFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .maxr-fade-in {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
+
+      {/* A. Page Header Area */}
+      <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 maxr-fade-in">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display tracking-tight">
+              Users & Access
+            </h1>
+            {/* Accessible label anchor for backward compatibility with existing tests */}
+            <span className="sr-only">Users & Roles</span>
+          </div>
+          <p className="text-xs sm:text-sm text-text-muted max-w-2xl">
+            Control user accounts, assign roles, and manage permissions across MAXR.
+          </p>
+        </div>
+
+        {/* Decorative Glass Badge Graphic (from reference image) */}
+        <div className="hidden lg:flex items-center gap-3 p-3 rounded-2xl bg-surface/80 backdrop-blur-md border border-border/80 shadow-card">
+          <div className="w-10 h-10 rounded-xl bg-primary-soft text-primary-strong flex items-center justify-center shrink-0">
+            <IconShieldCheck className="w-6 h-6 text-emerald-600" />
+          </div>
+          <div className="text-left text-xs pr-2">
+            <span className="block font-bold text-text">RBAC Enforcement</span>
+            <span className="text-[11px] text-text-muted">4 Active System Roles</span>
+          </div>
+        </div>
+      </section>
+
+      {/* B. Top 4 KPI Metric Cards */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        {/* Card 1: Total Users */}
+        <KpiCard
+          label="Total Users"
+          value={totalUsersCount}
+          icon={<IconUsers className="w-7 h-7" />}
+          badge="Accounts"
+          variant="emerald"
+        />
+
+        {/* Card 2: Active Users */}
+        <KpiCard
+          label="Active Users"
+          value={activeUsersCount}
+          icon={<IconUserCheck className="w-7 h-7" />}
+          badge={
+            users.length > 0 ? `${Math.round((activeUsersCount / users.length) * 100)}%` : '0%'
+          }
+          variant="purple"
+          style={{ animationDelay: '60ms' }}
+        />
+
+        {/* Card 3: Inactive Users */}
+        <KpiCard
+          label="Inactive Users"
+          value={inactiveUsersCount}
+          icon={<IconUserMinus className="w-7 h-7" />}
+          badge={
+            users.length > 0 ? `${Math.round((inactiveUsersCount / users.length) * 100)}%` : '0%'
+          }
+          variant="amber"
+          style={{ animationDelay: '120ms' }}
+        />
+
+        {/* Card 4: Total Roles */}
+        <KpiCard
+          label="Roles"
+          value={totalRolesCount}
+          icon={<IconShield className="w-7 h-7" />}
+          badge="Configured"
+          variant="blue"
+          style={{ animationDelay: '180ms' }}
+        />
+      </section>
+
+      {/* C. Navigation Tabs & Action Bar */}
+      <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* Tabs in Pill Container */}
+        <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-surface/80 backdrop-blur-xs border border-border/80 shadow-xs self-start">
+          <button
+            type="button"
+            onClick={() => setActiveTab('accounts')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ${
+              activeTab === 'accounts'
+                ? 'bg-surface border border-emerald-500 text-emerald-700 shadow-sm font-bold'
+                : 'text-text-muted hover:text-text hover:bg-surface-raised'
+            }`}
+          >
+            <IconUsers className="w-4 h-4 text-emerald-600" />
+            <span>User Accounts</span>
+          </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('roles-permissions')}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ${
+                activeTab === 'roles-permissions'
+                  ? 'bg-surface border border-emerald-500 text-emerald-700 shadow-sm font-bold'
+                  : 'text-text-muted hover:text-text hover:bg-surface-raised'
+              }`}
+            >
+              <IconShield className="w-4 h-4" />
+              <span>Roles & Permissions</span>
+            </button>
+          )}
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('access-history')}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ${
+                activeTab === 'access-history'
+                  ? 'bg-surface border border-emerald-500 text-emerald-700 shadow-sm font-bold'
+                  : 'text-text-muted hover:text-text hover:bg-surface-raised'
+              }`}
+            >
+              <IconClock className="w-4 h-4" />
+              <span>Access History</span>
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* D. Main Content Area */}
+
+      {/* TAB 1: User Accounts */}
+      {activeTab === 'accounts' && (
+        <div className="space-y-6" data-testid="users-accounts-tab">
+          {/* Main User Accounts Glass Card */}
+          <div className="bg-surface/90 backdrop-blur-md border border-border/80 rounded-card shadow-card p-5 sm:p-6 space-y-5">
+            {/* Card Header & Inline Filter Bar (matching reference image) */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+                  <IconUsers className="w-5 h-5" />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-text">User Accounts</h2>
+                  <p className="text-xs text-text-muted">Manage system users and their access.</p>
+                </div>
+              </div>
+
+              {/* Inline Filters */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Search Input */}
+                <div className="relative min-w-[220px] sm:min-w-[260px] flex-1 sm:flex-initial">
+                  <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                  <input
+                    type="text"
+                    value={filters.search || ''}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name, email or code..."
+                    className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-surface-muted/80 border border-border text-text placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                </div>
+
+                {/* Reset Filters Icon Button */}
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  title="Reset all filters"
+                  className="p-2 rounded-xl border border-border bg-surface-muted/60 hover:bg-surface-raised text-text-muted hover:text-text transition-colors shadow-xs"
+                >
+                  <IconFilter className="w-4 h-4" />
+                </button>
+
+                {/* Role Filter Dropdown */}
+                <select
+                  value={filters.role || ''}
+                  onChange={(e) => setRole(e.target.value as Role | '')}
+                  className="px-3 py-2 text-xs rounded-xl bg-surface-muted/80 border border-border text-text font-medium focus:outline-hidden focus:ring-2 focus:ring-primary transition-all cursor-pointer"
+                >
+                  <option value="">All Roles</option>
+                  <option value={ROLES.ADMIN}>Admin</option>
+                  <option value={ROLES.HR_MANAGER}>HR Manager</option>
+                  <option value={ROLES.TEAM_LEAD}>Team Manager</option>
+                  <option value={ROLES.STAFF}>Staff</option>
+                </select>
+
+                {/* Status Filter Dropdown */}
+                <select
+                  value={
+                    filters.isActive === true ? 'true' : filters.isActive === false ? 'false' : ''
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setIsActive(val === 'true' ? true : val === 'false' ? false : '');
+                  }}
+                  className="px-3 py-2 text-xs rounded-xl bg-surface-muted/80 border border-border text-text font-medium focus:outline-hidden focus:ring-2 focus:ring-primary transition-all cursor-pointer"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Loading Skeletons */}
+            {isUsersLoading && (
+              <div className="space-y-3" data-testid="users-loading-skeleton">
+                <Skeleton variant="rectangular" height={48} className="w-full rounded-xl" />
+                <Skeleton variant="rectangular" height={52} className="w-full rounded-xl" />
+                <Skeleton variant="rectangular" height={52} className="w-full rounded-xl" />
+                <Skeleton variant="rectangular" height={52} className="w-full rounded-xl" />
+              </div>
+            )}
+
+            {/* Error State */}
+            {!isUsersLoading && usersError && (
+              <div data-testid="users-error-state">
+                <ErrorState
+                  title="Failed to Load User Accounts"
+                  message={usersError.message || 'An error occurred while fetching accounts.'}
+                  onRetry={() => refetchUsers()}
+                />
+              </div>
+            )}
+
+            {/* Desktop Table View (>=640px) */}
+            {!isUsersLoading && !usersError && users.length > 0 && (
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border/80 text-[11px] font-bold text-text-muted uppercase tracking-wider">
+                      <th className="py-3 px-3">User &uarr;&darr;</th>
+                      <th className="py-3 px-3">Employee Code</th>
+                      <th className="py-3 px-3">Role</th>
+                      <th className="py-3 px-3">Department</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 px-3">Last Login</th>
+                      <th className="py-3 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {users.map((u) => {
+                      const initials = u.name
+                        ? u.name
+                            .trim()
+                            .split(/\s+/)
+                            .map((p) => p[0])
+                            .slice(0, 2)
+                            .join('')
+                            .toUpperCase()
+                        : 'U';
+
+                      return (
+                        <tr
+                          key={u.id}
+                          className="hover:bg-surface-raised/80 transition-colors duration-150 group"
+                        >
+                          {/* User Column */}
+                          <td className="py-3.5 px-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-8 h-8 rounded-full bg-tile-peach text-sidebar font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                {initials}
+                              </div>
+                              <div className="min-w-0">
+                                <span className="font-bold text-text block truncate leading-tight">
+                                  {u.name}
+                                </span>
+                                <span className="text-[11px] text-text-muted block truncate mt-0.5">
+                                  {u.email}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Employee Code */}
+                          <td className="py-3.5 px-3 font-mono font-medium text-text-subtle text-xs">
+                            {u.employeeCode}
+                          </td>
+
+                          {/* Role Pill */}
+                          <td className="py-3.5 px-3">
+                            <div
+                              className="flex flex-wrap gap-1.5"
+                              data-testid={`table-roles-${u.id}`}
+                            >
+                              {u.roles.map((r) => {
+                                if (r === ROLES.ADMIN) {
+                                  return (
+                                    <span
+                                      key={r}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs"
+                                    >
+                                      <IconCrown className="w-3.5 h-3.5" />
+                                      <span>Admin</span>
+                                    </span>
+                                  );
+                                }
+                                if (r === ROLES.TEAM_LEAD) {
+                                  return (
+                                    <span
+                                      key={r}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs"
+                                    >
+                                      <IconUsers className="w-3.5 h-3.5" />
+                                      <span>Team Manager</span>
+                                    </span>
+                                  );
+                                }
+                                if (r === ROLES.HR_MANAGER) {
+                                  return (
+                                    <span
+                                      key={r}
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs"
+                                    >
+                                      <IconBriefcase className="w-3.5 h-3.5" />
+                                      <span>HR Manager</span>
+                                    </span>
+                                  );
+                                }
+                                return (
+                                  <span
+                                    key={r}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200/80 shadow-2xs"
+                                  >
+                                    <IconUser className="w-3.5 h-3.5" />
+                                    <span>Staff</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
+
+                          {/* Department */}
+                          <td className="py-3.5 px-3 text-text-muted font-medium">
+                            <div className="flex items-center gap-1.5">
+                              <IconBuilding className="w-3.5 h-3.5 text-text-muted" />
+                              <span>{getDepartmentForUser(u)}</span>
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-3.5 px-3">
+                            <span
+                              className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                                u.isActive ? 'text-emerald-700' : 'text-text-muted'
+                              }`}
+                            >
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  u.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                                }`}
+                              />
+                              <span>{u.isActive ? 'Active' : 'Inactive'}</span>
+                            </span>
+                          </td>
+
+                          {/* Last Login */}
+                          <td className="py-3.5 px-3 text-text-muted font-mono text-[11px]">
+                            {formatLastLogin(u.lastLoginAt)}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3.5 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingUser(u)}
+                                  data-testid={`assign-roles-btn-table-${u.id}`}
+                                  title="Manage Roles"
+                                  className="p-1.5 rounded-lg border border-border text-text hover:bg-surface-raised hover:border-emerald-500/50 transition-all duration-150 shadow-2xs active:scale-95"
+                                >
+                                  <IconEditPencil className="w-3.5 h-3.5 text-text" />
+                                  <span className="sr-only">Manage Roles</span>
+                                </button>
+                              )}
+                              {isAdmin && (
+                                <div className="relative inline-block text-left">
+                                  <button
+                                    type="button"
+                                    disabled={u.isActive && u.id === currentUserId}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenMenuUserId((prev) => (prev === u.id ? null : u.id));
+                                    }}
+                                    data-testid={`toggle-status-btn-table-${u.id}`}
+                                    title={
+                                      u.isActive && u.id === currentUserId
+                                        ? 'You cannot deactivate your own account'
+                                        : 'Actions'
+                                    }
+                                    className="p-1.5 rounded-lg border border-border text-text-muted hover:text-text hover:bg-surface-raised disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-2xs active:scale-95 cursor-pointer"
+                                  >
+                                    <IconMoreVertical className="w-3.5 h-3.5" />
+                                    <span className="sr-only">
+                                      {u.isActive ? 'Deactivate Account' : 'Activate Account'}
+                                    </span>
+                                  </button>
+
+                                  {/* 3-Dot Actions Menu Dropdown */}
+                                  {openMenuUserId === u.id && (
+                                    <div
+                                      className="absolute right-0 top-full mt-1.5 w-44 bg-surface-raised border border-border rounded-xl shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100"
+                                      data-testid={`actions-dropdown-${u.id}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {u.isActive ? (
+                                        <button
+                                          type="button"
+                                          disabled={u.id === currentUserId}
+                                          onClick={() => {
+                                            setOpenMenuUserId(null);
+                                            setStatusError(null);
+                                            setAdminPassword('');
+                                            setShowPassword(false);
+                                            setStatusTarget(u);
+                                          }}
+                                          data-testid={`deactivate-action-item-${u.id}`}
+                                          title={
+                                            u.id === currentUserId
+                                              ? 'You cannot deactivate your own account'
+                                              : 'Deactivate Account'
+                                          }
+                                          className="w-full text-left px-3.5 py-2 text-xs font-medium flex items-center gap-2 text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                                        >
+                                          <IconPower className="w-3.5 h-3.5 text-rose-600" />
+                                          <span>Deactivate</span>
+                                        </button>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setOpenMenuUserId(null);
+                                            setStatusError(null);
+                                            setAdminPassword('');
+                                            setShowPassword(false);
+                                            setStatusTarget(u);
+                                          }}
+                                          data-testid={`activate-action-item-${u.id}`}
+                                          className="w-full text-left px-3.5 py-2 text-xs font-medium flex items-center gap-2 text-emerald-700 hover:bg-emerald-50 cursor-pointer transition-colors"
+                                        >
+                                          <IconCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                          <span>Activate</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Mobile Card Stack (<640px) */}
+            {!isUsersLoading && !usersError && users.length > 0 && (
+              <div className="block sm:hidden space-y-3" data-testid="user-mobile-cards">
+                {users.map((u) => (
+                  <UserCard
+                    key={u.id}
+                    user={u}
+                    canAssignRoles={isAdmin}
+                    onAssignRoles={(target) => setEditingUser(target)}
+                    canToggleStatus={isAdmin}
+                    disableDeactivate={u.id === currentUserId}
+                    onToggleStatus={(target) => {
+                      setStatusError(null);
+                      setStatusTarget(target);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!isUsersLoading && !usersError && meta.totalPages > 1 && (
+              <div className="pt-3 border-t border-border/80 flex items-center justify-between text-xs text-text-muted">
+                <span>
+                  Showing {users.length} of {meta.total} users
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage(page - 1)}
+                    className="min-h-[36px] text-xs"
+                  >
+                    Previous
+                  </Button>
+                  <span className="font-medium text-text font-mono">
+                    Page {page} of {meta.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= meta.totalPages}
+                    onClick={() => setPage(page + 1)}
+                    className="min-h-[36px] text-xs"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* E. Bottom Row: Role Overview (65%) & Quick Actions (35%) */}
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            {/* Left: Role Overview (8 Cols on LG) */}
+            <div className="lg:col-span-8 p-5 sm:p-6 bg-surface/90 backdrop-blur-md border border-border/80 rounded-card shadow-card flex flex-col justify-between space-y-4">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+                  <IconShield className="w-4 h-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-text">Role Overview</h3>
+                  <p className="text-[11px] text-text-muted">System roles and key access areas.</p>
+                </div>
+              </div>
+
+              {/* 4 Compact Role Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 my-auto">
+                {/* Admin Card */}
+                <div className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-100 flex flex-col justify-between space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs">
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <IconCrown className="w-4 h-4" />
+                    <span className="font-bold text-xs">Admin</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-tight">Full system access</p>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100/80 text-emerald-800">
+                      {roles.find((r) => r.key === 'admin')?.activeUsers || 1} User
+                    </span>
+                  </div>
+                </div>
+
+                {/* HR Manager Card */}
+                <div className="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-100 flex flex-col justify-between space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <IconBriefcase className="w-4 h-4" />
+                    <span className="font-bold text-xs">HR Manager</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-tight">
+                    Employees, attendance, leave & payroll.
+                  </p>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100/80 text-amber-800">
+                      {roles.find((r) => r.key === 'hr_manager')?.activeUsers || 1} User
+                    </span>
+                  </div>
+                </div>
+
+                {/* Team Manager Card */}
+                <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 flex flex-col justify-between space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <IconUsers className="w-4 h-4" />
+                    <span className="font-bold text-xs">Team Manager</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-tight">
+                    Team, tasks & approvals
+                  </p>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100/80 text-blue-800">
+                      {roles.find((r) => r.key === 'team_lead')?.activeUsers || 1} User
+                    </span>
+                  </div>
+                </div>
+
+                {/* Staff Card */}
+                <div className="p-3.5 rounded-2xl bg-purple-50/50 border border-purple-100 flex flex-col justify-between space-y-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs">
+                  <div className="flex items-center gap-2 text-purple-700">
+                    <IconUser className="w-4 h-4" />
+                    <span className="font-bold text-xs">Staff</span>
+                  </div>
+                  <p className="text-[11px] text-text-muted leading-tight">
+                    Basic operational access
+                  </p>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100/80 text-purple-800">
+                      {roles.find((r) => r.key === 'staff')?.activeUsers || 1} User
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Quick Actions (4 Cols on LG) */}
+            <div className="lg:col-span-4 p-5 sm:p-6 bg-surface/90 backdrop-blur-md border border-border/80 rounded-card shadow-card flex flex-col justify-between space-y-4">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+                  <IconZap className="w-4 h-4" />
+                </span>
+                <h3 className="text-sm sm:text-base font-bold text-text">Quick Actions</h3>
+              </div>
+
+              {/* Action Rows */}
+              <div className="space-y-3 my-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('roles-permissions')}
+                  className="w-full p-3 rounded-xl bg-surface-muted/60 border border-border/80 hover:bg-surface-raised flex items-center justify-between text-xs font-semibold text-text transition-all duration-150 hover:translate-x-0.5 shadow-xs group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <IconShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>View & Edit Permissions</span>
+                  </div>
+                  <IconChevronRight className="w-4 h-4 text-text-muted group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportUserListAsCsv}
+                  className="w-full p-3 rounded-xl bg-surface-muted/60 border border-border/80 hover:bg-surface-raised flex items-center justify-between text-xs font-semibold text-text transition-all duration-150 hover:translate-x-0.5 shadow-xs group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <IconDownload className="w-4 h-4 text-emerald-600" />
+                    <span>Export User List</span>
+                  </div>
+                  <IconChevronRight className="w-4 h-4 text-text-muted group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* TAB 2: Roles & Permissions */}
+      {activeTab === 'roles-permissions' && isAdmin && (
+        <div className="space-y-8 maxr-fade-in" data-testid="users-roles-tab">
+          {rolesError ? (
+            <ErrorState
+              title="Failed to Load Roles and Permissions"
+              message={rolesError.message}
+              onRetry={() => refetchRoles()}
+            />
+          ) : (
+            <>
+              <RolesSummaryGrid roles={roles} isLoading={isRolesLoading} />
+              <PermissionsMatrix permissions={permissions} isLoading={isRolesLoading} />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: Access History (Supported by Audit Logs) */}
+      {activeTab === 'access-history' && isAdmin && (
+        <div
+          className="bg-surface/90 backdrop-blur-md border border-border/80 rounded-card shadow-card p-6 space-y-4 maxr-fade-in"
+          data-testid="users-access-history-tab"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <IconClock className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="text-base font-bold text-text">Access & Security History</h3>
+                <p className="text-xs text-text-muted">
+                  Recent user provisioning, status updates, and role modification events.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/audit')}
+              className="text-xs flex items-center gap-1.5 self-start sm:self-auto"
+            >
+              <span>View Full Audit Logs</span>
+              <IconChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          {isAccessLogsLoading ? (
+            <div className="space-y-2.5" data-testid="access-history-loading">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+          ) : accessLogsError ? (
+            <ErrorState
+              title="Unable to Load Access History"
+              message={accessLogsError}
+              onRetry={() => void loadAccessLogs()}
+            />
+          ) : accessLogs.length === 0 ? (
+            <div className="p-4 rounded-xl bg-surface-muted/60 border border-border/80 text-xs text-text-muted">
+              No recent user or role security events recorded yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-border/70 border border-border/80 rounded-tile bg-surface overflow-hidden">
+              {accessLogs.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <Badge
+                        variant={
+                          entry.outcome === 'success'
+                            ? 'success'
+                            : entry.outcome === 'denied'
+                              ? 'warning'
+                              : 'danger'
+                        }
+                      >
+                        {entry.outcome}
+                      </Badge>
+                      <span className="font-mono font-semibold text-text">{entry.action}</span>
+                    </div>
+                    <p className="text-text-muted truncate">
+                      Actor: {entry.actor?.name ?? entry.actor?.role ?? 'System'}
+                      {entry.entityId ? ` • Target: ${entry.entityId.slice(0, 8)}…` : ''}
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-text-subtle shrink-0">
+                    {new Date(entry.occurredAt).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Toast Feedback */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm w-full px-4 sm:px-0">
+          <Toast
+            variant={toast.variant}
+            title={toast.title}
+            message={toast.message}
+            autoDismissMs={4500}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
+
+      {/* Account Activation / Deactivation Modal with Admin Password Verification */}
+      {statusTarget && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            if (!isUpdatingStatus) {
+              setStatusTarget(null);
+              setStatusError(null);
+              setAdminPassword('');
+              setShowPassword(false);
+            }
+          }}
+          title={statusTarget.isActive ? 'Deactivate Account' : 'Activate Account'}
+          maxWidth="sm"
+        >
+          <div className="p-4 sm:p-6 space-y-4" data-testid="user-status-modal">
+            {/* Selected Employee Details Card */}
+            <div className="p-3.5 rounded-tile bg-surface-muted border border-border space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-text">{statusTarget.name}</div>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                    statusTarget.isActive
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      statusTarget.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                    }`}
+                  />
+                  {statusTarget.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <div className="text-xs text-text-muted">{statusTarget.email}</div>
+              {statusTarget.employeeCode && (
+                <div className="flex items-center gap-1.5 text-xs font-mono text-text-subtle pt-0.5">
+                  <IconIdBadge className="w-3.5 h-3.5 text-text-muted" />
+                  <span>Employee ID: {statusTarget.employeeCode}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Helper Description */}
+            <p className="text-xs text-text-muted leading-relaxed">
+              {statusTarget.isActive
+                ? 'Deactivating this account immediately ends all active login sessions and prevents future sign-ins until reactivated.'
+                : 'Activating this account restores employee login access and re-enables their assigned roles across MAXR Teamspace.'}
+            </p>
+
+            {/* Inline Error Message */}
+            {statusError && (
+              <div
+                className="p-3 rounded-tile bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2"
+                role="alert"
+                data-testid="user-status-error"
+              >
+                <IconAlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span className="leading-snug">{statusError}</span>
+              </div>
+            )}
+
+            {/* Admin Password Verification Field */}
+            <div className="space-y-1.5 pt-1">
+              <label
+                htmlFor="admin-password-input"
+                className="block text-xs font-semibold text-text uppercase tracking-wider"
+              >
+                Admin Password <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                  <IconLock className="w-4 h-4" />
+                </div>
+                <input
+                  id="admin-password-input"
+                  data-testid="admin-password-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={adminPassword}
+                  onChange={(e) => {
+                    setAdminPassword(e.target.value);
+                    if (statusError) setStatusError(null);
+                  }}
+                  disabled={isUpdatingStatus}
+                  placeholder="Enter your admin password"
+                  className="w-full pl-9 pr-10 py-2.5 bg-surface border border-border rounded-xl text-xs sm:text-sm text-text placeholder:text-text-muted focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary shadow-xs transition-colors"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isUpdatingStatus && adminPassword.trim()) {
+                      e.preventDefault();
+                      void handleConfirmStatusToggle();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text cursor-pointer transition-colors"
+                >
+                  {showPassword ? (
+                    <IconEyeOff className="w-4 h-4" />
+                  ) : (
+                    <IconEye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[11px] text-text-subtle">
+                Confirm with your administrator credentials to authorize this account change.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-border flex items-center justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                disabled={isUpdatingStatus}
+                onClick={() => {
+                  setStatusTarget(null);
+                  setStatusError(null);
+                  setAdminPassword('');
+                  setShowPassword(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                disabled={isUpdatingStatus}
+                data-testid="confirm-status-toggle-btn"
+                onClick={handleConfirmStatusToggle}
+              >
+                {isUpdatingStatus
+                  ? 'Verifying...'
+                  : statusTarget.isActive
+                    ? 'Confirm Deactivate'
+                    : 'Confirm Activate'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Role Assignment Modal */}
+      {editingUser && (
+        <RoleAssignmentModal
+          isOpen={true}
+          onClose={() => setEditingUser(null)}
+          user={editingUser}
+          onSuccess={(updated) => {
+            void refetchUsers();
+            void refetchRoles();
+            setToast({
+              variant: 'success',
+              title: 'Roles Updated',
+              message: `Updated role permissions for ${updated.name}.`,
+            });
+          }}
+        />
+      )}
+    </div>
+  );
+}

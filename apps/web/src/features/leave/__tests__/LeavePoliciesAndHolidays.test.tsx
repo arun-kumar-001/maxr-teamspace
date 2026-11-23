@@ -1,0 +1,363 @@
+// @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
+import type { LeavePolicy, Holiday, LeaveBalance } from '../types';
+import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
+import { AddHolidayModal } from '../components/AddHolidayModal';
+import { HolidayCalendar } from '../components/HolidayCalendar';
+import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
+import { LeaveManagementPage } from '../pages/LeaveManagementPage';
+import * as leaveApi from '../api/leave';
+
+vi.mock('../api/leave', () => ({
+  fetchLeaveApprovalSettings: vi.fn().mockResolvedValue({ approverRole: 'hr_manager', version: 1 }),
+  updateLeaveApprovalSettings: vi.fn(),
+  fetchLeavePolicies: vi.fn(),
+  createLeavePolicy: vi.fn(),
+  updateLeavePolicy: vi.fn(),
+  fetchHolidays: vi.fn(),
+  createHoliday: vi.fn(),
+  deleteHoliday: vi.fn(),
+  fetchMyLeaveBalances: vi.fn(),
+  fetchLeaveBalances: vi
+    .fn()
+    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchMyLeaveRequests: vi
+    .fn()
+    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
+  runYearlyAccrual: vi.fn(),
+}));
+
+vi.mock('../../../auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'usr-001', role: 'hr_manager', name: 'HR Manager' },
+    role: 'hr_manager',
+    isAuthenticated: true,
+  }),
+}));
+
+const mockPolicies: LeavePolicy[] = [
+  {
+    id: 'pol-001',
+    code: 'PTO',
+    name: 'Paid Time Off',
+    hasBalance: true,
+    isActive: true,
+    annualDays: 18,
+    carryForwardMax: 5,
+    allowHalfDay: true,
+    maxBackdateDays: 3,
+    version: 1,
+    updatedAt: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'pol-002',
+    code: 'UNPAID',
+    name: 'Unpaid Leave',
+    hasBalance: false,
+    isActive: true,
+    annualDays: 0,
+    carryForwardMax: 0,
+    allowHalfDay: false,
+    maxBackdateDays: 0,
+    version: 1,
+    updatedAt: '2026-01-01T00:00:00Z',
+  },
+];
+
+const mockHolidays: Holiday[] = [
+  {
+    id: 'hol-001',
+    date: '2026-01-26',
+    name: 'Republic Day',
+  },
+  {
+    id: 'hol-002',
+    date: '2026-08-15',
+    name: 'Independence Day',
+  },
+];
+
+const mockBalances: LeaveBalance[] = [
+  {
+    leaveTypeId: 'pol-001',
+    code: 'PTO',
+    name: 'Paid Time Off',
+    year: 2026,
+    allotted: 18,
+    carriedForward: 2,
+    used: 5,
+    remaining: 15,
+  },
+];
+
+describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  describe('LeavePolicyFormModal', () => {
+    it('validates policy code regex format', async () => {
+      const onSubmit = vi.fn();
+      render(
+        <LeavePolicyFormModal isOpen={true} onClose={vi.fn()} policy={null} onSubmit={onSubmit} />,
+      );
+
+      const codeInput = screen.getByTestId('leave-policy-code-input');
+      const submitBtn = screen.getByTestId('submit-leave-policy-btn');
+
+      // Invalid code starting with digit
+      fireEvent.change(codeInput, { target: { value: '1INVALID' } });
+      fireEvent.click(submitBtn);
+
+      expect(screen.getByText(/Policy code must start with a letter/i)).toBeInTheDocument();
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('submits valid policy creation payload', async () => {
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+
+      render(
+        <LeavePolicyFormModal isOpen={true} onClose={onClose} policy={null} onSubmit={onSubmit} />,
+      );
+
+      fireEvent.change(screen.getByTestId('leave-policy-code-input'), {
+        target: { value: 'CASUAL' },
+      });
+      fireEvent.change(screen.getByTestId('leave-policy-name-input'), {
+        target: { value: 'Casual Leave' },
+      });
+      fireEvent.change(screen.getByTestId('leave-policy-annual-input'), {
+        target: { value: '12' },
+      });
+      fireEvent.change(screen.getByTestId('leave-policy-carry-input'), {
+        target: { value: '3' },
+      });
+
+      fireEvent.click(screen.getByTestId('submit-leave-policy-btn'));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({
+          code: 'CASUAL',
+          name: 'Casual Leave',
+          hasBalance: true,
+          annualDays: 12,
+          carryForwardMax: 3,
+          allowHalfDay: true,
+          maxBackdateDays: 3,
+        });
+        expect(onClose).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('AddHolidayModal', () => {
+    it('validates holiday date and submits input', async () => {
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+
+      render(
+        <AddHolidayModal isOpen={true} onClose={onClose} onSubmit={onSubmit} defaultYear={2026} />,
+      );
+
+      fireEvent.change(screen.getByTestId('holiday-date-input'), {
+        target: { value: '2026-10-02' },
+      });
+      fireEvent.change(screen.getByTestId('holiday-name-input'), {
+        target: { value: 'Gandhi Jayanti' },
+      });
+
+      fireEvent.click(screen.getByTestId('submit-holiday-btn'));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({
+          date: '2026-10-02',
+          name: 'Gandhi Jayanti',
+        });
+        expect(onClose).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('HolidayCalendar', () => {
+    it('renders grouped months and handles holiday deletion', async () => {
+      const onDelete = vi.fn().mockResolvedValue(undefined);
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      render(
+        <HolidayCalendar
+          holidays={mockHolidays}
+          year={2026}
+          onYearChange={vi.fn()}
+          onDeleteHoliday={onDelete}
+          canManage={true}
+        />,
+      );
+
+      expect(screen.getByText('Company Holiday Calendar')).toBeInTheDocument();
+      expect(screen.getByText('January')).toBeInTheDocument();
+      expect(screen.getByText('August')).toBeInTheDocument();
+      expect(screen.getByText('Republic Day')).toBeInTheDocument();
+      expect(screen.getByText('Independence Day')).toBeInTheDocument();
+
+      const deleteBtn = screen.getByTestId('delete-holiday-btn-hol-001');
+      fireEvent.click(deleteBtn);
+
+      expect(onDelete).toHaveBeenCalledWith('hol-001', 'Republic Day');
+    });
+  });
+
+  describe('LeaveBalancesSummary', () => {
+    it('shows an honest empty state, with no sample leave types, when nothing is set up', () => {
+      render(<LeaveBalancesSummary balances={[]} year={2026} />);
+
+      expect(screen.getByTestId('leave-balances-empty')).toBeInTheDocument();
+      expect(screen.getByText('No leave balances yet')).toBeInTheDocument();
+      expect(screen.queryByTestId(/^leave-type-bar-/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
+    });
+
+    it('shows one card per active leave type from Leave Setup, including a permission with no balance', () => {
+      const policy = (over: Partial<LeavePolicy>): LeavePolicy => ({
+        id: 'x',
+        code: 'X',
+        name: 'X',
+        hasBalance: true,
+        isActive: true,
+        annualDays: 0,
+        carryForwardMax: 0,
+        allowHalfDay: false,
+        maxBackdateDays: 0,
+        version: 1,
+        updatedAt: '2026-01-01T00:00:00Z',
+        ...over,
+      });
+      const policies = [
+        policy({ id: 'pol-001', code: 'PTO', name: 'Paid Time Off', annualDays: 20 }),
+        policy({ id: 'pm', code: 'PM', name: 'Short Permission', hasBalance: false }),
+        policy({ id: 'old', code: 'OLD', name: 'Old Leave', isActive: false }),
+      ];
+      render(<LeaveBalancesSummary balances={mockBalances} policies={policies} year={2026} />);
+
+      expect(screen.getByTestId('leave-type-bar-PTO')).toHaveTextContent('5 used · 15 left of 20');
+      expect(screen.getByTestId('leave-type-bar-PM')).toHaveTextContent('No yearly limit');
+      expect(screen.queryByTestId('leave-type-bar-OLD')).not.toBeInTheDocument();
+      const totals = within(screen.getByTestId('leave-balances-totals'));
+      expect(totals.getByText('Balance').nextElementSibling).toHaveTextContent('15');
+    });
+
+    it('computes totals from the balances it is given, not from fixed numbers', () => {
+      const two: LeaveBalance[] = [
+        {
+          leaveTypeId: 'pol-001',
+          code: 'PTO',
+          name: 'Paid Time Off',
+          year: 2026,
+          allotted: 10,
+          carriedForward: 0,
+          used: 4,
+          remaining: 6,
+        },
+        {
+          leaveTypeId: 'pol-002',
+          code: 'SICK',
+          name: 'Sick Leave',
+          year: 2026,
+          allotted: 5,
+          carriedForward: 1,
+          used: 1,
+          remaining: 5,
+        },
+      ];
+      render(<LeaveBalancesSummary balances={two} year={2026} />);
+
+      const totals = within(screen.getByTestId('leave-balances-totals'));
+      expect(totals.getByText('Total entitlement').nextElementSibling).toHaveTextContent('16');
+      expect(totals.getByText('Used').nextElementSibling).toHaveTextContent('5');
+      expect(totals.getByText('Balance').nextElementSibling).toHaveTextContent('11');
+      expect(screen.getByTestId('leave-type-fill-SICK')).toHaveStyle({ width: '17%' });
+    });
+
+    it('renders balance metrics and breakdown', () => {
+      render(<LeaveBalancesSummary balances={mockBalances} year={2026} />);
+
+      const row = within(screen.getByTestId('leave-type-bar-PTO'));
+      expect(row.getByText('Paid Time Off')).toBeInTheDocument();
+      expect(row.getByText('5 used · 15 left of 20')).toBeInTheDocument();
+      expect(screen.queryByText('Leave Entitlements & Balances')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('same-team-leave-balances')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('LeaveManagementPage', () => {
+    it('renders tabs and allows switching views', async () => {
+      vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValue(mockPolicies);
+      vi.mocked(leaveApi.fetchHolidays).mockResolvedValue(mockHolidays);
+      vi.mocked(leaveApi.fetchMyLeaveBalances).mockResolvedValue(mockBalances);
+
+      render(<LeaveManagementPage initialTab="balances" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Leave & Holiday Management')).toBeInTheDocument();
+      });
+
+      // Default balances tab content
+      expect(screen.getByText('Leave overview')).toBeInTheDocument();
+
+      // Switch to Holiday Calendar
+      fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
+      expect(screen.getByText('Company Holiday Calendar')).toBeInTheDocument();
+
+      // Leave types are created in Leave Setup, not on this page
+      expect(screen.queryByRole('radio', { name: 'Leave Policies' })).not.toBeInTheDocument();
+    });
+
+    it('synchronizes URL route on tab click when router context is present', async () => {
+      vi.mocked(leaveApi.fetchLeavePolicies).mockResolvedValue(mockPolicies);
+      vi.mocked(leaveApi.fetchHolidays).mockResolvedValue(mockHolidays);
+      vi.mocked(leaveApi.fetchMyLeaveBalances).mockResolvedValue(mockBalances);
+
+      function LocationDisplay() {
+        const location = useLocation();
+        return <div data-testid="location-display">{location.pathname}</div>;
+      }
+
+      render(
+        <MemoryRouter initialEntries={['/leave/requests']}>
+          <LocationDisplay />
+          <LeaveManagementPage initialTab="requests" />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Leave & Holiday Management')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/requests');
+
+      // Click "My Balances"
+      fireEvent.click(screen.getByRole('radio', { name: 'My Balances' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/balances');
+
+      // Click "Leave Calendar"
+      fireEvent.click(screen.getByRole('radio', { name: 'Leave Calendar' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/calendar');
+
+      // Click "Holiday Calendar"
+      fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/holidays');
+
+      // Click "My Requests"
+      fireEvent.click(screen.getByRole('radio', { name: 'My Requests' }));
+      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/requests');
+    });
+  });
+});

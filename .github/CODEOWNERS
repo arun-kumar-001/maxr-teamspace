@@ -1,0 +1,19 @@
+# Shared files (AGENTS.md §12): the Technical Lead must approve changes.
+# Enable "Require review from Code Owners" in the branch rules for develop and main.
+/AGENTS.md                      @arun-kumar-001
+/.github/                       @arun-kumar-001
+/docs/architecture/             @arun-kumar-001
+/docs/security/                 @arun-kumar-001
+/packages/shared/               @arun-kumar-001
+/apps/web/src/components/ui/    @arun-kumar-001
+/apps/web/src/styles/           @arun-kumar-001
+/apps/api/src/platform/         @arun-kumar-001
+/apps/api/src/http/             @arun-kumar-001
+/apps/api/src/middleware/       @arun-kumar-001
+/apps/api/src/db/migrations/    @arun-kumar-001
+/docker-compose.yml             @arun-kumar-001
+/package.json                   @arun-kumar-001
+/package-lock.json              @arun-kumar-001
+/tsconfig*.json                 @arun-kumar-001
+/.eslintrc*                     @arun-kumar-001
+/.prettierrc*                   @arun-kumar-001
