@@ -26,7 +26,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
   const navigate = inRouter ? useNavigate() : null;
   const location = inRouter ? useLocation() : null;
 
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   const canReviewApprovals =
     role === ROLES.TEAM_LEAD || role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
@@ -244,6 +244,7 @@ export const LeaveManagementPage: React.FC<LeaveManagementPageProps> = ({
           todayEntries={todayEntries}
           todayError={todayError}
           holidays={holidays}
+          myEmployeeId={user?.employeeId}
         />
       )}
 

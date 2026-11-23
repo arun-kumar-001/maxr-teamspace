@@ -150,7 +150,7 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
                     title={isHoliday ? names.join(', ') : undefined}
                     aria-label={isHoliday ? `${cell.day}: ${names.join(', ')}` : undefined}
                     data-testid={isHoliday ? `holiday-day-${cell.iso}` : undefined}
-                    className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm ${
+                    className={`min-h-[3rem] sm:min-h-[4.5rem] p-1 flex flex-col items-center rounded-lg text-sm ${
                       isHoliday
                         ? 'bg-primary-soft text-primary-ink font-bold border border-primary-strong'
                         : cell.iso === today
@@ -162,6 +162,14 @@ export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
                     {isHoliday && <span className="sr-only">holiday</span>}
                     {isHoliday && (
                       <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    )}
+                    {isHoliday && (
+                      <span
+                        aria-hidden="true"
+                        className="hidden sm:block mt-0.5 w-full truncate text-center text-[10px] font-semibold leading-tight"
+                      >
+                        {names.join(', ')}
+                      </span>
                     )}
                   </div>
                 );

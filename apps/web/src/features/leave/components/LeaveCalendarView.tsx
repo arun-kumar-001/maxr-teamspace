@@ -16,6 +16,8 @@ export interface LeaveCalendarViewProps {
   todayEntries?: LeaveCalendarEntry[];
   todayError?: string | null;
   holidays?: Holiday[];
+  /** When known, a toggle narrows the calendar to this person's own leave. */
+  myEmployeeId?: string;
   /** Called with the first and last day of the month shown, so the page can load that range. */
   onRangeChange?: (from: string, to: string) => void;
 }
@@ -42,11 +44,14 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
   todayEntries = [],
   todayError = null,
   holidays = [],
+  myEmployeeId,
   onRangeChange,
 }) => {
   const today = todayIso();
   const [year, setYear] = useState(Number(today.slice(0, 4)));
   const [monthIndex, setMonthIndex] = useState(Number(today.slice(5, 7)) - 1);
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
     if (!onRangeChange) return;
@@ -69,12 +74,15 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
 
   const sorted = useMemo(
     () =>
-      [...entries].sort(
-        (a, b) =>
-          a.startDate.localeCompare(b.startDate) || a.employeeName.localeCompare(b.employeeName),
-      ),
-    [entries],
+      entries
+        .filter((e) => !onlyMine || e.employeeId === myEmployeeId)
+        .sort(
+          (a, b) =>
+            a.startDate.localeCompare(b.startDate) || a.employeeName.localeCompare(b.employeeName),
+        ),
+    [entries, onlyMine, myEmployeeId],
   );
+  const holidayOn = (iso: string) => holidays.filter((h) => h.date === iso);
 
   const onDay = (iso: string) => sorted.filter((e) => e.startDate <= iso && iso <= e.endDate);
   const cells = monthCells(year, monthIndex);
@@ -172,53 +180,159 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
           </div>
         </div>
 
+        {myEmployeeId && (
+          <label className="flex items-center gap-2 text-sm text-text min-h-[44px] w-fit">
+            <input
+              type="checkbox"
+              checked={onlyMine}
+              onChange={(e) => setOnlyMine(e.target.checked)}
+              data-testid="leave-only-mine"
+            />
+            Only my leave
+          </label>
+        )}
+
         {isLoading && entries.length === 0 && (
           <p role="status" className="text-sm text-text-muted">
             Loading the leave calendar…
           </p>
         )}
 
-        <div className="hidden md:block p-4 bg-surface rounded-card border border-border shadow-card">
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-text-muted mb-1">
-            {WEEKDAY_SHORT.map((d) => (
-              <span key={d}>{d}</span>
-            ))}
+        <div className="hidden md:block p-4 bg-surface rounded-card border border-border shadow-card space-y-4">
+          <div>
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-text-muted mb-1">
+              {WEEKDAY_SHORT.map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1" data-testid="leave-calendar-grid">
+              {cells.map((cell, i) => {
+                if (!cell.iso || cell.day === null) return <span key={`blank-${i}`} />;
+                const iso = cell.iso;
+                const people = onDay(iso);
+                const dayHolidays = holidayOn(iso);
+                const isWeekend = i % 7 === 0 || i % 7 === 6;
+                return (
+                  <div
+                    key={iso}
+                    className={`min-h-[4.5rem] 2xl:min-h-[6rem] p-1.5 rounded-lg border text-left ${
+                      iso === today ? 'border-primary-strong' : 'border-border'
+                    } ${isWeekend ? 'bg-surface-muted' : ''} ${
+                      selected === iso ? 'ring-2 ring-primary-strong' : ''
+                    }`}
+                    data-testid={isWeekend ? `leave-day-weekend-${iso}` : undefined}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelected(selected === iso ? null : iso)}
+                      aria-pressed={selected === iso}
+                      aria-label={`Details for ${formatDay(iso)}`}
+                      className="min-h-[24px] min-w-[24px] text-xs font-semibold text-text rounded hover:bg-surface-muted"
+                    >
+                      {cell.day}
+                    </button>
+                    <ul className="mt-1 space-y-0.5">
+                      {dayHolidays.map((h) => (
+                        <li
+                          key={h.id}
+                          className="truncate rounded px-1 text-[11px] bg-tile-blue text-text"
+                          title={h.name}
+                        >
+                          Holiday: {h.name}
+                        </li>
+                      ))}
+                      {people.slice(0, 3).map((e) => (
+                        <li
+                          key={`${e.requestId}-${iso}`}
+                          className={`truncate rounded px-1 text-[11px] ${
+                            e.status === 'approved'
+                              ? 'bg-primary-soft text-primary-ink'
+                              : 'bg-tile-yellow text-text border border-dashed border-border-strong'
+                          }`}
+                          title={`${e.employeeName}: ${e.leaveTypeName} (${statusLabel(e.status)})`}
+                        >
+                          {e.status === 'pending' ? 'Pending: ' : ''}
+                          {e.employeeName.split(' ')[0]} · {e.leaveTypeCode}
+                          {e.halfDay ? ' ½' : ''}
+                        </li>
+                      ))}
+                      {people.length > 3 && (
+                        <li className="text-[11px] text-text-muted">+{people.length - 3} more</li>
+                      )}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-7 gap-1" data-testid="leave-calendar-grid">
-            {cells.map((cell, i) => {
-              if (!cell.iso || cell.day === null) return <span key={`blank-${i}`} />;
-              const people = onDay(cell.iso);
-              return (
-                <div
-                  key={cell.iso}
-                  className={`min-h-[5.5rem] p-1.5 rounded-lg border text-left ${
-                    cell.iso === today ? 'border-primary-strong' : 'border-border'
-                  }`}
+
+          <ul
+            className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted"
+            aria-label="Legend"
+            data-testid="leave-calendar-legend"
+          >
+            <li>
+              <span className="inline-block px-1.5 rounded bg-primary-soft text-primary-ink">
+                Name · TYPE
+              </span>{' '}
+              Approved leave
+            </li>
+            <li>
+              <span className="inline-block px-1.5 rounded bg-tile-yellow border border-dashed border-border-strong">
+                Pending: Name
+              </span>{' '}
+              Waiting for approval
+            </li>
+            <li>
+              <span className="inline-block px-1.5 rounded bg-tile-blue text-text">Holiday</span>{' '}
+              Company holiday
+            </li>
+            <li>
+              <span className="inline-block px-1.5 rounded bg-surface-muted border border-border">
+                Sat, Sun
+              </span>{' '}
+              Weekend
+            </li>
+            <li>½ Half day</li>
+          </ul>
+
+          {selected && (
+            <div
+              className="p-4 rounded-tile border border-border bg-surface-raised space-y-2"
+              data-testid="leave-day-detail"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="text-sm font-bold font-display text-text">{formatDay(selected)}</h4>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="min-h-[44px] px-3 text-sm font-semibold text-text-muted"
                 >
-                  <span className="text-xs font-semibold text-text">{cell.day}</span>
-                  <ul className="mt-1 space-y-0.5">
-                    {people.slice(0, 3).map((e) => (
-                      <li
-                        key={`${e.requestId}-${cell.iso}`}
-                        className={`truncate rounded px-1 text-[11px] ${
-                          e.status === 'approved'
-                            ? 'bg-primary-soft text-primary-ink'
-                            : 'bg-tile-yellow text-text border border-dashed border-border-strong'
-                        }`}
-                        title={`${e.employeeName}: ${e.leaveTypeName} (${statusLabel(e.status)})`}
-                      >
-                        {e.status === 'pending' ? 'Pending: ' : ''}
-                        {e.employeeName}
-                      </li>
-                    ))}
-                    {people.length > 3 && (
-                      <li className="text-[11px] text-text-muted">+{people.length - 3} more</li>
-                    )}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+                  Close
+                </button>
+              </div>
+              {holidayOn(selected).map((h) => (
+                <p key={h.id} className="text-sm font-semibold text-text">
+                  Holiday: {h.name}
+                </p>
+              ))}
+              {onDay(selected).length === 0 && holidayOn(selected).length === 0 ? (
+                <p className="text-sm text-text-muted">Nobody is on leave this day.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {onDay(selected).map((e) => (
+                    <li key={e.requestId} className="py-2">
+                      <p className="font-semibold text-sm text-text">{e.employeeName}</p>
+                      <p className="text-xs text-text-muted">
+                        {e.leaveTypeName} · {e.halfDay ? 'Half day' : 'Full day'} ·{' '}
+                        {statusLabel(e.status)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
         <section
