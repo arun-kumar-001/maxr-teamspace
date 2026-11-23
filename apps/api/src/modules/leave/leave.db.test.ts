@@ -434,4 +434,91 @@ describe('leave policies, holidays and balances against PostgreSQL', () => {
       expect(none.meta.total).toBe(0);
     });
   });
+
+  describe('a new leave type gets everyone’s balances in the same transaction', () => {
+    const withAccrual = (platformPolicies: LeavePoliciesService) => platformPolicies;
+    const service = () => {
+      const silent = createLogger({ level: 'silent', write: () => undefined });
+      const { platform } = createTestPlatform({ logger: silent });
+      return withAccrual(
+        new LeavePoliciesService(new PgLeavePoliciesRepository(pool), platform, (tx) =>
+          balances.accrueCurrentYear(tx),
+        ),
+      );
+    };
+
+    it('creates a balance for each current employee, pro-rata for this year’s joiners, none for the deactivated', async () => {
+      const veteran = await employee(`vet${randomUUID().slice(0, 4)}`, '2024-01-10');
+      const joiner = await employee(`new${randomUUID().slice(0, 4)}`, '2026-07-01');
+      const gone = await employee(`gone${randomUUID().slice(0, 4)}`, '2024-01-10', 'deactivated');
+
+      const created = await service().create(
+        {
+          code: 'STUDY',
+          name: 'Study leave',
+          hasBalance: true,
+          annualDays: 10,
+          carryForwardMax: 0,
+          allowHalfDay: true,
+          maxBackdateDays: 0,
+        },
+        caller,
+      );
+
+      expect((await balancesOf(veteran, 2026)).STUDY).toMatchObject({
+        leaveTypeId: created.id,
+        allotted: 10,
+        used: 0,
+      });
+      // Joined 1 July: 6 of 12 months.
+      expect((await balancesOf(joiner, 2026)).STUDY?.allotted).toBe(5);
+      expect((await balancesOf(gone, 2026)).STUDY).toBeUndefined();
+    });
+
+    it('creates no balance for a leave type that has none', async () => {
+      const person = await employee(`nb${randomUUID().slice(0, 4)}`, '2024-01-10');
+      await service().create(
+        {
+          code: 'PERM',
+          name: 'Permission',
+          hasBalance: false,
+          annualDays: 0,
+          carryForwardMax: 0,
+          allowHalfDay: false,
+          maxBackdateDays: 0,
+        },
+        caller,
+      );
+      expect((await balancesOf(person, 2026)).PERM).toBeUndefined();
+    });
+
+    it('fills only the gaps when a switched-off type is switched on, leaving existing balances alone', async () => {
+      const first = await employee(`a${randomUUID().slice(0, 4)}`, '2024-01-10');
+      const svc = service();
+      const type = await svc.create(
+        {
+          code: 'RESET',
+          name: 'Reset day',
+          hasBalance: true,
+          annualDays: 4,
+          carryForwardMax: 0,
+          allowHalfDay: true,
+          maxBackdateDays: 0,
+        },
+        caller,
+      );
+      await outer.query(
+        `UPDATE leave_balances SET used = 1 WHERE employee_id = $1 AND leave_type_id = $2`,
+        [first, type.id],
+      );
+      const off = await svc.update(type.id, { isActive: false, version: type.version }, caller);
+      const later = await employee(`b${randomUUID().slice(0, 4)}`, '2024-02-01');
+      expect((await balancesOf(later, 2026)).RESET).toBeUndefined();
+
+      await svc.update(type.id, { isActive: true, version: off.version }, caller);
+
+      expect((await balancesOf(later, 2026)).RESET?.allotted).toBe(4);
+      expect((await balancesOf(first, 2026)).RESET).toMatchObject({ allotted: 4, used: 1 });
+    });
+  });
 });
