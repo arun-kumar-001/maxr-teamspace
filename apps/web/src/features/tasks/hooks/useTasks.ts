@@ -11,6 +11,7 @@ import {
 } from '../api/tasksApi';
 import {
   applyTaskOverrides,
+  notifyTaskCreated,
   notifyTaskStatusChanged,
   onTaskStatusChanged,
   saveTaskStatusOverride,
@@ -232,6 +233,7 @@ export function useTasks(options: UseTasksOptions = {}) {
 
   const handleCreateTask = async (input: CreateTaskInput): Promise<Task> => {
     const created = await createTask(input);
+    notifyTaskCreated(created);
     await loadTasks();
     return created;
   };

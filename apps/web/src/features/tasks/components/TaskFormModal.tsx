@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
@@ -8,6 +9,7 @@ import { fetchEmployeeDirectory } from '../../employees/api/employees';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import { fetchProjects } from '../../projects/api/projectsApi';
 import type { Project } from '../../projects/types';
+import { notifyTaskCreated } from '../task-sync';
 import type { CreateTaskInput, Task, TaskPriority, UpdateTaskInput } from '../types';
 
 export interface TaskFormModalProps {
@@ -31,6 +33,7 @@ export function TaskFormModal({
   onSubmitCreate,
   onSubmitEdit,
 }: TaskFormModalProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
@@ -123,7 +126,10 @@ export function TaskFormModal({
           projectId: projectId || undefined,
           isDaily,
         };
-        await onSubmitCreate(input);
+        const created = await onSubmitCreate(input);
+        if (created && typeof created === 'object' && 'id' in created) {
+          notifyTaskCreated(created as Task);
+        }
       } else {
         if (!onSubmitEdit) return;
         const input: Omit<UpdateTaskInput, 'version'> = {
@@ -222,9 +228,22 @@ export function TaskFormModal({
               disabled={submitting}
               options={[
                 { value: '', label: 'Select Team Member' },
+                ...(assigneeId && !employees.some((e) => e.id === assigneeId)
+                  ? [
+                      {
+                        value: assigneeId,
+                        label:
+                          assigneeId === user?.employeeId
+                            ? `${user?.name || 'Me'} (Me)`
+                            : 'Selected Assignee',
+                      },
+                    ]
+                  : []),
                 ...employees.map((emp) => ({
                   value: emp.id,
-                  label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})`,
+                  label: `${emp.firstName} ${emp.lastName} (${emp.employeeCode})${
+                    user?.employeeId === emp.id ? ' - (Me)' : ''
+                  }`,
                 })),
               ]}
             />

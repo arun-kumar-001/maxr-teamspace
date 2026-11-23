@@ -1,70 +1,24 @@
-import { useEffect, useState, useMemo, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_DISPLAY_NAMES, ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { TimeTrackerCard } from '../../attendance';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
-import { fetchMyTasks } from '../../tasks/api/tasksApi';
+import { changeTaskStatus, createTask, fetchMyTasks } from '../../tasks/api/tasksApi';
+import {
+  applyTaskOverrides,
+  onTaskCreated,
+  onTaskStatusChanged,
+  saveTaskStatusOverride,
+} from '../../tasks/task-sync';
+import { TaskFormModal } from '../../tasks/components/TaskFormModal';
+import type { Task } from '../../tasks/types';
 import { fetchProjects } from '../../projects/api/projectsApi';
 import type { PayslipRecord } from '../../payslips/types';
 
-interface OnboardingChecklistItem {
-  id: number;
-  title: string;
-  date: string;
-  completed: boolean;
-  icon: ReactNode;
-}
-
-const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
-  {
-    id: 1,
-    title: 'Complete profile checklist',
-    date: 'Today, 09:00',
-    completed: true,
-    icon: (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 2,
-    title: 'Review project documents',
-    date: 'Today, 10:30',
-    completed: true,
-    icon: (
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 3,
-    title: 'Update sprint tasks',
-    date: 'Today, 13:00',
-    completed: false,
-    icon: (
+function TaskItemIcon({ task }: { task: Task }) {
+  if (task.priority === 'urgent' || task.priority === 'high') {
+    return (
       <svg
         className="w-4 h-4"
         fill="none"
@@ -74,14 +28,10 @@ const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
       >
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
-    ),
-  },
-  {
-    id: 4,
-    title: 'Submit weekly report',
-    date: 'Today, 14:45',
-    completed: false,
-    icon: (
+    );
+  }
+  if (task.dueDate) {
+    return (
       <svg
         className="w-4 h-4"
         fill="none"
@@ -95,14 +45,10 @@ const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
         />
       </svg>
-    ),
-  },
-  {
-    id: 5,
-    title: 'Team policy review',
-    date: 'Today, 16:30',
-    completed: false,
-    icon: (
+    );
+  }
+  if (task.projectId) {
+    return (
       <svg
         className="w-4 h-4"
         fill="none"
@@ -113,12 +59,27 @@ const INITIAL_ONBOARDING_TASKS: OnboardingChecklistItem[] = [
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
-          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
         />
       </svg>
-    ),
-  },
-];
+    );
+  }
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth="1.8"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    </svg>
+  );
+}
 
 const WEEKLY_PROGRESS_BARS = [
   { day: 'S', height: 0, active: false },
@@ -139,29 +100,30 @@ export function ProfilePortalPage() {
 
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
-  const [onboardingTasks, setOnboardingTasks] = useState<OnboardingChecklistItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('maxr_staff_tasks_state');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return INITIAL_ONBOARDING_TASKS.map((item) => {
-            const found = parsed.find((p: { id: number; completed: boolean }) => p.id === item.id);
-            return found ? { ...item, completed: Boolean(found.completed) } : item;
-          });
-        }
-      }
-    } catch {
-      // Ignore
-    }
-    return INITIAL_ONBOARDING_TASKS;
-  });
+  const [myTasks, setMyTasks] = useState<Task[]>([]);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [activeTasksCount, setActiveTasksCount] = useState(0);
   const [activeProjectsCount, setActiveProjectsCount] = useState(0);
   const [completedProjectsCount, setCompletedProjectsCount] = useState(0);
 
-  const completedTasksCount = onboardingTasks.filter((t) => t.completed).length;
+  const completedTasksCount = myTasks.filter((t) => t.status === 'completed').length;
+  const totalTasksCount = myTasks.length;
+  const completionPercentage =
+    totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
   const totalProjectsCount = activeProjectsCount + completedProjectsCount;
+
+  const loadTasks = useCallback(() => {
+    return fetchMyTasks({ pageSize: 50 })
+      .then((res) => {
+        if (res && res.data) {
+          const withOverrides = applyTaskOverrides(res.data);
+          setMyTasks(withOverrides);
+          const activeCount = withOverrides.filter((t) => t.status !== 'completed').length;
+          setActiveTasksCount(activeCount);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -173,14 +135,7 @@ export function ProfilePortalPage() {
       })
       .catch(() => {});
 
-    void fetchMyTasks({ pageSize: 50 })
-      .then((res) => {
-        if (active && res.data) {
-          const activeCount = res.data.filter((t) => t.status !== 'completed').length;
-          setActiveTasksCount(activeCount);
-        }
-      })
-      .catch(() => {});
+    void loadTasks();
 
     void fetchProjects({ pageSize: 50 })
       .then((res) => {
@@ -203,10 +158,32 @@ export function ProfilePortalPage() {
       })
       .catch(() => {});
 
+    const unsubStatus = onTaskStatusChanged(({ id, status }) => {
+      setMyTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+    });
+
+    const unsubCreated = onTaskCreated((newTask) => {
+      if (!user?.employeeId || newTask.assigneeEmployeeId === user.employeeId) {
+        setMyTasks((prev) => {
+          if (prev.some((t) => t.id === newTask.id)) return prev;
+          return [newTask, ...prev];
+        });
+        setActiveTasksCount((prev) => prev + 1);
+      }
+    });
+
+    const handleWindowFocus = () => {
+      void loadTasks();
+    };
+    window.addEventListener('focus', handleWindowFocus);
+
     return () => {
       active = false;
+      unsubStatus();
+      unsubCreated();
+      window.removeEventListener('focus', handleWindowFocus);
     };
-  }, []);
+  }, [loadTasks, user?.employeeId]);
 
   const avatarUrl =
     user?.avatarUrl ||
@@ -230,19 +207,26 @@ export function ProfilePortalPage() {
     reader.readAsDataURL(file);
   };
 
-  const toggleTask = (id: number) => {
-    setOnboardingTasks((prev) => {
-      const updated = prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
-      try {
-        localStorage.setItem(
-          'maxr_staff_tasks_state',
-          JSON.stringify(updated.map((t) => ({ id: t.id, completed: t.completed }))),
-        );
-      } catch {
-        // Ignore
-      }
-      return updated;
-    });
+  const toggleTask = async (taskId: string) => {
+    const currentTask = myTasks.find((t) => t.id === taskId);
+    if (!currentTask) return;
+    const nextStatus = currentTask.status === 'completed' ? 'in_progress' : 'completed';
+    saveTaskStatusOverride(taskId, nextStatus);
+    setMyTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: nextStatus, version: t.version + 1 } : t)),
+    );
+    try {
+      const updated = await changeTaskStatus(taskId, nextStatus);
+      setMyTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)));
+    } catch {
+      // Rollback if failure
+      saveTaskStatusOverride(taskId, currentTask.status);
+      setMyTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, status: currentTask.status, version: currentTask.version } : t,
+        ),
+      );
+    }
   };
 
   const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '') || 'User';
@@ -287,8 +271,6 @@ export function ProfilePortalPage() {
     return list;
   }, []);
 
-  const totalTasksCount = 8;
-  const completionPercentage = Math.round((completedTasksCount / totalTasksCount) * 100);
   return (
     <div
       data-testid="profile-portal-page"
@@ -927,64 +909,99 @@ export function ProfilePortalPage() {
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-white">My Tasks</span>
-            <span className="text-xl font-light font-display text-white">
-              {completedTasksCount}/8
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white">My Tasks</span>
+              <button
+                type="button"
+                onClick={() => setIsCreateTaskModalOpen(true)}
+                className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs transition-colors"
+                title="Add Task"
+                aria-label="Add Task"
+                data-testid="add-my-task-btn"
+              >
+                +
+              </button>
+            </div>
+            <span
+              className="text-xl font-light font-display text-white"
+              data-testid="my-tasks-ratio"
+            >
+              {completedTasksCount}/{totalTasksCount}
             </span>
           </div>
 
           <div className="space-y-3">
-            {onboardingTasks.map((task) => (
-              <button
-                key={task.id}
-                type="button"
-                onClick={() => toggleTask(task.id)}
-                className="w-full flex items-center justify-between gap-2 text-xs text-left select-none group transition-transform active:scale-95 duration-150"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      color: 'rgb(85, 205, 179)',
-                    }}
-                  >
-                    {task.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={`text-xs font-medium truncate transition-colors ${
-                        task.completed
-                          ? 'text-white/60 line-through'
-                          : 'text-stone-300 group-hover:text-white'
-                      }`}
+            {myTasks.length === 0 ? (
+              <div className="py-8 text-center space-y-2">
+                <p className="text-xs text-white/50">No tasks assigned yet</p>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateTaskModalOpen(true)}
+                  className="text-xs text-[rgb(85,205,179)] hover:underline inline-flex items-center gap-1 font-medium"
+                >
+                  + Add a task
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[290px] overflow-y-auto pr-1">
+                {myTasks.map((task) => {
+                  const isCompleted = task.status === 'completed';
+                  const taskDate = task.dueDate ? `Due: ${task.dueDate}` : 'No due date';
+                  return (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() => void toggleTask(task.id)}
+                      className="w-full flex items-center justify-between gap-2 text-xs text-left select-none group transition-transform active:scale-95 duration-150"
+                      data-testid={`task-item-${task.id}`}
                     >
-                      {task.title}
-                    </p>
-                    <p className="text-[10px] text-white/50">{task.date}</p>
-                  </div>
-                </div>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors shrink-0"
+                          style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                            color: 'rgb(85, 205, 179)',
+                          }}
+                        >
+                          <TaskItemIcon task={task} />
+                        </div>
+                        <div className="min-w-0">
+                          <p
+                            className={`text-xs font-medium truncate transition-colors ${
+                              isCompleted
+                                ? 'text-white/60 line-through'
+                                : 'text-stone-300 group-hover:text-white'
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+                          <p className="text-[10px] text-white/50">{taskDate}</p>
+                        </div>
+                      </div>
 
-                <div className="shrink-0">
-                  {task.completed ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
-                      style={{
-                        backgroundColor: 'rgb(85, 205, 179)',
-                        color: 'rgb(8, 11, 12)',
-                      }}
-                    >
-                      ✓
-                    </div>
-                  ) : (
-                    <div
-                      className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
-                      style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
-                    />
-                  )}
-                </div>
-              </button>
-            ))}
+                      <div className="shrink-0">
+                        {isCompleted ? (
+                          <div
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs"
+                            style={{
+                              backgroundColor: 'rgb(85, 205, 179)',
+                              color: 'rgb(8, 11, 12)',
+                            }}
+                          >
+                            ✓
+                          </div>
+                        ) : (
+                          <div
+                            className="w-4 h-4 rounded-full border transition-colors group-hover:border-white/70"
+                            style={{ borderColor: 'rgba(255, 255, 255, 0.35)' }}
+                          />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div
@@ -994,10 +1011,32 @@ export function ProfilePortalPage() {
               color: 'rgba(255, 255, 255, 0.5)',
             }}
           >
-            <span>Completed {completedTasksCount} of 8 tasks</span>
+            <span>
+              Completed {completedTasksCount} of {totalTasksCount} tasks
+            </span>
+            <button
+              type="button"
+              onClick={() => navigate('/tasks')}
+              className="hover:text-white transition-colors"
+            >
+              View all →
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Quick Task Creation Modal */}
+      <TaskFormModal
+        isOpen={isCreateTaskModalOpen}
+        onClose={() => setIsCreateTaskModalOpen(false)}
+        mode="create"
+        defaultAssigneeId={user?.employeeId ?? undefined}
+        onSubmitCreate={async (input) => {
+          const created = await createTask(input);
+          setMyTasks((prev) => [created, ...prev]);
+          setActiveTasksCount((prev) => prev + 1);
+        }}
+      />
     </div>
   );
 }
