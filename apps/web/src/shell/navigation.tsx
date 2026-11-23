@@ -710,18 +710,6 @@ export function getSidebarGroupsForRole(role: Role): SidebarGroup[] {
           icon: <NavSvgIcon name="users" />,
         },
         {
-          id: '/shifts',
-          label: 'Attendance Policies',
-          href: '/shifts',
-          icon: <NavSvgIcon name="clock" />,
-        },
-        {
-          id: '/leave/policies',
-          label: 'Leave Policies',
-          href: '/leave/policies',
-          icon: <NavSvgIcon name="calendar" />,
-        },
-        {
           id: '/admin/settings',
           label: 'Company Config',
           href: '/admin/settings',
