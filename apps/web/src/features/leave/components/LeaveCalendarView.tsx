@@ -92,94 +92,27 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
     a.employeeName.localeCompare(b.employeeName),
   );
 
+  const dayNumber = Number(today.slice(8, 10));
+  const initials = (name: string) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+
   return (
     <div
-      className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start"
+      className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_21rem] gap-x-6 gap-y-6"
       data-testid="leave-calendar-view"
     >
-      <aside
-        className="order-first xl:order-last p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card space-y-3"
-        aria-label="On leave today"
-        data-testid="leave-today-panel"
-      >
-        <div>
-          <h3 className="text-base font-bold font-display text-text">On leave today</h3>
-          <p className="text-xs text-text-muted">{formatDay(today)}</p>
-        </div>
-        {todayHolidays.map((h) => (
-          <p
-            key={h.id}
-            className="p-2 rounded-lg bg-primary-soft text-primary-ink text-sm font-semibold"
-            data-testid="leave-today-holiday"
-          >
-            Holiday today: {h.name}
-          </p>
-        ))}
-        {todayError ? (
-          <p role="alert" className="text-sm text-danger" data-testid="leave-today-error">
-            {todayError}
-          </p>
-        ) : onLeaveToday.length === 0 ? (
-          <p className="text-sm text-text-muted" data-testid="leave-today-empty">
-            Nobody is on leave today.
-          </p>
-        ) : (
-          <>
-            <p className="text-sm font-semibold text-text" data-testid="leave-today-count">
-              {onLeaveToday.length} {onLeaveToday.length === 1 ? 'person' : 'people'} on leave
-            </p>
-            <ul className="divide-y divide-border" data-testid="leave-today-list">
-              {onLeaveToday.map((entry) => (
-                <li key={entry.requestId} className="py-2.5">
-                  <p className="font-semibold text-sm text-text">{entry.employeeName}</p>
-                  <p className="text-xs text-text-muted">
-                    {entry.leaveTypeName} · {entry.halfDay ? 'Half day' : 'Full day'} ·{' '}
-                    {statusLabel(entry.status)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </aside>
-
-      <div className="space-y-6 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold font-display text-text">
-              Team Leave Calendar
-            </h2>
-            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-              Approved and pending leave you are allowed to see.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              type="button"
-              className={NAV_BUTTON}
-              onClick={() => step(-1)}
-              aria-label="Previous month"
-            >
-              ‹
-            </button>
-            <h3
-              className="min-w-[10rem] text-center text-base font-bold font-display text-text"
-              aria-live="polite"
-              data-testid="leave-calendar-month"
-            >
-              {MONTH_NAMES[monthIndex]} {year}
-            </h3>
-            <button
-              type="button"
-              className={NAV_BUTTON}
-              onClick={() => step(1)}
-              aria-label="Next month"
-            >
-              ›
-            </button>
-          </div>
-        </div>
-
+      <div className="xl:col-start-1 xl:row-start-1 space-y-2 min-w-0">
+        <h2 className="text-xl sm:text-2xl font-bold font-display text-text">
+          Team Leave Calendar
+        </h2>
+        <p className="text-xs sm:text-sm text-text-muted">
+          Approved and pending leave you are allowed to see.
+        </p>
         {myEmployeeId && (
           <label className="flex items-center gap-2 text-sm text-text min-h-[44px] w-fit">
             <input
@@ -191,7 +124,116 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
             Only my leave
           </label>
         )}
+      </div>
 
+      <div className="xl:col-start-2 xl:row-start-1 flex items-center justify-between gap-2 self-end">
+        <button
+          type="button"
+          className={NAV_BUTTON}
+          onClick={() => step(-1)}
+          aria-label="Previous month"
+        >
+          ‹
+        </button>
+        <h3
+          className="flex-1 text-center text-base font-bold font-display text-text"
+          aria-live="polite"
+          data-testid="leave-calendar-month"
+        >
+          {MONTH_NAMES[monthIndex]} {year}
+        </h3>
+        <button
+          type="button"
+          className={NAV_BUTTON}
+          onClick={() => step(1)}
+          aria-label="Next month"
+        >
+          ›
+        </button>
+      </div>
+
+      <aside
+        className="xl:col-start-2 xl:row-start-2 xl:sticky xl:top-4 self-start overflow-hidden rounded-card border border-border bg-surface-raised shadow-card"
+        aria-label="On leave today"
+        data-testid="leave-today-panel"
+      >
+        <div className="flex items-center gap-4 p-5 bg-primary-soft">
+          <div
+            aria-hidden="true"
+            className="w-14 h-14 shrink-0 rounded-2xl bg-surface-raised border border-border flex flex-col items-center justify-center shadow-xs"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wide text-primary-ink">
+              {MONTH_NAMES[Number(today.slice(5, 7)) - 1]?.slice(0, 3)}
+            </span>
+            <span className="text-xl font-extrabold font-display leading-none text-text">
+              {dayNumber}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-bold font-display text-text">On leave today</h3>
+            <p className="text-xs text-text-muted">{formatDay(today)}</p>
+          </div>
+          {!todayError && (
+            <span
+              className="ml-auto shrink-0 rounded-full bg-surface-raised border border-border px-3 py-1 text-sm font-extrabold text-text"
+              data-testid="leave-today-count"
+            >
+              {onLeaveToday.length}
+              <span className="sr-only">
+                {' '}
+                {onLeaveToday.length === 1 ? 'person' : 'people'} on leave
+              </span>
+            </span>
+          )}
+        </div>
+
+        <div className="p-5 space-y-3">
+          {todayHolidays.map((h) => (
+            <p
+              key={h.id}
+              className="px-3 py-2 rounded-xl bg-tile-blue text-text text-sm font-semibold"
+              data-testid="leave-today-holiday"
+            >
+              Holiday today: {h.name}
+            </p>
+          ))}
+          {todayError ? (
+            <p role="alert" className="text-sm text-danger" data-testid="leave-today-error">
+              {todayError}
+            </p>
+          ) : onLeaveToday.length === 0 ? (
+            <div className="py-4 text-center space-y-1" data-testid="leave-today-empty">
+              <p className="text-sm font-bold text-text">Everyone is in today</p>
+              <p className="text-xs text-text-muted">Nobody is on leave today.</p>
+            </div>
+          ) : (
+            <ul className="space-y-2" data-testid="leave-today-list">
+              {onLeaveToday.map((entry) => (
+                <li
+                  key={entry.requestId}
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-surface"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="w-10 h-10 shrink-0 rounded-full bg-primary-soft text-primary-ink text-sm font-bold flex items-center justify-center"
+                  >
+                    {initials(entry.employeeName)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm text-text truncate">{entry.employeeName}</p>
+                    <p className="text-xs text-text-muted truncate">
+                      {entry.leaveTypeName} · {entry.halfDay ? 'Half day' : 'Full day'} ·{' '}
+                      {statusLabel(entry.status)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </aside>
+
+      <div className="xl:col-start-1 xl:row-start-2 space-y-6 min-w-0">
         {isLoading && entries.length === 0 && (
           <p role="status" className="text-sm text-text-muted">
             Loading the leave calendar…
