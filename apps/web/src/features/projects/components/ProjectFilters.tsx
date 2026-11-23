@@ -157,9 +157,7 @@ export function ProjectFilters({
                   {
                     value: 'archived',
                     label:
-                      counts?.archived !== undefined
-                        ? `Archived (${counts.archived})`
-                        : 'Archived',
+                      counts?.archived !== undefined ? `Archived (${counts.archived})` : 'Archived',
                   },
                 ]
           }

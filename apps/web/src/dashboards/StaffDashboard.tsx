@@ -1258,9 +1258,7 @@ export function StaffDashboard() {
           {/* Task Items */}
           <div className="space-y-3">
             {realTasks.length === 0 && onboardingTasks.length === 0 ? (
-              <div className="text-xs text-white/50 text-center py-6">
-                No assigned tasks found.
-              </div>
+              <div className="text-xs text-white/50 text-center py-6">No assigned tasks found.</div>
             ) : realTasks.length > 0 ? (
               realTasks.slice(0, 8).map((task) => {
                 const isCompleted = task.status === 'completed';
@@ -1295,7 +1293,9 @@ export function StaffDashboard() {
                       <div className="min-w-0">
                         <p
                           className={`text-xs font-medium truncate transition-colors ${
-                            isCompleted ? 'text-white/60 line-through' : 'text-stone-300 group-hover:text-white'
+                            isCompleted
+                              ? 'text-white/60 line-through'
+                              : 'text-stone-300 group-hover:text-white'
                           }`}
                         >
                           {task.title}
@@ -1348,7 +1348,9 @@ export function StaffDashboard() {
                       <div className="min-w-0">
                         <p
                           className={`text-xs font-medium truncate transition-colors ${
-                            isCompleted ? 'text-white/60 line-through' : 'text-stone-300 group-hover:text-white'
+                            isCompleted
+                              ? 'text-white/60 line-through'
+                              : 'text-stone-300 group-hover:text-white'
                           }`}
                         >
                           {task.title}

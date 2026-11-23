@@ -8,7 +8,6 @@ import {
   resolveNotificationLink,
 } from './notificationHelpers';
 
-
 export interface NotificationBellProps {
   onNavigate?: (path: string) => void;
   onNavigateToInbox?: () => void;

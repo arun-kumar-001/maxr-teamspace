@@ -270,12 +270,11 @@ export function ProjectsListPage() {
                     const summary = taskSummaryByProject.get(project.id);
                     const isCompleted =
                       project.workflowStatus === 'completed' || project.status === 'archived';
-                    const pct =
-                      isCompleted
-                        ? 100
-                        : summary && summary.total > 0
-                          ? Math.round((summary.completed / summary.total) * 100)
-                          : 0;
+                    const pct = isCompleted
+                      ? 100
+                      : summary && summary.total > 0
+                        ? Math.round((summary.completed / summary.total) * 100)
+                        : 0;
                     return (
                       <tr
                         key={project.id}

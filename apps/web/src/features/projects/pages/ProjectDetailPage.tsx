@@ -103,9 +103,7 @@ export function ProjectDetailPage() {
       await updateProject({ workflowStatus: 'completed', progressPercent: 100 });
       await refetch();
     } catch (err: unknown) {
-      setActionError(
-        err instanceof Error ? err.message : 'Failed to mark project as completed',
-      );
+      setActionError(err instanceof Error ? err.message : 'Failed to mark project as completed');
     } finally {
       setIsSubmittingStatus(false);
     }
@@ -119,9 +117,7 @@ export function ProjectDetailPage() {
       await updateProject({ workflowStatus: 'in_progress' });
       await refetch();
     } catch (err: unknown) {
-      setActionError(
-        err instanceof Error ? err.message : 'Failed to update project status',
-      );
+      setActionError(err instanceof Error ? err.message : 'Failed to update project status');
     } finally {
       setIsSubmittingStatus(false);
     }

@@ -839,11 +839,13 @@ export const PayslipsPage: React.FC = () => {
                             Select Employee
                           </option>
                           {employees.map((emp) => {
-                            const fullName = [emp.firstName, emp.lastName].filter(Boolean).join(' ') || emp.id;
+                            const fullName =
+                              [emp.firstName, emp.lastName].filter(Boolean).join(' ') || emp.id;
                             const code = emp.employeeCode ? ` (${emp.employeeCode})` : '';
                             return (
                               <option key={emp.id} value={emp.id}>
-                                {fullName}{code}
+                                {fullName}
+                                {code}
                               </option>
                             );
                           })}

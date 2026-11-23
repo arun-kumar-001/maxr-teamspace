@@ -124,7 +124,9 @@ export function ProjectOverviewCards({
             tabIndex={isClickable ? 0 : undefined}
             aria-pressed={isClickable ? isSelected : undefined}
             className={`flex flex-col gap-3 p-5 border transition-all duration-200 hover:-translate-y-0.5 ${
-              isClickable ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong' : ''
+              isClickable
+                ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-strong'
+                : ''
             } ${isSelected ? 'ring-2 ring-primary border-primary-strong' : ''}`}
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.72)',
@@ -137,34 +139,34 @@ export function ProjectOverviewCards({
               borderRadius: '20px',
             }}
           >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-              {card.label}
-            </span>
-            <span
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ backgroundColor: card.accentBg, color: card.accentColor }}
-              aria-hidden="true"
-            >
-              {card.icon}
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
+                {card.label}
+              </span>
+              <span
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: card.accentBg, color: card.accentColor }}
+                aria-hidden="true"
+              >
+                {card.icon}
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="h-8 w-16 rounded-lg bg-surface-muted animate-pulse" />
+            ) : (
+              <span
+                className="font-display text-3xl font-bold tabular-nums leading-none"
+                style={{ color: 'rgb(8, 11, 12)' }}
+                data-testid={`overview-count-${card.id}`}
+              >
+                {card.value}
+              </span>
+            )}
+
+            <span className="text-xs text-text-muted">{card.caption}</span>
           </div>
-
-          {loading ? (
-            <div className="h-8 w-16 rounded-lg bg-surface-muted animate-pulse" />
-          ) : (
-            <span
-              className="font-display text-3xl font-bold tabular-nums leading-none"
-              style={{ color: 'rgb(8, 11, 12)' }}
-              data-testid={`overview-count-${card.id}`}
-            >
-              {card.value}
-            </span>
-          )}
-
-          <span className="text-xs text-text-muted">{card.caption}</span>
-        </div>
-      );
+        );
       })}
     </div>
   );

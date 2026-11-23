@@ -117,11 +117,15 @@ describe('Issue #11 - Same Team Leave Balances', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(leaveApi.fetchLeaveBalances).mockResolvedValue({
-      data: mockTeamBalances as any,
+      data: mockTeamBalances as unknown as Awaited<
+        ReturnType<typeof leaveApi.fetchLeaveBalances>
+      >['data'],
       meta: { page: 1, pageSize: 50, total: mockTeamBalances.length },
     });
     vi.mocked(employeeApi.fetchEmployeeDirectory).mockResolvedValue({
-      data: mockDirectory as any,
+      data: mockDirectory as unknown as Awaited<
+        ReturnType<typeof employeeApi.fetchEmployeeDirectory>
+      >['data'],
       meta: { page: 1, pageSize: 50, total: mockDirectory.length, totalPages: 1 },
     });
   });

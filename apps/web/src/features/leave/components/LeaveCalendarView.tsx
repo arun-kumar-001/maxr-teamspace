@@ -430,7 +430,10 @@ export const LeaveCalendarView: React.FC<LeaveCalendarViewProps> = ({
           </ul>
 
           {sorted.length === 0 && (
-            <p className="text-xs text-text-muted text-center pt-2" data-testid="leave-calendar-empty">
+            <p
+              className="text-xs text-text-muted text-center pt-2"
+              data-testid="leave-calendar-empty"
+            >
               Nobody is on leave in {MONTH_NAMES[monthIndex]}.
             </p>
           )}

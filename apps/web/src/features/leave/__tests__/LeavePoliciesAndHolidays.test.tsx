@@ -21,8 +21,12 @@ vi.mock('../api/leave', () => ({
   createHoliday: vi.fn(),
   deleteHoliday: vi.fn(),
   fetchMyLeaveBalances: vi.fn(),
-  fetchLeaveBalances: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
-  fetchMyLeaveRequests: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchLeaveBalances: vi
+    .fn()
+    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
+  fetchMyLeaveRequests: vi
+    .fn()
+    .mockResolvedValue({ data: [], meta: { page: 1, pageSize: 50, total: 0 } }),
   fetchLeaveCalendar: vi.fn().mockResolvedValue([]),
   runYearlyAccrual: vi.fn(),
 }));
@@ -217,7 +221,7 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
 
       expect(screen.getByTestId('leave-balances-empty')).toBeInTheDocument();
       expect(screen.getByText('No leave balances yet')).toBeInTheDocument();
-      expect(screen.queryByText(/Annual Leave|Sick Leave|Work from Home/)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(/^leave-balance-card-/)).not.toBeInTheDocument();
       expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
     });
 

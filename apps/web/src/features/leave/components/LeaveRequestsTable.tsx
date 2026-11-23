@@ -232,7 +232,6 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
     };
   }, [displayItems]);
 
-
   const filteredItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return displayItems.filter((item) => {
@@ -919,8 +918,13 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
               </div>
               <div className="pt-1">
                 <span className="text-gray-500 block mb-1">Reason</span>
-                <p className="p-2.5 rounded-xl bg-gray-50 text-gray-800 font-medium" data-testid="leave-detail-reason">
-                  {selectedRequest.rawRequest?.reason || (selectedRequest.reason !== '—' ? selectedRequest.reason : '') || 'No reason provided'}
+                <p
+                  className="p-2.5 rounded-xl bg-gray-50 text-gray-800 font-medium"
+                  data-testid="leave-detail-reason"
+                >
+                  {selectedRequest.rawRequest?.reason ||
+                    (selectedRequest.reason !== '—' ? selectedRequest.reason : '') ||
+                    'No reason provided'}
                 </p>
               </div>
             </div>
@@ -989,8 +993,14 @@ export const LeaveRequestsTable: React.FC<LeaveRequestsTableProps> = ({
                 <p className="text-xs text-text-muted mt-1 leading-relaxed">
                   Are you sure you want to cancel your leave request for{' '}
                   <strong className="text-text">{confirmCancelItem.leaveTypeName}</strong> from{' '}
-                  <strong className="text-text">{formatShortDate(confirmCancelItem.startDate)}</strong> to{' '}
-                  <strong className="text-text">{formatShortDate(confirmCancelItem.endDate)}</strong>? This action cannot be undone.
+                  <strong className="text-text">
+                    {formatShortDate(confirmCancelItem.startDate)}
+                  </strong>{' '}
+                  to{' '}
+                  <strong className="text-text">
+                    {formatShortDate(confirmCancelItem.endDate)}
+                  </strong>
+                  ? This action cannot be undone.
                 </p>
               </div>
             </div>

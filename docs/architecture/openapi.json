@@ -10772,7 +10772,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["title", "assigneeEmployeeId"],
+                "required": ["title"],
                 "additionalProperties": false
               }
             }

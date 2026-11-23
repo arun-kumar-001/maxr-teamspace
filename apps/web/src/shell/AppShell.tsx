@@ -19,7 +19,6 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   // The logo is a company setting kept on the server, so every user sees the same one.
   const [customLogo, setCustomLogo] = useState<string | null>(null);
 
-
   useEffect(() => {
     const handleNavChange = () => {
       setNavRevision((r) => r + 1);

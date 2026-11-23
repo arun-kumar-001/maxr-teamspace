@@ -56,16 +56,18 @@ beforeEach(() => {
     data: MOCK_TASKS,
     meta: { page: 1, pageSize: 50, total: 2 },
   });
-  vi.spyOn(tasksApi, 'changeTaskStatus').mockImplementation(async (id: string, status: any) => {
-    const existing = MOCK_TASKS.find((t) => t.id === id);
-    return {
-      ...(existing || MOCK_TASKS[0]!),
-      id,
-      status,
-      version: ((existing || MOCK_TASKS[0]!).version ?? 1) + 1,
-      updatedAt: new Date().toISOString(),
-    };
-  });
+  vi.spyOn(tasksApi, 'changeTaskStatus').mockImplementation(
+    async (id: string, status: Task['status']) => {
+      const existing = MOCK_TASKS.find((t) => t.id === id);
+      return {
+        ...(existing || MOCK_TASKS[0]!),
+        id,
+        status,
+        version: ((existing || MOCK_TASKS[0]!).version ?? 1) + 1,
+        updatedAt: new Date().toISOString(),
+      };
+    },
+  );
 });
 
 afterEach(() => {

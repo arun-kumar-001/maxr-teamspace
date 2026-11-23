@@ -101,7 +101,9 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
   const [employees, setEmployees] = useState<EmployeeDirectoryItem[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [leaveTypeFilter, setLeaveTypeFilter] = useState<'ALL' | 'ANNUAL' | 'SICK' | 'CASUAL'>('ALL');
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState<'ALL' | 'ANNUAL' | 'SICK' | 'CASUAL'>(
+    'ALL',
+  );
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
@@ -154,10 +156,7 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
     );
   }, [employees, user?.employeeId, user?.email]);
 
-  const adminDepartment =
-    currentEmployee?.department?.name ||
-    user?.department ||
-    '';
+  const adminDepartment = currentEmployee?.department?.name || user?.department || '';
 
   const employeeMap = useMemo(() => {
     const map = new Map<string, EmployeeDirectoryItem>();
@@ -193,9 +192,12 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
       // Leave Type Filter
       if (leaveTypeFilter !== 'ALL') {
         const typeStr = `${tb.name} ${tb.code}`.toLowerCase();
-        if (leaveTypeFilter === 'ANNUAL' && !typeStr.includes('annual') && !typeStr.includes('al')) return false;
-        if (leaveTypeFilter === 'SICK' && !typeStr.includes('sick') && !typeStr.includes('sl')) return false;
-        if (leaveTypeFilter === 'CASUAL' && !typeStr.includes('casual') && !typeStr.includes('cl')) return false;
+        if (leaveTypeFilter === 'ANNUAL' && !typeStr.includes('annual') && !typeStr.includes('al'))
+          return false;
+        if (leaveTypeFilter === 'SICK' && !typeStr.includes('sick') && !typeStr.includes('sl'))
+          return false;
+        if (leaveTypeFilter === 'CASUAL' && !typeStr.includes('casual') && !typeStr.includes('cl'))
+          return false;
       }
 
       // Search Query Filter
@@ -363,7 +365,10 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
       )}
 
       {/* 5. Same Team Leave Balances Section */}
-      <div className="pt-6 border-t border-border/80 space-y-4" data-testid="same-team-leave-balances">
+      <div
+        className="pt-6 border-t border-border/80 space-y-4"
+        data-testid="same-team-leave-balances"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2.5">
@@ -426,7 +431,9 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
 
           {/* Leave Type Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-            <span className="text-xs font-semibold text-text-muted mr-1 hidden md:inline">Type:</span>
+            <span className="text-xs font-semibold text-text-muted mr-1 hidden md:inline">
+              Type:
+            </span>
             {(
               [
                 { id: 'ALL', label: 'All Types' },
@@ -571,9 +578,7 @@ export const LeaveBalancesSummary: React.FC<LeaveBalancesSummaryProps> = ({
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${typeBadgeClass}`}
                         >
                           {tb.name}
-                          <span className="ml-1 opacity-75 font-mono text-[10px]">
-                            ({tb.code})
-                          </span>
+                          <span className="ml-1 opacity-75 font-mono text-[10px]">({tb.code})</span>
                         </span>
                       </td>
 

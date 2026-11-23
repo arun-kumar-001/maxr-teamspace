@@ -45,8 +45,7 @@ export function ProjectDetailDrawer({
 
   const projectTasks = tasks.filter((t) => t.projectId === projectId);
   const doneCount = projectTasks.filter((t) => t.status === 'completed').length;
-  const isCompleted =
-    project?.workflowStatus === 'completed' || project?.status === 'archived';
+  const isCompleted = project?.workflowStatus === 'completed' || project?.status === 'archived';
   const progressPct = isCompleted
     ? 100
     : projectTasks.length > 0
@@ -61,9 +60,7 @@ export function ProjectDetailDrawer({
       .map((part) => part[0]?.toUpperCase())
       .join('');
 
-  const handleWorkflowStatusSwitch = async (
-    target: 'in_progress' | 'completed' | 'archived',
-  ) => {
+  const handleWorkflowStatusSwitch = async (target: 'in_progress' | 'completed' | 'archived') => {
     if (!project || !canManage) return;
     setUpdatingStatus(true);
     setStatusError(null);

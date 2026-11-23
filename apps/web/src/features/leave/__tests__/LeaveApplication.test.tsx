@@ -593,6 +593,7 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
 
       const cancelBtn = screen.getByTestId('table-cancel-leave-btn-req-001');
       fireEvent.click(cancelBtn);
+      fireEvent.click(await screen.findByRole('button', { name: 'Confirm Cancel' }));
 
       await waitFor(() => {
         expect(onCancelRequest).toHaveBeenCalledWith('req-001');
@@ -636,8 +637,8 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       render(<LeaveCalendarView entries={mockCalendarEntries} />);
 
       expect(screen.getByText('Team Leave Calendar')).toBeInTheDocument();
-      expect(screen.getAllByText('Staff Member').length).toBeGreaterThan(0);
-      expect(screen.getByText(/3 days · Pending/)).toBeInTheDocument();
+      // The 3-day pending leave of 10 to 12 Nov is on each of its days.
+      expect(screen.getAllByText('Pending: Staff · PTO')).toHaveLength(3);
     });
   });
 

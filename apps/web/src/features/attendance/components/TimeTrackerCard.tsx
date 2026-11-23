@@ -297,7 +297,6 @@ export function TimeTrackerCard({
           }
         }
       } else {
-
         setSecondsElapsed(0);
         setCheckInTime('--:--');
         setIsCheckedIn(false);
