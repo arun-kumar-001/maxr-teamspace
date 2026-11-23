@@ -48,19 +48,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export async function fetchLeavePolicies(): Promise<LeavePolicy[]> {
-  const res = await fetch('/api/v1/leave-policies', {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch('/api/v1/leave-policies');
   const json = await handleResponse<{ data: LeavePolicy[] }>(res);
   return json.data;
 }
 
 export async function createLeavePolicy(data: CreateLeavePolicyInput): Promise<LeavePolicy> {
-  const res = await fetch('/api/v1/leave-policies', {
+  const res = await apiFetch('/api/v1/leave-policies', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      credentials: 'include',
+      'Idempotency-Key': crypto.randomUUID(),
     },
     body: JSON.stringify(data),
   });
@@ -72,11 +70,10 @@ export async function updateLeavePolicy(
   id: string,
   data: UpdateLeavePolicyInput,
 ): Promise<LeavePolicy> {
-  const res = await fetch(`/api/v1/leave-policies/${id}`, {
+  const res = await apiFetch(`/api/v1/leave-policies/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      credentials: 'include',
     },
     body: JSON.stringify(data),
   });
@@ -90,19 +87,17 @@ export async function fetchHolidays(year?: number): Promise<Holiday[]> {
   const queryString = params.toString();
   const url = queryString ? `/api/v1/holidays?${queryString}` : '/api/v1/holidays';
 
-  const res = await fetch(url, {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch(url);
   const json = await handleResponse<{ data: Holiday[] }>(res);
   return json.data;
 }
 
 export async function createHoliday(data: CreateHolidayInput): Promise<Holiday> {
-  const res = await fetch('/api/v1/holidays', {
+  const res = await apiFetch('/api/v1/holidays', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      credentials: 'include',
+      'Idempotency-Key': crypto.randomUUID(),
     },
     body: JSON.stringify(data),
   });
@@ -111,9 +106,8 @@ export async function createHoliday(data: CreateHolidayInput): Promise<Holiday> 
 }
 
 export async function deleteHoliday(id: string): Promise<boolean> {
-  const res = await fetch(`/api/v1/holidays/${id}`, {
+  const res = await apiFetch(`/api/v1/holidays/${id}`, {
     method: 'DELETE',
-    headers: { credentials: 'include' },
   });
   const json = await handleResponse<{ data: { removed: boolean } }>(res);
   return json.data.removed;
@@ -127,9 +121,7 @@ export async function fetchMyLeaveBalances(year?: number): Promise<LeaveBalance[
     ? `/api/v1/leave-balances/me?${queryString}`
     : '/api/v1/leave-balances/me';
 
-  const res = await fetch(url, {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch(url);
   const json = await handleResponse<{ data: LeaveBalance[] }>(res);
   return json.data;
 }
@@ -146,18 +138,15 @@ export async function fetchLeaveBalances(
   const queryString = params.toString();
   const url = queryString ? `/api/v1/leave-balances?${queryString}` : '/api/v1/leave-balances';
 
-  const res = await fetch(url, {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch(url);
   return handleResponse<{ data: EmployeeLeaveBalance[]; meta: PaginationMeta }>(res);
 }
 
 export async function runYearlyAccrual(year: number): Promise<AccrualResult> {
-  const res = await fetch('/api/v1/leave-balances/accrual', {
+  const res = await apiFetch('/api/v1/leave-balances/accrual', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      credentials: 'include',
     },
     body: JSON.stringify({ year }),
   });
@@ -193,24 +182,19 @@ export async function fetchMyLeaveRequests(
     ? `/api/v1/leave-requests/me?${queryString}`
     : '/api/v1/leave-requests/me';
 
-  const res = await fetch(url, {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch(url);
   return handleResponse<{ data: LeaveRequest[]; meta: PaginationMeta }>(res);
 }
 
 export async function fetchLeaveRequest(id: string): Promise<LeaveRequest> {
-  const res = await fetch(`/api/v1/leave-requests/${id}`, {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch(`/api/v1/leave-requests/${id}`);
   const json = await handleResponse<{ data: LeaveRequest }>(res);
   return json.data;
 }
 
 export async function cancelLeaveRequest(id: string): Promise<LeaveRequest> {
-  const res = await fetch(`/api/v1/leave-requests/${id}/cancel`, {
+  const res = await apiFetch(`/api/v1/leave-requests/${id}/cancel`, {
     method: 'POST',
-    headers: { credentials: 'include' },
   });
   const json = await handleResponse<{ data: LeaveRequest }>(res);
   return json.data;
@@ -218,9 +202,7 @@ export async function cancelLeaveRequest(id: string): Promise<LeaveRequest> {
 
 export async function fetchLeaveCalendar(from: string, to: string): Promise<LeaveCalendarEntry[]> {
   const params = new URLSearchParams({ from, to });
-  const res = await fetch(`/api/v1/leave-requests/calendar?${params.toString()}`, {
-    headers: { credentials: 'include' },
-  });
+  const res = await apiFetch(`/api/v1/leave-requests/calendar?${params.toString()}`);
   const json = await handleResponse<{ data: LeaveCalendarEntry[] }>(res);
   return json.data;
 }
