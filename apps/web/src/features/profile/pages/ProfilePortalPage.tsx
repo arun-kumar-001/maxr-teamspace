@@ -374,7 +374,6 @@ export function ProfilePortalPage() {
         </div>
       </div>
 
-
       {/* Row 1: Four Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
         {/* Card 1: Executive Profile Card (Overall Big Size View) */}
