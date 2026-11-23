@@ -214,6 +214,17 @@ function TasksPageContent({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {!canManage && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsCreateOpen(true)}
+              className="min-h-[40px] font-medium"
+              data-testid="add-task-btn"
+            >
+              + Add Task
+            </Button>
+          )}
           {visibleTasks.length > 0 && (
             <Button
               variant="outline"
@@ -341,7 +352,7 @@ function TasksPageContent({
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         mode="create"
-        defaultAssigneeId={scope === 'mine' ? (user?.employeeId ?? undefined) : undefined}
+        isStaff={!canManage}
         onSubmitCreate={handleCreateSubmit}
       />
 

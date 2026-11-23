@@ -323,6 +323,7 @@ describe('Tasks Feature (Issue #43)', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('create-task-btn')).toBeInTheDocument();
+      expect(screen.queryByTestId('add-task-btn')).toBeNull();
     });
 
     fireEvent.click(screen.getByTestId('create-task-btn'));
@@ -351,6 +352,94 @@ describe('Tasks Feature (Issue #43)', () => {
           assigneeEmployeeId: '22222222-2222-2222-2222-222222222222',
         }),
       );
+    });
+  });
+
+  it('allows staff member to click + Add Task button and create a task without Assignee field', async () => {
+    const staffCreatedTask: Task = {
+      id: '88888888-8888-8888-8888-888888888888',
+      title: 'Staff self-assigned task',
+      description: 'Personal staff task.',
+      projectId: null,
+      projectName: null,
+      assigneeEmployeeId: 'emp-004',
+      assigneeName: 'Arun Kumar',
+      assignerEmployeeId: 'emp-004',
+      assignerName: 'Arun Kumar',
+      status: 'todo',
+      priority: 'medium',
+      dueDate: '2026-04-20',
+      isOverdue: false,
+      completedAt: null,
+      version: 1,
+      createdAt: '2026-03-01T00:00:00Z',
+      updatedAt: '2026-03-01T00:00:00Z',
+    };
+
+    vi.mocked(tasksApi.createTask).mockResolvedValue(staffCreatedTask);
+
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <TasksPage initialScope="mine" />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('add-task-btn')).toBeInTheDocument();
+      expect(screen.queryByTestId('create-task-btn')).toBeNull();
+      expect(screen.getByTestId('export-tasks-btn')).toBeInTheDocument();
+    });
+
+    // Verify + Add Task is aligned to the left of Export
+    const addBtn = screen.getByTestId('add-task-btn');
+    const exportBtn = screen.getByTestId('export-tasks-btn');
+    expect(
+      Boolean(addBtn.compareDocumentPosition(exportBtn) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBe(true);
+
+    // Click + Add Task
+    fireEvent.click(addBtn);
+
+    // Modal opens
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Create New Task' })).toBeInTheDocument();
+    });
+
+    // Assignee dropdown and Assign to Me checkbox are NOT rendered for staff
+    expect(screen.queryByTestId('task-assignee-select')).toBeNull();
+    expect(screen.queryByTestId('checkbox-assign-to-me')).toBeNull();
+
+    // Enter title and submit
+    fireEvent.change(screen.getByTestId('task-title-input'), {
+      target: { value: 'Staff self-assigned task' },
+    });
+
+    fireEvent.click(screen.getByTestId('submit-task-btn'));
+
+    await waitFor(() => {
+      expect(tasksApi.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Staff self-assigned task',
+        }),
+      );
+    });
+  });
+
+  it('renders + New Task button for Admin and does not render duplicate + Add Task button', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <TasksPage initialScope="team" />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('create-task-btn')).toBeInTheDocument();
+      expect(screen.queryByTestId('add-task-btn')).toBeNull();
+      expect(screen.getByTestId('export-tasks-btn')).toBeInTheDocument();
     });
   });
 

@@ -1030,7 +1030,6 @@ export function ProfilePortalPage() {
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         mode="create"
-        defaultAssigneeId={user?.employeeId ?? undefined}
         onSubmitCreate={async (input) => {
           const created = await createTask(input);
           setMyTasks((prev) => [created, ...prev]);

@@ -111,6 +111,7 @@ export class MemoryTasksRepository implements ITasksRepository {
             ? t.assigneeEmployeeId === viewer.employeeId
             : viewer.all ||
               t.assignerEmployeeId === viewer.employeeId ||
+              t.assigneeEmployeeId === viewer.employeeId ||
               this.manages(viewer.employeeId, t);
         return (
           inScope &&
