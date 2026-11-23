@@ -368,4 +368,47 @@ describe('leave setup API: access', () => {
       ).toBe(400);
     });
   });
+
+  describe('a new or re-activated leave type gets everyone’s balances straight away', () => {
+    it('creates the balances of the current year when a leave type with a balance is added', async () => {
+      const { keyed, balancesRepo, auditStore } = await setup();
+      balancesRepo.createdPerAccrual = 7;
+      const res = await keyed('hr_manager', '/api/v1/leave-policies', newType);
+      expect(res.status).toBe(201);
+      expect(balancesRepo.accruals).toEqual([{ year: 2026, employeeId: undefined }]);
+      expect(auditStore.find((e) => e.action === 'leave_policy.create')[0]?.metadata).toMatchObject(
+        { balancesCreated: 7 },
+      );
+    });
+
+    it('creates nothing for a leave type that has no balance (permission, unpaid)', async () => {
+      const { keyed, balancesRepo } = await setup();
+      const res = await keyed('hr_manager', '/api/v1/leave-policies', {
+        code: 'PERMISSION',
+        name: 'Short permission',
+        hasBalance: false,
+        allowHalfDay: false,
+      });
+      expect(res.status).toBe(201);
+      expect(balancesRepo.accruals).toEqual([]);
+    });
+
+    it('creates the missing balances when a switched-off type is switched on again, and only then', async () => {
+      const { as, balancesRepo } = await setup();
+      await as.hr_manager.put(`/api/v1/leave-policies/${ANNUAL}`, { isActive: false, version: 1 });
+      expect(balancesRepo.accruals).toEqual([]);
+
+      await as.hr_manager.put(`/api/v1/leave-policies/${ANNUAL}`, { isActive: true, version: 2 });
+      expect(balancesRepo.accruals).toHaveLength(1);
+
+      await as.hr_manager.put(`/api/v1/leave-policies/${ANNUAL}`, { name: 'Renamed', version: 3 });
+      expect(balancesRepo.accruals).toHaveLength(1);
+    });
+
+    it('does not create balances when the creation itself is refused', async () => {
+      const { keyed, balancesRepo } = await setup();
+      await keyed('hr_manager', '/api/v1/leave-policies', { ...newType, code: 'annual' });
+      expect(balancesRepo.accruals).toEqual([]);
+    });
+  });
 });

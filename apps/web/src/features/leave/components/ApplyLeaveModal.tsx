@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
 import { Modal, Button, FormField } from '../../../components/ui';
 import { fetchLeaveApprovalRoute } from '../api/leave';
-import { getConfiguredLeavePolicies } from '../lib/configuredPolicies';
 import type { LeaveApprovalRoute } from '../types';
 
 export interface InitialLeaveRequest {
@@ -126,8 +125,6 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   const resolvedPolicies = useMemo(() => {
     const active = policies.filter((p) => p.isActive);
     if (active.length > 0) return active;
-    const configured = getConfiguredLeavePolicies();
-    if (configured && configured.length > 0) return configured;
     return demoOr([], DEFAULT_LEAVE_TYPES);
   }, [policies]);
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Holiday } from '../types';
+import { MONTH_NAMES, WEEKDAY_SHORT, formatDay, monthCells, todayIso } from '../lib/calendar-dates';
 
 export interface HolidayCalendarProps {
   holidays: Holiday[];
@@ -11,336 +12,248 @@ export interface HolidayCalendarProps {
   isLoading?: boolean;
 }
 
-const UPCOMING_DEFAULT_HOLIDAYS = [
-  { id: 'hol-1', dateMonth: 'Dec', dayNumber: '25', name: 'Christmas', type: 'Company Holiday' },
-  {
-    id: 'hol-2',
-    dateMonth: 'Jan',
-    dayNumber: '01',
-    name: "New Year's Day",
-    type: 'Company Holiday',
-  },
-  { id: 'hol-3', dateMonth: 'Jan', dayNumber: '15', name: 'Pongal', type: 'Company Holiday' },
-  {
-    id: 'hol-4',
-    dateMonth: 'Jan',
-    dayNumber: '26',
-    name: 'Republic Day (Gazetted)',
-    type: 'Company Holiday',
-  },
-];
+const NAV_BUTTON =
+  'min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-border bg-surface-raised text-text-muted hover:text-text hover:bg-surface-muted transition-colors';
 
-const CALENDAR_DAYS = [
-  null,
-  null,
-  null,
-  null,
-  null,
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-  16,
-  17,
-  18,
-  19,
-  20,
-  21,
-  22,
-  23,
-  24,
-  25,
-  26,
-  27,
-  28,
-  29,
-  30,
-  31,
-];
-
+/** Holidays come only from what the company added; with none, the page says so. */
 export const HolidayCalendar: React.FC<HolidayCalendarProps> = ({
   holidays,
   year,
   onYearChange,
+  onAddHoliday,
   onDeleteHoliday,
   canManage = false,
+  isLoading = false,
 }) => {
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(11); // December by default (Image 4)
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const today = todayIso();
+  const thisYear = Number(today.slice(0, 4));
+  const [monthIndex, setMonthIndex] = useState(
+    year === thisYear ? Number(today.slice(5, 7)) - 1 : 0,
+  );
+
+  const byDate = useMemo(() => {
+    const map = new Map<string, Holiday[]>();
+    for (const holiday of holidays) {
+      map.set(holiday.date, [...(map.get(holiday.date) ?? []), holiday]);
+    }
+    return map;
+  }, [holidays]);
+
+  const grouped = useMemo(() => {
+    const sorted = [...holidays].sort((a, b) => a.date.localeCompare(b.date));
+    const groups: { month: number; items: Holiday[] }[] = [];
+    for (const holiday of sorted) {
+      const month = Number(holiday.date.slice(5, 7)) - 1;
+      const last = groups[groups.length - 1];
+      if (last && last.month === month) last.items.push(holiday);
+      else groups.push({ month, items: [holiday] });
+    }
+    return groups;
+  }, [holidays]);
+
+  const step = (delta: number) => {
+    const next = monthIndex + delta;
+    if (next < 0) {
+      onYearChange(year - 1);
+      setMonthIndex(11);
+    } else if (next > 11) {
+      onYearChange(year + 1);
+      setMonthIndex(0);
+    } else {
+      setMonthIndex(next);
+    }
+  };
+
+  const cells = monthCells(year, monthIndex);
 
   return (
     <div className="space-y-6" data-testid="holiday-calendar-container">
-      {/* 1. Header (Image 4) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display text-text">Holiday Calendar</h2>
+          <h2 className="text-xl sm:text-2xl font-bold font-display text-text">
+            Company Holiday Calendar
+          </h2>
           <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-            Company holidays and observances
+            Holidays the company has added for {year}. They are not counted as leave days.
           </p>
         </div>
-
-        {/* Year Dropdown & Selector */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center border border-border rounded-xl bg-surface p-1 shadow-xs">
-            <button
-              type="button"
-              onClick={() => onYearChange(year - 1)}
-              data-testid="holiday-prev-year-btn"
-              aria-label="Previous year"
-              className="p-1 hover:bg-surface-muted rounded text-text-muted hover:text-text transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <span
-              className="px-2.5 text-xs font-bold text-text font-mono"
-              data-testid="holiday-current-year"
-            >
-              Year: {year}
-            </span>
-            <button
-              type="button"
-              onClick={() => onYearChange(year + 1)}
-              data-testid="holiday-next-year-btn"
-              aria-label="Next year"
-              className="p-1 hover:bg-surface-muted rounded text-text-muted hover:text-text transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          </div>
+          <button
+            type="button"
+            className={NAV_BUTTON}
+            onClick={() => onYearChange(year - 1)}
+            data-testid="holiday-prev-year-btn"
+            aria-label="Previous year"
+          >
+            ‹
+          </button>
+          <span className="px-2 text-sm font-bold text-text font-mono" data-testid="holiday-year">
+            Year: {year}
+          </span>
+          <button
+            type="button"
+            className={NAV_BUTTON}
+            onClick={() => onYearChange(year + 1)}
+            data-testid="holiday-next-year-btn"
+            aria-label="Next year"
+          >
+            ›
+          </button>
         </div>
       </div>
 
-      {/* 2. Main Two Column Grid (Image 4) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Monthly Mini Calendar (~45% width, 5 cols) */}
-        <div className="lg:col-span-5 bg-surface rounded-card border border-border shadow-card p-5 space-y-4">
-          {/* Month Header with Navigation */}
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setCurrentMonthIndex((prev) => (prev > 0 ? prev - 1 : 11))}
-              aria-label="Previous month"
-              className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-muted transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-
-            <span className="font-display font-bold text-sm text-text">
-              {
-                [
-                  'January',
-                  'February',
-                  'March',
-                  'April',
-                  'May',
-                  'June',
-                  'July',
-                  'August',
-                  'September',
-                  'October',
-                  'November',
-                  'December',
-                ][currentMonthIndex]
-              }
-              , {year}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => setCurrentMonthIndex((prev) => (prev < 11 ? prev + 1 : 0))}
-              aria-label="Next month"
-              className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-muted transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          </div>
-
-          {/* Weekday Labels */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-text-muted pb-1 border-b border-border/60">
-            <span>Sun</span>
-            <span>Mon</span>
-            <span>Tue</span>
-            <span>Wed</span>
-            <span>Thu</span>
-            <span>Fri</span>
-            <span>Sat</span>
-          </div>
-
-          {/* Month Days Grid */}
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {CALENDAR_DAYS.map((day, idx) => {
-              if (day === null) {
-                return <div key={`empty-${idx}`} className="h-8" />;
-              }
-
-              const isHoliday = day === 25; // Dec 25 in Image 4
-
-              return (
-                <div key={day} className="h-8 flex items-center justify-center">
-                  {isHoliday ? (
-                    <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                      {day}
-                    </div>
-                  ) : (
-                    <span className="text-xs font-semibold text-text hover:text-primary-strong transition-colors cursor-pointer">
-                      {day}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Legend */}
-          <div className="pt-3 border-t border-border/80 flex items-center justify-center gap-5 text-xs text-text-muted font-medium">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
-              <span>Company Holiday</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 shrink-0" />
-              <span>Optional Holiday</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Upcoming Holidays List (~55% width, 7 cols) */}
-        <div className="lg:col-span-7 bg-surface rounded-card border border-border shadow-card p-5 space-y-4">
-          <h3 className="font-display font-bold text-base text-text">Upcoming Holidays</h3>
-
-          <div className="space-y-3">
-            {UPCOMING_DEFAULT_HOLIDAYS.map((hol) => (
-              <div
-                key={hol.id}
-                className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-100 flex items-center justify-between gap-3 hover:bg-emerald-50/80 transition-colors"
+      {isLoading && holidays.length === 0 ? (
+        <p role="status" className="text-sm text-text-muted">
+          Loading holidays…
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <section
+            aria-label={`${MONTH_NAMES[monthIndex]} ${year}`}
+            className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                className={NAV_BUTTON}
+                onClick={() => step(-1)}
+                aria-label="Previous month"
               >
-                <div className="flex items-center gap-3.5">
-                  {/* Green Date Badge Tile on Left */}
-                  <div className="w-12 h-12 rounded-xl bg-emerald-100/80 text-emerald-900 flex flex-col items-center justify-center shrink-0 border border-emerald-200/60 shadow-2xs">
-                    <span className="text-[10px] font-bold uppercase tracking-wider">
-                      {hol.dateMonth}
-                    </span>
-                    <span className="text-base font-black font-display leading-tight">
-                      {hol.dayNumber}
-                    </span>
+                ‹
+              </button>
+              <h3 className="text-base font-bold font-display text-text" aria-live="polite">
+                {MONTH_NAMES[monthIndex]} {year}
+              </h3>
+              <button
+                type="button"
+                className={NAV_BUTTON}
+                onClick={() => step(1)}
+                aria-label="Next month"
+              >
+                ›
+              </button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-text-muted mb-1">
+              {WEEKDAY_SHORT.map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1" data-testid="holiday-month-grid">
+              {cells.map((cell, i) => {
+                if (!cell.iso || cell.day === null) return <span key={`blank-${i}`} />;
+                const names = (byDate.get(cell.iso) ?? []).map((h) => h.name);
+                const isHoliday = names.length > 0;
+                return (
+                  <div
+                    key={cell.iso}
+                    title={isHoliday ? names.join(', ') : undefined}
+                    aria-label={isHoliday ? `${cell.day}: ${names.join(', ')}` : undefined}
+                    data-testid={isHoliday ? `holiday-day-${cell.iso}` : undefined}
+                    className={`min-h-[3rem] sm:min-h-[4.5rem] p-1 flex flex-col items-center rounded-lg text-sm ${
+                      isHoliday
+                        ? 'bg-primary-soft text-primary-ink font-bold border border-primary-strong'
+                        : cell.iso === today
+                          ? 'border border-border-strong text-text font-semibold'
+                          : 'text-text'
+                    }`}
+                  >
+                    {cell.day}
+                    {isHoliday && <span className="sr-only">holiday</span>}
+                    {isHoliday && (
+                      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    )}
+                    {isHoliday && (
+                      <span
+                        aria-hidden="true"
+                        className="hidden sm:block mt-0.5 w-full truncate text-center text-[10px] font-semibold leading-tight"
+                      >
+                        {names.join(', ')}
+                      </span>
+                    )}
                   </div>
+                );
+              })}
+            </div>
+          </section>
 
-                  <div>
-                    <h4 className="font-bold text-sm text-text leading-tight">{hol.name}</h4>
-                    <p className="text-xs text-text-muted mt-0.5 font-medium">{hol.type}</p>
-                  </div>
-                </div>
-
-                {/* Calendar Icon on Right */}
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-emerald-700/80">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
+          <section className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card">
+            <h3 className="text-base font-bold font-display text-text mb-3">Holidays in {year}</h3>
+            {deleteError && (
+              <p role="alert" className="text-sm text-danger mb-3">
+                {deleteError}
+              </p>
+            )}
+            {grouped.length === 0 ? (
+              <div className="text-center py-8 space-y-2" data-testid="holiday-empty">
+                <p className="font-bold text-text">No holidays added yet</p>
+                <p className="text-xs text-text-muted">
+                  {canManage
+                    ? 'Add the days the company is closed so they are not counted as leave.'
+                    : 'Your company has not added any holidays for this year.'}
+                </p>
+                {canManage && onAddHoliday && (
+                  <button
+                    type="button"
+                    onClick={onAddHoliday}
+                    className="min-h-[44px] px-4 rounded-control bg-primary-deep text-white text-sm font-semibold"
+                  >
+                    Add Holiday
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Real Holidays Grouped List (Preserved for unit test assertions) */}
-      <div className="pt-4 border-t border-border/80">
-        <h3 className="text-sm font-bold text-text font-display mb-3">Company Holiday Calendar</h3>
-        <div className="space-y-4">
-          {[
-            'January',
-            'February',
-            'March',
-            'April',
-            'May',
-            'June',
-            'July',
-            'August',
-            'September',
-            'October',
-            'November',
-            'December',
-          ].map((monthName, mIdx) => {
-            const monthHolidays = holidays.filter((h) => {
-              const monthNum = parseInt(h.date.slice(5, 7), 10);
-              return monthNum === mIdx + 1;
-            });
-            if (monthHolidays.length === 0) return null;
-            return (
-              <div key={monthName} className="space-y-2">
-                <h4 className="font-bold text-xs text-text-muted font-display">{monthName}</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {monthHolidays.map((h) => (
-                    <div
-                      key={h.id}
-                      className="p-3 bg-surface rounded-tile border border-border shadow-xs flex items-center justify-between"
-                    >
-                      <div>
-                        <h4 className="font-bold text-xs text-text">{h.name}</h4>
-                        <p className="text-[11px] text-text-muted mt-0.5">{h.date}</p>
-                      </div>
-                      {canManage && onDeleteHoliday && (
-                        <button
-                          type="button"
-                          onClick={() => onDeleteHoliday(h.id, h.name)}
-                          data-testid={`delete-holiday-btn-${h.id}`}
-                          className="p-1 text-xs text-rose-600 hover:bg-rose-50 rounded"
-                          title={`Delete ${h.name}`}
+            ) : (
+              <div className="space-y-4">
+                {grouped.map((group) => (
+                  <div key={group.month}>
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-text-subtle mb-1.5">
+                      {MONTH_NAMES[group.month]}
+                    </h4>
+                    <ul className="space-y-2">
+                      {group.items.map((holiday) => (
+                        <li
+                          key={holiday.id}
+                          className="flex items-center justify-between gap-3 p-3 rounded-tile border border-border bg-surface-raised"
                         >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm text-text truncate">
+                              {holiday.name}
+                            </p>
+                            <p className="text-xs text-text-muted">{formatDay(holiday.date)}</p>
+                          </div>
+                          {canManage && onDeleteHoliday && (
+                            <button
+                              type="button"
+                              data-testid={`delete-holiday-btn-${holiday.id}`}
+                              aria-label={`Delete ${holiday.name}`}
+                              onClick={async () => {
+                                if (!window.confirm(`Delete holiday "${holiday.name}"?`)) return;
+                                try {
+                                  setDeleteError(null);
+                                  await onDeleteHoliday(holiday.id, holiday.name);
+                                } catch (err) {
+                                  setDeleteError(
+                                    err instanceof Error
+                                      ? err.message
+                                      : 'Could not delete the holiday',
+                                  );
+                                }
+                              }}
+                              className="min-h-[44px] px-3 text-sm font-semibold text-danger"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
-            );
-          })}
+            )}
+          </section>
         </div>
-      </div>
+      )}
     </div>
   );
 };

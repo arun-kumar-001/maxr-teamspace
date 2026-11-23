@@ -47,6 +47,21 @@ describe('useLeave never shows invented data outside a development demo', () => 
     expect(result.current.calendarEntries).toEqual([]);
   });
 
+  it('ignores leave types saved in the browser: balances come from the server only', async () => {
+    localStorage.setItem(
+      'maxr_company_config',
+      JSON.stringify({
+        customLeaveTypes: [{ name: 'Sick Leave', code: 'SL', quota: 12, isActive: true }],
+      }),
+    );
+    serverEmpty();
+    const { result } = renderHook(() => useLeave(2026));
+    await waitFor(() => expect(result.current.isLoadingRequests).toBe(false));
+    expect(result.current.policies).toEqual([]);
+    expect(result.current.balances).toEqual([]);
+    localStorage.clear();
+  });
+
   it('reports the failure instead of falling back to sample data', async () => {
     serverEmpty();
     vi.mocked(leaveApi.fetchMyLeaveRequests).mockRejectedValue(new Error('boom'));

@@ -104,7 +104,8 @@ export class PgLeaveBalancesRepository implements ILeaveBalancesRepository {
 
   async findForEmployee(employeeId: string, year: number): Promise<LeaveBalance[]> {
     const res = await this.getPool().query<Row>(
-      `${SELECT} WHERE b.employee_id = $1 AND b.year = $2 ORDER BY t.name`,
+      // A switched-off leave type can no longer be applied for, so it is hidden unless some of it was used.
+      `${SELECT} WHERE b.employee_id = $1 AND b.year = $2 AND (t.is_active OR b.used > 0) ORDER BY t.name`,
       [employeeId, year],
     );
     return res.rows.map(toBalance);

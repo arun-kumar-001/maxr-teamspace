@@ -63,18 +63,19 @@ export function createLeaveSetup(options: {
   clock?: () => Date;
 }): LeaveSetup {
   const pool = options.getPool ?? getPool;
-  const policies = new LeavePoliciesService(
-    options.policiesRepository ?? new PgLeavePoliciesRepository(pool),
-    options.platform,
-  );
-  const holidays = new HolidaysService(
-    options.holidaysRepository ?? new PgHolidaysRepository(pool),
+  const balances = new LeaveBalancesService(
+    options.balancesRepository ?? new PgLeaveBalancesRepository(pool),
     options.platform,
     options.settings,
     options.clock,
   );
-  const balances = new LeaveBalancesService(
-    options.balancesRepository ?? new PgLeaveBalancesRepository(pool),
+  const policies = new LeavePoliciesService(
+    options.policiesRepository ?? new PgLeavePoliciesRepository(pool),
+    options.platform,
+    (tx) => balances.accrueCurrentYear(tx),
+  );
+  const holidays = new HolidaysService(
+    options.holidaysRepository ?? new PgHolidaysRepository(pool),
     options.platform,
     options.settings,
     options.clock,

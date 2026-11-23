@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import type { LeavePolicy, Holiday, LeaveBalance } from '../types';
-import { LeavePolicyCard } from '../components/LeavePolicyCard';
 import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { AddHolidayModal } from '../components/AddHolidayModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
@@ -98,24 +97,6 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
 
   afterEach(() => {
     cleanup();
-  });
-
-  describe('LeavePolicyCard', () => {
-    it('renders policy details, quotas, and edit button', () => {
-      const onEdit = vi.fn();
-      render(<LeavePolicyCard policy={mockPolicies[0]!} onEdit={onEdit} canManage={true} />);
-
-      expect(screen.getByText('PTO')).toBeInTheDocument();
-      expect(screen.getByText('Paid Time Off')).toBeInTheDocument();
-      expect(screen.getByText('Active')).toBeInTheDocument();
-      expect(screen.getByText('Quota Managed')).toBeInTheDocument();
-      expect(screen.getByText('18 days')).toBeInTheDocument();
-      expect(screen.getByText('5 days')).toBeInTheDocument();
-
-      const editBtn = screen.getByTestId('edit-policy-btn-pol-001');
-      fireEvent.click(editBtn);
-      expect(onEdit).toHaveBeenCalledWith(mockPolicies[0]!);
-    });
   });
 
   describe('LeavePolicyFormModal', () => {
@@ -231,6 +212,76 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
   });
 
   describe('LeaveBalancesSummary', () => {
+    it('shows an honest empty state, with no sample leave types, when nothing is set up', () => {
+      render(<LeaveBalancesSummary balances={[]} year={2026} />);
+
+      expect(screen.getByTestId('leave-balances-empty')).toBeInTheDocument();
+      expect(screen.getByText('No leave balances yet')).toBeInTheDocument();
+      expect(screen.queryByText(/Annual Leave|Sick Leave|Work from Home/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/days left/)).not.toBeInTheDocument();
+    });
+
+    it('shows one card per active leave type from Leave Setup, including a permission with no balance', () => {
+      const policy = (over: Partial<LeavePolicy>): LeavePolicy => ({
+        id: 'x',
+        code: 'X',
+        name: 'X',
+        hasBalance: true,
+        isActive: true,
+        annualDays: 0,
+        carryForwardMax: 0,
+        allowHalfDay: false,
+        maxBackdateDays: 0,
+        version: 1,
+        updatedAt: '2026-01-01T00:00:00Z',
+        ...over,
+      });
+      const policies = [
+        policy({ id: 'pol-001', code: 'PTO', name: 'Paid Time Off', annualDays: 20 }),
+        policy({ id: 'pm', code: 'PM', name: 'Short Permission', hasBalance: false }),
+        policy({ id: 'old', code: 'OLD', name: 'Old Leave', isActive: false }),
+      ];
+      render(<LeaveBalancesSummary balances={mockBalances} policies={policies} year={2026} />);
+
+      expect(screen.getByTestId('leave-balance-card-PTO')).toHaveTextContent('15 days left');
+      expect(screen.getByTestId('leave-balance-card-PM')).toHaveTextContent('No yearly limit');
+      expect(screen.queryByTestId('leave-balance-card-OLD')).not.toBeInTheDocument();
+      const totals = within(screen.getByTestId('leave-balances-totals'));
+      expect(totals.getByText('Available').nextElementSibling).toHaveTextContent('15');
+    });
+
+    it('computes totals from the balances it is given, not from fixed numbers', () => {
+      const two: LeaveBalance[] = [
+        {
+          leaveTypeId: 'pol-001',
+          code: 'PTO',
+          name: 'Paid Time Off',
+          year: 2026,
+          allotted: 10,
+          carriedForward: 0,
+          used: 4,
+          remaining: 6,
+        },
+        {
+          leaveTypeId: 'pol-002',
+          code: 'SICK',
+          name: 'Sick Leave',
+          year: 2026,
+          allotted: 5,
+          carriedForward: 1,
+          used: 1,
+          remaining: 5,
+        },
+      ];
+      render(<LeaveBalancesSummary balances={two} year={2026} />);
+
+      const totals = within(screen.getByTestId('leave-balances-totals'));
+      expect(totals.getByText('Total entitlement').nextElementSibling).toHaveTextContent('16');
+      expect(totals.getByText('Used').nextElementSibling).toHaveTextContent('5');
+      expect(totals.getByText('Available').nextElementSibling).toHaveTextContent('11');
+      expect(screen.getByTestId('leave-balance-bar-SICK')).toHaveStyle({ width: '17%' });
+    });
+
     it('renders balance metrics and breakdown', () => {
       render(<LeaveBalancesSummary balances={mockBalances} year={2026} />);
 
@@ -260,10 +311,8 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
       expect(screen.getByText('Company Holiday Calendar')).toBeInTheDocument();
 
-      // Switch to Leave Policies
-      fireEvent.click(screen.getByRole('radio', { name: 'Leave Policies' }));
-      expect(screen.getByText('Configured Leave Policies')).toBeInTheDocument();
-      expect(screen.getByText('New Policy')).toBeInTheDocument();
+      // Leave types are created in Leave Setup, not on this page
+      expect(screen.queryByRole('radio', { name: 'Leave Policies' })).not.toBeInTheDocument();
     });
 
     it('synchronizes URL route on tab click when router context is present', async () => {
@@ -300,10 +349,6 @@ describe('Leave Policies, Balances and Holidays Suite (Issue #38)', () => {
       // Click "Holiday Calendar"
       fireEvent.click(screen.getByRole('radio', { name: 'Holiday Calendar' }));
       expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/holidays');
-
-      // Click "Leave Policies"
-      fireEvent.click(screen.getByRole('radio', { name: 'Leave Policies' }));
-      expect(screen.getByTestId('location-display')).toHaveTextContent('/leave/policies');
 
       // Click "My Requests"
       fireEvent.click(screen.getByRole('radio', { name: 'My Requests' }));

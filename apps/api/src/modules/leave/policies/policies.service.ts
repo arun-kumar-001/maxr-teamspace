@@ -22,12 +22,15 @@ const EDITABLE = [
 
 /**
  * Leave types and their policies (D-12). Changing a policy does not touch balances that already
- * exist: they were allotted under the policy of their year. Run the accrual after adding a type.
+ * exist: they were allotted under the policy of their year. A new type, or one switched back on,
+ * gets its balances created for everyone straight away (existing balances are left alone).
  */
 export class LeavePoliciesService {
   constructor(
     private readonly repository: ILeavePoliciesRepository,
     private readonly platform: Deps,
+    /** Creates the missing balances of the current year in the caller's transaction. */
+    private readonly accrueCurrentYear?: (tx: LeaveTx) => Promise<number>,
   ) {}
 
   list(): Promise<LeavePolicy[]> {
@@ -71,6 +74,8 @@ export class LeavePoliciesService {
     const audit = this.platform.audit.withContext(caller);
     return this.repository.transaction(async (tx) => {
       const created = await this.repository.insert(tx, input);
+      const balancesCreated =
+        created.hasBalance && created.isActive ? ((await this.accrueCurrentYear?.(tx)) ?? 0) : 0;
       await audit.record(
         {
           action: 'leave_policy.create',
@@ -85,6 +90,7 @@ export class LeavePoliciesService {
             allowHalfDay: created.allowHalfDay,
             maxBackdateDays: created.maxBackdateDays,
           },
+          metadata: { balancesCreated },
         },
         { transaction: tx },
       );
@@ -123,6 +129,8 @@ export class LeavePoliciesService {
       if (Object.keys(changes).length === 0) return current;
 
       const updated = await this.repository.update(tx, id, next);
+      const switchedOn = !current.isActive && next.isActive && current.hasBalance;
+      const balancesCreated = switchedOn ? ((await this.accrueCurrentYear?.(tx)) ?? 0) : 0;
       await audit.record(
         {
           action: 'leave_policy.update',
@@ -130,6 +138,7 @@ export class LeavePoliciesService {
           entityType: 'leave_policy',
           entityId: id,
           changes,
+          ...(switchedOn ? { metadata: { balancesCreated } } : {}),
         },
         { transaction: tx },
       );

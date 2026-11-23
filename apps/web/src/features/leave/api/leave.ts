@@ -56,6 +56,10 @@ export async function fetchLeavePolicies(): Promise<LeavePolicy[]> {
 export async function createLeavePolicy(data: CreateLeavePolicyInput): Promise<LeavePolicy> {
   const res = await apiFetch('/api/v1/leave-policies', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': crypto.randomUUID(),
+    },
     body: JSON.stringify(data),
   });
   const json = await handleResponse<{ data: LeavePolicy }>(res);
@@ -68,6 +72,9 @@ export async function updateLeavePolicy(
 ): Promise<LeavePolicy> {
   const res = await apiFetch(`/api/v1/leave-policies/${id}`, {
     method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(data),
   });
   const json = await handleResponse<{ data: LeavePolicy }>(res);
@@ -88,6 +95,10 @@ export async function fetchHolidays(year?: number): Promise<Holiday[]> {
 export async function createHoliday(data: CreateHolidayInput): Promise<Holiday> {
   const res = await apiFetch('/api/v1/holidays', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': crypto.randomUUID(),
+    },
     body: JSON.stringify(data),
   });
   const json = await handleResponse<{ data: Holiday }>(res);
@@ -134,6 +145,9 @@ export async function fetchLeaveBalances(
 export async function runYearlyAccrual(year: number): Promise<AccrualResult> {
   const res = await apiFetch('/api/v1/leave-balances/accrual', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({ year }),
   });
   const json = await handleResponse<{ data: AccrualResult }>(res);

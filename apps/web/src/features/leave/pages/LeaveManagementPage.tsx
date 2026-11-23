@@ -4,10 +4,7 @@ import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
 import { useLeave } from '../hooks/useLeave';
-import type { LeavePolicy } from '../types';
 import { Button, PrimaryActionButton, SegmentedControl } from '../../../components/ui';
-import { LeavePoliciesTable } from '../components/LeavePoliciesTable';
-import { LeavePolicyFormModal } from '../components/LeavePolicyFormModal';
 import { HolidayCalendar } from '../components/HolidayCalendar';
 import { AddHolidayModal } from '../components/AddHolidayModal';
 import { LeaveBalancesSummary } from '../components/LeaveBalancesSummary';
@@ -16,9 +13,13 @@ import { LeaveRequestsTable, type DisplayLeaveItem } from '../components/LeaveRe
 import { LeaveCalendarView } from '../components/LeaveCalendarView';
 import { LeaveApprovalsTab } from '../components/LeaveApprovalsTab';
 
+type LeaveTab = 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays';
+
 export interface LeaveManagementPageProps {
-  initialTab?: 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies';
+export interface LeaveManagementPageProps {
+  initialTab?: LeaveTab;
   onNavigate?: (path: string) => void;
+}
 }
 
 interface LeaveManagementPageContentProps extends LeaveManagementPageProps {
@@ -33,32 +34,19 @@ function LeaveManagementPageContent({
   const routerNavigate = inRouter ? useNavigate() : null;
   const location = inRouter ? useLocation() : null;
   const navigate = propNavigate || routerNavigate;
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const canManage = role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
   const canReviewApprovals =
     role === ROLES.TEAM_LEAD || role === ROLES.HR_MANAGER || role === ROLES.ADMIN;
 
-  const [activeTab, setActiveTab] = useState<
-    'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies'
-  >(
-    initialTab === 'policies' && !canManage
-      ? 'requests'
-      : initialTab === 'approvals' && !canReviewApprovals
-        ? 'requests'
-        : initialTab,
-  );
+  const allowedTab = (tab: LeaveTab): LeaveTab =>
+    tab === 'approvals' && !canReviewApprovals ? 'requests' : tab;
+
+  const [activeTab, setActiveTab] = useState<LeaveTab>(allowedTab(initialTab));
 
   useEffect(() => {
-    if (initialTab) {
-      setActiveTab(
-        initialTab === 'policies' && !canManage
-          ? 'requests'
-          : initialTab === 'approvals' && !canReviewApprovals
-            ? 'requests'
-            : initialTab,
-      );
-    }
-  }, [initialTab, canManage, canReviewApprovals]);
+    setActiveTab(initialTab === 'approvals' && !canReviewApprovals ? 'requests' : initialTab);
+  }, [initialTab, canReviewApprovals]);
 
   // Synchronize active tab from route pathname changes
   useEffect(() => {
@@ -72,17 +60,13 @@ function LeaveManagementPageContent({
         setActiveTab('calendar');
       } else if (path === '/leave/holidays' || path === '/hr/holidays') {
         setActiveTab('holidays');
-      } else if ((path === '/leave/policies' || path === '/hr/leave') && canManage) {
-        setActiveTab('policies');
       } else if (path === '/leave' || path === '/leave/requests' || path === '/staff/leave') {
         setActiveTab('requests');
       }
     }
   }, [location?.pathname, canManage, canReviewApprovals]);
 
-  const handleTabChange = (
-    tab: 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies',
-  ) => {
+  const handleTabChange = (tab: LeaveTab) => {
     setActiveTab(tab);
     if (navigate) {
       const targetPath = tab === 'requests' ? '/leave/requests' : `/leave/${tab}`;
@@ -98,23 +82,22 @@ function LeaveManagementPageContent({
     balances,
     requests,
     calendarEntries,
+    todayEntries,
+    todayError,
     selectedYear,
     setSelectedYear,
-    isLoadingPolicies,
     isLoadingHolidays,
     isLoadingBalances,
     isLoadingRequests,
     isLoadingCalendar,
-    policyError,
     holidayError,
     balanceError,
     requestsError,
     calendarError,
+    loadCalendar,
     applyLeave,
     editLeave,
     cancelRequest,
-    createPolicy,
-    updatePolicy,
     createHoliday,
     deleteHoliday,
   } = useLeave();
@@ -122,20 +105,7 @@ function LeaveManagementPageContent({
   // Modals
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState<DisplayLeaveItem | null>(null);
-  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
-  const [selectedPolicyForEdit, setSelectedPolicyForEdit] = useState<LeavePolicy | null>(null);
-
   const [isHolidayModalOpen, setIsHolidayModalOpen] = useState(false);
-
-  const handleOpenCreatePolicy = () => {
-    setSelectedPolicyForEdit(null);
-    setIsPolicyModalOpen(true);
-  };
-
-  const handleOpenEditPolicy = (policy: LeavePolicy) => {
-    setSelectedPolicyForEdit(policy);
-    setIsPolicyModalOpen(true);
-  };
 
   const tabOptions = [
     { value: 'requests', label: 'My Requests' },
@@ -143,7 +113,6 @@ function LeaveManagementPageContent({
     { value: 'balances', label: 'My Balances' },
     { value: 'calendar', label: 'Leave Calendar' },
     { value: 'holidays', label: 'Holiday Calendar' },
-    ...(canManage ? [{ value: 'policies', label: 'Leave Policies' }] : []),
   ];
 
   return (
@@ -152,9 +121,13 @@ function LeaveManagementPageContent({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-text font-display">
-            Employee Leave
+            {canReviewApprovals ? 'Leave Management' : 'My Leave'}
           </h1>
-          <p className="text-sm text-text-muted mt-1">Plan, track, and manage team leaves</p>
+          <p className="text-sm text-text-muted mt-1">
+            {canReviewApprovals
+              ? 'Review team leave and manage your own requests and balances'
+              : 'Apply for leave and track your requests and balances'}
+          </p>
           <span className="sr-only">Leave & Holiday Management</span>
         </div>
 
@@ -168,18 +141,6 @@ function LeaveManagementPageContent({
           >
             Apply Leave
           </PrimaryActionButton>
-
-          {canManage && activeTab === 'policies' && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleOpenCreatePolicy}
-              data-testid="create-policy-btn"
-              className="min-h-[44px]"
-            >
-              New Policy
-            </Button>
-          )}
 
           {canManage && activeTab === 'holidays' && (
             <Button
@@ -199,11 +160,7 @@ function LeaveManagementPageContent({
       <div className="border-b border-border pb-4 overflow-x-auto max-w-full">
         <SegmentedControl
           value={activeTab}
-onChange={(val) =>
-            handleTabChange(
-              val as 'requests' | 'approvals' | 'balances' | 'calendar' | 'holidays' | 'policies',
-            )
-          }
+          onChange={(val) => handleTabChange(val as LeaveTab)}
           options={tabOptions}
           ariaLabel="Leave and holiday navigation tabs"
         />
@@ -250,16 +207,6 @@ onChange={(val) =>
         </div>
       )}
 
-      {policyError && activeTab === 'policies' && (
-        <div
-          className="p-4 rounded-tile bg-rose-50 border border-rose-200 text-sm text-rose-800"
-          role="alert"
-          data-testid="policy-error-banner"
-        >
-          {policyError}
-        </div>
-      )}
-
       {/* Tab Panels */}
       {activeTab === 'requests' && (
         <LeaveRequestsTable
@@ -289,6 +236,7 @@ onChange={(val) =>
       {activeTab === 'balances' && (
         <LeaveBalancesSummary
           balances={balances}
+          policies={policies}
           year={selectedYear}
           onYearChange={setSelectedYear}
           isLoading={isLoadingBalances}
@@ -300,7 +248,11 @@ onChange={(val) =>
         <LeaveCalendarView
           entries={calendarEntries}
           isLoading={isLoadingCalendar}
-          onApplyClick={() => setIsApplyModalOpen(true)}
+          onRangeChange={loadCalendar}
+          todayEntries={todayEntries}
+          todayError={todayError}
+          holidays={holidays}
+          myEmployeeId={user?.employeeId}
         />
       )}
 
@@ -314,24 +266,6 @@ onChange={(val) =>
           canManage={canManage}
           isLoading={isLoadingHolidays}
         />
-      )}
-
-      {activeTab === 'policies' && canManage && (
-        <div className="space-y-4">
-          <div className="p-4 bg-surface border border-border rounded-card">
-            <h2 className="text-lg font-bold text-text font-display">Configured Leave Policies</h2>
-            <p className="text-xs text-text-muted mt-0.5">
-              Defines annual allotment, carry-forward caps, backdating limits, and half-day rules
-              for each leave type.
-            </p>
-          </div>
-          <LeavePoliciesTable
-            policies={policies}
-            isLoading={isLoadingPolicies}
-            onEdit={handleOpenEditPolicy}
-            canManage={canManage}
-          />
-        </div>
       )}
 
       {/* Modals */}
@@ -351,19 +285,6 @@ onChange={(val) =>
             await editLeave(editingRequest.id, payload);
           } else {
             await applyLeave(payload);
-          }
-        }}
-      />
-
-      <LeavePolicyFormModal
-        isOpen={isPolicyModalOpen}
-        onClose={() => setIsPolicyModalOpen(false)}
-        policy={selectedPolicyForEdit}
-        onSubmit={async (data) => {
-          if ('id' in data) {
-            await updatePolicy(data.id, data);
-          } else {
-            await createPolicy(data);
           }
         }}
       />

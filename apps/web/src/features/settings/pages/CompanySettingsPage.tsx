@@ -106,7 +106,10 @@ const TABS: {
 export function CompanySettingsPage() {
   const navigate = useNavigate();
   const { role, isLoading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('branding');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    const requested = new URLSearchParams(window.location.search).get('tab');
+    return TABS.some((tab) => tab.id === requested) ? (requested as SettingsTab) : 'branding';
+  });
   const [showToast, setShowToast] = useState(false);
   const [photoToastMessage, setPhotoToastMessage] = useState<string | null>(null);
 

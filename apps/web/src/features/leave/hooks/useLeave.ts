@@ -14,7 +14,7 @@ import type {
   LeaveCalendarEntry,
 } from '../types';
 import * as leaveApi from '../api/leave';
-import { getConfiguredLeavePolicies, getConfiguredLeaveBalances } from '../lib/configuredPolicies';
+import { todayIso } from '../lib/calendar-dates';
 
 const FALLBACK_POLICIES: LeavePolicy[] = [
   {
@@ -279,19 +279,9 @@ const FALLBACK_CALENDAR: LeaveCalendarEntry[] = [
 ];
 
 export function useLeave(initialYear: number = new Date().getFullYear()) {
-  const [policies, setPolicies] = useState<LeavePolicy[]>(() => {
-    const configured = getConfiguredLeavePolicies();
-    if (configured && configured.length > 0) return configured;
-    return demoOr([], FALLBACK_POLICIES);
-  });
+  const [policies, setPolicies] = useState<LeavePolicy[]>(demoOr([], FALLBACK_POLICIES));
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [balances, setBalances] = useState<LeaveBalance[]>(() => {
-    const configured = getConfiguredLeavePolicies();
-    if (configured && configured.length > 0) {
-      return getConfiguredLeaveBalances(configured, initialYear);
-    }
-    return demoOr([], FALLBACK_BALANCES);
-  });
+  const [balances, setBalances] = useState<LeaveBalance[]>(demoOr([], FALLBACK_BALANCES));
   const [requests, setRequests] = useState<LeaveRequest[]>(demoOr([], FALLBACK_REQUESTS));
   const [calendarEntries, setCalendarEntries] = useState<LeaveCalendarEntry[]>(
     demoOr([], FALLBACK_CALENDAR),
@@ -303,6 +293,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isLoadingRequests, setIsLoadingRequests] = useState(false);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
+  const [todayEntries, setTodayEntries] = useState<LeaveCalendarEntry[]>([]);
+  const [todayError, setTodayError] = useState<string | null>(null);
 
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [holidayError, setHolidayError] = useState<string | null>(null);
@@ -315,18 +307,10 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingPolicies(true);
       setPolicyError(null);
       const data = await leaveApi.fetchLeavePolicies();
-      if (data.length > 0) {
-        setPolicies(data);
-      } else {
-        const configured = getConfiguredLeavePolicies();
-        setPolicies(
-          configured && configured.length > 0 ? configured : demoOr(data, FALLBACK_POLICIES),
-        );
-      }
+      setPolicies(data.length > 0 ? data : demoOr(data, FALLBACK_POLICIES));
     } catch (err) {
       setPolicyError(err instanceof Error ? err.message : 'Failed to fetch leave policies');
-      const configured = getConfiguredLeavePolicies();
-      setPolicies(configured && configured.length > 0 ? configured : demoOr([], FALLBACK_POLICIES));
+      setPolicies(demoOr([], FALLBACK_POLICIES));
     } finally {
       setIsLoadingPolicies(false);
     }
@@ -350,24 +334,10 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingBalances(true);
       setBalanceError(null);
       const data = await leaveApi.fetchMyLeaveBalances(year);
-      if (data.length > 0) {
-        setBalances(data);
-      } else {
-        const configured = getConfiguredLeavePolicies();
-        if (configured && configured.length > 0) {
-          setBalances(getConfiguredLeaveBalances(configured, year));
-        } else {
-          setBalances(demoOr(data, FALLBACK_BALANCES));
-        }
-      }
+      setBalances(data.length > 0 ? data : demoOr(data, FALLBACK_BALANCES));
     } catch (err) {
       setBalanceError(err instanceof Error ? err.message : 'Failed to fetch leave balances');
-      const configured = getConfiguredLeavePolicies();
-      if (configured && configured.length > 0) {
-        setBalances(getConfiguredLeaveBalances(configured, year));
-      } else {
-        setBalances(demoOr([], FALLBACK_BALANCES));
-      }
+      setBalances(demoOr([], FALLBACK_BALANCES));
     } finally {
       setIsLoadingBalances(false);
     }
@@ -401,12 +371,25 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     }
   }, []);
 
+  /** Who is on leave today, kept apart from the month on screen so paging never empties it. */
+  const loadToday = useCallback(async () => {
+    const now = new Date();
+    const today = todayIso(now);
+    try {
+      setTodayError(null);
+      setTodayEntries(await leaveApi.fetchLeaveCalendar(today, today));
+    } catch (err) {
+      setTodayError(err instanceof Error ? err.message : 'Failed to fetch who is on leave today');
+    }
+  }, []);
+
   const handleApplyLeave = async (payload: ApplyForLeavePayload) => {
     try {
       const created = await leaveApi.applyForLeave(payload);
       setRequests((prev) => [created, ...prev]);
       // Refresh balances after successful leave submission
       await loadBalances(selectedYear);
+      void loadToday();
       return created;
     } catch (err) {
       // A request the server did not accept must never appear in the list as if it had been.
@@ -610,27 +593,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     loadHolidays(selectedYear);
     loadBalances(selectedYear);
     loadMyRequests();
-
-    // Load initial 30 days of leave calendar
-    const today = new Date();
-    const fromStr = today.toISOString().slice(0, 10);
-    const toDate = new Date(today.getTime() + 30 * 86_400_000);
-    const toStr = toDate.toISOString().slice(0, 10);
-    loadCalendar(fromStr, toStr);
-  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadCalendar, selectedYear]);
-
-  useEffect(() => {
-    const handleSync = () => {
-      void loadPolicies();
-      void loadBalances(selectedYear);
-    };
-    window.addEventListener('maxr:company-config-updated', handleSync);
-    window.addEventListener('storage', handleSync);
-    return () => {
-      window.removeEventListener('maxr:company-config-updated', handleSync);
-      window.removeEventListener('storage', handleSync);
-    };
-  }, [loadPolicies, loadBalances, selectedYear]);
+    void loadToday();
+  }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadToday, selectedYear]);
 
   return {
     policies,
@@ -638,6 +602,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     balances,
     requests,
     calendarEntries,
+    todayEntries,
+    todayError,
     selectedYear,
     setSelectedYear: handleYearChange,
     isLoadingPolicies,

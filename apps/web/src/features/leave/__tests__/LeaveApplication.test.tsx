@@ -636,8 +636,8 @@ describe('Leave Application & Management Suite (Issue #39)', () => {
       render(<LeaveCalendarView entries={mockCalendarEntries} />);
 
       expect(screen.getByText('Team Leave Calendar')).toBeInTheDocument();
-      expect(screen.getByText('Staff Member')).toBeInTheDocument();
-      expect(screen.getByText('3 days')).toBeInTheDocument();
+      expect(screen.getAllByText('Staff Member').length).toBeGreaterThan(0);
+      expect(screen.getByText(/3 days · Pending/)).toBeInTheDocument();
     });
   });
 

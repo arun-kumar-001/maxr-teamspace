@@ -78,6 +78,15 @@ export class LeaveBalancesService {
   }
 
   /**
+   * Creates the missing balances of the current year inside a transaction the caller already
+   * holds, so a new or re-activated leave type has everyone's balance the moment it exists.
+   * Existing balances are never changed.
+   */
+  async accrueCurrentYear(tx: LeaveTx): Promise<number> {
+    return this.repository.accrue(tx, await this.currentYear());
+  }
+
+  /**
    * The scheduled form of the accrual (D-12): creates whatever balances of the current company
    * year are missing, so nobody has to remember to run it on 1 January. It is safe to run every
    * tick and writes an audit entry only when it created something. Returns how many it created.
