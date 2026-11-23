@@ -6,6 +6,7 @@ import {
   checkInSchema,
   checkOutSchema,
   listAttendanceQuerySchema,
+  photoParamsSchema,
   teamCalendarQuerySchema,
 } from './attendance.schemas';
 import { AttendanceService, RequestContext } from './attendance.service';
@@ -91,6 +92,17 @@ export class AttendanceController {
     res.status(200).json(page);
   };
 
+  photo = async (req: Request, res: Response): Promise<void> => {
+    const { params } = validated(req, { params: photoParamsSchema });
+    const link = await this.service.photoLink(
+      params.id,
+      params.which,
+      this.context(req),
+      accessFor(req).filter,
+    );
+    res.status(200).json({ data: link });
+  };
+
   breakStart = async (req: Request, res: Response): Promise<void> => {
     const actor = this.getActor(req);
     const session = await this.service.startBreak(actor.employeeId, this.context(req));
@@ -105,7 +117,11 @@ export class AttendanceController {
 
   getTeamCalendar = async (req: Request, res: Response): Promise<void> => {
     const { query } = validated(req, { query: teamCalendarQuerySchema });
-    const data = await this.service.getTeamCalendar(query, this.context(req));
+    const data = await this.service.getTeamCalendar(
+      query,
+      this.context(req),
+      accessFor(req).filter,
+    );
     res.status(200).json({ data });
   };
 }

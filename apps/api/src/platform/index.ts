@@ -59,6 +59,16 @@ export function createPlatform({
 }: CreatePlatformOptions = {}): Platform {
   const production = config.nodeEnv === 'production';
 
+  if (
+    production &&
+    config.email.driver === 'smtp' &&
+    ['localhost', '127.0.0.1', '::1'].includes(config.email.smtp.host.toLowerCase())
+  ) {
+    logger.warn(
+      'EMAIL_DRIVER=smtp points at this machine (SMTP_HOST is localhost). Unless a mail server runs here, no email will be delivered.',
+    );
+  }
+
   if (production && !overrides.auditStore) {
     throw new Error(
       'A durable audit store is required in production (the SQL store arrives with issue #6)',

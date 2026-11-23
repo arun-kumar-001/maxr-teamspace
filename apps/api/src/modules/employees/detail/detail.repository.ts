@@ -1,3 +1,6 @@
+import { employeePhotoUrl } from '../photo/photo.types';
+import { getFieldCipher } from '../../../security/field-cipher';
+import type { FieldCipher } from '../../../security/field-crypto';
 import type { Role } from '@maxr/shared';
 import type { Pool, PoolClient } from 'pg';
 import { ScopeFilter, scopeToSql } from '../../rbac';
@@ -65,11 +68,12 @@ interface Row {
   user_active: boolean | null;
   last_login_at: Date | string | null;
   roles: string[];
+  photo_version: string | null;
 }
 
 const iso = (value: Date | string): string => new Date(value).toISOString();
 
-const toDetail = (row: Row, withAccount: boolean): EmployeeDetail => ({
+const toDetail = (row: Row, withAccount: boolean, cipher: FieldCipher): EmployeeDetail => ({
   id: row.id,
   employeeCode: row.employee_code,
   firstName: row.first_name,
@@ -91,6 +95,7 @@ const toDetail = (row: Row, withAccount: boolean): EmployeeDetail => ({
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
   version: row.version,
+  photoUrl: employeePhotoUrl(row.id, row.photo_version === null ? null : Number(row.photo_version)),
   additionalEmails: row.additional_emails ?? [],
   additionalPhones: row.additional_phones ?? [],
   permanentAddress: row.permanent_address,
@@ -98,11 +103,11 @@ const toDetail = (row: Row, withAccount: boolean): EmployeeDetail => ({
   bloodGroup: row.blood_group,
   ...(withAccount
     ? {
-        panNumber: row.pan_number,
-        aadhaarNumber: row.aadhaar_number,
+        panNumber: cipher.decrypt(row.pan_number, 'employees.pan_number'),
+        aadhaarNumber: cipher.decrypt(row.aadhaar_number, 'employees.aadhaar_number'),
         bankAccountHolder: row.bank_account_holder,
         bankName: row.bank_name,
-        bankAccountNumber: row.bank_account_number,
+        bankAccountNumber: cipher.decrypt(row.bank_account_number, 'employees.bank_account_number'),
         bankIfscCode: row.bank_ifsc_code,
         bankBranch: row.bank_branch,
         account: {
@@ -119,6 +124,7 @@ const SELECT = `
   SELECT e.id, e.employee_code, e.first_name, e.last_name, e.email, e.phone, e.status,
          to_char(e.joining_date, 'YYYY-MM-DD') AS joining_date,
          e.created_at, e.updated_at, e.version,
+         CASE WHEN e.profile_photo_key IS NULL THEN NULL ELSE (EXTRACT(EPOCH FROM e.profile_photo_updated_at) * 1000)::bigint END AS photo_version,
          e.additional_emails, e.additional_phones, e.permanent_address, e.current_address,
          e.blood_group, e.pan_number, e.aadhaar_number,
          e.bank_account_holder, e.bank_name, e.bank_account_number, e.bank_ifsc_code, e.bank_branch,
@@ -151,7 +157,10 @@ const COLUMNS: Record<PatchField, string> = {
 };
 
 export class PgEmployeeDetailRepository implements IEmployeeDetailRepository {
-  constructor(private readonly getPool: () => Pool) {}
+  constructor(
+    private readonly getPool: () => Pool,
+    private readonly cipher: FieldCipher = getFieldCipher(),
+  ) {}
 
   async transaction<T>(work: (tx: DetailTx) => Promise<T>): Promise<T> {
     const client: PoolClient = await this.getPool().connect();
@@ -178,13 +187,13 @@ export class PgEmployeeDetailRepository implements IEmployeeDetailRepository {
       `${SELECT} WHERE e.id = $1 AND ${scope.clause} ${GROUP}`,
       [id, ...scope.values],
     );
-    return res.rows[0] ? toDetail(res.rows[0], withAccount) : null;
+    return res.rows[0] ? toDetail(res.rows[0], withAccount, this.cipher) : null;
   }
 
   async load(tx: DetailTx, id: string, withAccount: boolean): Promise<EmployeeDetail> {
     const res = await tx.query<Row>(`${SELECT} WHERE e.id = $1 ${GROUP}`, [id]);
     if (!res.rows[0]) throw new Error(`Employee ${id} vanished inside its transaction`);
-    return toDetail(res.rows[0], withAccount);
+    return toDetail(res.rows[0], withAccount, this.cipher);
   }
 
   async lockEditable(tx: DetailTx, id: string): Promise<EditableEmployee | null> {

@@ -22,6 +22,7 @@ if [ ! -f "$ENV_FILE" ]; then
   REDIS_PASS=$(openssl rand -hex 16 2>/dev/null || date +%s | sha256sum | head -c 32)
   SESSION_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
   STORAGE_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
+  FIELD_KEY=$(openssl rand -base64 32)
   
   mkdir -p "$CERT_DIR"
   
@@ -38,6 +39,7 @@ TLS_CERT_DIR=${CERT_DIR}
 
 SESSION_SECRET=${SESSION_SEC}
 STORAGE_SIGNING_SECRET=${STORAGE_SEC}
+FIELD_ENCRYPTION_KEY=${FIELD_KEY}
 CORS_ORIGIN=https://localhost
 APP_URL=https://localhost
 LOG_LEVEL=info
@@ -48,7 +50,7 @@ SMTP_HOST=localhost
 SMTP_PORT=1025
 
 STORAGE_DRIVER=local
-STORAGE_REQUIRE_SCAN=false
+STORAGE_REQUIRE_SCAN=true
 EOF
   chmod 600 "$ENV_FILE"
   echo "      Generated $ENV_FILE with secure credentials."
@@ -63,6 +65,12 @@ else
     STORAGE_SEC=$(openssl rand -hex 32 2>/dev/null || date +%s | sha256sum | head -c 64)
     sed -i "s/^STORAGE_SIGNING_SECRET=.*/STORAGE_SIGNING_SECRET=${STORAGE_SEC}/" "$ENV_FILE" || echo "STORAGE_SIGNING_SECRET=${STORAGE_SEC}" >> "$ENV_FILE"
   fi
+  # Never regenerated once set: a new key would make every stored Aadhaar, PAN and bank number unreadable.
+  if ! grep -q "^FIELD_ENCRYPTION_KEY=." "$ENV_FILE"; then
+    sed -i "/^FIELD_ENCRYPTION_KEY=/d" "$ENV_FILE"
+    echo "FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)" >> "$ENV_FILE"
+    echo "      Generated FIELD_ENCRYPTION_KEY. Back it up now, separately from the database."
+  fi
   if ! grep -q "^CORS_ORIGIN=" "$ENV_FILE" || grep -q "^CORS_ORIGIN=$" "$ENV_FILE"; then
     echo "CORS_ORIGIN=https://localhost" >> "$ENV_FILE"
   fi
@@ -70,7 +78,12 @@ else
     echo "APP_URL=https://localhost" >> "$ENV_FILE"
   fi
   if ! grep -q "^STORAGE_REQUIRE_SCAN=" "$ENV_FILE"; then
-    echo "STORAGE_REQUIRE_SCAN=false" >> "$ENV_FILE"
+    echo "STORAGE_REQUIRE_SCAN=true" >> "$ENV_FILE"
+  fi
+  # Older versions of this script wrote false here. It is not changed for you: that file is yours.
+  if grep -q "^STORAGE_REQUIRE_SCAN=false" "$ENV_FILE"; then
+    echo "      WARNING: $ENV_FILE has STORAGE_REQUIRE_SCAN=false, so uploads are stored unscanned." >&2
+    echo "      Set STORAGE_REQUIRE_SCAN=true (the stack now runs a ClamAV scanner) and redeploy." >&2
   fi
 fi
 
@@ -100,9 +113,14 @@ fi
 echo "[4/6] Starting PostgreSQL and Redis containers..."
 docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" up -d postgres redis
 
+# The user and database name come from the env file the stack itself uses, so a renamed database
+# is waited for under its own name.
+DB_USER_NAME="$(grep -E '^DB_USER=' "$ENV_FILE" | head -1 | cut -d= -f2-)"
+DB_DATABASE="$(grep -E '^DB_NAME=' "$ENV_FILE" | head -1 | cut -d= -f2-)"
+
 echo "      Waiting for PostgreSQL to accept connections..."
 for i in {1..30}; do
-  if docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" exec -T postgres pg_isready -U maxr -d maxr_teamspace >/dev/null 2>&1; then
+  if docker compose -f deploy/docker-compose.prod.yml --env-file "$ENV_FILE" exec -T postgres pg_isready -U "${DB_USER_NAME:-maxr}" -d "${DB_DATABASE:-maxr_teamspace}" >/dev/null 2>&1; then
     echo "      PostgreSQL is ready!"
     break
   fi

@@ -461,23 +461,6 @@ function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconCopy({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  );
-}
 export function UsersPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'accounts' | 'roles-permissions' | 'access-history'>(
@@ -489,26 +472,8 @@ export function UsersPage() {
   const [statusError, setStatusError] = useState<string | null>(null);
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
-  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
   const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
 
-  const togglePasswordReveal = (userId: string) => {
-    setRevealedPasswords((prev) => ({
-      ...prev,
-      [userId]: !prev[userId],
-    }));
-  };
-
-  const handleCopyPassword = async (userId: string, pass: string) => {
-    try {
-      await navigator.clipboard.writeText(pass);
-      setCopiedUserId(userId);
-      setTimeout(() => setCopiedUserId(null), 2000);
-    } catch {
-      // ignore
-    }
-  };
   const [toast, setToast] = useState<{
     variant: 'success' | 'danger' | 'info';
     title: string;
@@ -968,7 +933,6 @@ export function UsersPage() {
                       <th className="py-3 px-3">Role</th>
                       <th className="py-3 px-3">Department</th>
                       <th className="py-3 px-3">Status</th>
-                      <th className="py-3 px-3">Password</th>
                       <th className="py-3 px-3">Last Login</th>
                       <th className="py-3 px-3 text-right">Actions</th>
                     </tr>
@@ -1087,83 +1051,6 @@ export function UsersPage() {
                               />
                               <span>{u.isActive ? 'Active' : 'Inactive'}</span>
                             </span>
-                          </td>
-
-                          {/* Password */}
-                          <td className="py-3.5 px-3">
-                            <div
-                              className="flex items-center gap-1 font-mono text-[11px]"
-                              data-testid={`password-cell-${u.id}`}
-                            >
-                              {isAdmin ? (
-                                u.tempCredential || u.temporaryPassword ? (
-                                  <>
-                                    <span
-                                      className={`px-2 py-0.5 rounded-md border text-[11px] transition-colors ${
-                                        revealedPasswords[u.id]
-                                          ? 'bg-primary-soft text-primary-deep border-primary-strong/30 font-semibold'
-                                          : 'bg-surface-muted text-text-muted border-border font-medium'
-                                      }`}
-                                      data-testid={`password-value-${u.id}`}
-                                    >
-                                      {revealedPasswords[u.id]
-                                        ? (u.tempCredential as string) ||
-                                          (u.temporaryPassword as string)
-                                        : '••••••••••••'}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => togglePasswordReveal(u.id)}
-                                      title={
-                                        revealedPasswords[u.id] ? 'Hide password' : 'View password'
-                                      }
-                                      aria-label={
-                                        revealedPasswords[u.id] ? 'Hide password' : 'View password'
-                                      }
-                                      data-testid={`toggle-view-password-${u.id}`}
-                                      className="p-1 rounded-md text-text-muted hover:text-text hover:bg-surface-raised transition-colors cursor-pointer"
-                                    >
-                                      {revealedPasswords[u.id] ? (
-                                        <IconEyeOff className="w-3.5 h-3.5" />
-                                      ) : (
-                                        <IconEye className="w-3.5 h-3.5" />
-                                      )}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleCopyPassword(
-                                          u.id,
-                                          (u.tempCredential as string) ||
-                                            (u.temporaryPassword as string),
-                                        )
-                                      }
-                                      title="Copy password"
-                                      aria-label="Copy password"
-                                      data-testid={`copy-password-${u.id}`}
-                                      className="p-1 rounded-md text-text-muted hover:text-primary-deep hover:bg-primary-soft transition-colors cursor-pointer"
-                                    >
-                                      {copiedUserId === u.id ? (
-                                        <IconCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                      ) : (
-                                        <IconCopy className="w-3.5 h-3.5" />
-                                      )}
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span
-                                    className="text-text-subtle font-mono text-[11px]"
-                                    data-testid={`password-value-${u.id}`}
-                                  >
-                                    ••••••••••••
-                                  </span>
-                                )
-                              ) : (
-                                <span className="text-text-subtle font-mono text-[11px]">
-                                  ••••••••••••
-                                </span>
-                              )}
-                            </div>
                           </td>
 
                           {/* Last Login */}

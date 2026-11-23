@@ -79,3 +79,21 @@ registerRoute({
     schema: z.object({ data: z.object({ id: z.string().uuid(), isActive: z.literal(false) }) }),
   },
 });
+
+registerRoute({
+  method: 'delete',
+  path: '/departments/{id}',
+  tags,
+  summary: 'Delete a department that has no designations or employees',
+  permission: 'departments.deactivate',
+  params: idParamSchema,
+  extraResponses: {
+    404: 'No such department',
+    409: 'The department still has designations or employees',
+  },
+  success: {
+    status: 200,
+    description: 'The department was deleted',
+    schema: z.object({ data: z.object({ id: z.string().uuid(), deleted: z.boolean() }) }),
+  },
+});

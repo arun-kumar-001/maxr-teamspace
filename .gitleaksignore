@@ -3,3 +3,6 @@
 
 # Historical false positive: the hard-coded test Idempotency-Key was removed and replaced with generateIdempotencyKey(). This exact historical fingerprint is retained because Gitleaks scans commit diffs.
 9e678410e84e55e4fc7e47588e72333a0c19b6a4:apps/web/src/features/employees/__tests__/createEmployeeApi.test.ts:generic-api-key:75
+
+# Historical false positive: temporary CI test dummy encryption key replaced with runtime generation.
+99b6662c4c8f31d567167418de679fbdb35f33ac:.github/workflows/ci.yml:generic-api-key:198

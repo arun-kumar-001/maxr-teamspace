@@ -208,6 +208,19 @@ export async function cancelCorrection(id: string): Promise<AttendanceCorrection
   return body.data;
 }
 
+/**
+ * A short-lived link to one record's check-in or check-out photo. Photos are never part of a list:
+ * ask for the one you are about to show.
+ */
+export async function fetchAttendancePhotoLink(
+  recordId: string,
+  which: 'check-in' | 'check-out',
+): Promise<{ url: string; expiresAt: string | null }> {
+  const res = await apiFetch(`/api/v1/attendance/${recordId}/photos/${which}`);
+  const body = await handleResponse<{ data: { url: string; expiresAt: string | null } }>(res);
+  return body.data;
+}
+
 export async function fetchTeamCalendar(params?: {
   startDate?: string;
   endDate?: string;

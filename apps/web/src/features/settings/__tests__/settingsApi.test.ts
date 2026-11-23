@@ -23,6 +23,9 @@ describe('settingsApi Suite (Issue #30)', () => {
       calendarSync: true,
       payrollExport: false,
     },
+    companyLogo: null,
+    lateDeductionPolicy: null,
+    permissionPolicy: null,
     updatedAt: '2026-11-01T12:00:00Z',
   };
 

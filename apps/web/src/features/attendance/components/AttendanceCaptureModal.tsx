@@ -79,80 +79,16 @@ export function AttendanceCaptureModal({
       (pos) => {
         const lat = Number(pos.coords.latitude.toFixed(6));
         const lng = Number(pos.coords.longitude.toFixed(6));
-        void (async () => {
-          let resolvedAddress = 'Current GPS Location';
-          try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 4000);
-            const nomRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`,
-              { headers: { Accept: 'application/json' }, signal: controller.signal },
-            );
-            clearTimeout(timer);
-            if (nomRes.ok) {
-              const nom = (await nomRes.json()) as {
-                display_name?: string;
-                address?: {
-                  house_number?: string;
-                  road?: string;
-                  pedestrian?: string;
-                  residential?: string;
-                  neighbourhood?: string;
-                  suburb?: string;
-                  quarter?: string;
-                  city_district?: string;
-                  city?: string;
-                  town?: string;
-                  village?: string;
-                  state?: string;
-                  postcode?: string;
-                };
-              };
-              const a = nom.address;
-              if (a) {
-                const street = [a.house_number, a.road || a.pedestrian || a.residential]
-                  .filter(Boolean)
-                  .join(', ');
-                const area = a.neighbourhood || a.suburb || a.quarter || a.city_district;
-                const city = a.city || a.town || a.village;
-                const parts = [street, area, city, a.state, a.postcode]
-                  .filter((p): p is string => Boolean(p && p.trim()))
-                  .filter((p, idx, arr) => arr.indexOf(p) === idx);
-                if (parts.length > 0) {
-                  resolvedAddress = parts.join(', ').slice(0, 250);
-                } else if (nom.display_name) {
-                  resolvedAddress = nom.display_name.slice(0, 250);
-                }
-              } else if (nom.display_name) {
-                resolvedAddress = nom.display_name.slice(0, 250);
-              }
-            } else {
-              const geoRes = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
-              );
-              if (geoRes.ok) {
-                const geo = (await geoRes.json()) as {
-                  locality?: string;
-                  city?: string;
-                  principalSubdivision?: string;
-                };
-                const parts = [geo.locality, geo.city, geo.principalSubdivision]
-                  .filter((p): p is string => Boolean(p && p.trim()))
-                  .filter((p, idx, arr) => arr.indexOf(p) === idx);
-                if (parts.length > 0) resolvedAddress = parts.join(', ').slice(0, 250);
-              }
-            }
-          } catch {
-            // Keep clean fallback text when offline
-          }
-          setLocation({
-            latitude: lat,
-            longitude: lng,
-            address: resolvedAddress,
-            workMode: 'office',
-          });
-          setLocationStatus('ready');
-        })();
+        // The position is not sent to any outside map service to look up a street name: that would
+        // hand where an employee is to a third party, and the site's policy (connect-src 'self')
+        // blocks such calls anyway. The coordinates themselves are stored with the record.
+        setLocation({
+          latitude: lat,
+          longitude: lng,
+          address: 'Current GPS Location',
+          workMode: 'office',
+        });
+        setLocationStatus('ready');
       },
       () => {
         setLocationStatus('ready');

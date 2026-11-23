@@ -33,8 +33,39 @@ export interface BasicSettings {
   workWeek: WorkWeek;
 }
 
+export const DEDUCTION_TYPES = ['fixed_amount', 'half_day_salary', 'hourly_rate', 'none'] as const;
+export const PERMISSION_APPROVAL_FLOWS = ['lead_only', 'hr_only', 'auto_approved'] as const;
+
+/** What happens to pay when someone arrives late. Stored as configured; payroll reads it later. */
+export interface LateDeductionPolicy {
+  enabled: boolean;
+  graceMinutes: number;
+  deductionType: (typeof DEDUCTION_TYPES)[number];
+  deductionAmount: number;
+  freeLateLimitCount: number;
+  halfDayCutoffMinutes: number;
+}
+
+/** Short absences (a few hours) that are not leave. */
+export interface PermissionPolicy {
+  enabled: boolean;
+  maxPermissionsPerMonth: number;
+  maxHoursPerPermission: number;
+  totalMonthlyPermissionHours?: number;
+  advanceNoticeHours?: number;
+  requiresCompensation?: boolean;
+  approvalFlow?: (typeof PERMISSION_APPROVAL_FLOWS)[number];
+  allowLateArrival?: boolean;
+  allowEarlyDeparture?: boolean;
+}
+
 export interface CompanySettings extends BasicSettings {
   integrations: IntegrationToggles;
+  /** A `data:image/png|jpeg|webp;base64,...` URL, or null when none was uploaded. */
+  companyLogo: string | null;
+  /** null until an Admin saves one. */
+  lateDeductionPolicy: LateDeductionPolicy | null;
+  permissionPolicy: PermissionPolicy | null;
   updatedAt: string;
 }
 
@@ -43,6 +74,10 @@ export interface UpdateSettingsDto {
   timezone?: string;
   workWeek?: { start: DayName; end: DayName };
   integrations?: Partial<IntegrationToggles>;
+  /** null removes the logo. */
+  companyLogo?: string | null;
+  lateDeductionPolicy?: LateDeductionPolicy;
+  permissionPolicy?: PermissionPolicy;
 }
 
 /** The single company settings row. A database CHECK keeps it the only one. */

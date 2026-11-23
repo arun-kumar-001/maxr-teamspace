@@ -15,6 +15,8 @@ export interface AuthContextValue {
   logout: () => void;
   switchRole: (newRole: Role) => void;
   updateUserAvatar?: (avatarUrl: string | null) => void;
+  /** Called once the password has been changed, so the app opens up. */
+  markPasswordChanged?: () => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -59,15 +61,6 @@ export function buildUserFromApi(apiUser: Record<string, unknown>): AuthUser {
     (apiUser.email as string) ||
     'User';
 
-  const defaultAvatar =
-    (MOCK_USERS[role]?.avatarUrl as string | undefined) ||
-    (role === ROLES.TEAM_LEAD ? '/alex-mercer-card.png' : '/user-portrait.png');
-  const savedAvatar =
-    typeof window !== 'undefined' && window.localStorage
-      ? localStorage.getItem(`maxr_avatar_${role}`) ||
-        (apiUser.id ? localStorage.getItem(`maxr_avatar_${apiUser.id}`) : null)
-      : null;
-
   return {
     id: (apiUser.id as string) || '',
     employeeId: apiUser.employeeId as string | undefined,
@@ -81,11 +74,10 @@ export function buildUserFromApi(apiUser: Record<string, unknown>): AuthUser {
     title: (apiUser.title as string) || ROLE_DISPLAY_NAMES[role] || role,
     department: (apiUser.department as string) || undefined,
     avatarInitials: computeInitials(fullName, apiUser.email as string),
-    avatarUrl:
-      (apiUser.avatarUrl as string) ||
-      (apiUser.profilePhotoUrl as string) ||
-      savedAvatar ||
-      defaultAvatar,
+    // The photo is the server's: a stable, authenticated URL. Without one the initials are shown;
+    // nothing is read from this browser's storage or borrowed from a stock image.
+    avatarUrl: typeof apiUser.photoUrl === 'string' ? apiUser.photoUrl : undefined,
+    mustChangePassword: apiUser.mustChangePassword === true,
   };
 }
 
@@ -256,30 +248,27 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
 
   const updateUserAvatar = (avatarUrl: string | null) => {
     setUser((prev) => (prev ? { ...prev, avatarUrl: avatarUrl || undefined } : null));
-    if (typeof window !== 'undefined' && window.localStorage) {
+    // Real accounts keep their photo on the server. Only the development mock accounts, which have
+    // no server record, remember theirs in this browser.
+    if (isDevMockAuth && typeof window !== 'undefined' && window.localStorage) {
       const key = `maxr_avatar_${user?.role || 'admin'}`;
-      if (avatarUrl) {
-        localStorage.setItem(key, avatarUrl);
-        if (user?.id) localStorage.setItem(`maxr_avatar_${user.id}`, avatarUrl);
-        if (user?.email) localStorage.setItem(`maxr_avatar_${user.email.toLowerCase()}`, avatarUrl);
-      } else {
-        localStorage.removeItem(key);
-        if (user?.id) localStorage.removeItem(`maxr_avatar_${user.id}`);
-        if (user?.email) localStorage.removeItem(`maxr_avatar_${user.email.toLowerCase()}`);
-      }
+      if (avatarUrl) localStorage.setItem(key, avatarUrl);
+      else localStorage.removeItem(key);
     }
   };
 
-  // Sync saved avatar from localStorage if available
+  // Development mock accounts only: restore the photo remembered in this browser.
   useEffect(() => {
-    if (user && typeof window !== 'undefined' && window.localStorage) {
-      const key = `maxr_avatar_${user.role}`;
-      const saved = localStorage.getItem(key);
+    if (isDevMockAuth && user && typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem(`maxr_avatar_${user.role}`);
       if (saved && user.avatarUrl !== saved) {
         setUser((prev) => (prev ? { ...prev, avatarUrl: saved } : null));
       }
     }
   }, [user?.role]);
+
+  const markPasswordChanged = () =>
+    setUser((prev) => (prev ? { ...prev, mustChangePassword: false } : null));
 
   const value: AuthContextValue = {
     user,
@@ -290,6 +279,7 @@ export function AuthProvider({ children, initialRole, persistSession = true }: A
     logout,
     switchRole,
     updateUserAvatar,
+    markPasswordChanged,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

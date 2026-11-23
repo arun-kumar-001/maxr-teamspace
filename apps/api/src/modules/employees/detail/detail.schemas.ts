@@ -63,6 +63,8 @@ export const employeeDetailSchema = z
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
     version: z.number().int(),
+    /** Stable, authenticated URL of the profile photo; null when there is none. */
+    photoUrl: z.string().nullable(),
     additionalEmails: z.array(z.string()).optional(),
     additionalPhones: z.array(z.string()).optional(),
     permanentAddress: z.string().nullable().optional(),

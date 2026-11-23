@@ -58,3 +58,6 @@ e2e-output/
 
 # Local Redis snapshots
 dump.rdb
+
+# Python wheels are never part of this repo
+*.whl

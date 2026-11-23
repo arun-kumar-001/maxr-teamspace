@@ -28,7 +28,14 @@ async function setup() {
   const managerOf = (employeeId: string) =>
     employeeId === users.staff.employeeId ? users.team_lead.employeeId : null;
   const repo = new InMemoryAttendanceRepository(managerOf);
-  const service = new AttendanceService(repo, platform.audit);
+  const service = new AttendanceService(
+    repo,
+    platform.audit,
+    undefined,
+    undefined,
+    undefined,
+    platform.storage,
+  );
 
   const app = express();
   app.use(requestIdMiddleware);
@@ -42,6 +49,7 @@ async function setup() {
       repository: repo,
       service,
       shiftResolver: undefined,
+      storage: platform.storage,
     }),
   );
   app.use(notFoundHandler);
@@ -74,6 +82,7 @@ describe('attendance module access & RBAC (Issue #34)', () => {
       ['get', '/api/v1/attendance/active'],
       ['get', '/api/v1/attendance/today'],
       ['get', '/api/v1/attendance/me'],
+      ['get', '/api/v1/attendance/team-calendar'],
       ['post', '/api/v1/attendance/check-in'],
       ['post', '/api/v1/attendance/check-out'],
     ] as const) {
@@ -153,6 +162,19 @@ describe('attendance module access & RBAC (Issue #34)', () => {
       const { as } = await setup();
       const res = await as[role].get('/api/v1/attendance');
       expect(res.status).toBe(status);
+    },
+  );
+
+  it.each([
+    ['admin', 200],
+    ['hr_manager', 200],
+    ['team_lead', 200],
+    ['staff', 403],
+  ] as Array<[Role, number]>)(
+    '%s reading the team calendar gets %i (attendance.list)',
+    async (role, status) => {
+      const { as } = await setup();
+      expect((await as[role].get('/api/v1/attendance/team-calendar')).status).toBe(status);
     },
   );
 

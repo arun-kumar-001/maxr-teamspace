@@ -63,6 +63,7 @@ export default {
       },
       borderRadius: {
         input: v('radius-input'),
+        control: v('radius-input'),
         tile: v('radius-tile'),
         card: v('radius-card'),
         segment: v('radius-segment'),

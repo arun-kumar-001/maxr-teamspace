@@ -170,7 +170,7 @@ export class InMemoryPayslipsRepository implements IPayslipsRepository {
 
   async update(id: string, dto: Partial<UpsertPayslipDto>): Promise<PayslipRecord | null> {
     const existing = this.records.get(id);
-    if (!existing) return null;
+    if (!existing || existing.status !== 'draft') return null;
 
     const updated = this.compute({
       ...existing,

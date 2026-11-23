@@ -1,3 +1,4 @@
+import { demoOr, isDemoDataEnabled } from '@/lib/demo-data';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ApiError,
@@ -314,12 +315,12 @@ export function useEmployeeDirectory(
         ]);
 
         if (isMounted) {
-          setDepartments(depts.length > 0 ? depts : FALLBACK_DEPARTMENTS);
-          setDesignations(desigs.length > 0 ? desigs : FALLBACK_DESIGNATIONS);
-          setManagers(mgrs.length > 0 ? mgrs : FALLBACK_MANAGERS);
+          setDepartments(depts.length > 0 ? depts : demoOr(depts, FALLBACK_DEPARTMENTS));
+          setDesignations(desigs.length > 0 ? desigs : demoOr(desigs, FALLBACK_DESIGNATIONS));
+          setManagers(mgrs.length > 0 ? mgrs : demoOr(mgrs, FALLBACK_MANAGERS));
         }
       } catch {
-        if (isMounted) {
+        if (isMounted && isDemoDataEnabled()) {
           setDepartments((prev) => (prev.length > 0 ? prev : FALLBACK_DEPARTMENTS));
           setDesignations((prev) => (prev.length > 0 ? prev : FALLBACK_DESIGNATIONS));
           setManagers((prev) => (prev.length > 0 ? prev : FALLBACK_MANAGERS));
@@ -387,8 +388,8 @@ export function useEmployeeDirectory(
               err.message.toLowerCase().includes('failed to fetch') ||
               err.message.toLowerCase().includes('networkerror')));
 
-        if (isOfflineOrAuthError) {
-          // Dev / demo / offline backend / unauthenticated session fallback
+        if (isOfflineOrAuthError && isDemoDataEnabled()) {
+          // Development demo only: a real outage or expired session must show an error, never people.
           const fallback = filterFallbackEmployees(FALLBACK_EMPLOYEES, currentQuery);
           setEmployees(fallback.data);
           setMeta(fallback.meta);

@@ -207,7 +207,7 @@ describe('useEmployeeDirectory Hook', () => {
     expect(result.current.error?.message).toBe('Database failure');
   });
 
-  it('falls back gracefully to mock directory data when receiving 401 unauthenticated response', async () => {
+  it('shows an error, not invented people, when the session is not authenticated (401)', async () => {
     vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockRejectedValueOnce(
       new ApiError('Authentication is required', 401, 'UNAUTHORIZED'),
     );
@@ -218,9 +218,23 @@ describe('useEmployeeDirectory Hook', () => {
       vi.runAllTimers();
     });
 
-    expect(result.current.isForbidden).toBe(false);
-    expect(result.current.error).toBeNull();
-    expect(result.current.items.length).toBeGreaterThan(0);
-    expect(result.current.meta.total).toBeGreaterThan(0);
+    expect(result.current.items).toEqual([]);
+    expect(result.current.error?.message).toBe('Authentication is required');
+    expect(result.current.statusCode).toBe(401);
+  });
+
+  it('shows an error, not invented people, when the backend is unreachable', async () => {
+    vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockRejectedValueOnce(
+      new Error('Failed to fetch'),
+    );
+
+    const { result } = renderHook(() => useEmployeeDirectory());
+
+    await act(async () => {
+      vi.runAllTimers();
+    });
+
+    expect(result.current.items).toEqual([]);
+    expect(result.current.error).not.toBeNull();
   });
 });

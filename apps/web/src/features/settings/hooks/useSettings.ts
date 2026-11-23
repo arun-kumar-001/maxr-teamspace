@@ -1,10 +1,15 @@
+import { isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSettings, updateSettings, SettingsApiError } from '../api/settingsApi';
 import { setStaffPayslipsEnabled } from '../../../shell/navigation';
+import { fetchLeavePolicies, createLeavePolicy, updateLeavePolicy } from '../../leave/api/leave';
+import type { LeavePolicy } from '../../leave/types';
 import {
   type CompanySettings,
   type DayName,
   type IntegrationToggles,
+  type LateDeductionConfig,
+  type PermissionPolicyConfig,
   type UpdateSettingsPayload,
   calculateWorkDays,
 } from '../types';
@@ -72,26 +77,7 @@ export interface LeavePolicyProfile {
   assignedEmployeesCount?: number;
 }
 
-export interface PermissionPolicyConfig {
-  enabled: boolean;
-  maxPermissionsPerMonth: number;
-  maxHoursPerPermission: number;
-  totalMonthlyPermissionHours?: number;
-  advanceNoticeHours?: number;
-  requiresCompensation?: boolean;
-  approvalFlow?: 'lead_only' | 'hr_only' | 'auto_approved';
-  allowLateArrival?: boolean;
-  allowEarlyDeparture?: boolean;
-}
-
-export interface LateDeductionConfig {
-  enabled: boolean;
-  graceMinutes: number;
-  deductionType: 'fixed_amount' | 'half_day_salary' | 'hourly_rate' | 'none';
-  deductionAmount: number;
-  freeLateLimitCount: number;
-  halfDayCutoffMinutes: number;
-}
+export type { LateDeductionConfig, PermissionPolicyConfig };
 
 export const DEFAULT_LATE_DEDUCTION: LateDeductionConfig = {
   enabled: true,
@@ -230,7 +216,6 @@ export interface SettingsDraft {
 }
 
 export const CONFIG_STORAGE_KEY = 'maxr_company_config';
-export const LOGO_STORAGE_KEY = 'maxr_company_logo';
 
 export interface ExtendedCompanyConfig {
   companyLogo?: string | null;
@@ -271,14 +256,17 @@ export const DEFAULT_EXTENDED_CONFIG: ExtendedCompanyConfig = {
   permissionPolicy: DEFAULT_PERMISSION_POLICY,
 };
 
-export function loadStoredExtendedConfig(): ExtendedCompanyConfig {
-  let logo: string | null = null;
-  try {
-    logo = localStorage.getItem(LOGO_STORAGE_KEY);
-  } catch {
-    // Browser storage can be unavailable
-  }
+/** What may be cached in this browser: the navigation only needs the integration toggles. */
+function cacheable(settings: CompanySettings): CompanySettings {
+  return { ...settings, companyLogo: null, lateDeductionPolicy: null, permissionPolicy: null };
+}
 
+/**
+ * The part of the company configuration that is still kept in this browser only (shift times,
+ * leave quotas and similar). The logo and the late-deduction and permission policies are NOT here:
+ * they are saved on the server, so every user sees the same ones.
+ */
+export function loadStoredExtendedConfig(): ExtendedCompanyConfig {
   let parsed: Partial<ExtendedCompanyConfig> = {};
   try {
     const raw = localStorage.getItem(CONFIG_STORAGE_KEY);
@@ -292,29 +280,41 @@ export function loadStoredExtendedConfig(): ExtendedCompanyConfig {
   return {
     ...DEFAULT_EXTENDED_CONFIG,
     ...parsed,
-    companyLogo: logo ?? parsed.companyLogo ?? null,
-    lateDeductionPolicy: parsed.lateDeductionPolicy
-      ? { ...DEFAULT_LATE_DEDUCTION, ...parsed.lateDeductionPolicy }
+    companyLogo: null,
+    lateDeductionPolicy: DEFAULT_LATE_DEDUCTION,
+    permissionPolicy: DEFAULT_PERMISSION_POLICY,
+  };
+}
+
+/** The server-held settings as the screen edits them; defaults stand in for "never configured". */
+export function serverBackedConfig(
+  s: Pick<CompanySettings, 'companyLogo' | 'lateDeductionPolicy' | 'permissionPolicy'>,
+): Pick<ExtendedCompanyConfig, 'companyLogo' | 'lateDeductionPolicy' | 'permissionPolicy'> {
+  return {
+    companyLogo: s.companyLogo ?? null,
+    lateDeductionPolicy: s.lateDeductionPolicy
+      ? { ...DEFAULT_LATE_DEDUCTION, ...s.lateDeductionPolicy }
       : DEFAULT_LATE_DEDUCTION,
-    permissionPolicy: parsed.permissionPolicy
-      ? { ...DEFAULT_PERMISSION_POLICY, ...parsed.permissionPolicy }
+    permissionPolicy: s.permissionPolicy
+      ? { ...DEFAULT_PERMISSION_POLICY, ...s.permissionPolicy }
       : DEFAULT_PERMISSION_POLICY,
   };
 }
 
 export function persistExtendedConfig(config: ExtendedCompanyConfig) {
+  // The logo and the two policies belong to the server; they are not copied into this browser.
+  const {
+    companyLogo: _logo,
+    lateDeductionPolicy: _late,
+    permissionPolicy: _perm,
+    ...local
+  } = config;
   try {
-    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-    if (config.companyLogo) {
-      localStorage.setItem(LOGO_STORAGE_KEY, config.companyLogo);
-    } else {
-      localStorage.removeItem(LOGO_STORAGE_KEY);
-    }
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new Event('maxr:company-config-updated'));
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(local));
   } catch {
     // Browser storage can be unavailable
   }
+  window.dispatchEvent(new Event('maxr:company-config-updated'));
 }
 
 export interface UseSettingsResult {
@@ -342,28 +342,61 @@ export function useSettings(): UseSettingsResult {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const initDraft = useCallback((s: CompanySettings): SettingsDraft => {
-    const ext = loadStoredExtendedConfig();
-    setSavedExtended(ext);
-    return {
-      companyName: s.companyName,
-      timezone: s.timezone,
-      workWeekStart: s.workWeek.start,
-      workWeekEnd: s.workWeek.end,
-      integrations: { ...s.integrations },
-      ...ext,
-    };
-  }, []);
+  const initDraft = useCallback(
+    (s: CompanySettings, policies: LeavePolicy[] = []): SettingsDraft => {
+      const ext = { ...loadStoredExtendedConfig(), ...serverBackedConfig(s) };
+
+      let effectiveLeaveTypes: CustomLeaveType[] = ext.customLeaveTypes ?? [];
+      if (policies && policies.length > 0) {
+        effectiveLeaveTypes = policies.map((p) => ({
+          id: p.id,
+          name: p.name,
+          code: p.code,
+          quota: p.annualDays,
+          annualEntitlement: p.annualDays,
+          isPaid: p.hasBalance,
+          allowHalfDay: p.allowHalfDay,
+          maxBackdateDays: p.maxBackdateDays,
+          carryForwardEnabled: p.carryForwardMax > 0,
+          carryForwardMax: p.carryForwardMax,
+          isActive: p.isActive,
+          category:
+            p.code === 'PM' ||
+            p.code === 'PERMISSION' ||
+            p.name.toLowerCase().includes('permission')
+              ? 'permission'
+              : 'general',
+          frequency: 'yearly',
+          accrualMethod: p.hasBalance ? 'yearly' : 'manual',
+        }));
+      }
+
+      const merged = { ...ext, customLeaveTypes: effectiveLeaveTypes };
+      setSavedExtended(merged);
+      return {
+        companyName: s.companyName,
+        timezone: s.timezone,
+        workWeekStart: s.workWeek.start,
+        workWeekEnd: s.workWeek.end,
+        integrations: { ...s.integrations },
+        ...merged,
+      };
+    },
+    [],
+  );
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getSettings();
+      const [data, policies] = await Promise.all([
+        getSettings(),
+        fetchLeavePolicies().catch(() => [] as LeavePolicy[]),
+      ]);
       setSettings(data);
-      setDraft(initDraft(data));
+      setDraft(initDraft(data, policies));
       try {
-        localStorage.setItem('maxr_company_settings', JSON.stringify(data));
+        localStorage.setItem('maxr_company_settings', JSON.stringify(cacheable(data)));
       } catch {
         // Browser storage can be unavailable while API settings remain usable.
       }
@@ -371,10 +404,11 @@ export function useSettings(): UseSettingsResult {
         setStaffPayslipsEnabled(data.integrations.payrollExport);
       }
     } catch (err) {
-      // In development or when database is offline, fallback to cached settings or baseline defaults
+      // Only the development demo may show cached or invented settings. In production a failed
+      // load is an error: stale values would look current and an Admin could save over real ones.
       let fallbackSettings: CompanySettings | null = null;
       try {
-        const stored = localStorage.getItem('maxr_company_settings');
+        const stored = isDemoDataEnabled() ? localStorage.getItem('maxr_company_settings') : null;
         if (stored) {
           fallbackSettings = JSON.parse(stored);
         }
@@ -382,7 +416,7 @@ export function useSettings(): UseSettingsResult {
         // Browser storage access error
       }
 
-      if (!fallbackSettings && import.meta.env.DEV) {
+      if (!fallbackSettings && isDemoDataEnabled()) {
         fallbackSettings = {
           companyName: 'MAXR Global Technologies',
           timezone: 'Asia/Kolkata',
@@ -397,6 +431,9 @@ export function useSettings(): UseSettingsResult {
             calendarSync: true,
             payrollExport: false,
           },
+          companyLogo: null,
+          lateDeductionPolicy: null,
+          permissionPolicy: null,
           updatedAt: new Date().toISOString(),
         };
       }
@@ -468,7 +505,8 @@ export function useSettings(): UseSettingsResult {
     if (draft.integrations.payrollExport !== settings.integrations.payrollExport) return true;
 
     // Extended config differences
-    if ((draft.companyLogo ?? null) !== (savedExtended.companyLogo ?? null)) return true;
+    const server = serverBackedConfig(settings);
+    if ((draft.companyLogo ?? null) !== server.companyLogo) return true;
     if ((draft.shiftStartTime ?? '09:00') !== (savedExtended.shiftStartTime ?? '09:00'))
       return true;
     if ((draft.shiftEndTime ?? '18:00') !== (savedExtended.shiftEndTime ?? '18:00')) return true;
@@ -497,15 +535,9 @@ export function useSettings(): UseSettingsResult {
       JSON.stringify(savedExtended.customLeaveTypes || [])
     )
       return true;
-    if (
-      JSON.stringify(draft.permissionPolicy || {}) !==
-      JSON.stringify(savedExtended.permissionPolicy || {})
-    )
+    if (JSON.stringify(draft.permissionPolicy) !== JSON.stringify(server.permissionPolicy))
       return true;
-    if (
-      JSON.stringify(draft.lateDeductionPolicy || {}) !==
-      JSON.stringify(savedExtended.lateDeductionPolicy || {})
-    )
+    if (JSON.stringify(draft.lateDeductionPolicy) !== JSON.stringify(server.lateDeductionPolicy))
       return true;
 
     return false;
@@ -556,6 +588,23 @@ export function useSettings(): UseSettingsResult {
       payload.integrations = changedIntegrations;
     }
 
+    const server = serverBackedConfig(settings);
+    if ((draft.companyLogo ?? null) !== server.companyLogo) {
+      payload.companyLogo = draft.companyLogo ?? null;
+    }
+    if (
+      draft.lateDeductionPolicy &&
+      JSON.stringify(draft.lateDeductionPolicy) !== JSON.stringify(server.lateDeductionPolicy)
+    ) {
+      payload.lateDeductionPolicy = draft.lateDeductionPolicy;
+    }
+    if (
+      draft.permissionPolicy &&
+      JSON.stringify(draft.permissionPolicy) !== JSON.stringify(server.permissionPolicy)
+    ) {
+      payload.permissionPolicy = draft.permissionPolicy;
+    }
+
     return payload;
   }, [settings, draft]);
 
@@ -578,7 +627,7 @@ export function useSettings(): UseSettingsResult {
           updatedSettings = await updateSettings(payload);
           setSettings(updatedSettings);
         } catch (apiErr) {
-          if (!import.meta.env.DEV) throw apiErr;
+          if (!isDemoDataEnabled()) throw apiErr;
           if (settings) {
             updatedSettings = {
               ...settings,
@@ -625,10 +674,72 @@ export function useSettings(): UseSettingsResult {
       persistExtendedConfig(newExtended);
       setSavedExtended(newExtended);
 
+      // Synchronize configured leave types with the backend leave_policies table
+      if (draft.customLeaveTypes && draft.customLeaveTypes.length > 0) {
+        try {
+          const currentBackend = await fetchLeavePolicies().catch(() => [] as LeavePolicy[]);
+          for (const item of draft.customLeaveTypes) {
+            const existing = currentBackend.find(
+              (bp) =>
+                bp.id === item.id ||
+                (item.code && bp.code.toUpperCase() === item.code.toUpperCase()),
+            );
+            const isPerm =
+              item.category === 'permission' ||
+              item.code === 'PM' ||
+              item.code === 'PERMISSION' ||
+              item.name.toLowerCase().includes('permission');
+            const hasBal = isPerm ? false : (item.isPaid ?? true);
+            const annualDays = hasBal ? item.quota || 0 : 0;
+            const carryForwardMax =
+              hasBal && item.carryForwardEnabled ? item.carryForwardMax || 0 : 0;
+
+            if (existing) {
+              const hasDiff =
+                existing.name !== item.name ||
+                existing.annualDays !== annualDays ||
+                existing.carryForwardMax !== carryForwardMax ||
+                existing.allowHalfDay !== (item.allowHalfDay ?? true) ||
+                existing.maxBackdateDays !== (item.maxBackdateDays ?? 0) ||
+                existing.isActive !== (item.isActive ?? true);
+              if (hasDiff) {
+                await updateLeavePolicy(existing.id, {
+                  name: item.name,
+                  annualDays,
+                  carryForwardMax,
+                  allowHalfDay: isPerm ? false : (item.allowHalfDay ?? true),
+                  maxBackdateDays: item.maxBackdateDays ?? 0,
+                  isActive: item.isActive ?? true,
+                  version: existing.version,
+                }).catch(() => {});
+              }
+            } else {
+              const rawCode =
+                (item.code || item.name.slice(0, 4))
+                  .trim()
+                  .toUpperCase()
+                  .replace(/[^A-Z0-9_]/g, '') || 'LV';
+              const cleanCode = rawCode.length >= 2 ? rawCode : `${rawCode}X`;
+              await createLeavePolicy({
+                code: cleanCode,
+                name: item.name,
+                hasBalance: hasBal,
+                annualDays,
+                carryForwardMax,
+                allowHalfDay: isPerm ? false : (item.allowHalfDay ?? true),
+                maxBackdateDays: item.maxBackdateDays ?? (isPerm ? 2 : 0),
+              }).catch(() => {});
+            }
+          }
+        } catch {
+          // Leave policy sync is best-effort alongside company settings
+        }
+      }
+
       if (updatedSettings) {
         setDraft(initDraft(updatedSettings));
         try {
-          localStorage.setItem('maxr_company_settings', JSON.stringify(updatedSettings));
+          localStorage.setItem('maxr_company_settings', JSON.stringify(cacheable(updatedSettings)));
         } catch {
           // Browser storage can be unavailable while API settings remain usable.
         }

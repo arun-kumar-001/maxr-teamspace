@@ -107,3 +107,14 @@ registerRoute({
   },
   success: { status: 200, description: 'The task after the move', schema: one },
 });
+
+registerRoute({
+  method: 'post',
+  path: '/tasks/{id}/daily-done',
+  tags,
+  summary: "Tick or untick a task as done for today, without changing the task's status",
+  permission: 'tasks.update_status',
+  params: taskIdParamsSchema,
+  extraResponses: notParty,
+  success: { status: 200, description: 'The task after the change', schema: one },
+});

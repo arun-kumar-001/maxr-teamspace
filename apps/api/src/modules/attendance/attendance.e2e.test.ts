@@ -17,7 +17,14 @@ async function setup(isEmployeeActive: (id: string) => boolean = () => true) {
   });
   const kit = createTestAuth(platform.audit);
   const repo = new InMemoryAttendanceRepository();
-  const service = new AttendanceService(repo, platform.audit, undefined, isEmployeeActive);
+  const service = new AttendanceService(
+    repo,
+    platform.audit,
+    undefined,
+    isEmployeeActive,
+    undefined,
+    platform.storage,
+  );
 
   const app = express();
   app.use(requestIdMiddleware);
@@ -31,6 +38,7 @@ async function setup(isEmployeeActive: (id: string) => boolean = () => true) {
       repository: repo,
       service,
       shiftResolver: undefined,
+      storage: platform.storage,
     }),
   );
   app.use(notFoundHandler);

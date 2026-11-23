@@ -20,6 +20,9 @@ describe('useSettings hook (Issue #30)', () => {
       calendarSync: false,
       payrollExport: true,
     },
+    companyLogo: null,
+    lateDeductionPolicy: null,
+    permissionPolicy: null,
     updatedAt: '2026-11-01T10:00:00Z',
   };
 

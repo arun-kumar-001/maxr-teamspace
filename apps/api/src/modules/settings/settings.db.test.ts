@@ -88,4 +88,69 @@ describe('company settings against PostgreSQL', () => {
       });
     }
   });
+
+  describe('policies and logo', () => {
+    const LOGO = 'data:image/png;base64,iVBORw0KGgo=';
+    const LATE = {
+      enabled: true,
+      graceMinutes: 10,
+      deductionType: 'fixed_amount',
+      deductionAmount: 250,
+      freeLateLimitCount: 2,
+      halfDayCutoffMinutes: 120,
+    } as const;
+
+    it('stores and returns the logo and both policies, and keeps them on an unrelated update', async () => {
+      try {
+        await repo.update({
+          companyLogo: LOGO,
+          lateDeductionPolicy: LATE,
+          permissionPolicy: { enabled: false, maxPermissionsPerMonth: 1, maxHoursPerPermission: 2 },
+        });
+        const after = await repo.update({ companyName: 'Policy Test Co' });
+        expect(after.companyLogo).toBe(LOGO);
+        expect(after.lateDeductionPolicy).toEqual(LATE);
+        expect(after.permissionPolicy).toEqual({
+          enabled: false,
+          maxPermissionsPerMonth: 1,
+          maxHoursPerPermission: 2,
+        });
+        expect(await repo.getLogo()).toBe(LOGO);
+        expect((await repo.update({ companyLogo: null })).companyLogo).toBeNull();
+      } finally {
+        await pool.query(
+          `UPDATE company_settings
+              SET company_logo = NULL, late_deduction_policy = NULL, permission_policy = NULL
+            WHERE id = $1`,
+          [COMPANY_SETTINGS_ID],
+        );
+      }
+    });
+
+    it.each([
+      ['an SVG', 'data:image/svg+xml;base64,PHN2Zz4='],
+      ['a web address', 'https://example.com/logo.png'],
+      ['script', 'data:text/html;base64,PHNjcmlwdD4='],
+      ['an oversized image', `data:image/png;base64,${'A'.repeat(300_001)}`],
+    ])('the database refuses %s as the logo, whatever wrote it', async (_label, value) => {
+      await rolledBack(async (q) => {
+        await expect(
+          q(`UPDATE company_settings SET company_logo = $2 WHERE id = $1`, [
+            COMPANY_SETTINGS_ID,
+            value,
+          ]),
+        ).rejects.toMatchObject({ code: '23514' });
+      });
+    });
+
+    it('the database refuses a policy that is not a JSON object', async () => {
+      await rolledBack(async (q) => {
+        await expect(
+          q(`UPDATE company_settings SET late_deduction_policy = '[1]'::jsonb WHERE id = $1`, [
+            COMPANY_SETTINGS_ID,
+          ]),
+        ).rejects.toMatchObject({ code: '23514' });
+      });
+    });
+  });
 });

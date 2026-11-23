@@ -29,6 +29,8 @@ export interface EmployeeDetail {
   updatedAt: string;
   /** Send it back with an edit; an edit made on an older version is refused with 409. */
   version: number;
+  /** Stable, authenticated URL of the profile photo; null when there is none. */
+  photoUrl: string | null;
   additionalEmails?: string[];
   additionalPhones?: string[];
   permanentAddress?: string | null;

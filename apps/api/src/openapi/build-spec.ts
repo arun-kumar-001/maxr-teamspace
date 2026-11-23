@@ -1,5 +1,6 @@
 import { generateDocument } from './registry';
 // Each module registers its routes by being imported here.
+import '../health/health.openapi';
 import '../modules/_template/template.openapi';
 import '../modules/audit-logs/audit-log.openapi';
 import '../modules/auth/auth.openapi';
@@ -23,6 +24,8 @@ import '../modules/employees/profile/profile.openapi';
 import '../modules/employees/detail/detail.openapi';
 import '../modules/employees/documents/documents.openapi';
 import '../modules/settings/settings.openapi';
+import '../modules/todos/todos.openapi';
+import '../modules/employees/photo/photo.openapi';
 import '../modules/shifts/shifts.openapi';
 import '../modules/users/users.openapi';
 import '../modules/employees/departments/department.openapi';

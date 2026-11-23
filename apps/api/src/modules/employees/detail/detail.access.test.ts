@@ -36,6 +36,7 @@ const person = (id: string, code: string, email: string): EmployeeDetail => ({
   bankAccountNumber: '1234567890',
   bankIfscCode: 'TEST0001234',
   version: 1,
+  photoUrl: null,
   account: { userId: `u-${id}`, isActive: true, lastLoginAt: null, roles: [ROLES.STAFF] },
 });
 

@@ -58,6 +58,9 @@ export class InMemoryAuthRepository implements AuthRepository {
 
   async updatePasswordHash(userId: string, passwordHash: string): Promise<void> {
     const user = this.users.get(userId);
-    if (user) user.passwordHash = passwordHash;
+    if (user) {
+      user.passwordHash = passwordHash;
+      user.mustChangePassword = false;
+    }
   }
 }

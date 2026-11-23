@@ -1,3 +1,4 @@
+import { demoOr, isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useCallback, useEffect } from 'react';
 import type {
   LeavePolicy,
@@ -13,6 +14,7 @@ import type {
   LeaveCalendarEntry,
 } from '../types';
 import * as leaveApi from '../api/leave';
+import { getConfiguredLeavePolicies, getConfiguredLeaveBalances } from '../lib/configuredPolicies';
 
 const FALLBACK_POLICIES: LeavePolicy[] = [
   {
@@ -277,11 +279,23 @@ const FALLBACK_CALENDAR: LeaveCalendarEntry[] = [
 ];
 
 export function useLeave(initialYear: number = new Date().getFullYear()) {
-  const [policies, setPolicies] = useState<LeavePolicy[]>(FALLBACK_POLICIES);
+  const [policies, setPolicies] = useState<LeavePolicy[]>(() => {
+    const configured = getConfiguredLeavePolicies();
+    if (configured && configured.length > 0) return configured;
+    return demoOr([], FALLBACK_POLICIES);
+  });
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [balances, setBalances] = useState<LeaveBalance[]>(FALLBACK_BALANCES);
-  const [requests, setRequests] = useState<LeaveRequest[]>(FALLBACK_REQUESTS);
-  const [calendarEntries, setCalendarEntries] = useState<LeaveCalendarEntry[]>(FALLBACK_CALENDAR);
+  const [balances, setBalances] = useState<LeaveBalance[]>(() => {
+    const configured = getConfiguredLeavePolicies();
+    if (configured && configured.length > 0) {
+      return getConfiguredLeaveBalances(configured, initialYear);
+    }
+    return demoOr([], FALLBACK_BALANCES);
+  });
+  const [requests, setRequests] = useState<LeaveRequest[]>(demoOr([], FALLBACK_REQUESTS));
+  const [calendarEntries, setCalendarEntries] = useState<LeaveCalendarEntry[]>(
+    demoOr([], FALLBACK_CALENDAR),
+  );
   const [selectedYear, setSelectedYear] = useState<number>(initialYear);
 
   const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
@@ -301,14 +315,18 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingPolicies(true);
       setPolicyError(null);
       const data = await leaveApi.fetchLeavePolicies();
-      if (data && data.length > 0) {
+      if (data.length > 0) {
         setPolicies(data);
       } else {
-        setPolicies(FALLBACK_POLICIES);
+        const configured = getConfiguredLeavePolicies();
+        setPolicies(
+          configured && configured.length > 0 ? configured : demoOr(data, FALLBACK_POLICIES),
+        );
       }
     } catch (err) {
-      console.warn('API error fetching leave policies, using fallback:', err);
-      setPolicies(FALLBACK_POLICIES);
+      setPolicyError(err instanceof Error ? err.message : 'Failed to fetch leave policies');
+      const configured = getConfiguredLeavePolicies();
+      setPolicies(configured && configured.length > 0 ? configured : demoOr([], FALLBACK_POLICIES));
     } finally {
       setIsLoadingPolicies(false);
     }
@@ -332,14 +350,24 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingBalances(true);
       setBalanceError(null);
       const data = await leaveApi.fetchMyLeaveBalances(year);
-      if (data && data.length > 0) {
+      if (data.length > 0) {
         setBalances(data);
       } else {
-        setBalances(FALLBACK_BALANCES);
+        const configured = getConfiguredLeavePolicies();
+        if (configured && configured.length > 0) {
+          setBalances(getConfiguredLeaveBalances(configured, year));
+        } else {
+          setBalances(demoOr(data, FALLBACK_BALANCES));
+        }
       }
     } catch (err) {
-      console.warn('API error fetching leave balances, using fallback:', err);
-      setBalances(FALLBACK_BALANCES);
+      setBalanceError(err instanceof Error ? err.message : 'Failed to fetch leave balances');
+      const configured = getConfiguredLeavePolicies();
+      if (configured && configured.length > 0) {
+        setBalances(getConfiguredLeaveBalances(configured, year));
+      } else {
+        setBalances(demoOr([], FALLBACK_BALANCES));
+      }
     } finally {
       setIsLoadingBalances(false);
     }
@@ -350,14 +378,10 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingRequests(true);
       setRequestsError(null);
       const res = await leaveApi.fetchMyLeaveRequests(query);
-      if (res && res.data && res.data.length > 0) {
-        setRequests(res.data);
-      } else {
-        setRequests(FALLBACK_REQUESTS);
-      }
+      setRequests(res.data.length > 0 ? res.data : demoOr(res.data, FALLBACK_REQUESTS));
     } catch (err) {
-      console.warn('API error fetching leave requests, using fallback:', err);
-      setRequests(FALLBACK_REQUESTS);
+      setRequestsError(err instanceof Error ? err.message : 'Failed to fetch leave requests');
+      setRequests(demoOr([], FALLBACK_REQUESTS));
     } finally {
       setIsLoadingRequests(false);
     }
@@ -368,14 +392,10 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       setIsLoadingCalendar(true);
       setCalendarError(null);
       const data = await leaveApi.fetchLeaveCalendar(from, to);
-      if (data && data.length > 0) {
-        setCalendarEntries(data);
-      } else {
-        setCalendarEntries(FALLBACK_CALENDAR);
-      }
+      setCalendarEntries(data.length > 0 ? data : demoOr(data, FALLBACK_CALENDAR));
     } catch (err) {
-      console.warn('API error fetching leave calendar, using fallback:', err);
-      setCalendarEntries(FALLBACK_CALENDAR);
+      setCalendarError(err instanceof Error ? err.message : 'Failed to fetch the leave calendar');
+      setCalendarEntries(demoOr([], FALLBACK_CALENDAR));
     } finally {
       setIsLoadingCalendar(false);
     }
@@ -388,8 +408,9 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       // Refresh balances after successful leave submission
       await loadBalances(selectedYear);
       return created;
-    } catch {
-      // Graceful local creation for mock auth sessions / offline dev
+    } catch (err) {
+      // A request the server did not accept must never appear in the list as if it had been.
+      if (!isDemoDataEnabled()) throw err;
       const policy = policies.find((p) => p.id === payload.leaveTypeId) || FALLBACK_POLICIES[0]!;
       const daysCount = payload.halfDay ? 0.5 : 1;
       const mockCreated: LeaveRequest = {
@@ -422,6 +443,11 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
   };
 
   const handleEditLeave = async (id: string, payload: ApplyForLeavePayload) => {
+    // The API has no endpoint to change a submitted request, so outside the demo this must fail
+    // loudly rather than change only what this screen shows.
+    if (!isDemoDataEnabled()) {
+      throw new Error('A submitted leave request cannot be edited. Cancel it and apply again.');
+    }
     const policy = policies.find((p) => p.id === payload.leaveTypeId) || FALLBACK_POLICIES[0]!;
     const daysCount = payload.halfDay ? 0.5 : 1;
 
@@ -494,8 +520,8 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
       // Refresh balances after request cancellation
       await loadBalances(selectedYear);
       return cancelled;
-    } catch {
-      // Local cancellation for fallback/mock/offline: refund leave balance
+    } catch (err) {
+      if (!isDemoDataEnabled()) throw err;
       const existing = requests.find((r) => r.id === id);
       if (existing) {
         setBalances((prev) =>
@@ -592,6 +618,19 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
     const toStr = toDate.toISOString().slice(0, 10);
     loadCalendar(fromStr, toStr);
   }, [loadPolicies, loadHolidays, loadBalances, loadMyRequests, loadCalendar, selectedYear]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      void loadPolicies();
+      void loadBalances(selectedYear);
+    };
+    window.addEventListener('maxr:company-config-updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('maxr:company-config-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, [loadPolicies, loadBalances, selectedYear]);
 
   return {
     policies,

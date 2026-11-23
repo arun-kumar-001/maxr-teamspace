@@ -11,7 +11,6 @@ export interface UserAccount {
   roles: Role[];
   lastLoginAt: string | null;
   createdAt: string;
-  tempCredential?: string | null;
 }
 
 export interface UserFilters {
@@ -54,7 +53,6 @@ export interface CreateUserInput {
   isActive?: boolean;
   departmentId?: string;
   designationId?: string;
-  temporaryPassword?: string;
 }
 
 export type CreateUserResult =

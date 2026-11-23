@@ -1,4 +1,4 @@
-import { useContext, type ReactNode } from 'react';
+import { lazy, Suspense, useContext, type ReactNode } from 'react';
 import {
   BrowserRouter,
   MemoryRouter,
@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom';
 import type { Role } from '@maxr/shared';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { ForcedPasswordChangePage } from './auth/ForcedPasswordChangePage';
 import { LoginPage } from './auth/LoginPage';
 import { AppShell } from './shell/AppShell';
 import { RouteGuard } from './shell/RouteGuard';
@@ -19,33 +20,85 @@ import {
 } from './shell/NavigationBlockerContext';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
-import { ComponentGalleryPage } from './components/ui/gallery/ComponentGalleryPage';
-import {
-  CreateEmployeePage,
-  EmployeeDeactivationPage,
-  EmployeeDetailPage,
-  EmployeeDirectoryPage,
-  EmployeeDocumentsPage,
-  MyOnboardingPage,
-  OnboardingPage,
-  OrgChartPage,
-  SetPasswordPage,
-} from './features/employees';
-import { DepartmentsPage } from './features/departments';
-import { MyProfilePage, ProfilePortalPage } from './features/profile';
-import { AttendancePage } from './features/attendance';
-import { ApprovalsInboxPage } from './features/approvals';
-import { ShiftsAndPoliciesPage } from './features/shifts';
-import { LeaveManagementPage } from './features/leave';
-import { UsersPage } from './features/users';
-import { NotificationsInboxPage } from './features/notifications';
-import { AuditLogsPage } from './features/audit-logs';
-import { ProjectsListPage, ProjectDetailPage } from './features/projects';
-import { TasksPage } from './features/tasks';
-import { CompanySettingsPage } from './features/settings';
-import { ExpensesPage } from './features/expenses';
-import { PayslipsPage } from './features/payslips';
-import { ReportsPage } from './features/reports';
+import { SetPasswordPage } from './features/employees';
+
+// Each screen is its own chunk, loaded when first visited, so the first load stays small.
+const ComponentGalleryPage = lazy(() =>
+  import('./components/ui/gallery/ComponentGalleryPage').then((m) => ({
+    default: m.ComponentGalleryPage,
+  })),
+);
+const CreateEmployeePage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.CreateEmployeePage })),
+);
+const EmployeeDeactivationPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.EmployeeDeactivationPage })),
+);
+const EmployeeDetailPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.EmployeeDetailPage })),
+);
+const EmployeeDirectoryPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.EmployeeDirectoryPage })),
+);
+const EmployeeDocumentsPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.EmployeeDocumentsPage })),
+);
+const MyOnboardingPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.MyOnboardingPage })),
+);
+const OnboardingPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.OnboardingPage })),
+);
+const OrgChartPage = lazy(() =>
+  import('./features/employees').then((m) => ({ default: m.OrgChartPage })),
+);
+const DepartmentsPage = lazy(() =>
+  import('./features/departments').then((m) => ({ default: m.DepartmentsPage })),
+);
+const MyProfilePage = lazy(() =>
+  import('./features/profile').then((m) => ({ default: m.MyProfilePage })),
+);
+const ProfilePortalPage = lazy(() =>
+  import('./features/profile').then((m) => ({ default: m.ProfilePortalPage })),
+);
+const AttendancePage = lazy(() =>
+  import('./features/attendance').then((m) => ({ default: m.AttendancePage })),
+);
+const ApprovalsInboxPage = lazy(() =>
+  import('./features/approvals').then((m) => ({ default: m.ApprovalsInboxPage })),
+);
+const ShiftsAndPoliciesPage = lazy(() =>
+  import('./features/shifts').then((m) => ({ default: m.ShiftsAndPoliciesPage })),
+);
+const LeaveManagementPage = lazy(() =>
+  import('./features/leave').then((m) => ({ default: m.LeaveManagementPage })),
+);
+const UsersPage = lazy(() => import('./features/users').then((m) => ({ default: m.UsersPage })));
+const NotificationsInboxPage = lazy(() =>
+  import('./features/notifications').then((m) => ({ default: m.NotificationsInboxPage })),
+);
+const AuditLogsPage = lazy(() =>
+  import('./features/audit-logs').then((m) => ({ default: m.AuditLogsPage })),
+);
+const ProjectsListPage = lazy(() =>
+  import('./features/projects').then((m) => ({ default: m.ProjectsListPage })),
+);
+const ProjectDetailPage = lazy(() =>
+  import('./features/projects').then((m) => ({ default: m.ProjectDetailPage })),
+);
+const TasksPage = lazy(() => import('./features/tasks').then((m) => ({ default: m.TasksPage })));
+const CompanySettingsPage = lazy(() =>
+  import('./features/settings').then((m) => ({ default: m.CompanySettingsPage })),
+);
+const ExpensesPage = lazy(() =>
+  import('./features/expenses').then((m) => ({ default: m.ExpensesPage })),
+);
+const PayslipsPage = lazy(() =>
+  import('./features/payslips').then((m) => ({ default: m.PayslipsPage })),
+);
+const ReportsPage = lazy(() =>
+  import('./features/reports').then((m) => ({ default: m.ReportsPage })),
+);
 
 // The gallery is a developer tool; it must not ship to production.
 const SHOW_GALLERY = import.meta.env.DEV;
@@ -65,7 +118,15 @@ function ShellLayoutInner({ children }: { children: ReactNode }) {
   return (
     <RouteGuard currentPath={location.pathname} onNavigate={handleNav}>
       <AppShell currentPath={location.pathname} onNavigate={handleNav}>
-        {children}
+        <Suspense
+          fallback={
+            <div role="status" aria-live="polite" className="p-8 text-sm text-text-muted">
+              Loading…
+            </div>
+          }
+        >
+          {children}
+        </Suspense>
       </AppShell>
     </RouteGuard>
   );
@@ -82,9 +143,12 @@ function ShellLayout({ children }: { children: ReactNode }) {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // A password someone else set must be replaced first; the server refuses everything else anyway.
+  if (isAuthenticated && user?.mustChangePassword) return <ForcedPasswordChangePage />;
 
   return (
     <Routes>

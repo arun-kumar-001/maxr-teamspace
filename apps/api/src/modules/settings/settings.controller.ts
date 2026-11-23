@@ -24,6 +24,10 @@ export class SettingsController {
     res.status(200).json({ data: await this.service.getBasic() });
   };
 
+  getLogo = async (_req: Request, res: Response): Promise<void> => {
+    res.status(200).json({ data: { companyLogo: await this.service.getLogo() } });
+  };
+
   update = async (req: Request, res: Response): Promise<void> => {
     const { body } = validated(req, { body: updateSettingsSchema });
     res.status(200).json({ data: await this.service.update(body, this.context(req)) });

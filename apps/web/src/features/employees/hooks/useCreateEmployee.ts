@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ROLES, type Role } from '@maxr/shared';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, ROLES, type Role } from '@maxr/shared';
 import {
   createEmployee,
   fetchActiveDepartments,
@@ -562,8 +562,10 @@ export function useCreateEmployee({
         if (formData.passwordMode === 'custom') {
           const trimmed = value.trim();
           if (!trimmed) return 'Password is required.';
-          if (trimmed.length < 8) return 'Password must be at least 8 characters long.';
-          if (trimmed.length > 128) return 'Password cannot exceed 128 characters.';
+          if (trimmed.length < MIN_PASSWORD_LENGTH)
+            return `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`;
+          if (trimmed.length > MAX_PASSWORD_LENGTH)
+            return `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters.`;
         }
         return undefined;
       }

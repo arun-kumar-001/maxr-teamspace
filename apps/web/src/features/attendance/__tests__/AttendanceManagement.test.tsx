@@ -115,7 +115,7 @@ function setupFetchMock() {
           }),
       });
     }
-    if (url.includes('/api/v1/leave/policies')) {
+    if (url.includes('/api/v1/leave-policies')) {
       return Promise.resolve({
         ok: true,
         headers: new Headers({ 'content-type': 'application/json' }),
@@ -139,7 +139,7 @@ function setupFetchMock() {
           }),
       });
     }
-    if (url.includes('/api/v1/leave/balances')) {
+    if (url.includes('/api/v1/leave-balances')) {
       return Promise.resolve({
         ok: true,
         headers: new Headers({ 'content-type': 'application/json' }),
@@ -160,7 +160,7 @@ function setupFetchMock() {
           }),
       });
     }
-    if (url.includes('/api/v1/leave/requests')) {
+    if (url.includes('/api/v1/leave-requests')) {
       return Promise.resolve({
         ok: true,
         headers: new Headers({ 'content-type': 'application/json' }),
@@ -189,7 +189,7 @@ function setupFetchMock() {
           }),
       });
     }
-    if (url.includes('/api/v1/leave/holidays')) {
+    if (url.includes('/api/v1/holidays')) {
       return Promise.resolve({
         ok: true,
         headers: new Headers({ 'content-type': 'application/json' }),

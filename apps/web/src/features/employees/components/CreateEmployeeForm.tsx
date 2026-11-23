@@ -88,11 +88,6 @@ export function CreateEmployeeForm({
     }
   };
 
-  // Local state for salary details
-  const [salaryAmount, setSalaryAmount] = useState('6,00,000');
-  const [salaryCurrency, setSalaryCurrency] = useState('INR');
-  const [salaryFrequency, setSalaryFrequency] = useState('Annual');
-
   // Profile picture upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -921,7 +916,7 @@ export function CreateEmployeeForm({
       </div>
 
       {/* ============================================================== */}
-      {/* SECTION 2: Employment, Hierarchy & Salary */}
+      {/* SECTION 2: Employment and Hierarchy */}
       {/* ============================================================== */}
       <div
         className={`bg-surface border border-border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-card space-y-6 sm:space-y-8 transition-all duration-200 ${
@@ -937,7 +932,7 @@ export function CreateEmployeeForm({
             Professional &amp; Employment Details
           </h2>
           <p className="text-sm text-text-muted mt-1">
-            Enter the employee’s role, department, reporting manager, and salary details.
+            Enter the employee’s role, department and reporting manager.
           </p>
         </div>
 
@@ -1106,61 +1101,6 @@ export function CreateEmployeeForm({
                 </FormField>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Salary Details Subsection (per user requirement) */}
-        <div className="pt-6 border-t border-border/70 space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-text">Salary &amp; Compensation Structure</h3>
-              <p className="text-xs text-text-muted mt-0.5">
-                Enter the employee’s salary and payment details.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <FormField label="Base Salary / CTC" htmlFor="create-emp-salary">
-              <Input
-                id="create-emp-salary"
-                type="text"
-                value={salaryAmount}
-                onChange={(e) => setSalaryAmount(e.target.value)}
-                placeholder="Enter salary amount"
-                disabled={isSubmitting}
-                data-testid="input-salary-ctc"
-              />
-            </FormField>
-
-            <FormField label="Currency" htmlFor="create-emp-currency">
-              <Select
-                id="create-emp-currency"
-                value={salaryCurrency}
-                onChange={(e) => setSalaryCurrency(e.target.value)}
-                disabled={isSubmitting}
-                options={[
-                  { value: 'INR', label: 'INR (₹)' },
-                  { value: 'USD', label: 'USD ($)' },
-                  { value: 'EUR', label: 'EUR (€)' },
-                  { value: 'GBP', label: 'GBP (£)' },
-                ]}
-              />
-            </FormField>
-
-            <FormField label="Pay Frequency" htmlFor="create-emp-frequency">
-              <Select
-                id="create-emp-frequency"
-                value={salaryFrequency}
-                onChange={(e) => setSalaryFrequency(e.target.value)}
-                disabled={isSubmitting}
-                options={[
-                  { value: 'Annual', label: 'Annual' },
-                  { value: 'Monthly', label: 'Monthly' },
-                  { value: 'Bi-weekly', label: 'Bi-weekly' },
-                ]}
-              />
-            </FormField>
           </div>
         </div>
       </div>
@@ -2033,12 +1973,6 @@ export function CreateEmployeeForm({
             <div>
               <span className="text-text-muted block text-[11px]">Manager:</span>
               <span>{selectedManager ? selectedManager.name : 'None (Top Level)'}</span>
-            </div>
-            <div>
-              <span className="text-text-muted block text-[11px]">Salary:</span>
-              <span>
-                {salaryCurrency} {salaryAmount} ({salaryFrequency})
-              </span>
             </div>
             <div>
               <span className="text-text-muted block text-[11px]">Role:</span>

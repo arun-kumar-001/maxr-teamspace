@@ -1,3 +1,4 @@
+import { MIN_PASSWORD_LENGTH } from '@maxr/shared';
 export interface AuthConfig {
   cookieName: string;
   /** `Secure` flag. Always true in production (the config refuses anything else there). */
@@ -50,7 +51,7 @@ export function loadAuthConfig(
     maxLoginFailures: readInt('LOGIN_MAX_FAILURES', env.LOGIN_MAX_FAILURES, 5, 1),
     lockoutWindowMs: readInt('LOGIN_LOCKOUT_WINDOW_MS', env.LOGIN_LOCKOUT_WINDOW_MS, 900_000, 1000),
     allowedOrigin,
-    minPasswordLength: 12,
+    minPasswordLength: MIN_PASSWORD_LENGTH,
     maxPasswordLength: 128,
   };
 }

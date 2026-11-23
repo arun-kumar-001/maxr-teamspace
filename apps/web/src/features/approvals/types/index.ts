@@ -23,6 +23,8 @@ export interface Approval extends Record<string, unknown> {
   decisions: ApprovalDecision[];
   createdAt: string;
   decidedAt: string | null;
+  /** True only when this is the caller's own request and nobody else could decide it. */
+  canDecideAsSoleApprover?: boolean;
 }
 
 export interface ApprovalFilters {

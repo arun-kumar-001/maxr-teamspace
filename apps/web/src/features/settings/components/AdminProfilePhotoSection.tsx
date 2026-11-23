@@ -1,3 +1,4 @@
+import { deleteMyPhoto, uploadMyPhoto } from '../../profile/api/profileApi';
 import { useState, useRef, type ChangeEvent } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { Button } from '../../../components/ui/Button';
@@ -55,41 +56,29 @@ export function AdminProfilePhotoSection({ onNotify }: AdminProfilePhotoSectionP
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setErrorMessage(null);
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setErrorMessage('Please select a valid image file (PNG, JPG, WEBP, or GIF).');
-      return;
-    }
-
-    // Validate size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('Image size exceeds 5MB limit. Please choose a smaller photo.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        updateUserAvatar?.(result);
+    uploadMyPhoto(file)
+      .then((photoUrl) => {
+        updateUserAvatar?.(photoUrl);
         onNotify?.('Profile photo updated successfully!');
-      }
-    };
-    reader.onerror = () => {
-      setErrorMessage('Failed to read the selected image file. Please try again.');
-    };
-    reader.readAsDataURL(file);
-
-    // Reset input value so re-selecting same file triggers onChange
-    e.target.value = '';
+      })
+      .catch((err: unknown) =>
+        setErrorMessage(err instanceof Error ? err.message : 'The photo could not be saved.'),
+      );
   };
 
   const handleRemovePhoto = () => {
     setErrorMessage(null);
-    updateUserAvatar?.(null);
-    onNotify?.('Profile photo removed. Initial avatar restored.');
+    deleteMyPhoto()
+      .then(() => {
+        updateUserAvatar?.(null);
+        onNotify?.('Profile photo removed. Initial avatar restored.');
+      })
+      .catch((err: unknown) =>
+        setErrorMessage(err instanceof Error ? err.message : 'The photo could not be removed.'),
+      );
   };
 
   return (
@@ -134,7 +123,7 @@ export function AdminProfilePhotoSection({ onNotify }: AdminProfilePhotoSectionP
             <input
               type="file"
               ref={fileInputRef}
-              accept="image/png,image/jpeg,image/webp,image/gif"
+              accept="image/png,image/jpeg"
               className="hidden"
               onChange={handleFileChange}
               data-testid="admin-avatar-file-input"

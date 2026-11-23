@@ -10,6 +10,15 @@ import { SessionService } from './session-service';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+/** Until a password someone else set is replaced, these are the only things the account can do. */
+const ALLOWED_WHILE_PASSWORD_MUST_CHANGE = new Set([
+  '/api/v1/auth/me',
+  '/api/v1/auth/change-password',
+  '/api/v1/auth/logout',
+]);
+
+export const PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED';
+
 export function sessionCookieOptions(config: AuthConfig, maxAgeMs?: number): CookieOptions {
   return {
     httpOnly: true,
@@ -34,6 +43,8 @@ export function readCookie(req: Request, name: string): string | undefined {
   return undefined;
 }
 
+const passwordChangeError = () =>
+  new AppError(403, PASSWORD_CHANGE_REQUIRED, 'You must change your password before continuing');
 const csrfError = () => new AppError(403, ERROR_CODES.FORBIDDEN, 'Invalid or missing CSRF token');
 
 function sameToken(expected: string, given: unknown): boolean {
@@ -92,6 +103,11 @@ export function createAuthenticate(
 
     if (unsafe && !sameToken(session.csrfToken, req.headers['x-csrf-token'])) {
       throw csrfError();
+    }
+
+    if (user.mustChangePassword) {
+      const path = (req.originalUrl.split('?')[0] ?? '').replace(/\/+$/, '');
+      if (!ALLOWED_WHILE_PASSWORD_MUST_CHANGE.has(path)) throw passwordChangeError();
     }
 
     req.actor = { id: user.id, employeeId: user.employeeId, role: roles[0] as Role, roles };

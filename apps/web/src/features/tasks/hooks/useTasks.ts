@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { isDemoDataEnabled } from '@/lib/demo-data';
 import {
   changeTaskStatus,
   createTask,
@@ -142,24 +143,24 @@ export function useTasks(options: UseTasksOptions = {}) {
             ? await fetchTeamTasks(query, signal)
             : await fetchMyTasks(query, signal);
 
-        const list = res.data && res.data.length > 0 ? res.data : FALLBACK_TASKS;
-        const withOverrides = applyTaskOverrides(list);
+        const list = res.data.length > 0 || !isDemoDataEnabled() ? res.data : FALLBACK_TASKS;
+        const withOverrides = isDemoDataEnabled() ? applyTaskOverrides(list) : list;
         setTasks(withOverrides);
         setTotal(res.meta?.total ?? withOverrides.length);
       } catch (err: unknown) {
         if (err instanceof DOMException && err.name === 'AbortError') {
           return;
         }
-        if (err instanceof TasksApiError && err.status === 403) {
-          setError(err.message);
-          setErrorCode(err.code);
-          setTasks([]);
-        } else {
-          // Fallback mock tasks for dev / offline / unauthenticated demo
+        if (isDemoDataEnabled() && !(err instanceof TasksApiError && err.status === 403)) {
           const fallback = applyTaskOverrides(FALLBACK_TASKS);
           setTasks(fallback);
           setTotal(fallback.length);
           setError(null);
+        } else {
+          setError(err instanceof Error ? err.message : 'Tasks could not be loaded.');
+          setErrorCode(err instanceof TasksApiError ? err.code : undefined);
+          setTasks([]);
+          setTotal(0);
         }
       } finally {
         setLoading(false);
@@ -240,18 +241,12 @@ export function useTasks(options: UseTasksOptions = {}) {
       const updated = await updateTask(id, input);
       setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
       return updated;
-    } catch {
+    } catch (err) {
       const current = tasks.find((t) => t.id === id);
-      if (current) {
-        const fallbackUpdated: Task = {
-          ...current,
-          ...input,
-          updatedAt: new Date().toISOString(),
-        };
-        setTasks((prev) => prev.map((t) => (t.id === id ? fallbackUpdated : t)));
-        return fallbackUpdated;
-      }
-      throw new Error(`Task with id ${id} not found`);
+      if (!isDemoDataEnabled() || !current) throw err;
+      const fallbackUpdated: Task = { ...current, ...input, updatedAt: new Date().toISOString() };
+      setTasks((prev) => prev.map((t) => (t.id === id ? fallbackUpdated : t)));
+      return fallbackUpdated;
     }
   };
 
@@ -265,11 +260,13 @@ export function useTasks(options: UseTasksOptions = {}) {
       TASK_TRANSITION_PATHS[current.status]?.[newStatus] ??
       (TASK_TRANSITIONS[current.status]?.includes(newStatus) ? [newStatus] : [newStatus]);
 
-    // 1. Immediately persist status override locally and broadcast event
-    saveTaskStatusOverride(id, newStatus);
-    notifyTaskStatusChanged(id, newStatus);
+    const demo = isDemoDataEnabled();
+    if (demo) {
+      saveTaskStatusOverride(id, newStatus);
+      notifyTaskStatusChanged(id, newStatus);
+    }
 
-    // 2. Optimistic UI update: instantly moves the card to the target column
+    // Optimistic UI update: the card moves at once and is put back if the server refuses.
     const optimisticTask: Task = {
       ...current,
       status: newStatus,
@@ -290,10 +287,10 @@ export function useTasks(options: UseTasksOptions = {}) {
         setTasks((prev) => prev.map((t) => (t.id === id ? finalTask : t)));
         return finalTask;
       }
-    } catch {
-      // In offline / dev / mock mode where task ID is not on server, keep the optimistic status
-      // and local override so progress and state update properly across dashboards.
-      return optimisticTask;
+    } catch (err) {
+      if (demo) return optimisticTask;
+      setTasks((prev) => prev.map((t) => (t.id === id ? current : t)));
+      throw err;
     }
 
     return optimisticTask;

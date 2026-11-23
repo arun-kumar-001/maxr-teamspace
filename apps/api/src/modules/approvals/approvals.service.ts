@@ -5,7 +5,14 @@ import { buildPage, toOffsetLimit } from '../../http/pagination';
 import type { PlatformServices } from '../../platform';
 import { EventCollector } from '../../platform/events/event-bus';
 import { ScopeFilter, scopeAllows } from '../rbac';
-import { currentStageOf, defaultRoute, denialReason, leaveRoute } from './approval-rules';
+import {
+  couldDecideOwnRequest,
+  currentStageOf,
+  defaultRoute,
+  denialReason,
+  leaveRoute,
+  stageRoles,
+} from './approval-rules';
 import { IApprovalsRepository } from './approvals.repository';
 import {
   APPROVAL_TRANSITIONS,
@@ -151,6 +158,33 @@ export class ApprovalsService {
     return this.repository.markCancelled(tx, approval.id);
   }
 
+  /**
+   * Whether `who` may decide their own request because no one else can: they hold the role the
+   * current stage needs and no other active employee does. Without this, the only Admin who is
+   * also the only HR Manager could never have their own leave approved. As soon as a second
+   * person holds the role, the exception ends and someone else must decide.
+   */
+  private async isSoleApprover(
+    approval: Approval,
+    who: { employeeId: string; roles: readonly Role[] },
+    tx?: ApprovalTx,
+  ): Promise<boolean> {
+    if (!couldDecideOwnRequest(approval, who)) return false;
+    const roles = stageRoles(approval) ?? [];
+    return !(await this.repository.existsOtherActiveWithRole(roles, who.employeeId, tx));
+  }
+
+  /** Marks the approvals the caller may decide only because they are the sole approver. */
+  private async withSoleApproverHint(approvals: Approval[], caller: ApprovalCaller) {
+    return Promise.all(
+      approvals.map(async (approval) =>
+        (await this.isSoleApprover(approval, caller))
+          ? { ...approval, canDecideAsSoleApprover: true }
+          : approval,
+      ),
+    );
+  }
+
   async list(
     query: ApprovalListQuery,
     caller: ApprovalCaller,
@@ -165,13 +199,13 @@ export class ApprovalsService {
         : undefined,
       ...toOffsetLimit({ page, pageSize }),
     });
-    return buildPage(items, total, { page, pageSize });
+    return buildPage(await this.withSoleApproverHint(items, caller), total, { page, pageSize });
   }
 
-  async get(id: string, filter: ScopeFilter): Promise<Approval> {
+  async get(id: string, filter: ScopeFilter, caller?: ApprovalCaller): Promise<Approval> {
     const approval = await this.repository.findById(id, filter);
     if (!approval) throw notFound('Approval not found');
-    return approval;
+    return caller ? (await this.withSoleApproverHint([approval], caller))[0]! : approval;
   }
 
   /**
@@ -202,15 +236,17 @@ export class ApprovalsService {
         ) {
           throw notFound('Approval not found');
         }
-        if (current.requesterEmployeeId === caller.employeeId) {
-          throw forbidden(DENIAL_MESSAGES.own_request);
-        }
+        const own = current.requesterEmployeeId === caller.employeeId;
+        if (own && current.status !== 'pending') throw forbidden(DENIAL_MESSAGES.own_request);
+        // Nobody decides their own request (D-12), unless nobody else could: see isSoleApprover.
+        const soleApprover = own && (await this.isSoleApprover(current, caller, tx));
+        if (own && !soleApprover) throw forbidden(DENIAL_MESSAGES.own_request);
         if (current.status !== 'pending') {
           // Repeating the decision that already stands is harmless; the opposite one is a conflict.
           if (current.status === outcome) return current;
           throw conflict(DENIAL_MESSAGES.not_pending);
         }
-        const denial = denialReason(current, caller);
+        const denial = soleApprover ? null : denialReason(current, caller);
         if (denial) throw forbidden(DENIAL_MESSAGES[denial]);
 
         const stage = current.currentStage;
@@ -241,6 +277,8 @@ export class ApprovalsService {
               subjectType: current.subjectType,
               subjectId: current.subjectId,
               commentProvided: comment !== undefined,
+              // Set when the requester decided their own request because no one else could.
+              ...(soleApprover ? { soleApprover: true } : {}),
             },
           },
           { transaction: tx },

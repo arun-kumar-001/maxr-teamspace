@@ -1,8 +1,15 @@
 import { randomBytes } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { DEV_FIELD_ENCRYPTION_KEY } from '../security/field-crypto';
 import { loadAndValidateConfig } from './env';
 
-const KEYS = ['NODE_ENV', 'DATABASE_URL', 'SESSION_SECRET', 'CORS_ORIGIN'] as const;
+const KEYS = [
+  'NODE_ENV',
+  'DATABASE_URL',
+  'SESSION_SECRET',
+  'CORS_ORIGIN',
+  'FIELD_ENCRYPTION_KEY',
+] as const;
 const saved: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -10,6 +17,7 @@ beforeEach(() => {
   process.env.NODE_ENV = 'production';
   process.env.DATABASE_URL = 'postgresql://u:p@db:5432/app';
   process.env.CORS_ORIGIN = 'https://teamspace.example.com';
+  process.env.FIELD_ENCRYPTION_KEY = randomBytes(32).toString('base64');
 });
 
 afterEach(() => {
@@ -66,5 +74,42 @@ describe('CORS_ORIGIN (#16)', () => {
 
   it('accepts an https origin', () => {
     expect(loadAndValidateConfig().CORS_ORIGIN).toBe('https://teamspace.example.com');
+  });
+});
+
+describe('FIELD_ENCRYPTION_KEY guard', () => {
+  beforeEach(() => {
+    process.env.SESSION_SECRET = randomBytes(24).toString('hex');
+  });
+
+  it('is required in production, so personal data is never stored with a shared dev key', () => {
+    delete process.env.FIELD_ENCRYPTION_KEY;
+    expect(() => loadAndValidateConfig()).toThrow(/FIELD_ENCRYPTION_KEY is strictly required/);
+  });
+
+  it('refuses the built-in development key in production', () => {
+    process.env.FIELD_ENCRYPTION_KEY = DEV_FIELD_ENCRYPTION_KEY;
+    expect(() => loadAndValidateConfig()).toThrow(/development key/);
+  });
+
+  it.each([
+    ['too-short'],
+    [randomBytes(16).toString('base64')],
+    [randomBytes(48).toString('base64')],
+  ])('rejects %j, which is not 32 bytes', (key) => {
+    process.env.FIELD_ENCRYPTION_KEY = key;
+    expect(() => loadAndValidateConfig()).toThrow(/32 random bytes/);
+  });
+
+  it('accepts a random 32-byte key', () => {
+    const key = randomBytes(32).toString('base64');
+    process.env.FIELD_ENCRYPTION_KEY = key;
+    expect(loadAndValidateConfig().FIELD_ENCRYPTION_KEY).toBe(key);
+  });
+
+  it('falls back to the development key outside production', () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.FIELD_ENCRYPTION_KEY;
+    expect(loadAndValidateConfig().FIELD_ENCRYPTION_KEY).toBe(DEV_FIELD_ENCRYPTION_KEY);
   });
 });

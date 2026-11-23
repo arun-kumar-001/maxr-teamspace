@@ -1,3 +1,5 @@
+import { getFieldCipher } from '../../../security/field-cipher';
+import type { FieldCipher } from '../../../security/field-crypto';
 import type { Role } from '@maxr/shared';
 import type { Pool, PoolClient } from 'pg';
 import { CreateEmployeeDto, CreatedEmployee, CreationTx, ExistingIdentity } from './creation.types';
@@ -29,7 +31,10 @@ const toDateOnly = (value: Date | string): string =>
   typeof value === 'string' ? value.slice(0, 10) : value.toISOString().slice(0, 10);
 
 export class PgEmployeeCreationRepository implements IEmployeeCreationRepository {
-  constructor(private readonly getPool: () => Pool) {}
+  constructor(
+    private readonly getPool: () => Pool,
+    private readonly cipher: FieldCipher = getFieldCipher(),
+  ) {}
 
   async transaction<T>(work: (tx: CreationTx) => Promise<T>): Promise<T> {
     const client: PoolClient = await this.getPool().connect();
@@ -96,21 +101,22 @@ export class PgEmployeeCreationRepository implements IEmployeeCreationRepository
         dto.permanentAddress ?? null,
         dto.currentAddress ?? null,
         dto.bloodGroup ?? null,
-        dto.panNumber ?? null,
-        dto.aadhaarNumber ?? null,
+        this.cipher.encrypt(dto.panNumber ?? null, 'employees.pan_number'),
+        this.cipher.encrypt(dto.aadhaarNumber ?? null, 'employees.aadhaar_number'),
         dto.bankAccountHolder ?? null,
         dto.bankName ?? null,
-        dto.bankAccountNumber ?? null,
+        this.cipher.encrypt(dto.bankAccountNumber ?? null, 'employees.bank_account_number'),
         dto.bankIfscCode ?? null,
         dto.bankBranch ?? null,
       ],
     );
     const row = employee.rows[0] as InsertedRow;
-    // Inactive until onboarding activates the account (D-20); temporary_password recorded for admin visibility.
+    // Inactive until onboarding activates the account (D-20). Only the hash is stored; a generated
+    // password is returned once in the create response and never persisted.
     const user = await tx.query<{ id: string }>(
-      `INSERT INTO users (employee_id, email, password_hash, is_active, temporary_password)
-       VALUES ($1, $2, $3, false, $4) RETURNING id`,
-      [row.id, dto.email, passwordHash, temporaryPassword ?? null],
+      `INSERT INTO users (employee_id, email, password_hash, is_active, must_change_password)
+       VALUES ($1, $2, $3, false, true) RETURNING id`,
+      [row.id, dto.email, passwordHash],
     );
     const userId = (user.rows[0] as { id: string }).id;
     const role = await tx.query(

@@ -1,3 +1,4 @@
+import { demoOr, isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { apiFetch } from '../api/client';
@@ -229,6 +230,12 @@ interface ApprovalItem {
   status: 'pending' | 'approved';
 }
 
+// Sample tasks and locally remembered status overrides exist for the development demo only; in
+// production the dashboard shows exactly what the server returned.
+const seedTasks = (): Task[] => demoOr([], FALLBACK_TASKS);
+const applyOverrides = (tasks: Task[]): Task[] =>
+  isDemoDataEnabled() ? applyTaskOverrides(tasks) : tasks;
+
 export function AdminDashboard() {
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined') {
@@ -242,7 +249,7 @@ export function AdminDashboard() {
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  const allTasksRef = useRef<Task[]>(FALLBACK_TASKS);
+  const allTasksRef = useRef<Task[]>(seedTasks());
 
   // State: Priority Tasks
   const [priorityTasks, setPriorityTasks] = useState<
@@ -255,7 +262,7 @@ export function AdminDashboard() {
       status: TaskStatus;
     }>
   >(() => {
-    const list = applyTaskOverrides(FALLBACK_TASKS);
+    const list = applyOverrides(seedTasks());
     return list.slice(0, 4).map((t) => ({
       id: t.id,
       title: t.title,
@@ -284,7 +291,7 @@ export function AdminDashboard() {
 
   // State: Task Counts
   const [taskCounts, setTaskCounts] = useState(() => {
-    const list = applyTaskOverrides(FALLBACK_TASKS);
+    const list = applyOverrides(seedTasks());
     const summary = computeTaskCounts(list);
     return {
       completed: summary.completed,
@@ -295,7 +302,7 @@ export function AdminDashboard() {
 
   // State: Metrics (Real dynamic values)
   const [metrics, setMetrics] = useState(() => {
-    const list = applyTaskOverrides(FALLBACK_TASKS);
+    const list = applyOverrides(seedTasks());
     const summary = computeTaskCounts(list);
     return {
       teamMembers: 0,
@@ -424,10 +431,10 @@ export function AdminDashboard() {
       const rawTasks =
         tasksRes.status === 'fulfilled' && tasksRes.value?.data?.length
           ? tasksRes.value.data
-          : FALLBACK_TASKS;
+          : seedTasks();
       allTasksRef.current = rawTasks;
 
-      const list = applyTaskOverrides(rawTasks);
+      const list = applyOverrides(rawTasks);
       const summary = computeTaskCounts(list);
       setTaskCounts({
         completed: summary.completed,
@@ -554,7 +561,7 @@ export function AdminDashboard() {
           : t,
       );
 
-      const updatedList = applyTaskOverrides(allTasksRef.current);
+      const updatedList = applyOverrides(allTasksRef.current);
       const summary = computeTaskCounts(updatedList);
       setTaskCounts({
         completed: summary.completed,

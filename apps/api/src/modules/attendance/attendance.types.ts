@@ -25,8 +25,9 @@ export interface AttendanceRecord {
   status: AttendanceStatus;
   location: AttendanceLocation | null;
   checkOutLocation: AttendanceLocation | null;
-  checkInPhoto: string | null;
-  checkOutPhoto: string | null;
+  /** Whether a photo exists. The photo itself comes from GET /attendance/{id}/photos/{check-in|check-out}. */
+  hasCheckInPhoto: boolean;
+  hasCheckOutPhoto: boolean;
   notes: string | null;
   createdAt: string;
   updatedAt: string;

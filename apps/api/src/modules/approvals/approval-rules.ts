@@ -1,4 +1,4 @@
-import { ROLES } from '@maxr/shared';
+import { ROLES, type Role } from '@maxr/shared';
 import { Approval, ApprovalStage, Decider, RequesterContext } from './approvals.types';
 
 export type DenialReason = 'not_pending' | 'own_request' | 'not_your_stage' | 'already_decided';
@@ -33,6 +33,31 @@ export function denialReason(approval: Approval, decider: Decider): DenialReason
         ? isHr(decider)
         : false;
   return allowed ? null : 'not_your_stage';
+}
+
+/** Roles that can decide the approval's current stage; null for the manager step, which names one person. */
+export function stageRoles(approval: Approval): readonly Role[] | null {
+  const stage = currentStageOf(approval);
+  if (stage === 'admin') return [ROLES.ADMIN];
+  if (stage === 'hr') {
+    return approval.subjectType === 'leave_request'
+      ? [ROLES.HR_MANAGER]
+      : [ROLES.HR_MANAGER, ROLES.ADMIN];
+  }
+  return null;
+}
+
+/**
+ * Whether `who` is the requester and holds the role the current stage needs, so that the only
+ * thing in their way is the ban on deciding their own request. The service lifts that ban only
+ * when nobody else could decide (see ApprovalsService.isSoleApprover).
+ */
+export function couldDecideOwnRequest(approval: Approval, who: Decider): boolean {
+  if (approval.status !== 'pending' || approval.requesterEmployeeId !== who.employeeId)
+    return false;
+  if (approval.decisions.some((d) => d.decidedByEmployeeId === who.employeeId)) return false;
+  const roles = stageRoles(approval);
+  return roles !== null && roles.some((role) => who.roles.includes(role));
 }
 
 export function leaveRoute(

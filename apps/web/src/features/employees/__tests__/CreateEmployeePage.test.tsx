@@ -95,6 +95,15 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
     expect(screen.getByTestId('select-designation')).toBeInTheDocument();
   });
 
+  it('does not ask for salary, which the API does not accept, nor prefill an invented amount', async () => {
+    renderWithRole();
+    await screen.findByTestId('section-employment-details');
+
+    expect(screen.queryByTestId('input-salary-ctc')).not.toBeInTheDocument();
+    expect(screen.queryByText(/salary/i)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('6,00,000')).not.toBeInTheDocument();
+  });
+
   it('shows department and designation names without their codes', async () => {
     renderWithRole(ROLES.ADMIN);
     await waitFor(() => expect(screen.getByRole('option', { name: 'Engineering' })).toBeDefined());

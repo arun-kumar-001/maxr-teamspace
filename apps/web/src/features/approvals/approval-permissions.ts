@@ -6,8 +6,11 @@ export function canDecideApproval(
   employeeId: string | undefined,
   roles: readonly Role[],
 ): boolean {
-  if (!employeeId || approval.status !== 'pending' || approval.requesterEmployeeId === employeeId)
-    return false;
+  if (!employeeId || approval.status !== 'pending') return false;
+  // Your own request: only when the server says nobody else could decide it.
+  if (approval.requesterEmployeeId === employeeId) {
+    return approval.canDecideAsSoleApprover === true;
+  }
   if (approval.decisions.some((decision) => decision.decidedByEmployeeId === employeeId))
     return false;
   const stage = approval.stages[approval.currentStage];

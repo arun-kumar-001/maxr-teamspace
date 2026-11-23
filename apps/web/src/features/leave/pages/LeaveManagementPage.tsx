@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isDemoDataEnabled } from '@/lib/demo-data';
 import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ROLES } from '@maxr/shared';
@@ -268,10 +269,14 @@ onChange={(val) =>
           onCancelRequest={async (id) => {
             await cancelRequest(id);
           }}
-onEditRequest={(req) => {
-            setEditingRequest(req);
-            setIsApplyModalOpen(true);
-          }}
+          onEditRequest={
+            isDemoDataEnabled()
+              ? (req) => {
+                  setEditingRequest(req);
+                  setIsApplyModalOpen(true);
+                }
+              : undefined
+          }
           onApplyClick={() => {
             setEditingRequest(null);
             setIsApplyModalOpen(true);

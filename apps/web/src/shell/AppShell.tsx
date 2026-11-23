@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Header } from './Header';
 import { Sidebar, SidebarDrawer, PageContainer } from '../components/ui';
 import { useAuth } from '../auth/AuthContext';
+import { getCompanyLogo } from '../features/settings/api/settingsApi';
 import { getSidebarGroupsForRole, getNavItemsForRole } from './navigation';
 
 export interface AppShellProps {
@@ -15,23 +16,13 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [, setNavRevision] = useState(0);
-  const [customLogo, setCustomLogo] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem('maxr_company_logo');
-    } catch {
-      return null;
-    }
-  });
+  // The logo is a company setting kept on the server, so every user sees the same one.
+  const [customLogo, setCustomLogo] = useState<string | null>(null);
 
 
   useEffect(() => {
     const handleNavChange = () => {
       setNavRevision((r) => r + 1);
-      try {
-        setCustomLogo(localStorage.getItem('maxr_company_logo'));
-      } catch {
-        // storage unavailable
-      }
     };
     window.addEventListener('storage', handleNavChange);
     window.addEventListener('maxr:staff-payslips-change', handleNavChange);
@@ -40,6 +31,21 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
       window.removeEventListener('storage', handleNavChange);
       window.removeEventListener('maxr:staff-payslips-change', handleNavChange);
       window.removeEventListener('maxr:company-config-updated', handleNavChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = () => {
+      getCompanyLogo()
+        .then((logo) => active && setCustomLogo(logo))
+        .catch(() => active && setCustomLogo(null));
+    };
+    load();
+    window.addEventListener('maxr:company-config-updated', load);
+    return () => {
+      active = false;
+      window.removeEventListener('maxr:company-config-updated', load);
     };
   }, []);
 

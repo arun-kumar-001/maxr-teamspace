@@ -1,6 +1,7 @@
 import { useContext, useRef, useState, type ChangeEvent } from 'react';
 import { AuthContext } from '../../../auth/AuthContext';
 import { Badge } from '../../../components/ui/StatusPill';
+import { deleteMyPhoto, uploadMyPhoto } from '../api/profileApi';
 import type { EmployeeProfile } from '../types';
 
 export interface ProfileHeaderProps {
@@ -34,34 +35,23 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setUploadError(null);
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please select a valid image file (PNG, JPG, WEBP).');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('Image size exceeds 5MB limit.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        updateUserAvatar?.(reader.result);
-      }
-    };
-    reader.onerror = () => {
-      setUploadError('Failed to read the image file.');
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    uploadMyPhoto(file)
+      .then((photoUrl) => updateUserAvatar?.(photoUrl))
+      .catch((err: unknown) =>
+        setUploadError(err instanceof Error ? err.message : 'The photo could not be saved.'),
+      );
   };
 
   const handleRemovePhoto = () => {
     setUploadError(null);
-    updateUserAvatar?.(null);
+    deleteMyPhoto()
+      .then(() => updateUserAvatar?.(null))
+      .catch((err: unknown) =>
+        setUploadError(err instanceof Error ? err.message : 'The photo could not be removed.'),
+      );
   };
 
   return (
@@ -72,7 +62,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
+        accept="image/png,image/jpeg"
         onChange={handleFileChange}
         className="hidden"
         data-testid="profile-photo-file-input"

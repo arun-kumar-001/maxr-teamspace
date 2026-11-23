@@ -29,6 +29,7 @@ const makeEmployee = (overrides: Partial<EmployeeDirectoryItem> = {}): EmployeeD
     joiningDate: overrides.joiningDate ?? '2024-01-15',
     createdAt: overrides.createdAt ?? '2024-01-15T08:00:00.000Z',
     updatedAt: overrides.updatedAt ?? '2024-01-15T08:00:00.000Z',
+    photoUrl: overrides.photoUrl ?? null,
   };
 };
 

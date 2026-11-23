@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { ROLES, type Role } from '@maxr/shared';
+import { MIN_PASSWORD_LENGTH, ROLES, type Role } from '@maxr/shared';
 import { Badge, Button, FormField, Input, Modal } from '../../../components/ui';
 import { createUser, UsersApiError } from '../api/usersApi';
 import type { UserAccount } from '../types';
@@ -97,8 +97,8 @@ export function AddUserModal({ isOpen, onClose, onCreated }: AddUserModalProps) 
     } else if (!EMAIL_PATTERN.test(email.trim())) {
       nextErrors.email = 'Enter a valid email address.';
     }
-    if (password.trim() && password.trim().length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters.';
+    if (password.trim() && password.trim().length < MIN_PASSWORD_LENGTH) {
+      nextErrors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
     }
     if (selectedRoles.length === 0) {
       nextErrors.roles = 'Select at least one role.';

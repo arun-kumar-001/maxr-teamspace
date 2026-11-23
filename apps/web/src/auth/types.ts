@@ -14,4 +14,6 @@ export interface AuthUser {
   department?: string;
   avatarInitials: string;
   avatarUrl?: string;
+  /** A password someone else set must be replaced before anything else can be used. */
+  mustChangePassword?: boolean;
 }

@@ -27,6 +27,12 @@ export class MemoryApprovalsRepository implements IApprovalsRepository {
     }
   }
 
+  async existsOtherActiveWithRole(roles: readonly string[], excludeEmployeeId: string) {
+    return Object.entries(this.requesters).some(
+      ([id, context]) => id !== excludeEmployeeId && context.roles.some((r) => roles.includes(r)),
+    );
+  }
+
   async getRequesterContext(_tx: ApprovalTx, employeeId: string) {
     const context = this.requesters[employeeId];
     if (!context) return null;

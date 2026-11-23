@@ -1,3 +1,4 @@
+import { employeePhotoUrl } from '../photo/photo.types';
 import type { Pool } from 'pg';
 import { scopeAllows, scopeToSql } from '../../rbac/scope';
 import {
@@ -32,6 +33,7 @@ interface EmployeeDirectoryRow {
   manager_first_name: string | null;
   manager_last_name: string | null;
   manager_employee_code: string | null;
+  photo_version: string | null;
 }
 
 const toEntity = (row: EmployeeDirectoryRow): EmployeeDirectoryItem => ({
@@ -71,6 +73,7 @@ const toEntity = (row: EmployeeDirectoryRow): EmployeeDirectoryItem => ({
     row.updated_at instanceof Date
       ? row.updated_at.toISOString()
       : new Date(row.updated_at).toISOString(),
+  photoUrl: employeePhotoUrl(row.id, row.photo_version === null ? null : Number(row.photo_version)),
 });
 
 const escapeLikePattern = (input: string): string => input.replace(/([\\%_])/g, '\\$1');
@@ -179,7 +182,8 @@ export class PgEmployeeDirectoryRepository implements IEmployeeDirectoryReposito
          m.id AS manager_id,
          m.first_name AS manager_first_name,
          m.last_name AS manager_last_name,
-         m.employee_code AS manager_employee_code
+         m.employee_code AS manager_employee_code,
+         CASE WHEN e.profile_photo_key IS NULL THEN NULL ELSE (EXTRACT(EPOCH FROM e.profile_photo_updated_at) * 1000)::bigint END AS photo_version
         FROM employees e
         JOIN departments d ON e.department_id = d.id
         JOIN designations des ON e.designation_id = des.id

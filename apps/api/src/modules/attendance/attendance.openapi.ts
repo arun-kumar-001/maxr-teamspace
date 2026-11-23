@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { registerRoute } from '../../openapi/registry';
-import { checkInSchema, checkOutSchema, teamCalendarQuerySchema } from './attendance.schemas';
+import {
+  checkInSchema,
+  checkOutSchema,
+  photoParamsSchema,
+  teamCalendarQuerySchema,
+} from './attendance.schemas';
 
 const tags = ['Attendance'];
 
@@ -30,6 +35,8 @@ const AttendanceRecordSchema = z
         workMode: z.enum(['office', 'remote']).optional(),
       })
       .nullable(),
+    hasCheckInPhoto: z.boolean(),
+    hasCheckOutPhoto: z.boolean(),
     notes: z.string().nullable(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
@@ -208,7 +215,7 @@ registerRoute({
   path: '/attendance/team-calendar',
   tags,
   summary: 'Get scoped team attendance, leave, and holiday calendar entries',
-  permission: 'attendance.read_own',
+  permission: 'attendance.list',
   query: teamCalendarQuerySchema,
   success: {
     status: 200,
@@ -220,6 +227,24 @@ registerRoute({
         holidays: z.array(z.any()),
         entries: z.array(z.any()),
       }),
+    }),
+  },
+});
+
+registerRoute({
+  method: 'get',
+  path: '/attendance/{id}/photos/{which}',
+  tags,
+  summary:
+    'A short-lived link (two minutes) to the check-in or check-out photo of one record in your scope. Photos are never part of a list. Each look is audited',
+  permission: 'attendance.list',
+  params: photoParamsSchema,
+  extraResponses: { 404: 'No such record in your scope, or it has no photo for that moment' },
+  success: {
+    status: 200,
+    description: 'Where to fetch the photo; the link works for you only',
+    schema: z.object({
+      data: z.object({ url: z.string(), expiresAt: z.string().datetime().nullable() }),
     }),
   },
 });

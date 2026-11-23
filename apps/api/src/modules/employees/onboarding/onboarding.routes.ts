@@ -1,25 +1,17 @@
 import { idParamSchema } from '@maxr/shared';
 import { Request, RequestHandler, Response, Router } from 'express';
-import { z } from 'zod';
 import { asyncHandler } from '../../../http/async-handler';
 import { validate, validated } from '../../../http/validate';
 import { publicRoute, requirePermission } from '../../rbac';
 import {
   employeeStepSchema,
+  itemParamSchema,
   listOnboardingQuerySchema,
+  reopenBodySchema,
   setPasswordSchema,
   verifyItemSchema,
 } from './onboarding.schemas';
 import { OnboardingService } from './onboarding.service';
-
-const itemParamSchema = z.object({
-  id: z.string().uuid(),
-  itemKey: z.string().min(1).max(100),
-});
-
-const reopenBodySchema = z.object({
-  reason: z.string().trim().max(500).optional(),
-});
 
 export function createOnboardingRouter(options: {
   service: OnboardingService;

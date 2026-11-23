@@ -320,6 +320,28 @@ describe('users and roles API: creating accounts', () => {
     });
   });
 
+  it('shows a generated password once, in the create response, and never again', async () => {
+    const { as } = await setup([target]);
+    const created = await as.admin.post('/api/v1/users', {
+      firstName: 'Nadia',
+      lastName: 'Roy',
+      email: 'nadia.once@maxr.internal',
+      roles: [ROLES.STAFF],
+    });
+    const password = created.body.meta?.temporaryPassword as string;
+    expect(password).toBeTypeOf('string');
+
+    // Later reads, by an admin, return neither the password nor a field that could hold it.
+    const list = await as.admin.get('/api/v1/users?pageSize=50');
+    const detail = await as.admin.get(`/api/v1/users/${created.body.data.id}`);
+    for (const res of [list, detail]) {
+      expect(res.status).toBe(200);
+      const text = JSON.stringify(res.body);
+      expect(text).not.toContain(password);
+      expect(text).not.toMatch(/tempCredential|temporaryPassword|temporary_password/);
+    }
+  });
+
   it('creates an account with an explicit password without echoing temporaryPassword', async () => {
     const { as } = await setup([target]);
     const res = await as.admin.post('/api/v1/users', {

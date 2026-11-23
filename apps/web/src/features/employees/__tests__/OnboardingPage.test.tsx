@@ -11,6 +11,43 @@ import { OnboardingPage } from '../pages/OnboardingPage';
 describe('OnboardingPage Hiring & Onboarding Workspace', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.localStorage.setItem(
+      'maxr_hiring_roles_v1',
+      JSON.stringify([
+        {
+          id: 'role-swe',
+          code: 'REQ-104',
+          title: 'Software Engineer',
+          departmentId: 'dept-1',
+          departmentName: 'Engineering',
+          contractType: 'Full-time',
+          workMode: 'Hybrid',
+          compensation: 'Fixture',
+          hiresNeeded: 2,
+          status: 'hiring',
+          daysOpen: 18,
+          postedDate: '24 Oct',
+          hiringManagerName: 'Fixture Manager',
+        },
+      ]),
+    );
+    window.localStorage.setItem(
+      'maxr_hiring_candidates_v1',
+      JSON.stringify([
+        {
+          id: 'cand-1',
+          roleId: 'role-swe',
+          firstName: 'Karthik',
+          lastName: 'Subramanian',
+          email: 'karthik@example.test',
+          source: 'Careers page',
+          stage: 'applied',
+          rating: 4,
+          daysInStage: 4,
+          appliedDate: '2026-11-07',
+        },
+      ]),
+    );
     vi.spyOn(employeesApi, 'fetchDepartments').mockResolvedValue([
       { id: 'dept-1', name: 'Engineering', code: 'ENG' },
       { id: 'dept-2', name: 'Human Resources', code: 'HR' },
@@ -65,6 +102,15 @@ describe('OnboardingPage Hiring & Onboarding Workspace', () => {
         </AuthProvider>
       </MemoryRouter>,
     );
+
+  it('starts empty, with no sample candidates or roles, when nothing has been saved', async () => {
+    window.localStorage.clear();
+    renderPage();
+
+    expect(await screen.findByTestId('hiring-pipeline-board')).toBeInTheDocument();
+    expect(screen.queryByTestId('candidate-card-cand-1')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Karthik/)).not.toBeInTheDocument();
+  });
 
   it('renders Hiring and Onboarding tabs and displays 5 drag-and-drop columns on Hiring tab', async () => {
     renderPage();

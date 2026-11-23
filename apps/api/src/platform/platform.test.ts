@@ -91,11 +91,48 @@ describe('production fails closed (TC-13-35)', () => {
     NODE_ENV: 'production',
     STORAGE_SIGNING_SECRET: SECRET,
     EMAIL_DRIVER: 'smtp',
+    SMTP_HOST: 'smtp.example.test',
   };
   const durable = () => ({
     auditStore: new InMemoryAuditStore(),
     outbox: new InMemoryNotificationOutbox(),
     scanner: { scan: async () => ({ clean: true }) },
+  });
+
+  describe('email must go somewhere real', () => {
+    const { SMTP_HOST: _host, ...withoutHost } = productionEnv;
+
+    it('refuses to start when SMTP_HOST is not set, instead of using the development mail catcher', () => {
+      expect(() => loadPlatformConfig(withoutHost)).toThrow(/SMTP_HOST is required/);
+    });
+
+    it('does not need SMTP_HOST when mail goes through SendGrid', () => {
+      expect(() =>
+        loadPlatformConfig({
+          ...withoutHost,
+          EMAIL_DRIVER: 'sendgrid',
+          SENDGRID_API_KEY: 'SG.x',
+        }),
+      ).not.toThrow();
+    });
+
+    it('warns at start-up when SMTP_HOST is this machine, and stays quiet for a real host', () => {
+      const local = captureLogger();
+      createPlatform({
+        config: loadPlatformConfig({ ...productionEnv, SMTP_HOST: 'localhost' }),
+        logger: local.logger,
+        overrides: durable(),
+      });
+      expect(local.lines.join('\n')).toMatch(/no email will be delivered/);
+
+      const real = captureLogger();
+      createPlatform({
+        config: loadPlatformConfig(productionEnv),
+        logger: real.logger,
+        overrides: durable(),
+      });
+      expect(real.lines.join('\n')).not.toMatch(/no email will be delivered/);
+    });
   });
 
   it('refuses to start without a durable audit store', () => {

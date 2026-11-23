@@ -39,7 +39,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // A published source map hands out the whole front-end source; nothing here needs it in production.
+    sourcemap: false,
   },
   test: {
     globals: true,

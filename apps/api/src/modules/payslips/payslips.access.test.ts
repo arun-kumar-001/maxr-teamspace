@@ -14,7 +14,7 @@ import { createPayslipsRouter } from './payslips.routes';
 import { PayslipsService } from './payslips.service';
 
 async function setup() {
-  const { platform } = createTestPlatform({
+  const { platform, auditStore } = createTestPlatform({
     logger: createLogger({ level: 'silent', write: () => undefined }),
   });
   const kit = createTestAuth(platform.audit);
@@ -101,7 +101,7 @@ async function setup() {
     users.hr_manager.id,
   );
 
-  return { app, as, kit, staffPublished, staffDraft, leadPublished };
+  return { app, as, kit, auditStore, staffPublished, staffDraft, leadPublished };
 }
 
 describe('payslips module access & PDF downloads', () => {
@@ -168,5 +168,75 @@ describe('payslips module access & PDF downloads', () => {
     const staffList = await as.staff.get('/api/v1/payslips/me');
     expect(staffList.status).toBe(200);
     expect(staffList.body.data).toHaveLength(2);
+  });
+
+  describe('payroll controls', () => {
+    const body = (employeeId: string, extra: object = {}) => ({
+      employeeId,
+      payMonth: 9,
+      payYear: 2026,
+      designation: 'Engineer',
+      basicSalary: 50000,
+      ...extra,
+    });
+
+    it('refuses to change a published payslip and leaves it untouched', async () => {
+      const { as, staffPublished } = await setup();
+      const res = await as.hr_manager.put(`/api/v1/payslips/${staffPublished.id}`, {
+        basicSalary: 99999,
+      });
+      expect(res.status).toBe(409);
+
+      const after = await as.hr_manager.get(`/api/v1/payslips/${staffPublished.id}`);
+      expect(after.body.data.basicSalary).toBe(45000);
+    });
+
+    it('lets HR change a draft for someone else', async () => {
+      const { as, staffDraft } = await setup();
+      const res = await as.hr_manager.put(`/api/v1/payslips/${staffDraft.id}`, {
+        basicSalary: 47000,
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.data.basicSalary).toBe(47000);
+    });
+
+    it.each([['hr_manager'], ['admin']] as Array<[Role]>)(
+      '%s cannot create a payslip for themselves',
+      async (role) => {
+        const { as, kit } = await setup();
+        const res = await as[role].post('/api/v1/payslips', body(kit.users[role].employeeId));
+        expect(res.status).toBe(403);
+      },
+    );
+
+    it('HR cannot change or publish their own draft, even though an Admin prepared it', async () => {
+      const { as, kit } = await setup();
+      const created = await as.admin.post(
+        '/api/v1/payslips',
+        body(kit.users.hr_manager.employeeId),
+      );
+      expect(created.status).toBe(201);
+      const id = created.body.data.id as string;
+
+      expect(
+        (await as.hr_manager.put(`/api/v1/payslips/${id}`, { basicSalary: 90000 })).status,
+      ).toBe(403);
+      expect((await as.hr_manager.post(`/api/v1/payslips/${id}/publish`).send({})).status).toBe(
+        403,
+      );
+      // A different payroll admin can still publish it.
+      expect((await as.admin.post(`/api/v1/payslips/${id}/publish`).send({})).status).toBe(200);
+    });
+
+    it('records which fields changed, but never the amounts', async () => {
+      const { as, auditStore, staffDraft } = await setup();
+      await as.hr_manager.put(`/api/v1/payslips/${staffDraft.id}`, {
+        basicSalary: 47123,
+        designation: 'Software Engineer',
+      });
+      const [entry] = auditStore.find((e) => e.action === 'payslips.update');
+      expect(entry?.metadata).toMatchObject({ changedFields: ['basicSalary'] });
+      expect(JSON.stringify(entry)).not.toContain('47123');
+    });
   });
 });

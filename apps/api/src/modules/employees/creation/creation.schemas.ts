@@ -1,4 +1,10 @@
-import { ROLES, uuidString, type Role } from '@maxr/shared';
+import {
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  ROLES,
+  uuidString,
+  type Role,
+} from '@maxr/shared';
 import { z } from 'zod';
 
 const MAX_DAYS_AHEAD = 365;
@@ -38,7 +44,11 @@ export const createEmployeeSchema = z
     managerId: uuidString.optional(),
     joiningDate: isoDate,
     role: roleKey.default(ROLES.STAFF),
-    password: z.string().min(8).max(128).optional(),
+    password: z
+      .string()
+      .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+      .max(MAX_PASSWORD_LENGTH)
+      .optional(),
     additionalEmails: z.array(z.string().trim().toLowerCase().email().max(255)).max(5).optional(),
     additionalPhones: z
       .array(

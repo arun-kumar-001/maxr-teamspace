@@ -17,7 +17,8 @@ import {
 
 export interface TeamCalendarParams {
   callerEmployeeId: string;
-  callerRole: string;
+  /** Whose attendance the caller may see: decided by RBAC, not by the role name. */
+  scope: ScopeFilter;
   startDate: string;
   endDate: string;
   departmentId?: string;
@@ -34,6 +35,14 @@ export interface AttendanceFindManyParams {
   status?: string;
 }
 
+export type PhotoKind = 'check-in' | 'check-out';
+
+/** A storage key, or the legacy inline data URL of a row that has not been moved yet. */
+export interface PhotoRef {
+  key: string | null;
+  legacyDataUrl: string | null;
+}
+
 export interface IAttendanceRepository {
   findActiveSession(employeeId: string): Promise<AttendanceRecord | null>;
   findTodaySessions(employeeId: string, workDate: string): Promise<AttendanceRecord[]>;
@@ -43,6 +52,7 @@ export interface IAttendanceRepository {
     dto: CheckInDto,
     checkInTime?: string,
     status?: AttendanceStatus,
+    photoKey?: string,
   ): Promise<AttendanceRecord>;
   createCheckOut(
     sessionId: string,
@@ -50,13 +60,15 @@ export interface IAttendanceRepository {
     durationMinutes: number,
     notes?: string,
     checkOutLocation?: AttendanceLocation,
-    checkOutPhoto?: string,
+    checkOutPhotoKey?: string,
   ): Promise<AttendanceRecord | null>;
   findMany(
     params: AttendanceFindManyParams,
     scope: ScopeFilter,
   ): Promise<{ items: AttendanceRecord[]; total: number }>;
   findById(id: string, scope: ScopeFilter): Promise<AttendanceRecord | null>;
+  /** Where a record's photo is kept. A scope check belongs before this call (findById). */
+  findPhotoRef(id: string, which: PhotoKind): Promise<PhotoRef | null>;
   isEmployeeActive(employeeId: string): Promise<boolean>;
   updateBreaks(
     sessionId: string,
@@ -78,12 +90,21 @@ interface AttendanceRow {
   status: string;
   location: unknown;
   check_out_location: unknown;
-  check_in_photo: string | null;
-  check_out_photo: string | null;
+  has_check_in_photo: boolean;
+  has_check_out_photo: boolean;
   notes: string | null;
   created_at: Date | string;
   updated_at: Date | string;
 }
+
+/**
+ * Lists never carry a photo, only whether one exists: a photo is fetched on its own through a
+ * short-lived link. Rows written before photos moved to storage still have the old column.
+ */
+const PHOTO_FLAGS = `(check_in_photo IS NOT NULL OR check_in_photo_key IS NOT NULL) AS has_check_in_photo,
+              (check_out_photo IS NOT NULL OR check_out_photo_key IS NOT NULL) AS has_check_out_photo`;
+const PHOTO_FLAGS_A = `(a.check_in_photo IS NOT NULL OR a.check_in_photo_key IS NOT NULL) AS has_check_in_photo,
+              (a.check_out_photo IS NOT NULL OR a.check_out_photo_key IS NOT NULL) AS has_check_out_photo`;
 
 function normalizeBreaks(val: unknown): AttendanceBreak[] {
   if (!Array.isArray(val)) return [];
@@ -122,8 +143,8 @@ function toRecord(row: AttendanceRow): AttendanceRecord {
     status: row.status as AttendanceStatus,
     location: (row.location as AttendanceLocation) ?? null,
     checkOutLocation: (row.check_out_location as AttendanceLocation) ?? null,
-    checkInPhoto: row.check_in_photo ?? null,
-    checkOutPhoto: row.check_out_photo ?? null,
+    hasCheckInPhoto: row.has_check_in_photo,
+    hasCheckOutPhoto: row.has_check_out_photo,
     notes: row.notes ?? null,
     createdAt: formatIso(row.created_at)!,
     updatedAt: formatIso(row.updated_at)!,
@@ -158,7 +179,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
   async findActiveSession(employeeId: string): Promise<AttendanceRecord | null> {
     const res = await this.getPool().query<AttendanceRow>(
       `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
-              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, a.check_in_photo, a.check_out_photo, a.notes, a.created_at, a.updated_at
+              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, ${PHOTO_FLAGS_A}, a.notes, a.created_at, a.updated_at
          FROM attendance_records a
         WHERE a.employee_id = $1 AND a.check_out_time IS NULL
         ORDER BY a.check_in_time DESC
@@ -171,7 +192,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
   async findTodaySessions(employeeId: string, workDate: string): Promise<AttendanceRecord[]> {
     const res = await this.getPool().query<AttendanceRow>(
       `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
-              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, a.check_in_photo, a.check_out_photo, a.notes, a.created_at, a.updated_at
+              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, ${PHOTO_FLAGS_A}, a.notes, a.created_at, a.updated_at
          FROM attendance_records a
         WHERE a.employee_id = $1 AND a.work_date = $2
         ORDER BY a.check_in_time ASC`,
@@ -186,6 +207,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
     dto: CheckInDto,
     checkInTime?: string,
     status: AttendanceStatus = 'present',
+    photoKey?: string,
   ): Promise<AttendanceRecord> {
     const active = await this.isEmployeeActive(employeeId);
     if (!active) {
@@ -195,10 +217,10 @@ export class PgAttendanceRepository implements IAttendanceRepository {
     try {
       const res = await this.getPool().query<AttendanceRow>(
         `INSERT INTO attendance_records (
-           employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, check_in_photo, notes
+           employee_id, work_date, check_in_time, check_out_time, duration_minutes, status, location, check_in_photo_key, notes
          ) VALUES (
            $1, $2, COALESCE($3, NOW()), NULL, NULL, $6, $4, $7, $5
-         ) RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, breaks, break_minutes, status, location, check_out_location, check_in_photo, check_out_photo, notes, created_at, updated_at`,
+         ) RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, breaks, break_minutes, status, location, check_out_location, ${PHOTO_FLAGS}, notes, created_at, updated_at`,
         [
           employeeId,
           workDate,
@@ -206,7 +228,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
           dto.location ? JSON.stringify(dto.location) : null,
           dto.notes ?? null,
           status,
-          dto.photoDataUrl ?? null,
+          photoKey ?? null,
         ],
       );
       return toRecord(res.rows[0]!);
@@ -228,7 +250,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
     durationMinutes: number,
     notes?: string,
     checkOutLocation?: AttendanceLocation,
-    checkOutPhoto?: string,
+    checkOutPhotoKey?: string,
   ): Promise<AttendanceRecord | null> {
     const res = await this.getPool().query<AttendanceRow>(
       `UPDATE attendance_records
@@ -236,17 +258,17 @@ export class PgAttendanceRepository implements IAttendanceRepository {
               duration_minutes = $3,
               notes = COALESCE($4, notes),
               check_out_location = COALESCE($5, check_out_location),
-              check_out_photo = COALESCE($6, check_out_photo),
+              check_out_photo_key = COALESCE($6, check_out_photo_key),
               updated_at = NOW()
         WHERE id = $1 AND check_out_time IS NULL
-        RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, breaks, break_minutes, status, location, check_out_location, check_in_photo, check_out_photo, notes, created_at, updated_at`,
+        RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, breaks, break_minutes, status, location, check_out_location, ${PHOTO_FLAGS}, notes, created_at, updated_at`,
       [
         sessionId,
         checkOutTime,
         durationMinutes,
         notes ?? null,
         checkOutLocation ? JSON.stringify(checkOutLocation) : null,
-        checkOutPhoto ?? null,
+        checkOutPhotoKey ?? null,
       ],
     );
     return res.rows[0] ? toRecord(res.rows[0]) : null;
@@ -305,7 +327,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
 
     const itemsRes = await this.getPool().query<AttendanceRow>(
       `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
-              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, a.check_in_photo, a.check_out_photo, a.notes, a.created_at, a.updated_at
+              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, ${PHOTO_FLAGS_A}, a.notes, a.created_at, a.updated_at
          FROM attendance_records a
         ${whereClause}
         ORDER BY ${sortCol} ${sortDir}, a.check_in_time ${sortDir}
@@ -323,12 +345,25 @@ export class PgAttendanceRepository implements IAttendanceRepository {
     const { clause: scopeClause, values: scopeValues } = scopeToSql(scope, 'a.employee_id', 2);
     const res = await this.getPool().query<AttendanceRow>(
       `SELECT a.id, a.employee_id, a.work_date, a.check_in_time, a.check_out_time,
-              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, a.check_in_photo, a.check_out_photo, a.notes, a.created_at, a.updated_at
+              a.duration_minutes, a.breaks, a.break_minutes, a.status, a.location, a.check_out_location, ${PHOTO_FLAGS_A}, a.notes, a.created_at, a.updated_at
          FROM attendance_records a
         WHERE a.id = $1 AND ${scopeClause}`,
       [id, ...scopeValues],
     );
     return res.rows[0] ? toRecord(res.rows[0]) : null;
+  }
+
+  async findPhotoRef(id: string, which: PhotoKind): Promise<PhotoRef | null> {
+    const [keyColumn, legacyColumn] =
+      which === 'check-in'
+        ? ['check_in_photo_key', 'check_in_photo']
+        : ['check_out_photo_key', 'check_out_photo'];
+    const res = await this.getPool().query<{ key: string | null; legacy: string | null }>(
+      `SELECT ${keyColumn} AS key, ${legacyColumn} AS legacy FROM attendance_records WHERE id = $1`,
+      [id],
+    );
+    const row = res.rows[0];
+    return row ? { key: row.key, legacyDataUrl: row.legacy } : null;
   }
 
   async updateBreaks(
@@ -342,7 +377,7 @@ export class PgAttendanceRepository implements IAttendanceRepository {
               break_minutes = $3,
               updated_at = NOW()
         WHERE id = $1 AND check_out_time IS NULL
-        RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, breaks, break_minutes, status, location, check_out_location, check_in_photo, check_out_photo, notes, created_at, updated_at`,
+        RETURNING id, employee_id, work_date, check_in_time, check_out_time, duration_minutes, breaks, break_minutes, status, location, check_out_location, ${PHOTO_FLAGS}, notes, created_at, updated_at`,
       [sessionId, JSON.stringify(breaks), breakMinutes],
     );
     return res.rows[0] ? toRecord(res.rows[0]) : null;
@@ -350,27 +385,26 @@ export class PgAttendanceRepository implements IAttendanceRepository {
 
   async getTeamCalendar(params: TeamCalendarParams): Promise<TeamCalendarData> {
     const pool = this.getPool();
-    const callerRes = await pool.query<{
-      department_id: string | null;
-      manager_id: string | null;
-    }>(`SELECT department_id, manager_id FROM employees WHERE id = $1`, [params.callerEmployeeId]);
-    const callerDeptId = callerRes.rows[0]?.department_id ?? null;
-    const callerManagerId = callerRes.rows[0]?.manager_id ?? null;
-
     const empConditions: string[] = [`e.status = 'active'`];
     const empValues: unknown[] = [];
     let p = 1;
 
-    if (params.callerRole === 'team_lead') {
-      empConditions.push(`(e.id = $${p} OR e.manager_id = $${p})`);
-      empValues.push(params.callerEmployeeId);
-      p++;
-    } else if (params.callerRole !== 'admin' && params.callerRole !== 'hr_manager') {
-      empConditions.push(
-        `(e.id = $${p} OR ($${p + 1}::uuid IS NOT NULL AND e.department_id = $${p + 1}::uuid) OR ($${p + 2}::uuid IS NOT NULL AND e.manager_id = $${p + 2}::uuid))`,
-      );
-      empValues.push(params.callerEmployeeId, callerDeptId, callerManagerId);
-      p += 3;
+    switch (params.scope.kind) {
+      case 'all':
+        break;
+      case 'team':
+        // A Team Lead sees themselves and their direct reports.
+        empConditions.push(`(e.id = $${p} OR e.manager_id = $${p})`);
+        empValues.push(params.scope.managerId);
+        p++;
+        break;
+      case 'own':
+        empConditions.push(`e.id = $${p}`);
+        empValues.push(params.scope.employeeId);
+        p++;
+        break;
+      default:
+        empConditions.push('FALSE');
     }
 
     if (params.departmentId) {

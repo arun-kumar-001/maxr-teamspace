@@ -17,6 +17,7 @@ export function createSettingsRouter(
 
   router.get('/', requirePermission('settings.read'), asyncHandler(controller.get));
   router.get('/basic', requirePermission('settings.read_basic'), asyncHandler(controller.getBasic));
+  router.get('/logo', requirePermission('settings.read_basic'), asyncHandler(controller.getLogo));
   router.put(
     '/',
     requirePermission('settings.update'),
