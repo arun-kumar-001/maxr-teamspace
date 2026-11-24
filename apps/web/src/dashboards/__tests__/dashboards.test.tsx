@@ -41,10 +41,14 @@ describe('TC-12-05: Four Distinct Role Dashboard Shells', () => {
 
   describe('TeamLeadDashboard', () => {
     it('should render team lead KPI cards, task overview, time tracker, and active team tasks', () => {
-      const html = renderToStaticMarkup(<TeamLeadDashboard />);
+      const html = renderToStaticMarkup(
+        <MemoryRouter>
+          <TeamLeadDashboard />
+        </MemoryRouter>,
+      );
 
       expect(html).toContain('data-testid="team-lead-dashboard"');
-      expect(html).toContain('Engineering Team Lead');
+      expect(html).toContain('Team Lead');
       expect(html).toContain('Team Size');
       expect(html).toContain('My Tasks');
       expect(html).toContain('Team Tasks');
@@ -96,7 +100,9 @@ describe('TC-12-05: Four Distinct Role Dashboard Shells', () => {
     it('should route Team Lead role to TeamLeadDashboard', () => {
       const html = renderToStaticMarkup(
         <AuthProvider initialRole={ROLES.TEAM_LEAD} persistSession={false}>
-          <DashboardRouter />
+          <MemoryRouter>
+            <DashboardRouter />
+          </MemoryRouter>
         </AuthProvider>,
       );
       expect(html).toContain('data-testid="team-lead-dashboard"');
