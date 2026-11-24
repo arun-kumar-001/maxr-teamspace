@@ -29,6 +29,7 @@ export interface CorrectionCaller {
   actorId: string;
   employeeId: string;
   requestId?: string;
+  roles?: string[];
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -82,8 +83,9 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
     const events = new EventCollector();
     const created = await this.repository.transaction(async (tx) => {
       const record = await this.repository.lockRecord(tx, input.attendanceRecordId);
-      // Someone else's record looks exactly like a missing one.
-      if (!record || record.employeeId !== caller.employeeId) {
+      const isManager = Boolean(caller.roles?.some((r) => r === 'admin' || r === 'hr_manager'));
+      // Someone else's record looks exactly like a missing one unless manager/admin.
+      if (!record || (!isManager && record.employeeId !== caller.employeeId)) {
         throw notFound('Attendance record not found');
       }
       if (record.workDate < minusDays(localDate(now, timezone), CORRECTION_WINDOW_DAYS)) {
@@ -94,10 +96,11 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
       if (localDate(checkIn, timezone) !== record.workDate) {
         throw unprocessable('The check-in must fall on the record’s work date');
       }
+      const targetEmployeeId = record.employeeId;
       if (
         await this.repository.hasOverlap(
           tx,
-          caller.employeeId,
+          targetEmployeeId,
           record.id,
           input.requestedCheckIn,
           input.requestedCheckOut,
@@ -108,20 +111,47 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
 
       const correction = await this.repository.insert(tx, {
         attendanceRecordId: record.id,
-        employeeId: caller.employeeId,
+        employeeId: targetEmployeeId,
         originalCheckIn: record.checkIn,
         originalCheckOut: record.checkOut,
         requestedCheckIn: checkIn.toISOString(),
         requestedCheckOut: checkOut.toISOString(),
         reason: input.reason,
       });
-      const stages = await this.approvals.route(tx, caller.employeeId);
+
+      if (isManager && record.employeeId !== caller.employeeId) {
+        const checkInDate = new Date(correction.requestedCheckIn);
+        const durationMinutes = Math.round(
+          (new Date(correction.requestedCheckOut).getTime() - checkInDate.getTime()) / 60000,
+        );
+        const status = await this.statusFor(record.employeeId, record.workDate, checkInDate);
+        await this.repository.writeRecordTimes(tx, record.id, {
+          checkIn: correction.requestedCheckIn,
+          checkOut: correction.requestedCheckOut,
+          durationMinutes,
+          status,
+        });
+        await this.repository.setStatus(tx, correction.id, 'approved');
+        await audit.record(
+          {
+            action: 'attendance.correction_admin_applied',
+            outcome: 'success',
+            entityType: 'attendance_correction',
+            entityId: correction.id,
+            metadata: { attendanceRecordId: record.id, workDate: record.workDate },
+          },
+          { transaction: tx },
+        );
+        return { ...correction, status: 'approved' as const, approvalId: null };
+      }
+
+      const stages = await this.approvals.route(tx, targetEmployeeId);
       const approval = await this.approvals.submit(
         tx,
         {
           subjectType: CORRECTION_SUBJECT,
           subjectId: correction.id,
-          requesterEmployeeId: caller.employeeId,
+          requesterEmployeeId: targetEmployeeId,
           stages,
         },
         events,

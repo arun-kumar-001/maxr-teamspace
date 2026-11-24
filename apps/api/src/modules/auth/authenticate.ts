@@ -19,10 +19,15 @@ const ALLOWED_WHILE_PASSWORD_MUST_CHANGE = new Set([
 
 export const PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED';
 
-export function sessionCookieOptions(config: AuthConfig, maxAgeMs?: number): CookieOptions {
+export function sessionCookieOptions(
+  config: AuthConfig,
+  maxAgeMs?: number,
+  req?: Request,
+): CookieOptions {
+  const isHttps = req ? Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https') : false;
   return {
     httpOnly: true,
-    secure: config.cookieSecure,
+    secure: config.cookieSecure || isHttps,
     sameSite: 'lax',
     // Only API calls carry the session, never page or asset requests.
     path: '/api',
@@ -57,13 +62,59 @@ function sameToken(expected: string, given: unknown): boolean {
 const originError = () => new AppError(403, ERROR_CODES.FORBIDDEN, 'Request origin is not allowed');
 
 /**
- * Browser-origin check for state-changing requests: when the browser says where the request
- * came from, it must be our own site. (SameSite=Lax cookies and the CSRF token are the other layers.)
+ * Checks whether an incoming request Origin is allowed.
+ * In production: strictly matches allowedOrigin (or comma-separated list).
+ * In development/test: also allows localhost/local IP and development tunnels (ngrok, localtunnel).
  */
-export function requireSameOrigin(config: Pick<AuthConfig, 'allowedOrigin'>): RequestHandler {
+export function isAllowedOrigin(
+  origin: string | undefined,
+  allowedOrigin: string,
+  nodeEnv: string = process.env.NODE_ENV || 'development',
+): boolean {
+  if (!origin) return true;
+  if (origin === allowedOrigin) return true;
+  if (allowedOrigin.includes(',')) {
+    const list = allowedOrigin.split(',').map((s) => s.trim());
+    if (list.includes(origin)) return true;
+  }
+
+  if (nodeEnv !== 'production') {
+    try {
+      const url = new URL(origin);
+      const host = url.hostname;
+      // Allow local development origins
+      if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') {
+        return true;
+      }
+      // Allow common development tunnels (ngrok, localtunnel, etc.)
+      if (
+        host.endsWith('.ngrok-free.dev') ||
+        host.endsWith('.ngrok-free.app') ||
+        host.endsWith('.ngrok.app') ||
+        host.endsWith('.ngrok.io') ||
+        host.endsWith('.localtunnel.me')
+      ) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Browser-origin check for state-changing requests: when the browser says where the request
+ * came from, it must be our own site or an authorized dev tunnel. (SameSite=Lax cookies and the CSRF token are the other layers.)
+ */
+export function requireSameOrigin(
+  config: Pick<AuthConfig, 'allowedOrigin' | 'nodeEnv'>,
+): RequestHandler {
   return (req, _res, next) => {
     const origin = req.headers.origin;
-    const foreign = origin !== undefined && origin !== config.allowedOrigin;
+    const foreign =
+      origin !== undefined && !isAllowedOrigin(origin, config.allowedOrigin, config.nodeEnv);
     next(!SAFE_METHODS.has(req.method) && foreign ? originError() : undefined);
   };
 }
@@ -82,14 +133,18 @@ export function createAuthenticate(
   const authenticate = async (req: Request, res: Response): Promise<void> => {
     const unsafe = !SAFE_METHODS.has(req.method);
     // Origin first, so a cross-site request learns nothing about whether a session exists.
-    if (unsafe && req.headers.origin !== undefined && req.headers.origin !== config.allowedOrigin) {
+    if (
+      unsafe &&
+      req.headers.origin !== undefined &&
+      !isAllowedOrigin(req.headers.origin, config.allowedOrigin, config.nodeEnv)
+    ) {
       throw originError();
     }
 
     const token = readCookie(req, config.cookieName);
     const session = token ? await sessions.resolve(token) : null;
     if (!session) {
-      if (token) res.clearCookie(config.cookieName, sessionCookieOptions(config));
+      if (token) res.clearCookie(config.cookieName, sessionCookieOptions(config, undefined, req));
       throw unauthorized();
     }
 
@@ -97,7 +152,7 @@ export function createAuthenticate(
     const roles = user ? toRoles(user.roles) : [];
     if (!user || !user.isActive || user.employeeStatus !== 'active' || roles.length === 0) {
       await sessions.revokeAllForUser(session.userId);
-      res.clearCookie(config.cookieName, sessionCookieOptions(config));
+      res.clearCookie(config.cookieName, sessionCookieOptions(config, undefined, req));
       throw unauthorized();
     }
 

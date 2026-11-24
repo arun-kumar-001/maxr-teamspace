@@ -30,7 +30,7 @@ export class AuthController {
       res.cookie(
         this.config.cookieName,
         session.token,
-        sessionCookieOptions(this.config, session.maxAgeMs),
+        sessionCookieOptions(this.config, session.maxAgeMs, req),
       );
       res.setHeader('Cache-Control', 'no-store');
       res.status(200).json({ data: { user: profile, csrfToken: session.csrfToken } });
@@ -51,7 +51,7 @@ export class AuthController {
   logout = async (req: Request, res: Response): Promise<void> => {
     const { actor, session } = this.current(req);
     await this.service.logout(actor.id, session.tokenHash, actor.role, this.meta(req));
-    res.clearCookie(this.config.cookieName, sessionCookieOptions(this.config));
+    res.clearCookie(this.config.cookieName, sessionCookieOptions(this.config, undefined, req));
     res.status(204).end();
   };
 

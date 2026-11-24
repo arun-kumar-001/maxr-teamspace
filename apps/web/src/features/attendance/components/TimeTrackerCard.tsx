@@ -85,24 +85,25 @@ export function TimeTrackerCard({
 }: TimeTrackerCardProps) {
   const [isCheckedIn, setIsCheckedIn] = useState(() => {
     const local = getLocalSession();
-    return local ? local.isCheckedIn : true;
+    return local ? local.isCheckedIn : false;
   });
   const [checkInTime, setCheckInTime] = useState(() => {
     const local = getLocalSession();
-    return local ? local.checkInTime : '09:15 AM';
+    return local ? local.checkInTime : '--:--';
   });
   const [timeTrackerRunning, setTimeTrackerRunning] = useState(() => {
     const local = getLocalSession();
-    return local ? local.isCheckedIn : true;
+    return local ? local.isCheckedIn : false;
   });
   const [secondsElapsed, setSecondsElapsed] = useState(() => {
     const local = getLocalSession();
     if (local?.startTimeMs) {
       return Math.max(0, Math.floor((Date.now() - local.startTimeMs) / 1000));
     }
-    return 9314;
+    return 0;
   });
   const [todayTotalMinutes, setTodayTotalMinutes] = useState<number | null>(null);
+  const [isCompletedToday, setIsCompletedToday] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [captureOpen, setCaptureOpen] = useState(false);
@@ -131,6 +132,7 @@ export function TimeTrackerCard({
         setCheckInTime(formattedCheckIn);
         setSecondsElapsed(activeElapsedSecs);
         setIsCheckedIn(true);
+        setIsCompletedToday(false);
         const isOnBreak = Boolean(
           summary.activeSession?.breakStartTime && !summary.activeSession?.breakEndTime,
         );
@@ -140,7 +142,25 @@ export function TimeTrackerCard({
           checkInTime: formattedCheckIn,
           startTimeMs: start.getTime(),
         });
+      } else if (summary.sessions && summary.sessions.length > 0) {
+        // Attendance completed for today!
+        setIsCheckedIn(false);
+        setIsCompletedToday(true);
+        setTimeTrackerRunning(false);
+        setSecondsElapsed((summary.totalDurationMinutes ?? 0) * 60);
+        clearLocalSession();
+        const lastSession = summary.sessions[summary.sessions.length - 1];
+        if (lastSession?.checkInTime) {
+          setCheckInTime(
+            new Date(lastSession.checkInTime).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            }),
+          );
+        }
       } else {
+        setIsCompletedToday(false);
         const local = getLocalSession();
         if (local && local.isCheckedIn) {
           const activeElapsedSecs = Math.max(
@@ -166,7 +186,14 @@ export function TimeTrackerCard({
         setCheckInTime(local.checkInTime);
         setSecondsElapsed(activeElapsedSecs);
         setIsCheckedIn(true);
+        setIsCompletedToday(false);
         setTimeTrackerRunning(true);
+      } else {
+        setSecondsElapsed(0);
+        setCheckInTime('--:--');
+        setIsCheckedIn(false);
+        setIsCompletedToday(false);
+        setTimeTrackerRunning(false);
       }
     }
   };
@@ -189,7 +216,7 @@ export function TimeTrackerCard({
   }, [timeTrackerRunning]);
 
   const handleAttendanceToggle = async () => {
-    if (busy) return;
+    if (busy || isCompletedToday) return;
     const hasCamera =
       typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
     if (hasCamera) {
@@ -418,7 +445,7 @@ export function TimeTrackerCard({
               style={{ backgroundColor: 'rgba(8, 11, 12, 0.3)' }}
             />
           )}
-          {isCheckedIn ? 'Work Time' : 'Session Paused'}
+          {isCompletedToday ? 'Completed for Today' : isCheckedIn ? 'Work Time' : 'Session Paused'}
         </p>
       </div>
     </div>
@@ -429,28 +456,40 @@ export function TimeTrackerCard({
       <button
         type="button"
         onClick={() => void handleAttendanceToggle()}
-        disabled={busy}
+        disabled={busy || isCompletedToday}
         data-testid="attendance-toggle-button"
-        className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 disabled:opacity-70 ${
-          isCheckedIn && timeTrackerRunning ? 'animate-pulse-ring' : 'hover:opacity-90'
+        className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all duration-200 disabled:opacity-75 disabled:cursor-not-allowed ${
+          isCompletedToday
+            ? 'bg-surface-muted text-text-muted border border-border cursor-not-allowed'
+            : isCheckedIn && timeTrackerRunning
+              ? 'animate-pulse-ring hover:scale-105 active:scale-95'
+              : 'hover:scale-105 active:scale-95 hover:opacity-90'
         }`}
-        style={{
-          backgroundColor: isCheckedIn ? 'rgb(8, 11, 12)' : 'rgb(85, 205, 179)',
-          color: isCheckedIn ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
-          border: '1px solid rgba(8, 11, 12, 0.12)',
-        }}
+        style={
+          isCompletedToday
+            ? undefined
+            : {
+                backgroundColor: isCheckedIn ? 'rgb(8, 11, 12)' : 'rgb(85, 205, 179)',
+                color: isCheckedIn ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
+                border: '1px solid rgba(8, 11, 12, 0.12)',
+              }
+        }
         aria-label={
-          isCheckedIn ? 'Check Out of attendance session' : 'Check In to attendance session'
+          isCompletedToday
+            ? 'Attendance completed for today'
+            : isCheckedIn
+              ? 'Check Out of attendance session'
+              : 'Check In to attendance session'
         }
       >
-        <span className="text-[10px]">{isCheckedIn ? '⏹' : '▷'}</span>
-        <span>{isCheckedIn ? 'Check Out' : 'Check In'}</span>
+        <span className="text-[10px]">{isCompletedToday ? '✓' : isCheckedIn ? '⏹' : '▷'}</span>
+        <span>{isCompletedToday ? 'Completed' : isCheckedIn ? 'Check Out' : 'Check In'}</span>
       </button>
 
       <button
         type="button"
         onClick={() => void handlePausePlay()}
-        disabled={busy || !isCheckedIn}
+        disabled={busy || !isCheckedIn || isCompletedToday}
         className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
         style={{
           backgroundColor: !timeTrackerRunning ? 'rgb(73, 53, 72)' : 'rgb(244, 247, 246)',
@@ -502,15 +541,23 @@ export function TimeTrackerCard({
           </div>
           <p
             className={`text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap ${
-              isCheckedIn ? 'text-primary-ink' : 'text-text-muted'
+              isCompletedToday
+                ? 'text-emerald-700 font-bold'
+                : isCheckedIn
+                  ? 'text-primary-ink'
+                  : 'text-text-muted'
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                isCheckedIn ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'
+                isCompletedToday
+                  ? 'bg-emerald-600'
+                  : isCheckedIn
+                    ? 'bg-emerald-500 animate-pulse'
+                    : 'bg-gray-400'
               }`}
             />
-            {isCheckedIn ? 'Checked In' : 'Checked Out'}
+            {isCompletedToday ? 'Completed' : isCheckedIn ? 'Checked In' : 'Checked Out'}
           </p>
         </div>
 

@@ -565,6 +565,7 @@ function AttendanceOpsWorkspace({
               employees={employees}
               departments={departments}
               canApproveTimesheets={canManage}
+              selectedDate={selectedDate}
             />
           )}
 
@@ -585,6 +586,7 @@ function AttendanceOpsWorkspace({
           isOpen={isRequestModalOpen}
           onClose={closeRequestModal}
           record={selectedRecord}
+          defaultReason="Attendance correction by administrator"
           onSuccess={() => {
             refetchCorrections();
             void loadData();

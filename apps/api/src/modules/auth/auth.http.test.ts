@@ -143,6 +143,16 @@ describe('POST /auth/login', () => {
     expect(cookieOf(res)).toBe('');
   });
 
+  it('allows login from an ngrok development tunnel origin', async () => {
+    const { app } = makeApp({ nodeEnv: 'development' });
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .set('Origin', 'https://nonengrossingly-nonecliptical-chelsey.ngrok-free.dev')
+      .send({ email: 'staff@maxr.test', password: TEST_PASSWORD });
+    expect(res.status).toBe(200);
+    expect(cookieOf(res)).toMatch(/^maxr_session=/);
+  });
+
   it('is limited per IP by the login rate limiter', async () => {
     const { createRateLimiter } = await import('../../http/rate-limit');
     const audit = makeApp().platform.audit;

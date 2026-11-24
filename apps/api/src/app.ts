@@ -17,6 +17,7 @@ import { Platform, createPlatform } from './platform';
 import { publicRoute } from './modules/rbac';
 import { PdfExporter, ReportRegistry } from './modules/reports';
 import { AuthServices, createAuth, loadAuthConfig } from './modules/auth';
+import { isAllowedOrigin } from './modules/auth/authenticate';
 import { createApiRouter } from './routes';
 import { getPool } from './db/client';
 import { getRedisClient } from './db/redis';
@@ -71,7 +72,13 @@ export function createApp(options: AppOptions = {}): Express {
   // Security & Core Middleware
   app.use(
     cors({
-      origin: config.CORS_ORIGIN,
+      origin: (requestOrigin, callback) => {
+        if (!requestOrigin || isAllowedOrigin(requestOrigin, config.CORS_ORIGIN, nodeEnv)) {
+          callback(null, true);
+        } else {
+          callback(null, false);
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'X-Request-Id', 'Idempotency-Key', 'X-CSRF-Token'],

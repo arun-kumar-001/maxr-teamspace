@@ -217,10 +217,15 @@ export function CompanyCheckInOutTab({
   };
   const [selectedSessionRow, setSelectedSessionRow] = useState<EmployeeSessionRow | null>(null);
 
-  // Map employee with their latest record for selectedDate
+  // Map employee with their primary session record for selectedDate
   const sessionRows = useMemo<EmployeeSessionRow[]>(() => {
     const recordByEmpId = new Map<string, AttendanceRecord>();
-    for (const rec of records) {
+    const sortedRecords = [...records].sort((a, b) => {
+      const timeA = a.checkInTime ? new Date(a.checkInTime).getTime() : 0;
+      const timeB = b.checkInTime ? new Date(b.checkInTime).getTime() : 0;
+      return timeA - timeB;
+    });
+    for (const rec of sortedRecords) {
       if (!recordByEmpId.has(rec.employeeId)) {
         recordByEmpId.set(rec.employeeId, rec);
       }

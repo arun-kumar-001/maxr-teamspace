@@ -5,19 +5,128 @@ import type { PayslipRecord } from '../features/payslips/types';
 import { changeTaskStatus, fetchMyTasks } from '../features/tasks/api/tasksApi';
 import type { Task } from '../features/tasks/types';
 import { fetchProjects } from '../features/projects/api/projectsApi';
+import { fetchTodayAttendance } from '../features/attendance/api/attendance';
 
 export function StaffDashboard() {
   const auth = useContext(AuthContext);
   const user = auth?.user;
-  const [isCheckedIn, setIsCheckedIn] = useState(true);
-  const [checkInTime, setCheckInTime] = useState('09:15 AM');
-  const [timeTrackerRunning, setTimeTrackerRunning] = useState(true);
-  const [secondsElapsed, setSecondsElapsed] = useState(9314); // 02:35:14 in seconds
+  const [isCheckedIn, setIsCheckedIn] = useState(() => {
+    try {
+      const raw =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('maxr_time_tracker_active_session')
+          : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Boolean(parsed.isCheckedIn);
+      }
+    } catch {}
+    return false;
+  });
+  const [checkInTime, setCheckInTime] = useState(() => {
+    try {
+      const raw =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('maxr_time_tracker_active_session')
+          : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed.checkInTime || '--:--';
+      }
+    } catch {}
+    return '--:--';
+  });
+  const [timeTrackerRunning, setTimeTrackerRunning] = useState(() => {
+    try {
+      const raw =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('maxr_time_tracker_active_session')
+          : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Boolean(parsed.isCheckedIn);
+      }
+    } catch {}
+    return false;
+  });
+  const [secondsElapsed, setSecondsElapsed] = useState(() => {
+    try {
+      const raw =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('maxr_time_tracker_active_session')
+          : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.startTimeMs) {
+          return Math.max(0, Math.floor((Date.now() - parsed.startTimeMs) / 1000));
+        }
+      }
+    } catch {}
+    return 0;
+  });
   const [liveTime, setLiveTime] = useState('12:35:00 PM');
   const [selectedDay, setSelectedDay] = useState(24);
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
   const [realTasks, setRealTasks] = useState<Task[]>([]);
   const [projectsCount, setProjectsCount] = useState(0);
+  const [isCompletedToday, setIsCompletedToday] = useState(false);
+
+  useEffect(() => {
+    const syncAttendance = async () => {
+      try {
+        const summary = await fetchTodayAttendance();
+        const active = summary.activeSession;
+        if (active?.checkInTime) {
+          setIsCheckedIn(true);
+          setIsCompletedToday(false);
+          setTimeTrackerRunning(true);
+          const start = new Date(active.checkInTime);
+          setSecondsElapsed(Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000)));
+          setCheckInTime(
+            start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          );
+        } else if (summary.sessions && summary.sessions.length > 0) {
+          setIsCheckedIn(false);
+          setIsCompletedToday(true);
+          setTimeTrackerRunning(false);
+          setSecondsElapsed((summary.totalDurationMinutes ?? 0) * 60);
+          const last = summary.sessions[summary.sessions.length - 1];
+          if (last?.checkInTime) {
+            setCheckInTime(
+              new Date(last.checkInTime).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+              }),
+            );
+          }
+        } else {
+          setIsCheckedIn(false);
+          setIsCompletedToday(false);
+          setTimeTrackerRunning(false);
+          setCheckInTime('--:--');
+          setSecondsElapsed(0);
+        }
+      } catch {
+        try {
+          const raw = localStorage.getItem('maxr_time_tracker_active_session');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            setIsCheckedIn(Boolean(parsed.isCheckedIn));
+            setCheckInTime(parsed.checkInTime || '--:--');
+            setTimeTrackerRunning(Boolean(parsed.isCheckedIn));
+            if (parsed.startTimeMs) {
+              setSecondsElapsed(Math.max(0, Math.floor((Date.now() - parsed.startTimeMs) / 1000)));
+            }
+          }
+        } catch {}
+      }
+    };
+
+    void syncAttendance();
+    window.addEventListener('maxr:attendance-updated', syncAttendance);
+    return () => window.removeEventListener('maxr:attendance-updated', syncAttendance);
+  }, []);
 
   const toggleRealTask = async (task: Task) => {
     const nextStatus = task.status === 'completed' ? 'in_progress' : 'completed';
@@ -72,20 +181,38 @@ export function StaffDashboard() {
   }, []);
 
   const handleAttendanceToggle = () => {
+    if (isCompletedToday) return;
     if (isCheckedIn) {
       setIsCheckedIn(false);
       setTimeTrackerRunning(false);
+      setCheckInTime('--:--');
+      setSecondsElapsed(0);
+      try {
+        localStorage.removeItem('maxr_time_tracker_active_session');
+        window.dispatchEvent(new Event('maxr:attendance-updated'));
+      } catch {}
     } else {
       setIsCheckedIn(true);
       setTimeTrackerRunning(true);
       const now = new Date();
-      setCheckInTime(
-        now.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }),
-      );
+      const formatted = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+      setCheckInTime(formatted);
+      setSecondsElapsed(0);
+      try {
+        localStorage.setItem(
+          'maxr_time_tracker_active_session',
+          JSON.stringify({
+            isCheckedIn: true,
+            checkInTime: formatted,
+            startTimeMs: now.getTime(),
+          }),
+        );
+        window.dispatchEvent(new Event('maxr:attendance-updated'));
+      } catch {}
     }
   };
 
@@ -684,16 +811,32 @@ export function StaffDashboard() {
               <span
                 className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all"
                 style={{
-                  backgroundColor: isCheckedIn
-                    ? 'rgba(85, 205, 179, 0.2)'
-                    : 'rgba(8, 11, 12, 0.06)',
-                  color: isCheckedIn ? 'rgb(13, 148, 136)' : 'rgba(8, 11, 12, 0.65)',
+                  backgroundColor: isCompletedToday
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : isCheckedIn
+                      ? 'rgba(85, 205, 179, 0.2)'
+                      : 'rgba(8, 11, 12, 0.06)',
+                  color: isCompletedToday
+                    ? 'rgb(5, 150, 105)'
+                    : isCheckedIn
+                      ? 'rgb(13, 148, 136)'
+                      : 'rgba(8, 11, 12, 0.65)',
                 }}
               >
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${isCheckedIn ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isCompletedToday
+                      ? 'bg-emerald-600'
+                      : isCheckedIn
+                        ? 'bg-emerald-500 animate-pulse'
+                        : 'bg-gray-400'
+                  }`}
                 />
-                {isCheckedIn ? `Checked In • ${checkInTime}` : 'Checked Out'}
+                {isCompletedToday
+                  ? `Completed • ${checkInTime}`
+                  : isCheckedIn
+                    ? `Checked In • ${checkInTime}`
+                    : 'Checked Out'}
               </span>
             </div>
             <button
@@ -783,7 +926,11 @@ export function StaffDashboard() {
                     style={{ backgroundColor: 'rgba(8, 11, 12, 0.3)' }}
                   />
                 )}
-                {isCheckedIn ? 'Work Time' : 'Session Paused'}
+                {isCompletedToday
+                  ? 'Completed for Today'
+                  : isCheckedIn
+                    ? 'Work Time'
+                    : 'Session Paused'}
               </p>
             </div>
           </div>
@@ -794,21 +941,36 @@ export function StaffDashboard() {
             <button
               type="button"
               onClick={handleAttendanceToggle}
+              disabled={isCompletedToday}
               data-testid="attendance-toggle-button"
-              className={`min-h-[46px] sm:min-h-[36px] shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all hover:scale-105 active:scale-95 duration-200 ${
-                isCheckedIn && timeTrackerRunning ? 'animate-pulse-ring' : 'hover:opacity-90'
+              className={`min-h-[46px] sm:min-h-[36px] shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all duration-200 disabled:opacity-75 disabled:cursor-not-allowed ${
+                isCompletedToday
+                  ? 'bg-surface-muted text-text-muted border border-border cursor-not-allowed'
+                  : isCheckedIn && timeTrackerRunning
+                    ? 'animate-pulse-ring hover:scale-105 active:scale-95'
+                    : 'hover:scale-105 active:scale-95 hover:opacity-90'
               }`}
-              style={{
-                backgroundColor: isCheckedIn ? 'rgb(8, 11, 12)' : 'rgb(85, 205, 179)',
-                color: isCheckedIn ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
-                border: '1px solid rgba(8, 11, 12, 0.12)',
-              }}
+              style={
+                isCompletedToday
+                  ? undefined
+                  : {
+                      backgroundColor: isCheckedIn ? 'rgb(8, 11, 12)' : 'rgb(85, 205, 179)',
+                      color: isCheckedIn ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
+                      border: '1px solid rgba(8, 11, 12, 0.12)',
+                    }
+              }
               aria-label={
-                isCheckedIn ? 'Check Out of attendance session' : 'Check In to attendance session'
+                isCompletedToday
+                  ? 'Attendance completed for today'
+                  : isCheckedIn
+                    ? 'Check Out of attendance session'
+                    : 'Check In to attendance session'
               }
             >
-              <span className="text-[10px]">{isCheckedIn ? '⏹' : '▷'}</span>
-              <span>{isCheckedIn ? 'Check Out' : 'Check In'}</span>
+              <span className="text-[10px]">
+                {isCompletedToday ? '✓' : isCheckedIn ? '⏹' : '▷'}
+              </span>
+              <span>{isCompletedToday ? 'Completed' : isCheckedIn ? 'Check Out' : 'Check In'}</span>
             </button>
 
             {/* Timer Play/Pause Button */}

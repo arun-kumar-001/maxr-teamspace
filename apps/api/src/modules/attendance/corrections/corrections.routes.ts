@@ -1,5 +1,6 @@
 import { Request, RequestHandler, Response, Router } from 'express';
 import { asyncHandler } from '../../../http/async-handler';
+import { forbidden } from '../../../http/errors';
 import { IdempotencyStore, idempotent } from '../../../http/idempotency';
 import { validate, validated } from '../../../http/validate';
 import { requirePermission, resolveScope, toScopeFilter } from '../../rbac';
@@ -13,7 +14,13 @@ import { AttendanceCorrectionsService, CorrectionCaller } from './corrections.se
 function caller(req: Request): CorrectionCaller {
   const { actor } = req;
   if (!actor) throw new Error('authenticate() did not run before this handler');
-  return { actorId: actor.id, employeeId: actor.employeeId, requestId: req.id };
+  if (!actor.employeeId) throw forbidden('User has no associated employee profile');
+  return {
+    actorId: actor.id,
+    employeeId: actor.employeeId,
+    requestId: req.id,
+    roles: actor.roles,
+  };
 }
 
 /**

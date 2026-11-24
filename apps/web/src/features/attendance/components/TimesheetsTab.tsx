@@ -1,7 +1,72 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Button, KpiCard, Modal } from '../../../components/ui';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 import type { AttendanceRecord } from '../types';
+import { fetchTeamAttendance, fetchMyAttendanceHistory } from '../api/attendance';
+
+function formatPunchTime(isoString?: string | null): string {
+  if (!isoString) return '—';
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  } catch {
+    return '—';
+  }
+}
+
+function getWeekDays(refDateStr?: string) {
+  let baseDate = new Date();
+  if (refDateStr && /^\d{4}-\d{2}-\d{2}$/.test(refDateStr)) {
+    const parts = refDateStr.split('-').map(Number);
+    const yr = parts[0];
+    const mo = parts[1];
+    const da = parts[2];
+    if (typeof yr === 'number' && typeof mo === 'number' && typeof da === 'number') {
+      baseDate = new Date(yr, mo - 1, da);
+    }
+  }
+
+  const day = baseDate.getDay(); // 0: Sun, 1: Mon, ...
+  const diffToMon = day === 0 ? -6 : 1 - day;
+  const monday = new Date(baseDate);
+  monday.setDate(baseDate.getDate() + diffToMon);
+
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const days: Array<{
+    dayName: string;
+    isoDate: string;
+    displayLabel: string;
+    fullDisplay: string;
+  }> = [];
+
+  for (let i = 0; i < 7; i++) {
+    const dt = new Date(monday);
+    dt.setDate(monday.getDate() + i);
+    const yr = dt.getFullYear();
+    const mo = String(dt.getMonth() + 1).padStart(2, '0');
+    const da = String(dt.getDate()).padStart(2, '0');
+    const isoDate = `${yr}-${mo}-${da}`;
+    const shortDisplay = dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    const name = dayNames[i] ?? '';
+    days.push({
+      dayName: name,
+      isoDate,
+      displayLabel: `${name} (${shortDisplay})`,
+      fullDisplay: `${name}, ${shortDisplay} ${yr}`,
+    });
+  }
+
+  const firstDay = days[0];
+  const lastDay = days[6];
+
+  return {
+    mondayIso: firstDay?.isoDate ?? '',
+    sundayIso: lastDay?.isoDate ?? '',
+    startLabel: firstDay?.displayLabel ?? '',
+    endLabel: lastDay?.displayLabel ?? '',
+    days,
+  };
+}
 
 function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -76,6 +141,7 @@ export interface TimesheetsTabProps {
   employees: EmployeeDirectoryItem[];
   departments: DepartmentItem[];
   canApproveTimesheets: boolean;
+  selectedDate?: string;
 }
 
 export function TimesheetsTab({
@@ -83,6 +149,7 @@ export function TimesheetsTab({
   employees,
   departments,
   canApproveTimesheets,
+  selectedDate,
 }: TimesheetsTabProps) {
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [statusTab, setStatusTab] = useState<'all' | 'submitted' | 'flagged' | 'approved'>('all');
@@ -92,56 +159,169 @@ export function TimesheetsTab({
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
   const [hoveredChartDay, setHoveredChartDay] = useState<string | null>(null);
+  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
+  const [weekRecords, setWeekRecords] = useState<AttendanceRecord[]>(records);
+
+  const activeSelectedDate = useMemo(() => {
+    if (selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
+      return selectedDate;
+    }
+    const now = new Date();
+    const yr = now.getFullYear();
+    const mo = String(now.getMonth() + 1).padStart(2, '0');
+    const da = String(now.getDate()).padStart(2, '0');
+    return `${yr}-${mo}-${da}`;
+  }, [selectedDate]);
+
+  const weekInfo = useMemo(() => getWeekDays(activeSelectedDate), [activeSelectedDate]);
+
+  // Sync with records prop
+  useEffect(() => {
+    if (records && records.length > 0) {
+      setWeekRecords((prev) => {
+        if (prev.length === 0) return records;
+        const map = new Map<string, AttendanceRecord>();
+        prev.forEach((r) => map.set(r.id, r));
+        records.forEach((r) => map.set(r.id, r));
+        return Array.from(map.values());
+      });
+    }
+  }, [records]);
+
+  // Fetch full week team records
+  const loadWeekRecords = useCallback(async () => {
+    try {
+      const res = canApproveTimesheets
+        ? await fetchTeamAttendance({
+            startDate: weekInfo.mondayIso,
+            endDate: weekInfo.sundayIso,
+            pageSize: 300,
+          })
+        : await fetchMyAttendanceHistory({
+            startDate: weekInfo.mondayIso,
+            endDate: weekInfo.sundayIso,
+            pageSize: 50,
+          });
+      if (res && Array.isArray(res.data)) {
+        setWeekRecords(res.data);
+      }
+    } catch {
+      // Keep existing weekRecords if API fails
+    }
+  }, [canApproveTimesheets, weekInfo.mondayIso, weekInfo.sundayIso]);
+
+  useEffect(() => {
+    void loadWeekRecords();
+  }, [loadWeekRecords]);
+
+  // Real-time live update listeners
+  useEffect(() => {
+    const handleSync = () => {
+      void loadWeekRecords();
+    };
+    window.addEventListener('maxr:attendance-updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('maxr:attendance-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, [loadWeekRecords]);
 
   // Derive timesheets by aggregating records per employee
-  const [timesheetList, setTimesheetList] = useState<TimesheetEntry[]>(() => {
-    // If employees loaded, derive for each employee
+  const timesheetList = useMemo<TimesheetEntry[]>(() => {
+    const now = new Date();
+    const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
     if (employees.length > 0) {
-      return employees.map((emp, index) => {
-        const empRecords = records.filter((r) => r.employeeId === emp.id);
-        const totalMinutes =
-          empRecords.reduce((acc, r) => acc + (r.durationMinutes || 480), 0) ||
-          (index % 3 === 0 ? 2535 : 2400);
+      return employees.map((emp) => {
+        const empRecords = weekRecords.filter(
+          (r) => r.employeeId === emp.id || r.employeeId === emp.employeeCode,
+        );
+        const totalMinutes = empRecords.reduce((acc, r) => acc + (r.durationMinutes || 0), 0);
         const workedHours = parseFloat((totalMinutes / 60).toFixed(1));
         const plannedHours = 40.0;
         const overtimeHours =
           workedHours > plannedHours ? parseFloat((workedHours - plannedHours).toFixed(1)) : 0;
 
-        // Status distribution
+        // Break duration from real data
+        const totalBreakMinutes = empRecords.reduce((acc, r) => acc + (r.breakMinutes || 0), 0);
+        const breakH = Math.floor(totalBreakMinutes / 60);
+        const breakM = totalBreakMinutes % 60;
+        const breakDuration =
+          totalBreakMinutes > 0
+            ? breakH > 0
+              ? `${breakH}h ${breakM > 0 ? `${breakM}m` : ''}`
+              : `${breakM}m`
+            : '0m';
+
+        // Check for missing punch-out on past days
+        const missingPunchRecord = empRecords.find(
+          (r) => r.checkInTime && !r.checkOutTime && r.workDate < todayIso,
+        );
+
         let status: 'submitted' | 'approved' | 'flagged' = 'submitted';
-        if (index === 1 || index === 4) status = 'flagged';
-        else if (index > 2) status = 'approved';
+        if (approvedIds.has(emp.id) || approvedIds.has(`ts-${emp.id}`)) {
+          status = 'approved';
+        } else if (missingPunchRecord) {
+          status = 'flagged';
+        }
 
         return {
           id: `ts-${emp.id}`,
           employeeId: emp.id,
-          name: `${emp.firstName} ${emp.lastName}`,
+          name: `${emp.firstName} ${emp.lastName}`.trim(),
           employeeCode: emp.employeeCode,
-          departmentName: emp.department?.name || 'Engineering',
+          departmentName: emp.department?.name || 'General',
           plannedHours,
           workedHours,
           overtimeHours,
-          breakDuration: '1h 00m',
+          breakDuration,
           status,
-          discrepancyNote: status === 'flagged' ? 'Missing punch-out on Thursday' : undefined,
+          discrepancyNote: missingPunchRecord
+            ? `Missing check-out on ${missingPunchRecord.workDate}`
+            : undefined,
         };
       });
     }
 
     // Fallback if rendered with records only (e.g. staff history)
-    return records.map((r, index) => ({
-      id: `ts-${r.id}`,
-      employeeId: r.employeeId,
-      name: r.employeeName || 'Jane Doe',
-      employeeCode: 'EMP-0001',
-      departmentName: 'Engineering',
-      plannedHours: 40.0,
-      workedHours: 42.5,
-      overtimeHours: 2.5,
-      breakDuration: '1h 00m',
-      status: index === 0 ? 'submitted' : 'approved',
-    }));
-  });
+    return weekRecords.map((r) => {
+      const workedHours = parseFloat(((r.durationMinutes || 0) / 60).toFixed(1));
+      const plannedHours = 40.0;
+      const overtimeHours =
+        workedHours > plannedHours ? parseFloat((workedHours - plannedHours).toFixed(1)) : 0;
+      const totalBreakMinutes = r.breakMinutes || 0;
+      const breakH = Math.floor(totalBreakMinutes / 60);
+      const breakM = totalBreakMinutes % 60;
+      const breakDuration =
+        totalBreakMinutes > 0
+          ? breakH > 0
+            ? `${breakH}h ${breakM > 0 ? `${breakM}m` : ''}`
+            : `${breakM}m`
+          : '0m';
+
+      let status: 'submitted' | 'approved' | 'flagged' = 'submitted';
+      if (approvedIds.has(r.id) || approvedIds.has(`ts-${r.id}`)) {
+        status = 'approved';
+      } else if (r.checkInTime && !r.checkOutTime && r.workDate < todayIso) {
+        status = 'flagged';
+      }
+
+      return {
+        id: `ts-${r.id}`,
+        employeeId: r.employeeId,
+        name: r.employeeName || 'Employee',
+        employeeCode: 'EMP',
+        departmentName: 'General',
+        plannedHours,
+        workedHours,
+        overtimeHours,
+        breakDuration,
+        status,
+        discrepancyNote: status === 'flagged' ? `Missing check-out on ${r.workDate}` : undefined,
+      };
+    });
+  }, [employees, weekRecords, approvedIds]);
 
   // KPI Calculations
   const totalHoursWorked = useMemo(() => {
@@ -169,6 +349,7 @@ export function TimesheetsTab({
       approved: timesheetList.filter((t) => t.status === 'approved').length,
     };
   }, [timesheetList]);
+
   const filteredTimesheets = useMemo(() => {
     return timesheetList.filter((ts) => {
       if (
@@ -207,19 +388,20 @@ export function TimesheetsTab({
   };
 
   const handleApproveSingle = (id: string) => {
-    setTimesheetList((prev) =>
-      prev.map((ts) => (ts.id === id ? { ...ts, status: 'approved' } : ts)),
-    );
+    setApprovedIds((prev) => new Set([...prev, id]));
     setSuccessToast('Timesheet approved successfully.');
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
   const handleApproveSelected = () => {
-    setTimesheetList((prev) =>
-      prev.map((ts) => (selectedIds.has(ts.id) ? { ...ts, status: 'approved' } : ts)),
-    );
+    setApprovedIds((prev) => {
+      const next = new Set(prev);
+      selectedIds.forEach((id) => next.add(id));
+      return next;
+    });
+    const count = selectedIds.size;
     setSelectedIds(new Set());
-    setSuccessToast(`${selectedIds.size} timesheets approved.`);
+    setSuccessToast(`${count} timesheets approved.`);
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
@@ -255,16 +437,35 @@ export function TimesheetsTab({
     document.body.removeChild(link);
   };
 
-  // Hours by Day data (Matches user design: Mon-Sun with active day)
-  const hoursByDay = [
-    { day: 'Mon', hours: 38.5, percent: 52 },
-    { day: 'Tue', hours: 39.0, percent: 54 },
-    { day: 'Wed', hours: 41.2, percent: 56 },
-    { day: 'Thu', hours: 38.0, percent: 53 },
-    { day: 'Fri', hours: 40.5, percent: 55 },
-    { day: 'Sat', hours: 42.0, percent: 58 },
-    { day: 'Sun', hours: 39.0, percent: 53 },
-  ];
+  // Hours by Day data derived from actual attendance records for the 7 days of the week
+  const hoursByDay = useMemo(() => {
+    const dayTotals = weekInfo.days.map((d) => {
+      const dayRecs = weekRecords.filter((r) => r.workDate === d.isoDate);
+      const dayMinutes = dayRecs.reduce((acc, r) => acc + (r.durationMinutes || 0), 0);
+      const hours = parseFloat((dayMinutes / 60).toFixed(1));
+      return {
+        day: d.dayName,
+        isoDate: d.isoDate,
+        hours,
+      };
+    });
+
+    const maxHours = Math.max(...dayTotals.map((d) => d.hours), 8);
+
+    return dayTotals.map((d) => ({
+      day: d.day,
+      hours: d.hours,
+      percent:
+        d.hours > 0 ? Math.max(12, Math.min(100, Math.round((d.hours / maxHours) * 100))) : 8,
+    }));
+  }, [weekInfo.days, weekRecords]);
+
+  // Average hours per day calculation
+  const avgDayHours = useMemo(() => {
+    const totalWeekHours = hoursByDay.reduce((acc, d) => acc + d.hours, 0);
+    const activeDays = hoursByDay.filter((d) => d.hours > 0).length || 5;
+    return (totalWeekHours / activeDays).toFixed(1);
+  }, [hoursByDay]);
 
   return (
     <div className="space-y-6">
@@ -644,7 +845,7 @@ export function TimesheetsTab({
                   Hours by day
                 </h3>
                 <p className="text-[11px] text-text-muted font-normal mt-0.5">
-                  Every timesheet, last week
+                  Every timesheet, this week ({weekInfo.startLabel} – {weekInfo.endLabel})
                 </p>
               </div>
               {selectedChartDay && (
@@ -727,7 +928,9 @@ export function TimesheetsTab({
                     {activeDay ? `${activeDay.day} selected` : 'Avg / day'}
                   </span>
                   <span className="font-bold text-primary-deep font-mono text-xs">
-                    {activeDay ? `${activeDay.hours} hrs (${activeDay.percent}%)` : '39.8 hrs'}
+                    {activeDay
+                      ? `${activeDay.hours} hrs (${activeDay.percent}%)`
+                      : `${avgDayHours} hrs`}
                   </span>
                 </div>
               );
@@ -762,23 +965,46 @@ export function TimesheetsTab({
             )}
 
             <div className="space-y-2">
-              <span className="font-bold text-text block">Daily Breakdown</span>
+              <span className="font-bold text-text block">
+                Daily Breakdown ({weekInfo.startLabel} – {weekInfo.endLabel})
+              </span>
               <div className="border border-border/70 rounded-xl divide-y divide-border/60 overflow-hidden">
-                {[
-                  'Mon (Nov 02)',
-                  'Tue (Nov 03)',
-                  'Wed (Nov 04)',
-                  'Thu (Nov 05)',
-                  'Fri (Nov 06)',
-                ].map((day) => (
-                  <div
-                    key={day}
-                    className="flex items-center justify-between p-2.5 bg-surface text-text"
-                  >
-                    <span className="font-semibold">{day}</span>
-                    <span className="text-text-muted font-mono">09:00 AM – 06:00 PM (8.5 hrs)</span>
-                  </div>
-                ))}
+                {weekInfo.days.map((day) => {
+                  const empDayRec = weekRecords.find(
+                    (r) =>
+                      (r.employeeId === detailedEntry.employeeId ||
+                        r.employeeId === detailedEntry.id.replace('ts-', '')) &&
+                      r.workDate === day.isoDate,
+                  );
+                  const hasRecord = !!empDayRec;
+                  const punchIn = empDayRec?.checkInTime
+                    ? formatPunchTime(empDayRec.checkInTime)
+                    : null;
+                  const punchOut = empDayRec?.checkOutTime
+                    ? formatPunchTime(empDayRec.checkOutTime)
+                    : null;
+                  const hours = empDayRec
+                    ? ((empDayRec.durationMinutes || 0) / 60).toFixed(1)
+                    : '0.0';
+
+                  return (
+                    <div
+                      key={day.isoDate}
+                      className="flex items-center justify-between p-2.5 bg-surface text-text text-xs"
+                    >
+                      <span className="font-semibold">{day.fullDisplay}</span>
+                      <span
+                        className={`font-mono ${
+                          hasRecord ? 'text-primary-deep font-bold' : 'text-text-muted'
+                        }`}
+                      >
+                        {hasRecord
+                          ? `${punchIn} – ${punchOut || 'Active'} (${hours} hrs)`
+                          : 'No attendance recorded (0.0 hrs)'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

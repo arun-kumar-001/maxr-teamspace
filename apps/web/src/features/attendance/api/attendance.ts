@@ -41,8 +41,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
   if (!res.ok) {
     const errorInfo = payload?.error;
+    const detailMsg =
+      Array.isArray(errorInfo?.details) && errorInfo.details.length > 0
+        ? errorInfo.details
+          .map((d: { field?: string; message?: string }) => d.message || d.field)
+          .filter(Boolean)
+          .join(', ')
+        : null;
     throw new AttendanceApiError(
-      errorInfo?.message ?? `Request failed with status ${res.status}`,
+      detailMsg ?? (errorInfo?.message ?? `Request failed with status ${res.status}`),
       res.status,
       errorInfo?.code ?? 'ATTENDANCE_ERROR',
       errorInfo?.details,
@@ -164,8 +171,16 @@ export async function fetchTeamAttendance(
 export async function requestCorrection(
   payload: RequestCorrectionPayload,
 ): Promise<AttendanceCorrection> {
+  const idempotencyKey =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `corr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
   const res = await apiFetch('/api/v1/attendance/corrections', {
     method: 'POST',
+    headers: {
+      'Idempotency-Key': idempotencyKey,
+    },
     body: JSON.stringify(payload),
   });
   const body = await handleResponse<{ data: AttendanceCorrection }>(res);

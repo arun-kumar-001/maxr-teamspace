@@ -1,7 +1,10 @@
-import { Pool, PoolConfig, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolConfig, QueryResult, QueryResultRow, types } from 'pg';
 import { config } from '../config/env';
 import { Logger, getLogger } from '../logging/logger';
 import { DependencyStatus } from './types';
+
+// Return PostgreSQL DATE (OID 1082) as plain 'YYYY-MM-DD' strings without timezone offset shifts
+types.setTypeParser(1082, (val: string) => val);
 
 let pool: Pool | null = null;
 

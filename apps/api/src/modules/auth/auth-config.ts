@@ -12,6 +12,7 @@ export interface AuthConfig {
   lockoutWindowMs: number;
   /** The only browser origin allowed to send state-changing requests with the session cookie. */
   allowedOrigin: string;
+  nodeEnv?: string;
   minPasswordLength: number;
   maxPasswordLength: number;
 }
@@ -51,6 +52,7 @@ export function loadAuthConfig(
     maxLoginFailures: readInt('LOGIN_MAX_FAILURES', env.LOGIN_MAX_FAILURES, 5, 1),
     lockoutWindowMs: readInt('LOGIN_LOCKOUT_WINDOW_MS', env.LOGIN_LOCKOUT_WINDOW_MS, 900_000, 1000),
     allowedOrigin,
+    nodeEnv,
     minPasswordLength: MIN_PASSWORD_LENGTH,
     maxPasswordLength: 128,
   };

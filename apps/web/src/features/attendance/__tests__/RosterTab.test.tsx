@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RosterTab } from '../components/RosterTab';
+import type { AttendanceRecord } from '../types';
 import type { DepartmentItem, EmployeeDirectoryItem } from '../../employees/types';
 
 const mockEmployees: EmployeeDirectoryItem[] = [
@@ -42,6 +43,22 @@ const mockEmployees: EmployeeDirectoryItem[] = [
 
 const mockDepartments: DepartmentItem[] = [{ id: 'dept-1', name: 'Engineering', code: 'ENG' }];
 
+const mockRecords: AttendanceRecord[] = [
+  {
+    id: 'att-1',
+    employeeId: 'emp-1',
+    workDate: '2026-11-03',
+    checkInTime: '2026-11-03T09:00:00Z',
+    checkOutTime: '2026-11-03T19:00:00Z',
+    durationMinutes: 600,
+    status: 'present',
+    location: null,
+    notes: null,
+    createdAt: '2026-11-03T09:00:00Z',
+    updatedAt: '2026-11-03T19:00:00Z',
+  },
+];
+
 describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -54,6 +71,7 @@ describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
         departments={mockDepartments}
         shifts={[]}
         selectedDate="2026-11-03"
+        initialRecords={mockRecords}
         canManageRoster={true}
       />,
     );
@@ -62,18 +80,17 @@ describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
     expect(screen.getByText('Arun Kumar')).toBeInTheDocument();
     expect(screen.getByText('Rajesh Patel')).toBeInTheDocument();
 
-    // Verify real-time check-in & check-out times are displayed (e.g. 09:xx – 19:xx)
+    // Verify real-time check-in & check-out times are displayed when recorded (e.g. 09:xx – 19:xx)
     const timeCells = screen.getAllByRole('button').filter((b) => b.textContent?.includes('–'));
     expect(timeCells.length).toBeGreaterThan(0);
+
+    // Verify empty/unrecorded days are blank (em-dash '—') without fake default punches
+    const blankCells = screen.getAllByRole('button').filter((b) => b.textContent === '—');
+    expect(blankCells.length).toBeGreaterThan(0);
 
     // Verify weekend off badges are displayed cleanly
     const offBadges = screen.getAllByText('Off');
     expect(offBadges.length).toBeGreaterThan(0);
-
-    // Verify bottom legend has clean attendance status indicators
-    expect(screen.getByText('Completed (Check-In & Out)')).toBeInTheDocument();
-    expect(screen.getByText('Active (Currently In)')).toBeInTheDocument();
-    expect(screen.getByText('Weekly Off')).toBeInTheDocument();
 
     // Verify table structure has proper accessible label
     const table = screen.getByLabelText('Attendance Shift Roster Grid');

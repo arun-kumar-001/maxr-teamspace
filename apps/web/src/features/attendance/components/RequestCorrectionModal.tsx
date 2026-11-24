@@ -9,6 +9,7 @@ export interface RequestCorrectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   record: AttendanceRecord | null;
+  defaultReason?: string;
   onSuccess?: (correction: AttendanceCorrection) => void;
 }
 
@@ -16,11 +17,12 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
   isOpen,
   onClose,
   record,
+  defaultReason,
   onSuccess,
 }) => {
   const [checkInTime, setCheckInTime] = useState('09:00');
   const [checkOutTime, setCheckOutTime] = useState('18:00');
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState(defaultReason || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,33 +31,35 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
     if (record) {
       if (record.checkInTime) {
         const d = new Date(record.checkInTime);
-        const hours = String(d.getUTCHours()).padStart(2, '0');
-        const mins = String(d.getUTCMinutes()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
         setCheckInTime(`${hours}:${mins}`);
       } else {
         setCheckInTime('09:00');
       }
 
-      if (record.checkOutTime) {
+      if (record.checkOutTime && record.checkOutTime !== record.checkInTime) {
         const d = new Date(record.checkOutTime);
-        const hours = String(d.getUTCHours()).padStart(2, '0');
-        const mins = String(d.getUTCMinutes()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
         setCheckOutTime(`${hours}:${mins}`);
       } else {
         setCheckOutTime('18:00');
       }
 
-      setReason('');
+      setReason(defaultReason || '');
       setError(null);
     }
-  }, [record, isOpen]);
+  }, [record, isOpen, defaultReason]);
 
   if (!isOpen || !record) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!reason.trim()) {
+    const effectiveReason = (reason.trim() || defaultReason || '').trim();
+
+    if (!effectiveReason) {
       setError('Please provide a reason explaining this correction request.');
       return;
     }
@@ -65,20 +69,13 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
       return;
     }
 
-    // Construct ISO datetimes in UTC for the record's workDate
-    const requestedCheckIn = `${record.workDate}T${checkInTime}:00.000Z`;
-    let requestedCheckOut = `${record.workDate}T${checkOutTime}:00.000Z`;
-
-    const inDate = new Date(requestedCheckIn);
-    let outDate = new Date(requestedCheckOut);
+    // Construct datetimes from local time on the record's workDate
+    const inDate = new Date(`${record.workDate}T${checkInTime}:00`);
+    let outDate = new Date(`${record.workDate}T${checkOutTime}:00`);
 
     // If checkOut is earlier than checkIn, treat as overnight session (next day)
     if (outDate <= inDate) {
-      const nextDay = new Date(inDate);
-      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-      const nextDayStr = nextDay.toISOString().split('T')[0];
-      requestedCheckOut = `${nextDayStr}T${checkOutTime}:00.000Z`;
-      outDate = new Date(requestedCheckOut);
+      outDate.setDate(outDate.getDate() + 1);
     }
 
     const durationMinutes = (outDate.getTime() - inDate.getTime()) / (1000 * 60);
@@ -93,14 +90,25 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
       return;
     }
 
+    if (outDate.getTime() > Date.now()) {
+      if (checkOutTime <= checkInTime) {
+        setError(
+          'Requested check-out time must be after check-in time (e.g. use PM or 18:00 for evening hours).',
+        );
+      } else {
+        setError('Requested time cannot be in the future.');
+      }
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
       const correction = await requestCorrection({
         attendanceRecordId: record.id,
-        requestedCheckIn,
-        requestedCheckOut,
-        reason: reason.trim(),
+        requestedCheckIn: inDate.toISOString(),
+        requestedCheckOut: outDate.toISOString(),
+        reason: effectiveReason,
       });
       onSuccess?.(correction);
       onClose();
@@ -113,10 +121,9 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
 
   const formatDisplayTime = (isoTime: string | null) => {
     if (!isoTime) return 'Not recorded';
-    return new Date(isoTime).toLocaleTimeString(undefined, {
+    return new Date(isoTime).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'UTC',
     });
   };
 
@@ -180,7 +187,7 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
         )}
 
         {/* Requested Check-in Time */}
-        <FormField label="Requested Check-In (UTC)" htmlFor="requested-checkin-time" required>
+        <FormField label="Requested Check-In" htmlFor="requested-checkin-time" required>
           <input
             id="requested-checkin-time"
             data-testid="requested-checkin-input"
@@ -197,7 +204,7 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
         </FormField>
 
         {/* Requested Check-out Time */}
-        <FormField label="Requested Check-Out (UTC)" htmlFor="requested-checkout-time" required>
+        <FormField label="Requested Check-Out" htmlFor="requested-checkout-time" required>
           <input
             id="requested-checkout-time"
             data-testid="requested-checkout-input"
@@ -230,6 +237,28 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
             disabled={isSubmitting}
             required
           />
+          {/* Quick Suggestions */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <span className="text-[11px] text-text-muted font-medium">Quick suggestions:</span>
+            {[
+              'Punch timing adjustment',
+              'Forgot to punch out',
+              'Biometric / System correction',
+              'Network delay',
+            ].map((pill) => (
+              <button
+                key={pill}
+                type="button"
+                onClick={() => {
+                  setReason(pill);
+                  if (error) setError(null);
+                }}
+                className="px-2 py-0.5 rounded-md text-[11px] bg-surface-muted hover:bg-primary-soft hover:text-primary-deep text-text border border-border/80 transition-colors cursor-pointer"
+              >
+                {pill}
+              </button>
+            ))}
+          </div>
         </FormField>
       </form>
     </Modal>

@@ -179,7 +179,7 @@ function resolveEmployeePunch(
 ): {
   inTime: string;
   outTime: string | null;
-  status: 'present' | 'active' | 'late' | 'absent';
+  status: 'present' | 'active' | 'late' | 'absent' | 'empty';
   display: string;
 } {
   if (record && record.checkInTime) {
@@ -210,33 +210,45 @@ function resolveEmployeePunch(
     };
   }
 
-  // Deterministic realistic variance around 09:00 - 19:00 (9 to 7) based on employee ID and date
-  const hash = (emp.id + wd.dateStr).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const inMinute = (hash % 18) - 5;
-  const outMinute = ((hash * 7) % 25) - 8;
-
-  const inH = inMinute < 0 ? 8 : 9;
-  const inM = inMinute < 0 ? 60 + inMinute : inMinute;
-  const inStr = `${String(inH).padStart(2, '0')}:${String(inM).padStart(2, '0')}`;
-
+  // If today and no server record yet, check if there is an active local session for this user
   if (wd.isToday) {
-    return {
-      inTime: inStr,
-      outTime: null,
-      status: 'active',
-      display: `${inStr} – In`,
-    };
+    try {
+      const raw =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('maxr_time_tracker_active_session')
+          : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.isCheckedIn && parsed.checkInTime) {
+          const userRaw = typeof window !== 'undefined' ? localStorage.getItem('maxr_user') : null;
+          const user = userRaw ? JSON.parse(userRaw) : null;
+          if (
+            user &&
+            (user.employeeId === emp.id ||
+              user.id === emp.id ||
+              user.email === emp.email ||
+              user.employeeCode === emp.employeeCode)
+          ) {
+            return {
+              inTime: parsed.checkInTime,
+              outTime: null,
+              status: 'active',
+              display: `${parsed.checkInTime} – In`,
+            };
+          }
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
   }
 
-  const outH = outMinute < 0 ? 18 : 19;
-  const outM = outMinute < 0 ? 60 + outMinute : outMinute;
-  const outStr = `${String(outH).padStart(2, '0')}:${String(outM).padStart(2, '0')}`;
-
+  // When there is no check-in record, default must be blank ('—') instead of fake times
   return {
-    inTime: inStr,
-    outTime: outStr,
-    status: inH === 9 && inM > 15 ? 'late' : 'present',
-    display: `${inStr} – ${outStr}`,
+    inTime: '',
+    outTime: null,
+    status: 'empty',
+    display: '—',
   };
 }
 
@@ -298,6 +310,19 @@ export function RosterTab({
 
   const [weekRecords, setWeekRecords] = useState<AttendanceRecord[]>(initialRecords);
   const [weekLeaves, setWeekLeaves] = useState<LeaveCalendarEntry[]>(initialLeaves);
+
+  // Sync initialRecords and initialLeaves when passed/updated from parent
+  useEffect(() => {
+    if (initialRecords) {
+      setWeekRecords(initialRecords);
+    }
+  }, [initialRecords]);
+
+  useEffect(() => {
+    if (initialLeaves) {
+      setWeekLeaves(initialLeaves);
+    }
+  }, [initialLeaves]);
   const [assignmentsByEmp, setAssignmentsByEmp] = useState<Record<string, ShiftAssignment[]>>({});
 
   // Individual cell shift assignment modal
@@ -475,30 +500,43 @@ export function RosterTab({
     currentMonthDate,
   ]);
 
-  // Load attendance & approved/pending leaves
+  // Load attendance & approved/pending leaves with real-time sync listeners
   useEffect(() => {
     let active = true;
     const start = viewMode === 'week' ? weekStartStr : currentMonthDate.startIso;
     const end = viewMode === 'week' ? weekEndStr : currentMonthDate.endIso;
 
-    const attPromise = canManageRoster
-      ? fetchTeamAttendance({ startDate: start, endDate: end, pageSize: 300 })
-      : fetchMyAttendanceHistory({ startDate: start, endDate: end, pageSize: 150 });
+    const reloadData = () => {
+      const attPromise = canManageRoster
+        ? fetchTeamAttendance({ startDate: start, endDate: end, pageSize: 300 })
+        : fetchMyAttendanceHistory({ startDate: start, endDate: end, pageSize: 150 });
 
-    void Promise.allSettled([attPromise, fetchLeaveCalendar(start, end)]).then(
-      ([attRes, leaveRes]) => {
-        if (!active) return;
-        if (attRes.status === 'fulfilled') {
-          setWeekRecords(attRes.value.data || []);
-        }
-        if (leaveRes.status === 'fulfilled') {
-          setWeekLeaves(leaveRes.value || []);
-        }
-      },
-    );
+      void Promise.allSettled([attPromise, fetchLeaveCalendar(start, end)]).then(
+        ([attRes, leaveRes]) => {
+          if (!active) return;
+          if (attRes.status === 'fulfilled') {
+            setWeekRecords(attRes.value.data || []);
+          }
+          if (leaveRes.status === 'fulfilled') {
+            setWeekLeaves(leaveRes.value || []);
+          }
+        },
+      );
+    };
+
+    reloadData();
+
+    const handleSync = () => {
+      reloadData();
+    };
+
+    window.addEventListener('maxr:attendance-updated', handleSync);
+    window.addEventListener('storage', handleSync);
 
     return () => {
       active = false;
+      window.removeEventListener('maxr:attendance-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
     };
   }, [weekStartStr, weekEndStr, currentMonthDate, viewMode, canManageRoster]);
 
@@ -556,7 +594,20 @@ export function RosterTab({
   const recordByEmpDate = useMemo(() => {
     const map = new Map<string, AttendanceRecord>();
     for (const rec of weekRecords) {
-      map.set(`${rec.employeeId}__${rec.workDate}`, rec);
+      let dateKey = '';
+      if (rec.checkInTime) {
+        try {
+          const d = new Date(rec.checkInTime);
+          dateKey = toLocalIsoDate(d);
+        } catch {
+          dateKey = rec.workDate ? rec.workDate.slice(0, 10) : '';
+        }
+      } else if (rec.workDate) {
+        dateKey = rec.workDate.slice(0, 10);
+      }
+      if (dateKey) {
+        map.set(`${rec.employeeId}__${dateKey}`, rec);
+      }
     }
     return map;
   }, [weekRecords]);
@@ -1073,7 +1124,11 @@ export function RosterTab({
                         {/* Day Shift Cells: Full Real-time Check-In and Check-Out without dot */}
                         {weekDays.map((wd) => {
                           const leave = leaveByEmpDate.get(`${emp.id}__${wd.dateStr}`);
-                          const record = recordByEmpDate.get(`${emp.id}__${wd.dateStr}`);
+                          const record =
+                            recordByEmpDate.get(`${emp.id}__${wd.dateStr}`) ??
+                            (emp.employeeCode
+                              ? recordByEmpDate.get(`${emp.employeeCode}__${wd.dateStr}`)
+                              : undefined);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
                           const cellConfig = getShiftCellConfig(shift, !!leave, wd.isWeekend);
                           const punch = resolveEmployeePunch(emp, wd, record);
@@ -1103,9 +1158,13 @@ export function RosterTab({
                                     }
                                   }}
                                   title={
-                                    canManageRoster
-                                      ? `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} · Click to edit shift`
-                                      : `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''}`
+                                    punch.status === 'empty'
+                                      ? canManageRoster
+                                        ? `${emp.firstName} · Not checked in · Click to edit shift`
+                                        : `${emp.firstName} · Not checked in`
+                                      : canManageRoster
+                                        ? `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} · Click to edit shift`
+                                        : `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''}`
                                   }
                                   className={`h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center px-2 transition-all text-xs font-semibold tabular-nums ${
                                     punch.status === 'present'
@@ -1114,7 +1173,9 @@ export function RosterTab({
                                         ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
                                         : punch.status === 'late'
                                           ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
-                                          : 'bg-surface-muted/60 text-text border border-border/80 hover:bg-surface-muted'
+                                          : punch.status === 'empty'
+                                            ? 'bg-surface-muted/30 text-text-muted/60 border border-border/60 hover:bg-surface-muted/50'
+                                            : 'bg-surface-muted/60 text-text border border-border/80 hover:bg-surface-muted'
                                   } ${
                                     canManageRoster
                                       ? 'cursor-pointer hover:shadow-xs'
@@ -1227,7 +1288,11 @@ export function RosterTab({
                         {/* Day Cells for Month (Neat rounded pill badges) */}
                         {currentMonthDate.days.map((d) => {
                           const leave = leaveByEmpDate.get(`${emp.id}__${d.dateStr}`);
-                          const record = recordByEmpDate.get(`${emp.id}__${d.dateStr}`);
+                          const record =
+                            recordByEmpDate.get(`${emp.id}__${d.dateStr}`) ??
+                            (emp.employeeCode
+                              ? recordByEmpDate.get(`${emp.employeeCode}__${d.dateStr}`)
+                              : undefined);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
                           const cellConfig = getShiftCellConfig(shift, !!leave, d.isWeekend);
                           const punch = resolveEmployeePunch(emp, d, record);
@@ -1257,7 +1322,11 @@ export function RosterTab({
                                       openAssignModal(emp, d.dateStr, shift);
                                     }
                                   }}
-                                  title={`${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} on ${d.dateStr}`}
+                                  title={
+                                    punch.status === 'empty'
+                                      ? `${emp.firstName} · Not checked in on ${d.dateStr}`
+                                      : `${emp.firstName} · In: ${punch.inTime}${punch.outTime ? ` · Out: ${punch.outTime}` : ''} on ${d.dateStr}`
+                                  }
                                   className={`h-[34px] w-[58px] mx-auto rounded-lg text-[10px] font-bold flex items-center justify-center transition-all ${
                                     punch.status === 'present'
                                       ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/80 hover:bg-emerald-100/70'
@@ -1265,14 +1334,20 @@ export function RosterTab({
                                         ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
                                         : punch.status === 'late'
                                           ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
-                                          : 'bg-surface-muted/60 text-text border border-border/80'
+                                          : punch.status === 'empty'
+                                            ? 'bg-surface-muted/30 text-text-muted/60 border border-border/60'
+                                            : 'bg-surface-muted/60 text-text border border-border/80'
                                   } ${
                                     canManageRoster
                                       ? 'cursor-pointer hover:scale-105 hover:shadow-xs'
                                       : 'cursor-default'
                                   }`}
                                 >
-                                  {punch.status === 'active' ? 'In' : punch.inTime}
+                                  {punch.status === 'active'
+                                    ? 'In'
+                                    : punch.status === 'empty'
+                                      ? '—'
+                                      : punch.inTime}
                                 </button>
                               )}
                             </td>
@@ -1293,30 +1368,7 @@ export function RosterTab({
         </div>
       )}
 
-      {/* 4. Bottom Legend Bar */}
-      <div className="p-4 bg-white rounded-card border border-border/80 shadow-xs flex items-center gap-6 flex-wrap text-xs font-semibold text-text">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-          <span>Completed (Check-In & Out)</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-primary-strong shrink-0" />
-          <span>Active (Currently In)</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-          <span>On Leave</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0" />
-          <span>Weekly Off</span>
-        </div>
-      </div>
-
-      {/* 5. Create Roster Modal with Full Custom Shift Schedule Support */}
+      {/* 4. Create Roster Modal with Full Custom Shift Schedule Support */}
       {isCreateRosterOpen && (
         <Modal
           isOpen={true}
