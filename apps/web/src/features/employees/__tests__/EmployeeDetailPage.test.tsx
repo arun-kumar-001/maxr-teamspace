@@ -203,9 +203,12 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
 
     // Check header information
     expect(screen.getByRole('heading', { level: 1, name: /Jane Doe/i })).toBeInTheDocument();
-    expect(screen.getByText('EMP-001')).toBeInTheDocument();
+    // The My Profile header and the Employment card both show the code.
+    expect(screen.getAllByText('EMP-001').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('profile-header')).toBeInTheDocument();
+    expect(screen.queryByTestId('upload-avatar-btn')).toBeNull();
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/v1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/v1|Version 1/).length).toBeGreaterThan(0);
 
     // Check Job info tab
     expect(screen.getByTestId('tab-overview')).toBeInTheDocument();

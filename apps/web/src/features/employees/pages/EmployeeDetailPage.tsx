@@ -14,6 +14,9 @@ import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
+import { EmploymentInformation } from '../../profile/components/EmploymentInformation';
+import { ProfileHeader } from '../../profile/components/ProfileHeader';
+import type { EmployeeProfile } from '../../profile/types';
 import type { EmployeeDetail, EmployeePatch } from '../types';
 
 function BankAccountDetailsSection({ employee }: { employee: EmployeeDetail }) {
@@ -161,14 +164,24 @@ export function EmployeeDetailPage() {
     );
   }
 
-  const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
+  const profile: EmployeeProfile = {
+    id: employee.id,
+    employeeCode: employee.employeeCode,
+    firstName: employee.firstName,
+    lastName: employee.lastName,
+    email: employee.email,
+    phone: employee.phone ?? null,
+    department: employee.department,
+    designation: employee.designation,
+    manager: employee.manager ?? null,
+    status: employee.status,
+    joiningDate: employee.joiningDate,
+    createdAt: employee.createdAt,
+    updatedAt: employee.updatedAt,
+    version: employee.version,
+  };
 
-  const statusVariant =
-    employee.status === 'active'
-      ? 'success'
-      : employee.status === 'pending'
-        ? 'warning'
-        : 'neutral';
+  const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
   const tabOptions: Array<{
     value: 'overview' | 'personal' | 'account';
@@ -218,80 +231,62 @@ export function EmployeeDetailPage() {
         </div>
       </div>
 
-      {/* Profile Header Card */}
-      <div className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4 min-w-0">
+      {/* Same header as My Profile; the photo is read-only here */}
+      <ProfileHeader
+        profile={profile}
+        avatar={
           <EmployeeAvatar
             name={`${employee.firstName} ${employee.lastName}`}
             employeeId={employee.id}
             photoUrl={employee.photoUrl}
             initials={initials}
             decorative
-            className="h-16 w-16 border border-primary/20 bg-primary-soft font-display text-xl font-bold text-primary-ink shadow-sm sm:h-20 sm:w-20 sm:text-2xl"
+            className="h-20 w-20 border-4 border-surface bg-primary-soft font-display text-2xl font-bold text-primary-ink shadow-md sm:h-24 sm:w-24 sm:text-3xl"
           />
-          <div className="min-w-0 space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-text font-display truncate">
-                {employee.firstName} {employee.lastName}
-              </h1>
-              <Badge variant={statusVariant}>
-                {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
-              </Badge>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-text-muted">
-              <span className="font-mono bg-surface-muted px-2 py-0.5 rounded text-text font-medium border border-border">
-                {employee.employeeCode}
-              </span>
-              <span>&bull;</span>
-              <span>{employee.designation?.title || 'No Designation'}</span>
-              <span>&bull;</span>
-              <span>{employee.department?.name || 'No Department'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          {canEdit && (
-            <Button
-              variant="primary"
-              onClick={() => setIsEditOpen(true)}
-              className="min-h-[44px]"
-              data-testid="edit-employee-btn"
-            >
-              <svg
-                className="w-4 h-4 mr-1.5 stroke-current stroke-2 fill-none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {canEdit && (
+              <Button
+                variant="primary"
+                onClick={() => setIsEditOpen(true)}
+                className="min-h-[44px]"
+                data-testid="edit-employee-btn"
               >
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Edit Employee
-            </Button>
-          )}
+                <svg
+                  className="w-4 h-4 mr-1.5 stroke-current stroke-2 fill-none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit Employee
+              </Button>
+            )}
 
-          <Button
-            variant="outline"
-            onClick={() => navigate('/employees/org-chart')}
-            className="min-h-[44px]"
-            data-testid="view-org-chart-btn"
-          >
-            Org Chart
-          </Button>
-
-          {canDeactivate && (
             <Button
-              variant="danger"
-              onClick={() => setIsDeactivateOpen(true)}
+              variant="outline"
+              onClick={() => navigate('/employees/org-chart')}
               className="min-h-[44px]"
-              data-testid="deactivate-employee-btn"
+              data-testid="view-org-chart-btn"
             >
-              Deactivate
+              Org Chart
             </Button>
-          )}
-        </div>
-      </div>
+
+            {canDeactivate && (
+              <Button
+                variant="danger"
+                onClick={() => setIsDeactivateOpen(true)}
+                className="min-h-[44px]"
+                data-testid="deactivate-employee-btn"
+              >
+                Deactivate
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Deactivated Notice Banner if applicable */}
       {employee.status === 'deactivated' && (
@@ -330,87 +325,22 @@ export function EmployeeDetailPage() {
 
       {/* Tab Panels */}
       {activeTab === 'overview' && (
-        <div
-          className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card space-y-6"
-          data-testid="tab-overview"
-        >
-          <h2 className="text-base font-semibold text-text font-display">Employment Information</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Department</span>
-              <p className="font-semibold text-text">{employee.department.name} </p>
+        <div className="space-y-4" data-testid="tab-overview">
+          <EmploymentInformation profile={profile} />
+          {canEdit && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsChangeManagerOpen(true)}
+                className="text-xs min-h-[44px]"
+                data-testid="open-change-manager-btn"
+              >
+                Change Manager
+              </Button>
             </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Designation</span>
-              <p className="font-semibold text-text">{employee.designation.title} </p>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Reporting Manager</span>
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-semibold text-text">
-                  {employee.manager ? (
-                    <span>
-                      {employee.manager.firstName} {employee.manager.lastName}{' '}
-                      <span className="text-xs font-mono font-normal text-text-muted">
-                        ({employee.manager.employeeCode})
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="text-text-muted font-normal">
-                      None (Direct Report / Executive)
-                    </span>
-                  )}
-                </p>
-                {canEdit && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsChangeManagerOpen(true)}
-                    className="text-xs min-h-[32px] py-0.5 px-2"
-                    data-testid="open-change-manager-btn"
-                  >
-                    Change Manager
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Joining Date</span>
-              <p className="font-semibold text-text">{employee.joiningDate}</p>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Status</span>
-              <div>
-                <Badge variant={statusVariant}>
-                  {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Record Version</span>
-              <p className="font-mono text-text">v{employee.version}</p>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Profile Created</span>
-              <p className="text-text-muted text-xs">
-                {employee.createdAt ? new Date(employee.createdAt).toLocaleString() : '—'}
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-xs text-text-subtle font-medium block">Last Modified</span>
-              <p className="text-text-muted text-xs">
-                {employee.updatedAt ? new Date(employee.updatedAt).toLocaleString() : '—'}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       )}
 

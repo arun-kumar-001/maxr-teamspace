@@ -1,4 +1,4 @@
-import { useContext, useRef, useState, type ChangeEvent } from 'react';
+import { useContext, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { AuthContext } from '../../../auth/AuthContext';
 import { Badge } from '../../../components/ui/StatusPill';
 import { deleteMyPhoto, uploadMyPhoto } from '../api/profileApi';
@@ -6,9 +6,16 @@ import type { EmployeeProfile } from '../types';
 
 export interface ProfileHeaderProps {
   profile: EmployeeProfile;
+  /**
+   * Shows somebody else's profile (the Employee Directory): this avatar replaces the signed-in
+   * user's photo and the upload camera, and the header gets no link to itself.
+   */
+  avatar?: ReactNode;
+  /** Buttons shown at the right of the header, for example Edit and Deactivate. */
+  actions?: ReactNode;
 }
 
-export function ProfileHeader({ profile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, avatar, actions }: ProfileHeaderProps) {
   const auth = useContext(AuthContext);
   const user = auth?.user;
   const updateUserAvatar = auth?.updateUserAvatar;
@@ -77,57 +84,62 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
       <div className="px-6 pb-6 pt-0 relative">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-12 sm:-mt-14">
           <div className="flex items-end gap-4 min-w-0">
-            {/* Avatar with Camera Overlay Trigger */}
-            <div className="relative group/avatar shrink-0">
-              <div
-                onClick={handleChoosePhoto}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-surface text-primary-ink font-display font-bold text-2xl sm:text-3xl flex items-center justify-center border-4 border-surface shadow-md overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-primary-strong hover:opacity-95"
-                aria-label="Click to upload profile photo"
-                title="Click to change profile photo"
-                data-testid="profile-avatar-initials"
-              >
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={profile.firstName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="w-full h-full bg-primary-soft flex items-center justify-center">
-                    {initials}
-                  </span>
-                )}
+            {avatar ? (
+              <div className="relative shrink-0" data-testid="profile-avatar-initials">
+                {avatar}
               </div>
-
-              {/* Camera Icon Overlay */}
-              <button
-                type="button"
-                onClick={handleChoosePhoto}
-                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-surface-raised border border-border text-text shadow-sm flex items-center justify-center hover:bg-primary-soft hover:text-primary-strong hover:border-primary-strong transition-all cursor-pointer"
-                title="Upload profile photo"
-                aria-label="Upload profile photo"
-                data-testid="upload-avatar-btn"
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+            ) : (
+              <div className="relative group/avatar shrink-0">
+                <div
+                  onClick={handleChoosePhoto}
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-surface text-primary-ink font-display font-bold text-2xl sm:text-3xl flex items-center justify-center border-4 border-surface shadow-md overflow-hidden cursor-pointer transition-all hover:ring-2 hover:ring-primary-strong hover:opacity-95"
+                  aria-label="Click to upload profile photo"
+                  title="Click to change profile photo"
+                  data-testid="profile-avatar-initials"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </button>
-            </div>
+                  {user?.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={profile.firstName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="w-full h-full bg-primary-soft flex items-center justify-center">
+                      {initials}
+                    </span>
+                  )}
+                </div>
+
+                {/* Camera Icon Overlay */}
+                <button
+                  type="button"
+                  onClick={handleChoosePhoto}
+                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-surface-raised border border-border text-text shadow-sm flex items-center justify-center hover:bg-primary-soft hover:text-primary-strong hover:border-primary-strong transition-all cursor-pointer"
+                  title="Upload profile photo"
+                  aria-label="Upload profile photo"
+                  data-testid="upload-avatar-btn"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
 
             {/* Profile Name & Designation / Department */}
             <div className="min-w-0 pb-1">
@@ -157,27 +169,31 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
               </div>
             )}
 
-            <a
-              href={`/employees/${profile.id}`}
-              data-testid="view-full-record-link"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-input border border-border bg-surface hover:bg-surface-muted text-text transition-colors shadow-xs min-h-[44px]"
-            >
-              <svg
-                className="w-3.5 h-3.5 text-text-muted"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+            {avatar ? (
+              actions
+            ) : (
+              <a
+                href={`/employees/${profile.id}`}
+                data-testid="view-full-record-link"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-input border border-border bg-surface hover:bg-surface-muted text-text transition-colors shadow-xs min-h-[44px]"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
-              <span>View Full Record</span>
-            </a>
+                <svg
+                  className="w-3.5 h-3.5 text-text-muted"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+                <span>View Full Record</span>
+              </a>
+            )}
           </div>
         </div>
 
@@ -187,7 +203,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
             {profile.employeeCode}
           </span>
           <span className="text-xs text-text-subtle font-mono">Version {profile.version}</span>
-          {user?.avatarUrl && (
+          {!avatar && user?.avatarUrl && (
             <button
               type="button"
               onClick={handleRemovePhoto}
