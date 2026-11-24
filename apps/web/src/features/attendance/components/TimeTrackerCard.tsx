@@ -123,7 +123,17 @@ export function TimeTrackerCard({
       }
       if (active?.checkInTime) {
         const start = new Date(active.checkInTime);
-        const activeElapsedSecs = Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000));
+        const nowMs = Date.now();
+        // Break time is not work time: closed breaks are subtracted, and an open break stops the clock.
+        const breakSecs = (active.breaks ?? []).reduce((sum, b) => {
+          const from = new Date(b.startTime).getTime();
+          const to = b.endTime ? new Date(b.endTime).getTime() : nowMs;
+          return sum + Math.max(0, Math.floor((to - from) / 1000));
+        }, 0);
+        const activeElapsedSecs = Math.max(
+          0,
+          Math.floor((nowMs - start.getTime()) / 1000) - breakSecs,
+        );
         const formattedCheckIn = start.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
@@ -133,9 +143,7 @@ export function TimeTrackerCard({
         setSecondsElapsed(activeElapsedSecs);
         setIsCheckedIn(true);
         setIsCompletedToday(false);
-        const isOnBreak = Boolean(
-          summary.activeSession?.breakStartTime && !summary.activeSession?.breakEndTime,
-        );
+        const isOnBreak = Boolean(active.breaks?.some((b) => b.endTime === null));
         setTimeTrackerRunning(!isOnBreak);
         saveLocalSession({
           isCheckedIn: true,

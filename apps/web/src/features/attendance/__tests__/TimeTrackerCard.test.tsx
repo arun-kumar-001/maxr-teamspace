@@ -167,4 +167,45 @@ describe('TimeTrackerCard & AttendanceCaptureModal (Issue #2)', () => {
     expect(screen.getByText('Checked In')).toBeDefined();
     expect(screen.getByText('10:00 AM')).toBeDefined();
   });
+
+  it('stays paused after the server reload, and does not count break time as work time', async () => {
+    const now = Date.now();
+    const session = {
+      id: 's1',
+      checkInTime: new Date(now - 2 * 3600_000).toISOString(),
+      checkOutTime: null,
+      // Worked 1h, then on break for the last hour (still open).
+      breaks: [{ startTime: new Date(now - 3600_000).toISOString(), endTime: null }],
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) =>
+        Promise.resolve({
+          ok: true,
+          headers: new Headers({ 'content-type': 'application/json' }),
+          json: () =>
+            Promise.resolve(
+              url.includes('/attendance/today')
+                ? {
+                    data: {
+                      workDate: '2026-11-19',
+                      totalDurationMinutes: 0,
+                      sessionsCount: 1,
+                      activeSession: session,
+                      sessions: [session],
+                    },
+                  }
+                : { data: session },
+            ),
+        }),
+      ),
+    );
+
+    render(<TimeTrackerCard variant="overview" />);
+
+    // Paused: the button offers Resume (it was "Pause" while the break was ignored)...
+    expect(await screen.findByTitle('Resume work time')).toBeDefined();
+    // ...and the clock shows the 1h worked, not the 2h since check-in.
+    expect(screen.getByText(/^01:00$/)).toBeDefined();
+  });
 });

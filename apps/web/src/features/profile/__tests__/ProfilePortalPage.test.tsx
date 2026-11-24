@@ -121,6 +121,10 @@ describe('ProfilePortalPage', () => {
     expect(screen.getByText('09:15 AM')).toBeTruthy();
     expect(screen.getByText('Checked In')).toBeTruthy();
     expect(screen.getByTestId('portal-avatar-img')).toBeTruthy();
+    // The photo card shows only name and role: no badge, upload camera or email.
+    expect(screen.queryByText(/active profile/i)).toBeNull();
+    expect(screen.queryByTitle(/upload profile photo/i)).toBeNull();
+    expect(screen.queryByText(/@/)).toBeNull();
     expect(screen.getByText('Recent Payslips')).toBeTruthy();
     expect(screen.getByText('My Tasks')).toBeTruthy();
 
