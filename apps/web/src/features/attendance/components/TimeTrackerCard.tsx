@@ -498,7 +498,7 @@ export function TimeTrackerCard({
                 <path d="M12 7v5.2l3.4 2" />
               </svg>
             </span>
-            <h2 className="text-sm font-bold text-text truncate">Time tracker</h2>
+            <h2 className="text-sm font-bold text-text truncate">Time Tracker</h2>
           </div>
           <p
             className={`text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap ${

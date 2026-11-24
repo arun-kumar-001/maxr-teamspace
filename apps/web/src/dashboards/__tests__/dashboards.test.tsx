@@ -40,17 +40,20 @@ describe('TC-12-05: Four Distinct Role Dashboard Shells', () => {
   });
 
   describe('TeamLeadDashboard', () => {
-    it('should render team shift status, pending approvals, and sprint velocity', () => {
+    it('should render team lead KPI cards, task overview, time tracker, and active team tasks', () => {
       const html = renderToStaticMarkup(<TeamLeadDashboard />);
 
       expect(html).toContain('data-testid="team-lead-dashboard"');
-      expect(html).toContain('Engineering Team Lead Dashboard');
+      expect(html).toContain('Engineering Team Lead');
       expect(html).toContain('Team Size');
+      expect(html).toContain('My Tasks');
+      expect(html).toContain('Team Tasks');
       expect(html).toContain('Pending Approvals');
-      expect(html).toContain('Sprint Velocity');
-      expect(html).toContain('Active Sprint Tasks');
-      expect(html).toContain('Approve');
-      expect(html).toContain('Reject');
+      expect(html).toContain('Team Task Overview');
+      expect(html).toContain('Time Tracker');
+      expect(html).toContain('Attendance (Today)');
+      expect(html).toContain('Team Performance');
+      expect(html).toContain('Active Team Tasks');
     });
   });
 
