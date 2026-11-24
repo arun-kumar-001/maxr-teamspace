@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
@@ -12,6 +12,7 @@ import {
   formatProjectDueSummary,
   type ProjectTaskSummary,
 } from '../components/ProjectCard';
+import { newIdempotencyKey } from '../api/projectsApi';
 import { ProjectDetailDrawer } from '../components/ProjectDetailDrawer';
 import { ProjectFilters } from '../components/ProjectFilters';
 import { ProjectFormModal } from '../components/ProjectFormModal';
@@ -100,8 +101,24 @@ export function ProjectsListPage() {
     setSelectedProjectId(projectId);
   };
 
+  // One Idempotency-Key per distinct form. If a try got no answer (network, 5xx), trying the same
+  // form again reuses it, so a create that did reach the server is not repeated. After an answer
+  // (created, or a 4xx refusal, which the server remembers for the key) the next try needs a new key.
+  const createAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
+
   const handleCreateSubmit = async (input: CreateProjectInput) => {
-    await createProject(input);
+    const fingerprint = JSON.stringify(input);
+    if (createAttempt.current?.fingerprint !== fingerprint) {
+      createAttempt.current = { fingerprint, key: newIdempotencyKey() };
+    }
+    try {
+      await createProject(input, createAttempt.current.key);
+      createAttempt.current = null;
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (typeof status === 'number' && status < 500) createAttempt.current = null;
+      throw err;
+    }
   };
 
   const handleQuickCreateTask = async (input: CreateTaskInput) => {

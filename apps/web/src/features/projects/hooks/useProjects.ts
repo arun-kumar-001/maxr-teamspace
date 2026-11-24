@@ -138,8 +138,11 @@ export function useProjects(options: UseProjectsOptions = {}) {
     setSearch(newSearch);
   };
 
-  const handleCreateProject = async (input: CreateProjectInput): Promise<Project> => {
-    const created = await createProject(input);
+  const handleCreateProject = async (
+    input: CreateProjectInput,
+    idempotencyKey?: string,
+  ): Promise<Project> => {
+    const created = await createProject(input, idempotencyKey);
     await loadProjects();
     return created;
   };

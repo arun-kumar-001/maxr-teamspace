@@ -67,18 +67,36 @@ async function withDevMockFallback<T>(
   }
 }
 
+/** " (body.code: Letters, digits...)": what the server says is wrong, so the message is not just "validation failed". */
+function describeDetails(details: unknown): string {
+  if (!Array.isArray(details)) return '';
+  const parts = details
+    .map((d: { field?: string; message?: string }) =>
+      d.field && d.message ? `${d.field}: ${d.message}` : (d.message ?? d.field ?? ''),
+    )
+    .filter(Boolean);
+  return parts.length > 0 ? ` (${parts.join('; ')})` : '';
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     const errObj = data?.error || {};
     throw new ProjectsApiError(
-      errObj.message || `API request failed with status ${res.status}`,
+      `${errObj.message || `API request failed with status ${res.status}`}${describeDetails(errObj.details)}`,
       res.status,
       errObj.code,
       errObj.details,
     );
   }
   return data as T;
+}
+
+/** A fresh Idempotency-Key for one create submission (the server accepts 8 to 128 letters, digits, "-" and "_"). */
+export function newIdempotencyKey(): string {
+  return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `project-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export async function fetchProjects(
@@ -127,12 +145,20 @@ export async function fetchProjectById(id: string, signal?: AbortSignal): Promis
   );
 }
 
-export async function createProject(input: CreateProjectInput): Promise<ProjectDetail> {
+/**
+ * Creates a project. The API refuses a create without an Idempotency-Key (answering "Request
+ * validation failed"); pass the same key when retrying the same submission so a request that did
+ * reach the server is not created twice.
+ */
+export async function createProject(
+  input: CreateProjectInput,
+  idempotencyKey: string = newIdempotencyKey(),
+): Promise<ProjectDetail> {
   return withDevMockFallback(
     async () => {
       const res = await apiFetch('/api/v1/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
         body: JSON.stringify(input),
       });
       const data = await handleResponse<{ data: ProjectDetail }>(res);

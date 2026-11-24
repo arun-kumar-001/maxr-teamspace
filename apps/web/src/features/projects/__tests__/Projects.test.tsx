@@ -223,7 +223,67 @@ describe('Projects Feature (Issue #42)', () => {
           code: 'PRJ-GAMMA',
           name: 'Gamma Testing Platform',
         }),
+        expect.any(String),
       );
+    });
+  });
+
+  describe('Idempotency-Key of a project create', () => {
+    const keyOf = (call: number) => vi.mocked(projectsApi.createProject).mock.calls[call]![1];
+
+    async function openAndSubmit() {
+      fireEvent.click(await screen.findByTestId('header-create-project-btn'));
+      fireEvent.change(screen.getByLabelText(/Project Code/i), { target: { value: 'MAXR-002' } });
+      fireEvent.change(screen.getByLabelText(/Project Name/i), { target: { value: 'MaxR' } });
+      fireEvent.click(screen.getByTestId('submit-project-btn'));
+    }
+
+    const renderPage = () =>
+      render(
+        <MemoryRouter initialEntries={['/projects']}>
+          <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+            <ProjectsListPage />
+          </AuthProvider>
+        </MemoryRouter>,
+      );
+
+    it('is kept when the server never answered, and is new once the project was created', async () => {
+      vi.mocked(projectsApi.createProject)
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        .mockResolvedValue(mockProjectDetail);
+      renderPage();
+
+      await openAndSubmit();
+      await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByTestId('submit-project-btn')).not.toBeDisabled());
+
+      // The same form again after a lost request: the same key, so it cannot be created twice.
+      fireEvent.click(screen.getByTestId('submit-project-btn'));
+      await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalledTimes(2));
+      expect(keyOf(1)).toBe(keyOf(0));
+
+      // Creating another project with identical text later is a new request, not a replay.
+      await waitFor(() => expect(screen.queryByTestId('submit-project-btn')).toBeNull());
+      await openAndSubmit();
+      await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalledTimes(3));
+      expect(keyOf(2)).not.toBe(keyOf(1));
+    });
+
+    it('is new after the server refused the request, which it remembers for the old key', async () => {
+      vi.mocked(projectsApi.createProject)
+        .mockRejectedValueOnce(
+          Object.assign(new Error('A project with this code already exists'), { status: 409 }),
+        )
+        .mockResolvedValue(mockProjectDetail);
+      renderPage();
+
+      await openAndSubmit();
+      await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(screen.getByTestId('submit-project-btn')).not.toBeDisabled());
+
+      fireEvent.click(screen.getByTestId('submit-project-btn'));
+      await waitFor(() => expect(projectsApi.createProject).toHaveBeenCalledTimes(2));
+      expect(keyOf(1)).not.toBe(keyOf(0));
     });
   });
 
