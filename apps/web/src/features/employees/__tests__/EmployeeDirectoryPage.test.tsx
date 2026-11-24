@@ -91,6 +91,31 @@ describe('EmployeeDirectoryPage Component', () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the employee's uploaded profile photo from the server on the card", async () => {
+    const photoUrl = '/api/v1/employees/emp-1/photo?v=1700000000000';
+    vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockResolvedValueOnce({
+      data: [{ ...sampleEmployees[0]!, photoUrl }],
+      meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+    });
+    render(<EmployeeDirectoryPage />);
+    const card = await screen.findByTestId('employee-grid-card-emp-1');
+    expect(card.querySelector('img')).toHaveAttribute('src', photoUrl);
+  });
+
+  it('labels the code row "Emp ID" and keeps name, designation and department in that order', async () => {
+    render(<EmployeeDirectoryPage />);
+    const card = await screen.findByTestId('employee-grid-card-emp-1');
+    expect(card).toHaveTextContent('Emp ID');
+    expect(card).not.toHaveTextContent('Employee ID');
+    const text = card.textContent ?? '';
+    const name = text.indexOf('Eleanor Vance');
+    const designation = text.indexOf(sampleEmployees[0]!.designation.title);
+    const department = text.indexOf(sampleEmployees[0]!.department.name);
+    expect(name).toBeGreaterThanOrEqual(0);
+    expect(designation).toBeGreaterThan(name);
+    expect(department).toBeGreaterThan(designation);
+  });
+
   it('renders loading skeletons on initial mount before data resolves', async () => {
     let resolveDirectory: ((val: PaginatedResponse) => void) | undefined;
     vi.spyOn(directoryApi, 'fetchEmployeeDirectory').mockImplementationOnce(

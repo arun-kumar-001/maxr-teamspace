@@ -11,11 +11,14 @@ import {
 } from '../../../components/ui';
 import { useAuth } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../components/EmployeeCard';
+import { EmployeeActionsMenu } from '../components/EmployeeActionsMenu';
+import { EmployeeAvatar } from '../components/EmployeeAvatar';
 import { EmployeeFilters } from '../components/EmployeeFilters';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { fetchEmployeeDetail, updateEmployeeDetail } from '../api/detail';
 import { useEmployeeDirectory } from '../hooks/useEmployeeDirectory';
+import { formatTenure } from '../lib/tenure';
 import type { EmployeeDirectoryItem, EmployeeDetail } from '../types';
 
 // --- Code-Based SVG Icons (Zero Raw Hex - ui-hex-regression test compliant) ---
@@ -117,25 +120,6 @@ function IconNetwork({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconLayers({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
-
 function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
@@ -151,60 +135,6 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function IconEye({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function IconEditPencil({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-    </svg>
-  );
-}
-
-function IconMoreVertical({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
-      <circle cx="12" cy="5" r="1.2" fill="currentColor" />
-      <circle cx="12" cy="19" r="1.2" fill="currentColor" />
     </svg>
   );
 }
@@ -264,62 +194,42 @@ function IconMail({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   );
 }
 
-function IconPower({ className = 'w-4 h-4' }: { className?: string }) {
+function IconTable({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-      <line x1="12" y1="2" x2="12" y2="12" />
+      <rect x="3" y="4" width="18" height="16" rx="3" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <line x1="3" y1="15" x2="21" y2="15" />
+      <line x1="9" y1="10" x2="9" y2="20" />
     </svg>
   );
 }
 
-function IconList({ className = 'w-4 h-4' }: { className?: string }) {
+function IconCards({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
     >
-      <line x1="8" y1="6" x2="21" y2="6" />
-      <line x1="8" y1="12" x2="21" y2="12" />
-      <line x1="8" y1="18" x2="21" y2="18" />
-      <line x1="3" y1="6" x2="3.01" y2="6" />
-      <line x1="3" y1="12" x2="3.01" y2="12" />
-      <line x1="3" y1="18" x2="3.01" y2="18" />
-    </svg>
-  );
-}
-
-function IconGrid({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
+      <rect x="3" y="3" width="8" height="8" rx="2.5" />
+      <rect x="13" y="3" width="8" height="8" rx="2.5" />
+      <rect x="3" y="13" width="8" height="8" rx="2.5" />
+      <rect x="13" y="13" width="8" height="8" rx="2.5" />
     </svg>
   );
 }
@@ -361,72 +271,16 @@ function IconX({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 function DepartmentBadge({ name = '' }: { name?: string }) {
-  const lower = name.toLowerCase();
-  if (lower.includes('eng')) {
-    return (
-      <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-text">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-sky-50 text-sky-600 font-mono text-[11px] font-bold shrink-0">
-          &lt;/&gt;
-        </span>
-        <span>{name}</span>
-      </div>
-    );
-  }
-  if (lower.includes('human') || lower.includes('hr')) {
-    return (
-      <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-text">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-emerald-50 text-emerald-600 shrink-0">
-          <IconUsers className="w-3.5 h-3.5" />
-        </span>
-        <span>{name}</span>
-      </div>
-    );
-  }
-  if (lower.includes('oper')) {
-    return (
-      <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-text">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-teal-50 text-teal-600 shrink-0">
-          <IconLayers className="w-3.5 h-3.5" />
-        </span>
-        <span>{name}</span>
-      </div>
-    );
-  }
-  if (lower.includes('prod')) {
-    return (
-      <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-text">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-indigo-50 text-indigo-600 shrink-0">
-          <IconLayers className="w-3.5 h-3.5" />
-        </span>
-        <span>{name}</span>
-      </div>
-    );
-  }
   return (
-    <div className="flex items-center gap-1.5 font-medium text-xs sm:text-sm text-text">
-      <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-purple-50 text-purple-600 shrink-0">
-        <IconBuilding className="w-3.5 h-3.5" />
+    <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-text">
+      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-ink">
+        <IconBuilding className="h-3.5 w-3.5" />
       </span>
-      <span>{name || '\u2014'}</span>
+      <span className="truncate" title={name || undefined}>
+        {name || '\u2014'}
+      </span>
     </div>
   );
-}
-
-function getEmployeePhoto(emp: EmployeeDirectoryItem): string | undefined {
-  if ((emp as unknown as { avatarUrl?: string }).avatarUrl) {
-    return (emp as unknown as { avatarUrl: string }).avatarUrl;
-  }
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const localAvatar =
-      localStorage.getItem(`maxr_avatar_${emp.id}`) ||
-      ((emp as unknown as { userId?: string }).userId
-        ? localStorage.getItem(`maxr_avatar_${(emp as unknown as { userId: string }).userId}`)
-        : null) ||
-      (emp.email ? localStorage.getItem(`maxr_avatar_${emp.email.toLowerCase()}`) : null) ||
-      (emp.employeeCode ? localStorage.getItem(`maxr_avatar_${emp.employeeCode}`) : null);
-    if (localAvatar) return localAvatar;
-  }
-  return undefined;
 }
 
 function getEmploymentType(
@@ -439,36 +293,6 @@ function getEmploymentType(
       .employmentType;
   }
   return undefined;
-}
-
-function DirectoryEmployeePhoto({
-  name,
-  initials,
-  photoUrl,
-}: {
-  name: string;
-  initials: string;
-  photoUrl?: string;
-}) {
-  const [imgFailed, setImgFailed] = useState(false);
-
-  return (
-    <div className="w-20 h-20 rounded-full overflow-hidden mx-auto bg-surface-muted border-2 border-surface-raised shadow-xs shrink-0 flex items-center justify-center relative">
-      {!imgFailed && photoUrl ? (
-        <img
-          src={photoUrl}
-          alt={name}
-          onError={() => setImgFailed(true)}
-          className="w-full h-full object-cover rounded-full"
-          loading="lazy"
-        />
-      ) : (
-        <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-soft to-surface-muted text-primary-deep font-display font-bold text-xl flex items-center justify-center">
-          {initials}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function EmployeeDirectoryPage() {
@@ -518,8 +342,6 @@ export function EmployeeDirectoryPage() {
   const [editingEmployeeDetail, setEditingEmployeeDetail] = useState<EmployeeDetail | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const handleOpenEdit = async (emp: EmployeeDirectoryItem) => {
     try {
@@ -561,25 +383,6 @@ export function EmployeeDirectoryPage() {
     totalEmployees > 0 ? ((activeEmployees / totalEmployees) * 100).toFixed(1) : '100.0';
   const inactivePercentage =
     totalEmployees > 0 ? ((inactiveEmployees / totalEmployees) * 100).toFixed(1) : '0.0';
-
-  // Toggle selection
-  const handleSelectAll = () => {
-    if (selectedIds.size === employees.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(employees.map((e) => e.id)));
-    }
-  };
-
-  const handleSelectOne = (id: string) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    setSelectedIds(next);
-  };
 
   // CSV Export
   const handleExportCSV = () => {
@@ -808,32 +611,37 @@ export function EmployeeDirectoryPage() {
           )}
         </div>
 
-        {/* View Switcher Toggle (matching Image 2) */}
-        <div className="flex items-center gap-1 bg-surface-raised border border-border/80 rounded-xl p-0.5 shadow-xs shrink-0 self-end sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setViewMode('list')}
-            aria-label="List view"
-            className={`min-h-[44px] min-w-[44px] p-1.5 rounded-lg transition-colors cursor-pointer ${
-              viewMode === 'list'
-                ? 'bg-primary-soft text-primary-deep'
-                : 'text-text-muted hover:text-text hover:bg-surface-muted'
-            }`}
-          >
-            <IconList className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('grid')}
-            aria-label="Grid view"
-            className={`min-h-[44px] min-w-[44px] p-1.5 rounded-lg transition-colors cursor-pointer ${
-              viewMode === 'grid'
-                ? 'bg-primary-soft text-primary-deep'
-                : 'text-text-muted hover:text-text hover:bg-surface-muted'
-            }`}
-          >
-            <IconGrid className="w-4 h-4" />
-          </button>
+        {/* Layout switch: same look as the shared SegmentedControl (grey track, raised white selected pill), icons only. */}
+        <div
+          role="group"
+          aria-label="Directory layout"
+          className="inline-flex shrink-0 items-center gap-0.5 self-end rounded-[14px] bg-track p-1 sm:self-auto"
+        >
+          {(
+            [
+              { mode: 'list', label: 'List view', hint: 'Table', Icon: IconTable },
+              { mode: 'grid', label: 'Grid view', hint: 'Cards', Icon: IconCards },
+            ] as const
+          ).map(({ mode, label, hint, Icon }) => {
+            const selected = viewMode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                aria-pressed={selected}
+                aria-label={label}
+                title={hint}
+                className={`inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-segment transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-strong sm:min-h-[36px] sm:min-w-[40px] ${
+                  selected
+                    ? 'bg-surface-raised text-primary-ink shadow-raised'
+                    : 'text-text-muted hover:text-text'
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -941,7 +749,9 @@ export function EmployeeDirectoryPage() {
 
       {/* 8. Desktop & Tablet Views (>=640px) Card Grid matching Image 2 */}
       {!isLoading && employees.length > 0 && viewMode === 'grid' && (
-        <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 dir-fade-in relative">
+        // At most 4 cards per row: each column is a quarter of the row (minus gaps), so cards grow with the
+        // screen. Below 16rem per card the row drops to 3, 2 then 1 columns instead of squeezing the card.
+        <div className="hidden sm:grid gap-6 dir-fade-in relative [grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100%_-_4.5rem)/4)),1fr))]">
           {employees.map((emp) => {
             const initials = `${emp.firstName[0] || ''}${emp.lastName[0] || ''}`.toUpperCase();
             const isSelf = emp.id === user?.employeeId;
@@ -950,95 +760,52 @@ export function EmployeeDirectoryPage() {
             return (
               <div
                 key={emp.id}
-                className="p-6 bg-surface-raised border border-border/80 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between relative group"
+                className="relative flex flex-col rounded-3xl border border-border bg-surface-raised shadow-card transition-shadow duration-200 hover:shadow-raised"
                 data-testid={`employee-grid-card-${emp.id}`}
               >
-                {/* Top Bar: Status Badge + 3-Dots Action Menu */}
-                <div className="flex items-center justify-between w-full">
-                  {emp.status === 'active' ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-positive-soft text-positive-ink">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-muted text-text-muted">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                      {emp.status === 'pending' ? 'Pending' : 'Inactive'}
-                    </span>
-                  )}
-
-                  {/* Three-dot Action Menu */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setOpenMenuId(openMenuId === emp.id ? null : emp.id)}
-                      aria-label={`Actions for ${emp.firstName} ${emp.lastName}`}
-                      aria-expanded={openMenuId === emp.id}
-                      className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors cursor-pointer"
-                    >
-                      <IconMoreVertical className="w-4 h-4" />
-                    </button>
-
-                    {openMenuId === emp.id && (
-                      <div
-                        className="absolute right-0 top-8 z-30 w-44 bg-surface-raised border border-border rounded-xl shadow-lg py-1 animate-in fade-in zoom-in-95"
-                        role="group"
-                        aria-label="Employee actions"
-                        onKeyDown={(event) => {
-                          if (event.key === 'Escape') setOpenMenuId(null);
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpenMenuId(null);
-                            navigate(`/employees/${emp.id}`);
-                          }}
-                          className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
-                        >
-                          <IconEye className="w-4 h-4 text-text-muted shrink-0" />
-                          <span>View Details</span>
-                        </button>
-
-                        {canCreateEmployee && !isDeactivated && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenMenuId(null);
-                              handleOpenEdit(emp);
-                            }}
-                            className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-text hover:bg-surface-muted hover:text-primary-deep transition-colors text-left cursor-pointer"
-                          >
-                            <IconEditPencil className="w-4 h-4 text-text-muted shrink-0" />
-                            <span>Edit Employee</span>
-                          </button>
-                        )}
-
-                        {isAdmin && !isSelf && !isDeactivated && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenMenuId(null);
-                              setDeactivatingEmployee(emp);
-                            }}
-                            className="min-h-[44px] w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-danger hover:bg-negative-soft transition-colors text-left border-t border-border/60 cursor-pointer"
-                            data-testid={`deactivate-btn-table-${emp.id}`}
-                          >
-                            <IconPower className="w-4 h-4 text-danger shrink-0" />
-                            <span>Deactivate</span>
-                          </button>
-                        )}
-                      </div>
+                {/* Banner: status + actions. The avatar below overlaps its edge, so it sits at the same height on every card. */}
+                <div className="flex h-24 items-start justify-between rounded-t-3xl bg-primary-soft px-4 pt-3">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    {emp.status === 'active' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-raised px-2.5 py-1 text-xs font-semibold text-positive-ink">
+                        <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-raised px-2.5 py-1 text-xs font-semibold text-text-muted">
+                        <span
+                          className="h-1.5 w-1.5 rounded-full bg-border-strong"
+                          aria-hidden="true"
+                        />
+                        {emp.status === 'pending' ? 'Pending' : 'Inactive'}
+                      </span>
+                    )}
+                    {isSelf && (
+                      <span className="rounded-full bg-surface-raised px-2 py-1 text-xs font-semibold text-primary-ink">
+                        <span aria-hidden="true">You</span>
+                        <span className="sr-only">(Current User)</span>
+                      </span>
                     )}
                   </div>
+
+                  <EmployeeActionsMenu
+                    employeeId={emp.id}
+                    employeeName={`${emp.firstName} ${emp.lastName}`}
+                    canEdit={canCreateEmployee && !isDeactivated}
+                    canDeactivate={isAdmin && !isSelf && !isDeactivated}
+                    onView={() => navigate(`/employees/${emp.id}`)}
+                    onEdit={() => handleOpenEdit(emp)}
+                    onDeactivate={() => setDeactivatingEmployee(emp)}
+                  />
                 </div>
 
-                {/* Center Content: Circular Profile Photo, Name, Designation, Department, Employment Type */}
-                <div className="flex flex-col items-center text-center mt-3">
-                  <DirectoryEmployeePhoto
+                {/* Identity: every slot has a fixed position, so cards line up row by row */}
+                <div className="-mt-10 flex flex-col items-center px-5 text-center">
+                  <EmployeeAvatar
                     name={`${emp.firstName} ${emp.lastName}`}
                     initials={initials}
-                    photoUrl={getEmployeePhoto(emp)}
+                    photoUrl={emp.photoUrl}
+                    className="mx-auto h-20 w-20 border-4 border-surface-raised bg-surface-muted font-display text-xl font-bold text-primary-ink shadow-card"
                   />
 
                   <a
@@ -1048,66 +815,61 @@ export function EmployeeDirectoryPage() {
                       navigate(`/employees/${emp.id}`);
                     }}
                     data-testid={`employee-link-${emp.id}`}
-                    className="font-bold text-base sm:text-lg text-text hover:text-primary-deep transition-colors mt-3 block truncate max-w-[240px]"
+                    title={`${emp.firstName} ${emp.lastName}`}
+                    className="mt-3 block w-full truncate font-display text-base font-semibold text-text transition-colors hover:text-primary-ink"
                   >
                     {emp.firstName} {emp.lastName}
                   </a>
 
-                  {isSelf && <span className="text-xs text-text-subtle">(Current User)</span>}
-
-                  <p className="text-xs sm:text-sm text-text-muted font-normal mt-0.5 truncate max-w-[240px]">
+                  <p className="mt-0.5 w-full truncate text-sm text-text-muted">
                     {emp.designation?.title || 'Staff'}
                   </p>
 
-                  <p className="text-xs text-text-subtle font-normal mt-0.5 truncate max-w-[240px]">
-                    {emp.department?.name || 'MAXR Team'}
-                  </p>
-
-                  {getEmploymentType(emp) && (
-                    <div className="mt-2.5">
-                      <span className="inline-block px-3 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600">
+                  <div className="mt-2.5 flex min-h-6 w-full flex-wrap items-center justify-center gap-1.5">
+                    <span className="max-w-full truncate rounded-full bg-surface-muted px-2.5 py-0.5 text-xs font-medium text-text-muted">
+                      {emp.department?.name || 'MAXR Team'}
+                    </span>
+                    {getEmploymentType(emp) && (
+                      <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary-ink">
                         {getEmploymentType(emp)}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                {/* Thin Horizontal Divider */}
-                <div className="border-t border-border/80 my-4 w-full" />
-
-                {/* 3 Key-Value Meta Rows */}
-                <div className="space-y-2.5 w-full text-xs">
-                  <div className="flex items-center justify-between gap-2">
+                {/* Contact details in one tile pinned to the bottom, same label/value styling on each row */}
+                <div className="mt-auto p-4 pt-5">
+                  {/* One two-column grid: the label column fits the widest label, so every value starts at the same left edge and only an over-long value is cut at its end. */}
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 rounded-2xl bg-surface-muted p-3.5 text-xs">
                     <span className="flex items-center gap-2 text-text-muted">
-                      <IconIdBadge className="w-3.5 h-3.5 text-text-subtle shrink-0" />
-                      <span>Employee ID</span>
+                      <IconIdBadge className="h-3.5 w-3.5 shrink-0 text-text-subtle" />
+                      <span>Emp ID</span>
                     </span>
-                    <span className="font-semibold text-text tracking-tight truncate max-w-[150px]">
+                    <span
+                      className="truncate text-left font-semibold text-text"
+                      title={emp.employeeCode}
+                    >
                       {emp.employeeCode}
                     </span>
-                  </div>
 
-                  <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2 text-text-muted">
-                      <IconPhone className="w-3.5 h-3.5 text-text-subtle shrink-0" />
-                      <span>Phone Number</span>
+                      <IconPhone className="h-3.5 w-3.5 shrink-0 text-text-subtle" />
+                      <span>Phone</span>
                     </span>
                     <a
                       href={emp.phone ? `tel:${emp.phone}` : undefined}
-                      className="font-semibold text-text tracking-tight truncate max-w-[150px] hover:text-primary-deep transition-colors"
+                      className="truncate text-left font-semibold text-text transition-colors hover:text-primary-ink"
                     >
                       {emp.phone || 'Not provided'}
                     </a>
-                  </div>
 
-                  <div className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2 text-text-muted">
-                      <IconMail className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+                      <IconMail className="h-3.5 w-3.5 shrink-0 text-text-subtle" />
                       <span>Email</span>
                     </span>
                     <a
                       href={`mailto:${emp.email}`}
-                      className="font-medium text-text truncate max-w-[150px] sm:max-w-[170px] hover:text-primary-deep transition-colors"
+                      className="truncate text-left font-semibold text-text transition-colors hover:text-primary-ink"
                       title={emp.email}
                     >
                       {emp.email}
@@ -1117,15 +879,6 @@ export function EmployeeDirectoryPage() {
               </div>
             );
           })}
-
-          {/* Click outside to close open three-dot menu */}
-          {openMenuId && (
-            <div
-              className="fixed inset-0 z-20 cursor-default"
-              onClick={() => setOpenMenuId(null)}
-              aria-hidden="true"
-            />
-          )}
         </div>
       )}
 
@@ -1133,22 +886,13 @@ export function EmployeeDirectoryPage() {
       {!isLoading && employees.length > 0 && viewMode === 'list' && (
         <div
           data-testid="datatable-desktop-table"
-          className="hidden sm:block bg-surface/90 backdrop-blur-xs border border-border/80 rounded-card shadow-card overflow-hidden dir-fade-in"
+          className="hidden sm:block bg-surface border border-border rounded-card shadow-card overflow-hidden dir-fade-in"
         >
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm" aria-label="Employee directory listing">
-              <thead className="bg-surface-muted/60 border-b border-border text-xs font-bold text-text-muted uppercase tracking-wider">
+              <thead className="whitespace-nowrap border-b border-border bg-surface-muted text-xs font-bold uppercase tracking-wider text-text-muted">
                 <tr>
-                  <th scope="col" className="w-10 px-4 py-3.5">
-                    <input
-                      type="checkbox"
-                      aria-label="Select all employees"
-                      checked={selectedIds.size === employees.length && employees.length > 0}
-                      onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
-                    />
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
+                  <th scope="col" className="px-3 py-3">
                     <button
                       type="button"
                       onClick={() =>
@@ -1165,7 +909,7 @@ export function EmployeeDirectoryPage() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col" className="px-4 py-3.5">
+                  <th scope="col" className="px-3 py-3">
                     <button
                       type="button"
                       onClick={() =>
@@ -1188,19 +932,22 @@ export function EmployeeDirectoryPage() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col" className="px-4 py-3.5">
+                  <th scope="col" className="px-3 py-3">
                     DEPARTMENT
                   </th>
-                  <th scope="col" className="px-4 py-3.5 hidden md:table-cell">
+                  <th scope="col" className="px-3 py-3 hidden xl:table-cell">
                     DESIGNATION
                   </th>
-                  <th scope="col" className="px-4 py-3.5 hidden lg:table-cell">
+                  <th scope="col" className="px-3 py-3 hidden 3xl:table-cell">
                     MANAGER
                   </th>
-                  <th scope="col" className="px-4 py-3.5">
+                  <th scope="col" className="px-3 py-3 hidden 3xl:table-cell">
+                    PHONE
+                  </th>
+                  <th scope="col" className="px-3 py-3">
                     STATUS
                   </th>
-                  <th scope="col" className="px-4 py-3.5 hidden xl:table-cell">
+                  <th scope="col" className="px-3 py-3 hidden 2xl:table-cell">
                     <button
                       type="button"
                       onClick={() =>
@@ -1223,8 +970,8 @@ export function EmployeeDirectoryPage() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col" className="px-4 py-3.5 text-right">
-                    ACTIONS
+                  <th scope="col" className="w-14 px-3 py-3">
+                    <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
@@ -1236,56 +983,37 @@ export function EmployeeDirectoryPage() {
                   const isDeactivated = emp.status === 'deactivated';
 
                   return (
-                    <tr
-                      key={emp.id}
-                      className={`hover:bg-surface-muted/50 transition-colors ${
-                        selectedIds.has(emp.id) ? 'bg-primary-soft/30' : ''
-                      }`}
-                    >
-                      <td className="w-10 px-4 py-3.5">
-                        <input
-                          type="checkbox"
-                          aria-label={`Select ${emp.firstName} ${emp.lastName}`}
-                          checked={selectedIds.has(emp.id)}
-                          onChange={() => handleSelectOne(emp.id)}
-                          className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
-                        />
-                      </td>
-
+                    <tr key={emp.id} className="transition-colors hover:bg-surface-muted/50">
                       {/* Employee Column: Avatar, Name, Email */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-bold text-xs shrink-0 shadow-xs overflow-hidden relative">
-                            {getEmployeePhoto(emp) ? (
-                              <img
-                                src={getEmployeePhoto(emp)}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
+                          <EmployeeAvatar
+                            name={`${emp.firstName} ${emp.lastName}`}
+                            initials={initials}
+                            photoUrl={emp.photoUrl}
+                            className="h-10 w-10 bg-primary-soft text-sm font-bold text-primary-ink"
+                          />
+                          <div className="min-w-0 max-w-[15rem]">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <a
+                                href={`/employees/${emp.id}`}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate(`/employees/${emp.id}`);
                                 }}
-                              />
-                            ) : null}
-                            <span className={getEmployeePhoto(emp) ? 'sr-only' : undefined}>
-                              {initials}
-                            </span>
-                          </div>
-                          <div className="min-w-0">
-                            <a
-                              href={`/employees/${emp.id}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                navigate(`/employees/${emp.id}`);
-                              }}
-                              className="font-semibold text-text hover:text-primary-deep hover:underline truncate block"
-                              data-testid={`employee-link-${emp.id}`}
-                            >
-                              {emp.firstName} {emp.lastName}{' '}
-                              <span className="font-mono text-xs text-text-muted font-normal">
-                                {emp.employeeCode}
-                              </span>
-                            </a>
-                            <div className="text-xs text-text-muted truncate">
+                                className="min-w-0 truncate font-semibold text-text hover:text-primary-ink hover:underline"
+                                data-testid={`employee-link-${emp.id}`}
+                              >
+                                {emp.firstName} {emp.lastName}
+                              </a>
+                              {isSelf && (
+                                <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-primary-ink">
+                                  <span aria-hidden="true">You</span>
+                                  <span className="sr-only">(Current User)</span>
+                                </span>
+                              )}
+                            </div>
+                            <div className="truncate text-xs text-text-muted">
                               {emp.email || `${emp.firstName.toLowerCase()}@maxr.internal`}
                             </div>
                           </div>
@@ -1293,30 +1021,35 @@ export function EmployeeDirectoryPage() {
                       </td>
 
                       {/* Code Column */}
-                      <td className="px-4 py-3.5">
-                        <span className="font-mono text-xs text-text-muted font-semibold bg-surface-muted px-2 py-0.5 rounded border border-border/60">
+                      <td className="px-3 py-3">
+                        <span className="inline-block whitespace-nowrap rounded-md bg-surface-muted px-2 py-0.5 font-mono text-xs font-semibold text-text-muted">
                           {emp.employeeCode}
                         </span>
                       </td>
 
                       {/* Department Column */}
-                      <td className="px-4 py-3.5">
+                      <td className="max-w-[11rem] px-3 py-3">
                         <DepartmentBadge name={emp.department?.name} />
                       </td>
 
                       {/* Designation Column */}
-                      <td className="px-4 py-3.5 hidden md:table-cell text-xs sm:text-sm text-text-muted">
+                      <td
+                        className="hidden max-w-[11.5rem] truncate px-3 py-3 text-sm text-text-muted xl:table-cell"
+                        title={emp.designation?.title || undefined}
+                      >
                         {emp.designation?.title || '\u2014'}
                       </td>
 
                       {/* Manager Column */}
-                      <td className="px-4 py-3.5 hidden lg:table-cell">
+                      <td className="hidden px-3 py-3 3xl:table-cell">
                         {emp.manager ? (
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink font-semibold flex items-center justify-center text-[10px] shrink-0">
-                              {emp.manager.firstName[0]}
-                              {emp.manager.lastName[0]}
-                            </div>
+                            <EmployeeAvatar
+                              name={`${emp.manager.firstName} ${emp.manager.lastName}`}
+                              employeeId={emp.manager.id}
+                              initials={`${emp.manager.firstName[0] ?? ''}${emp.manager.lastName[0] ?? ''}`}
+                              className="h-6 w-6 bg-primary-soft text-[10px] font-semibold text-primary-ink"
+                            />
                             <span className="text-xs text-text font-medium truncate max-w-[120px]">
                               {emp.manager.firstName} {emp.manager.lastName}
                             </span>
@@ -1326,24 +1059,39 @@ export function EmployeeDirectoryPage() {
                         )}
                       </td>
 
+                      {/* Phone Column */}
+                      <td className="hidden whitespace-nowrap px-3 py-3 text-sm 3xl:table-cell">
+                        {emp.phone ? (
+                          <a
+                            href={`tel:${emp.phone}`}
+                            className="text-text transition-colors hover:text-primary-ink"
+                          >
+                            {emp.phone}
+                          </a>
+                        ) : (
+                          <span className="text-text-muted">—</span>
+                        )}
+                      </td>
+
                       {/* Status Column */}
-                      <td className="px-4 py-3.5">
+                      <td className="px-3 py-3">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                             emp.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-700'
+                              ? 'bg-positive-soft text-positive-ink'
                               : emp.status === 'pending'
-                                ? 'bg-amber-500/10 text-amber-700'
-                                : 'bg-rose-500/10 text-rose-700'
+                                ? 'bg-tile-yellow text-text'
+                                : 'bg-negative-soft text-negative-ink'
                           }`}
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${
+                            aria-hidden="true"
+                            className={`h-1.5 w-1.5 rounded-full ${
                               emp.status === 'active'
-                                ? 'bg-emerald-500'
+                                ? 'bg-success'
                                 : emp.status === 'pending'
-                                  ? 'bg-amber-500'
-                                  : 'bg-rose-500'
+                                  ? 'bg-warning'
+                                  : 'bg-danger'
                             }`}
                           />
                           {emp.status === 'active'
@@ -1355,55 +1103,26 @@ export function EmployeeDirectoryPage() {
                       </td>
 
                       {/* Joined Date Column */}
-                      <td className="px-4 py-3.5 hidden xl:table-cell text-xs text-text-muted">
-                        {formatJoiningDate(emp.joiningDate)}
+                      <td className="hidden whitespace-nowrap px-3 py-3 2xl:table-cell">
+                        <div className="text-sm text-text">
+                          {formatJoiningDate(emp.joiningDate)}
+                        </div>
+                        <div className="text-xs text-text-muted">
+                          {formatTenure(emp.joiningDate)}
+                        </div>
                       </td>
 
                       {/* Actions Column */}
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            aria-label={`View ${emp.firstName} ${emp.lastName}`}
-                            onClick={() => navigate(`/employees/${emp.id}`)}
-                            className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-primary-deep rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
-                          >
-                            <IconEye className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            type="button"
-                            aria-label={`Edit ${emp.firstName} ${emp.lastName}`}
-                            onClick={() => handleOpenEdit(emp)}
-                            className="min-h-[44px] min-w-[44px] p-1.5 text-text-muted hover:text-text rounded-lg hover:bg-surface-muted transition-colors min-w-[32px] min-h-[32px] inline-flex items-center justify-center"
-                          >
-                            <IconEditPencil className="w-4 h-4" />
-                          </button>
-
-                          {isAdmin && (
-                            <>
-                              {isSelf ? (
-                                <span className="text-xs text-text-subtle font-medium ml-1">
-                                  (Current User)
-                                </span>
-                              ) : isDeactivated ? (
-                                <span className="text-xs text-text-subtle font-mono ml-1">
-                                  Deactivated
-                                </span>
-                              ) : (
-                                <Button
-                                  variant="danger"
-                                  size="sm"
-                                  onClick={() => setDeactivatingEmployee(emp)}
-                                  data-testid={`deactivate-btn-table-${emp.id}`}
-                                  className="min-h-[36px] text-xs px-2.5 py-1 ml-1"
-                                >
-                                  Deactivate
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
+                      <td className="w-14 px-3 py-3 text-right">
+                        <EmployeeActionsMenu
+                          employeeId={emp.id}
+                          employeeName={`${emp.firstName} ${emp.lastName}`}
+                          canEdit={canCreateEmployee && !isDeactivated}
+                          canDeactivate={isAdmin && !isSelf && !isDeactivated}
+                          onView={() => navigate(`/employees/${emp.id}`)}
+                          onEdit={() => handleOpenEdit(emp)}
+                          onDeactivate={() => setDeactivatingEmployee(emp)}
+                        />
                       </td>
                     </tr>
                   );
@@ -1413,7 +1132,7 @@ export function EmployeeDirectoryPage() {
           </div>
 
           {/* 10. Pagination Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 bg-surface-muted/40 border-t border-border text-xs text-text-muted">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 bg-surface-muted border-t border-border text-xs text-text-muted">
             <div>
               Showing{' '}
               <span className="font-semibold text-text">{(meta.page - 1) * meta.pageSize + 1}</span>{' '}

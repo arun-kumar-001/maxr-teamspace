@@ -247,8 +247,8 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await searchInput.fill('Knight');
 
     // Wait for debounced search and filtered results
-    await expect(page.getByRole('cell', { name: /Michael Knight MAX003/i })).toBeVisible();
-    await expect(page.getByRole('cell', { name: /Devon Miles MAX001/i })).toBeHidden();
+    await expect(page.getByRole('link', { name: 'Michael Knight', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Devon Miles', exact: true })).toBeHidden();
 
     // Reset filters
     const clearBtn = page.getByTestId('employee-filters-reset');
@@ -256,9 +256,9 @@ test.describe('Issue #19: Employee Directory UI Responsiveness & Features', () =
     await expect(clearBtn).toBeVisible();
     await clearBtn.click();
 
-    await expect(page.getByRole('cell', { name: /Devon Miles MAX001/i })).toBeVisible();
-    await expect(page.getByRole('cell', { name: /Bonnie Barstow MAX002/i })).toBeVisible();
-    await expect(page.getByRole('cell', { name: /Michael Knight MAX003/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Devon Miles', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Bonnie Barstow', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Michael Knight', exact: true })).toBeVisible();
   });
 
   test('role-based access control: Staff is denied access to all directory routes', async ({

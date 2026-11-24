@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EmployeeDirectoryPage } from '../pages/EmployeeDirectoryPage';
@@ -246,14 +246,30 @@ describe('Employee Deactivation Feature Suite (Issue #26)', () => {
         expect(screen.getByTestId('employee-directory-page')).toBeDefined();
       });
 
-      // Desktop table Actions column:
-      // Self employee row has (Current User)
+      // Self employee is marked as the current user
       expect(screen.getAllByText('(Current User)').length).toBeGreaterThan(0);
 
       fireEvent.click(screen.getByRole('button', { name: 'List view' }));
+      const table = screen.getByTestId('datatable-desktop-table');
 
-      // Active other employee has Deactivate button
-      expect(screen.getAllByTestId('deactivate-btn-table-emp-201').length).toBeGreaterThan(0);
+      // Active other employee: Deactivate sits in the row's three-dot menu
+      expect(screen.queryByTestId('deactivate-btn-table-emp-201')).toBeNull();
+      fireEvent.click(within(table).getByRole('button', { name: 'Actions for Sarah Connor' }));
+      expect(screen.getByTestId('deactivate-btn-table-emp-201')).toBeDefined();
+
+      // Self and already deactivated employees cannot be deactivated from the menu
+      fireEvent.keyDown(screen.getByRole('group', { name: 'Employee actions' }), {
+        key: 'Escape',
+      });
+      fireEvent.click(within(table).getByRole('button', { name: 'Actions for Admin User' }));
+      expect(screen.queryByTestId('deactivate-btn-table-emp-admin')).toBeNull();
+      fireEvent.keyDown(screen.getByRole('group', { name: 'Employee actions' }), {
+        key: 'Escape',
+      });
+      fireEvent.click(
+        within(table).getByRole('button', { name: 'Actions for Deactivated Person' }),
+      );
+      expect(screen.queryByTestId('deactivate-btn-table-emp-202')).toBeNull();
 
       // Mobile card has Deactivate button
       expect(screen.getByTestId('deactivate-btn-card-emp-201')).toBeDefined();

@@ -33,6 +33,13 @@ const TEXT_PAIRS: Array<[string, string, string]> = [
   ['muted text on yellow tile', C.textMuted, C.tileYellow],
   ['muted text on blue tile', C.textMuted, C.tileBlue],
   ['muted text on green tile', C.textMuted, C.tileGreen],
+  ['text on grey tiles (directory contact tile)', C.text, C.surfaceMuted],
+  ['muted text on grey tiles (directory chips and labels)', C.textMuted, C.surfaceMuted],
+  ['teal text on grey tiles (avatar initials)', C.primaryInk, C.surfaceMuted],
+  ['positive text on white pills (directory status)', C.positiveInk, C.surfaceRaised],
+  ['muted text on white pills (directory status)', C.textMuted, C.surfaceRaised],
+  ['teal text on white pills (directory "You")', C.primaryInk, C.surfaceRaised],
+  ['negative text on white (row actions menu)', C.negativeInk, C.surfaceRaised],
 ];
 
 describe('TC-10-03: WCAG 2.1 AA contrast for the MaxR Flow palette', () => {
