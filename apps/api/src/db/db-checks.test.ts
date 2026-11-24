@@ -11,6 +11,8 @@ vi.mock('pg', () => ({
     query = poolQuery;
     end = vi.fn();
   },
+  // db/client.ts registers a DATE type parser when it loads.
+  types: { setTypeParser: vi.fn() },
 }));
 vi.mock('ioredis', () => ({
   default: class {

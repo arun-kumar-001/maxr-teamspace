@@ -74,8 +74,36 @@ afterEach(() => {
   cleanup();
 });
 
+/** A session this browser saved earlier today, which the time tracker shows when it starts. */
+function saveActiveSession() {
+  localStorage.setItem(
+    'maxr_time_tracker_active_session',
+    JSON.stringify({
+      isCheckedIn: true,
+      checkInTime: '09:15 AM',
+      startTimeMs: Date.now() - 9314 * 1000,
+    }),
+  );
+}
+
 describe('ProfilePortalPage', () => {
+  it('starts checked out, with no check-in time, when nobody has checked in today', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <ProfilePortalPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('attendance-toggle-button').textContent).toContain('Check In');
+    expect(screen.getByText('Checked Out')).toBeTruthy();
+    expect(screen.getByText('--:--')).toBeTruthy();
+    expect(screen.queryByText('09:15 AM')).toBeNull();
+  });
+
   it('renders the My Profile portal view for Admin role', async () => {
+    saveActiveSession();
     render(
       <MemoryRouter>
         <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
@@ -103,6 +131,7 @@ describe('ProfilePortalPage', () => {
   });
 
   it('toggles check-in state and task completion interactively with real backend persistence', async () => {
+    saveActiveSession();
     render(
       <MemoryRouter>
         <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>

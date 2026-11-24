@@ -7,63 +7,40 @@ import type { Task } from '../features/tasks/types';
 import { fetchProjects } from '../features/projects/api/projectsApi';
 import { fetchTodayAttendance } from '../features/attendance/api/attendance';
 
+const ACTIVE_SESSION_KEY = 'maxr_time_tracker_active_session';
+
+interface SavedSession {
+  isCheckedIn: boolean;
+  checkInTime: string;
+  elapsedSeconds: number;
+}
+
+// Browser storage can be blocked, empty, or hold damaged text. All of those just mean "no saved session".
+function readSavedSession(): SavedSession | null {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return {
+      isCheckedIn: Boolean(parsed.isCheckedIn),
+      checkInTime: parsed.checkInTime || '--:--',
+      elapsedSeconds: parsed.startTimeMs
+        ? Math.max(0, Math.floor((Date.now() - parsed.startTimeMs) / 1000))
+        : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function StaffDashboard() {
   const auth = useContext(AuthContext);
   const user = auth?.user;
-  const [isCheckedIn, setIsCheckedIn] = useState(() => {
-    try {
-      const raw =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('maxr_time_tracker_active_session')
-          : null;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return Boolean(parsed.isCheckedIn);
-      }
-    } catch {}
-    return false;
-  });
-  const [checkInTime, setCheckInTime] = useState(() => {
-    try {
-      const raw =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('maxr_time_tracker_active_session')
-          : null;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return parsed.checkInTime || '--:--';
-      }
-    } catch {}
-    return '--:--';
-  });
-  const [timeTrackerRunning, setTimeTrackerRunning] = useState(() => {
-    try {
-      const raw =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('maxr_time_tracker_active_session')
-          : null;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return Boolean(parsed.isCheckedIn);
-      }
-    } catch {}
-    return false;
-  });
-  const [secondsElapsed, setSecondsElapsed] = useState(() => {
-    try {
-      const raw =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('maxr_time_tracker_active_session')
-          : null;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.startTimeMs) {
-          return Math.max(0, Math.floor((Date.now() - parsed.startTimeMs) / 1000));
-        }
-      }
-    } catch {}
-    return 0;
-  });
+  const [saved] = useState(readSavedSession);
+  const [isCheckedIn, setIsCheckedIn] = useState(saved?.isCheckedIn ?? false);
+  const [checkInTime, setCheckInTime] = useState(saved?.checkInTime ?? '--:--');
+  const [timeTrackerRunning, setTimeTrackerRunning] = useState(saved?.isCheckedIn ?? false);
+  const [secondsElapsed, setSecondsElapsed] = useState(saved?.elapsedSeconds ?? 0);
   const [liveTime, setLiveTime] = useState('12:35:00 PM');
   const [selectedDay, setSelectedDay] = useState(24);
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
@@ -108,18 +85,14 @@ export function StaffDashboard() {
           setSecondsElapsed(0);
         }
       } catch {
-        try {
-          const raw = localStorage.getItem('maxr_time_tracker_active_session');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            setIsCheckedIn(Boolean(parsed.isCheckedIn));
-            setCheckInTime(parsed.checkInTime || '--:--');
-            setTimeTrackerRunning(Boolean(parsed.isCheckedIn));
-            if (parsed.startTimeMs) {
-              setSecondsElapsed(Math.max(0, Math.floor((Date.now() - parsed.startTimeMs) / 1000)));
-            }
-          }
-        } catch {}
+        // The server could not be reached: show what this browser last saved.
+        const fallback = readSavedSession();
+        if (fallback) {
+          setIsCheckedIn(fallback.isCheckedIn);
+          setCheckInTime(fallback.checkInTime);
+          setTimeTrackerRunning(fallback.isCheckedIn);
+          setSecondsElapsed(fallback.elapsedSeconds);
+        }
       }
     };
 
@@ -188,9 +161,11 @@ export function StaffDashboard() {
       setCheckInTime('--:--');
       setSecondsElapsed(0);
       try {
-        localStorage.removeItem('maxr_time_tracker_active_session');
+        localStorage.removeItem(ACTIVE_SESSION_KEY);
         window.dispatchEvent(new Event('maxr:attendance-updated'));
-      } catch {}
+      } catch {
+        // Blocked storage only means the change is not remembered after a reload.
+      }
     } else {
       setIsCheckedIn(true);
       setTimeTrackerRunning(true);
@@ -204,7 +179,7 @@ export function StaffDashboard() {
       setSecondsElapsed(0);
       try {
         localStorage.setItem(
-          'maxr_time_tracker_active_session',
+          ACTIVE_SESSION_KEY,
           JSON.stringify({
             isCheckedIn: true,
             checkInTime: formatted,
@@ -212,7 +187,9 @@ export function StaffDashboard() {
           }),
         );
         window.dispatchEvent(new Event('maxr:attendance-updated'));
-      } catch {}
+      } catch {
+        // Blocked storage only means the session is not remembered after a reload.
+      }
     }
   };
 
