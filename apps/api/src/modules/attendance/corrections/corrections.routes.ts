@@ -15,18 +15,15 @@ function caller(req: Request): CorrectionCaller {
   const { actor } = req;
   if (!actor) throw new Error('authenticate() did not run before this handler');
   if (!actor.employeeId) throw forbidden('User has no associated employee profile');
-  return {
-    actorId: actor.id,
-    employeeId: actor.employeeId,
-    requestId: req.id,
-    roles: actor.roles,
-  };
+  return { actorId: actor.id, employeeId: actor.employeeId, requestId: req.id };
 }
 
 /**
- * Mounted at /api/v1/attendance/corrections, BEFORE the attendance router. The employee is always
- * the signed-in caller; the body never names one. Decisions are not here: approvers use
- * /api/v1/approvals, which calls back into the service when the last step is decided.
+ * Mounted at /api/v1/attendance/corrections, BEFORE the attendance router. The body never names
+ * an employee: the correction belongs to the owner of the record, which is the signed-in caller
+ * unless the caller may approve corrections for everyone (Admin, HR Manager), who can correct any
+ * record and have it applied at once. Decisions are not here: approvers use /api/v1/approvals,
+ * which calls back into the service when the last step is decided.
  */
 export function createCorrectionsRouter(options: {
   service: AttendanceCorrectionsService;
@@ -44,7 +41,13 @@ export function createCorrectionsRouter(options: {
     validate({ body: requestCorrectionSchema }),
     asyncHandler(async (req: Request, res: Response) => {
       const { body } = validated(req, { body: requestCorrectionSchema });
-      res.status(201).json({ data: await service.request(body, caller(req)) });
+      const { actor } = req;
+      if (!actor) throw new Error('authenticate() did not run before this handler');
+      const approveScope = toScopeFilter(
+        resolveScope(actor.roles, 'attendance.approve_correction'),
+        actor,
+      );
+      res.status(201).json({ data: await service.request(body, caller(req), approveScope) });
     }),
   );
 

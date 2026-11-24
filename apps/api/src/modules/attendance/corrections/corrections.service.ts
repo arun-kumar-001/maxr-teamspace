@@ -10,7 +10,7 @@ import type {
   ApprovalsService,
   ApprovalTx,
 } from '../../approvals';
-import { ScopeFilter } from '../../rbac';
+import { NO_ACCESS, ScopeFilter } from '../../rbac';
 import type { CompanySettingsReader } from '../../settings';
 import type { ShiftResolver } from '../../shifts';
 import { checkInStatus } from '../attendance.service';
@@ -29,8 +29,10 @@ export interface CorrectionCaller {
   actorId: string;
   employeeId: string;
   requestId?: string;
-  roles?: string[];
 }
+
+type Audit = ReturnType<Deps['audit']['withContext']>;
+type LockedRecord = NonNullable<Awaited<ReturnType<ICorrectionsRepository['lockRecord']>>>;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -58,10 +60,17 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
   /**
    * Files a correction for one of the caller's own records and opens its approval in the same
    * transaction: either both exist or neither does (D-13).
+   *
+   * Someone who may approve corrections for everyone (`approveScope` is `all`: Admin and HR
+   * Manager) can also file one for another employee's record. That correction is applied at
+   * once, audited with the before and after times, instead of waiting in an approval queue. A
+   * team lead's scope is only their direct reports, so their corrections keep going through the
+   * queue, which can have a second step they could not complete themselves.
    */
   async request(
     input: RequestCorrectionInput,
     caller: CorrectionCaller,
+    approveScope: ScopeFilter = NO_ACCESS,
   ): Promise<AttendanceCorrection> {
     const now = this.clock();
     const { timezone } = await this.settings.getBasic();
@@ -83,9 +92,10 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
     const events = new EventCollector();
     const created = await this.repository.transaction(async (tx) => {
       const record = await this.repository.lockRecord(tx, input.attendanceRecordId);
-      const isManager = Boolean(caller.roles?.some((r) => r === 'admin' || r === 'hr_manager'));
-      // Someone else's record looks exactly like a missing one unless manager/admin.
-      if (!record || (!isManager && record.employeeId !== caller.employeeId)) {
+      // Someone else's record looks exactly like a missing one, unless the caller may approve
+      // corrections for everyone.
+      const mayFileForOthers = approveScope.kind === 'all';
+      if (!record || (record.employeeId !== caller.employeeId && !mayFileForOthers)) {
         throw notFound('Attendance record not found');
       }
       if (record.workDate < minusDays(localDate(now, timezone), CORRECTION_WINDOW_DAYS)) {
@@ -119,29 +129,9 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
         reason: input.reason,
       });
 
-      if (isManager && record.employeeId !== caller.employeeId) {
-        const checkInDate = new Date(correction.requestedCheckIn);
-        const durationMinutes = Math.round(
-          (new Date(correction.requestedCheckOut).getTime() - checkInDate.getTime()) / 60000,
-        );
-        const status = await this.statusFor(record.employeeId, record.workDate, checkInDate);
-        await this.repository.writeRecordTimes(tx, record.id, {
-          checkIn: correction.requestedCheckIn,
-          checkOut: correction.requestedCheckOut,
-          durationMinutes,
-          status,
-        });
-        await this.repository.setStatus(tx, correction.id, 'approved');
-        await audit.record(
-          {
-            action: 'attendance.correction_admin_applied',
-            outcome: 'success',
-            entityType: 'attendance_correction',
-            entityId: correction.id,
-            metadata: { attendanceRecordId: record.id, workDate: record.workDate },
-          },
-          { transaction: tx },
-        );
+      if (record.employeeId !== caller.employeeId) {
+        // Only reachable with company-wide approval authority (see above).
+        await this.applyApproved(tx, correction, record, audit, { appliedDirectly: true });
         return { ...correction, status: 'approved' as const, approvalId: null };
       }
 
@@ -242,6 +232,33 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
       );
     }
 
+    await this.applyApproved(
+      tx,
+      correction,
+      record,
+      this.platform.audit.withContext({ actorId: decider.actorId, requestId: decider.requestId }),
+    );
+  }
+
+  /**
+   * Overwrites the record's times, duration and status with an accepted correction and audits the
+   * before and after. The one place for both ways a correction is accepted: an approver's
+   * decision, or a company-wide approver filing it directly.
+   */
+  private async applyApproved(
+    tx: ApprovalTx,
+    correction: AttendanceCorrection,
+    record: LockedRecord,
+    audit: Audit,
+    extraMetadata: Record<string, unknown> = {},
+  ): Promise<void> {
+    // Read before writing: a repository may hand back the very object it then updates.
+    const before = {
+      checkIn: record.checkIn,
+      checkOut: record.checkOut,
+      durationMinutes: record.durationMinutes,
+      status: record.status,
+    };
     const checkIn = new Date(correction.requestedCheckIn);
     const durationMinutes = Math.round(
       (new Date(correction.requestedCheckOut).getTime() - checkIn.getTime()) / 60000,
@@ -254,24 +271,22 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
       status,
     });
     await this.repository.setStatus(tx, correction.id, 'approved');
-    await this.platform.audit
-      .withContext({ actorId: decider.actorId, requestId: decider.requestId })
-      .record(
-        {
-          action: 'attendance.correction_apply',
-          outcome: 'success',
-          entityType: 'attendance_record',
-          entityId: record.id,
-          changes: {
-            checkInTime: { from: record.checkIn, to: correction.requestedCheckIn },
-            checkOutTime: { from: record.checkOut, to: correction.requestedCheckOut },
-            durationMinutes: { from: record.durationMinutes, to: durationMinutes },
-            status: { from: record.status, to: status },
-          },
-          metadata: { correctionId: correction.id },
+    await audit.record(
+      {
+        action: 'attendance.correction_apply',
+        outcome: 'success',
+        entityType: 'attendance_record',
+        entityId: record.id,
+        changes: {
+          checkInTime: { from: before.checkIn, to: correction.requestedCheckIn },
+          checkOutTime: { from: before.checkOut, to: correction.requestedCheckOut },
+          durationMinutes: { from: before.durationMinutes, to: durationMinutes },
+          status: { from: before.status, to: status },
         },
-        { transaction: tx },
-      );
+        metadata: { correctionId: correction.id, ...extraMetadata },
+      },
+      { transaction: tx },
+    );
   }
 
   async list(

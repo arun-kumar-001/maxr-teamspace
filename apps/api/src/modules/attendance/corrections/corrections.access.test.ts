@@ -150,6 +150,56 @@ describe('attendance corrections API: access', () => {
     expectNoExistenceLeak(others, missing);
   });
 
+  it.each(['admin', 'hr_manager'] as Role[])(
+    '%s corrects someone else’s record: applied at once, never queued, audited with before and after',
+    async (role) => {
+      const { file, as, recordFor, body, repo, auditStore, kit } = await setup();
+      const recordId = recordFor('staff');
+      const res = await file(role, body(recordId, { reason: 'a private reason' }));
+      expect(res.status).toBe(201);
+      expect(res.body.data).toMatchObject({ status: 'approved', approvalId: null });
+      expect(repo.records.find((r) => r.id === recordId)).toMatchObject({
+        checkIn: '2026-10-20T04:00:00.000Z',
+        checkOut: '2026-10-20T12:30:00.000Z',
+        durationMinutes: 510,
+      });
+
+      const queue = await as.team_lead.get(
+        '/api/v1/approvals?awaitingMyDecision=true&subjectType=attendance_correction',
+      );
+      expect(queue.body.data).toHaveLength(0);
+
+      const entries = auditStore.find((e) => e.action === 'attendance.correction_apply');
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({
+        actorId: kit.users[role].id,
+        entityId: recordId,
+        changes: { durationMinutes: { from: 480, to: 510 } },
+        metadata: { appliedDirectly: true },
+      });
+      expect(JSON.stringify(entries[0])).not.toContain('a private reason');
+    },
+  );
+
+  it('keeps a team lead out of a direct report’s record: it answers like a missing one and nothing changes', async () => {
+    const { file, recordFor, body, repo } = await setup();
+    const recordId = recordFor('staff'); // the team lead manages staff
+    const others = await file('team_lead', body(recordId));
+    const missing = await file('team_lead', body(MISSING));
+    expectNoExistenceLeak(others, missing);
+    expect(repo.corrections).toHaveLength(0);
+    expect(repo.records.find((r) => r.id === recordId)?.durationMinutes).toBe(480);
+  });
+
+  it('a direct correction still refuses times that overlap another session', async () => {
+    const { file, recordFor, body, repo } = await setup();
+    const recordId = recordFor('staff');
+    recordFor('staff'); // a second session on the same day
+    const res = await file('admin', body(recordId));
+    expect(res.status).toBe(409);
+    expect(repo.records.find((r) => r.id === recordId)?.durationMinutes).toBe(480);
+  });
+
   it('needs an Idempotency-Key', async () => {
     const { as, recordFor, body } = await setup();
     const res = await as.staff.post('/api/v1/attendance/corrections', body(recordFor('staff')));
