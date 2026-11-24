@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { useState } from 'react';
 import { ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
@@ -262,13 +263,14 @@ export function ProjectDetailDrawer({
                 <span className="text-text-subtle text-xs">Members ({project.members.length})</span>
                 <div className="flex items-center gap-1 flex-wrap justify-end">
                   {project.members.slice(0, 5).map((member) => (
-                    <span
+                    <EmployeeAvatar
                       key={member.employeeId}
+                      name={member.name}
+                      employeeId={member.employeeId}
+                      initials={getInitials(member.name)}
                       title={member.name}
-                      className="w-7 h-7 rounded-full bg-primary-soft text-primary-ink text-[11px] font-semibold flex items-center justify-center border border-border"
-                    >
-                      {getInitials(member.name)}
-                    </span>
+                      className="h-7 w-7 border border-border bg-primary-soft text-[11px] font-semibold text-primary-ink"
+                    />
                   ))}
                   {project.members.length > 5 && (
                     <span className="text-xs text-text-muted pl-1">

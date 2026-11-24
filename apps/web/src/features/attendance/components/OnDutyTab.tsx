@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, KpiCard } from '../../../components/ui';
@@ -579,9 +580,13 @@ export function OnDutyTab({
                           {/* Employee (Matching RosterTab style) */}
                           <td className="px-4 py-2.5 align-middle">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/80 shadow-xs">
-                                {initials}
-                              </div>
+                              <EmployeeAvatar
+                                name={row.name}
+                                employeeId={row.employeeId}
+                                initials={initials}
+                                decorative
+                                className="h-8 w-8 border border-border/80 bg-surface-muted text-xs font-bold text-text shadow-xs"
+                              />
                               <div className="min-w-0 truncate">
                                 <a
                                   href={`/employees/${row.employeeId}`}
@@ -866,11 +871,13 @@ export function OnDutyTab({
 
                   return (
                     <div key={emp.id} className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full ${avatarBg} text-xs font-bold flex items-center justify-center shrink-0 shadow-xs`}
-                      >
-                        {initials}
-                      </div>
+                      <EmployeeAvatar
+                        name={emp.name}
+                        employeeId={emp.id}
+                        initials={initials}
+                        decorative
+                        className={`h-8 w-8 ${avatarBg} text-xs font-bold shadow-xs`}
+                      />
                       <div className="min-w-0 flex-1">
                         <span className="font-semibold text-xs text-text block truncate">
                           {emp.name}

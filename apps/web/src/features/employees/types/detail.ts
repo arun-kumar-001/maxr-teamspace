@@ -14,6 +14,8 @@ export interface EmployeeDetailDesignationRef {
 }
 
 export interface EmployeeDetail {
+  /** Stable, authenticated URL of the profile photo; null when there is none. */
+  photoUrl?: string | null;
   id: string;
   employeeCode: string;
   firstName: string;

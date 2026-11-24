@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import React, { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { createTaskComment, fetchTaskComments } from '../api/tasksApi';
@@ -135,12 +136,13 @@ export function TaskCommentsThread({
                 className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border shadow-card"
                 data-testid={`comment-item-${comment.id}`}
               >
-                <div
-                  className="w-8 h-8 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center text-xs font-semibold shrink-0 select-none border border-primary-soft-border"
-                  aria-hidden="true"
-                >
-                  {getInitials(comment.authorName)}
-                </div>
+                <EmployeeAvatar
+                  name={comment.authorName}
+                  employeeId={comment.authorEmployeeId}
+                  initials={getInitials(comment.authorName)}
+                  decorative
+                  className="h-8 w-8 select-none border border-primary-soft-border bg-primary-soft text-xs font-semibold text-primary-ink"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-xs font-semibold text-text">

@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/StateCards';
 import type { Holiday, LeaveCalendarEntry } from '../../leave/types';
@@ -311,9 +312,13 @@ export function MeetingAgendaList({
 
                           <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
                             <div className="flex items-center gap-1">
-                              <span className="w-6 h-6 rounded-full bg-primary-soft text-primary-deep text-[10px] font-semibold flex items-center justify-center border border-border">
-                                {getInitials(meeting.organizerName)}
-                              </span>
+                              <EmployeeAvatar
+                                name={meeting.organizerName}
+                                employeeId={meeting.organizerEmployeeId}
+                                initials={getInitials(meeting.organizerName)}
+                                title={`Organizer: ${meeting.organizerName}`}
+                                className="h-6 w-6 border border-border bg-primary-soft text-[10px] font-semibold text-primary-deep"
+                              />
                               {meeting.attendeeCount > 1 && (
                                 <span className="px-1.5 py-0.5 rounded-full bg-surface-muted text-[10px] text-text-muted font-medium">
                                   +{meeting.attendeeCount - 1}

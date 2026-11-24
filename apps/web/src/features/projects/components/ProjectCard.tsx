@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import type { Project } from '../types';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
 
@@ -205,9 +206,13 @@ export function ProjectCard({
       {/* Bottom Footer */}
       <div className="pt-3 mt-4 border-t border-border flex items-center justify-between gap-2 text-xs text-text-subtle">
         <div className="flex items-center gap-1.5 min-w-0" title={`Lead: ${project.ownerName}`}>
-          <div className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-semibold text-[10px] shrink-0">
-            {getInitials(project.ownerName)}
-          </div>
+          <EmployeeAvatar
+            name={project.ownerName}
+            employeeId={project.ownerEmployeeId}
+            initials={getInitials(project.ownerName)}
+            decorative
+            className="h-6 w-6 bg-primary-soft text-[10px] font-semibold text-primary-ink"
+          />
           <span className="px-1.5 py-0.5 rounded-full bg-surface-muted border border-border text-[10px] font-semibold text-text-muted tabular-nums shrink-0">
             {project.memberCount} {project.memberCount === 1 ? 'member' : 'members'}
           </span>

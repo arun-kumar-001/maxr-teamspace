@@ -1,6 +1,7 @@
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { Badge } from '../../../components/ui/StatusPill';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { getAvatarTone, getInitials } from '../../employees/components/hiringUtils';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import type { DepartmentOption, Designation } from '../types';
@@ -96,13 +97,13 @@ export function DesignationDetailModal({
                     className="w-full p-2.5 flex items-center justify-between gap-2 text-left hover:bg-surface-muted/70 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 ${getAvatarTone(
-                          fullName,
-                        )}`}
-                      >
-                        {getInitials(emp.firstName, emp.lastName)}
-                      </div>
+                      <EmployeeAvatar
+                        name={fullName}
+                        employeeId={emp.id}
+                        initials={getInitials(emp.firstName, emp.lastName)}
+                        decorative
+                        className={`h-7 w-7 text-[11px] font-semibold ${getAvatarTone(fullName)}`}
+                      />
                       <div className="min-w-0">
                         <div className="text-xs font-semibold text-text truncate">{fullName}</div>
                         <div className="text-[11px] text-text-muted truncate">

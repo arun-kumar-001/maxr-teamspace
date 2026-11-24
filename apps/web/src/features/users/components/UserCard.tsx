@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { ROLES, type Role } from '@maxr/shared';
 import { Badge, Button } from '../../../components/ui';
 import type { UserAccount } from '../types';
@@ -57,12 +58,13 @@ export function UserCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full bg-primary-soft text-primary-ink font-semibold flex items-center justify-center text-sm shrink-0"
-            aria-hidden="true"
-          >
-            {initials}
-          </div>
+          <EmployeeAvatar
+            name={user.name}
+            employeeId={user.employeeId}
+            initials={initials}
+            decorative
+            className="h-10 w-10 bg-primary-soft text-sm font-semibold text-primary-ink"
+          />
           <div>
             <h3 className="font-semibold text-text text-sm sm:text-base leading-tight">
               {user.name}

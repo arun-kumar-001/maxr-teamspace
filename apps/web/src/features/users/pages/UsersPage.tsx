@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES, type Role } from '@maxr/shared';
@@ -957,9 +958,13 @@ export function UsersPage() {
                           {/* User Column */}
                           <td className="py-3.5 px-3">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-8 h-8 rounded-full bg-tile-peach text-sidebar font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
-                                {initials}
-                              </div>
+                              <EmployeeAvatar
+                                name={u.name}
+                                employeeId={u.employeeId}
+                                initials={initials}
+                                decorative
+                                className="h-8 w-8 bg-tile-peach text-xs font-bold text-sidebar shadow-xs"
+                              />
                               <div className="min-w-0">
                                 <span className="font-bold text-text block truncate leading-tight">
                                   {u.name}

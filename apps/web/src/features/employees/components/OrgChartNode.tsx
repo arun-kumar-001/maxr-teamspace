@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/StatusPill';
 import type { OrgNode } from '../types';
+import { EmployeeAvatar } from './EmployeeAvatar';
 import { getAvatarTone, getInitials } from './hiringUtils';
 
 export interface OrgChartNodeProps {
@@ -55,14 +56,15 @@ export function OrgChartNode({
         <div className="flex items-start justify-between gap-2.5">
           {/* Avatar & Core Info */}
           <div className="flex items-start gap-2.5 min-w-0">
-            <div
-              className={`w-9 h-9 rounded-full font-semibold flex items-center justify-center shrink-0 text-xs border border-surface shadow-sm ${getAvatarTone(
+            <EmployeeAvatar
+              name={node.name}
+              employeeId={node.id}
+              initials={initials}
+              decorative
+              className={`h-9 w-9 border border-surface text-xs font-semibold shadow-sm ${getAvatarTone(
                 node.name,
               )}`}
-              aria-hidden="true"
-            >
-              {initials}
-            </div>
+            />
             <div className="min-w-0">
               <button
                 type="button"

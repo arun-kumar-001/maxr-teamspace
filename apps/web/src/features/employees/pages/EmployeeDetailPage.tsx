@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../components/EmployeeAvatar';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
@@ -162,21 +163,6 @@ export function EmployeeDetailPage() {
 
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
-  const employeeAvatar =
-    (employee as unknown as { avatarUrl?: string }).avatarUrl ||
-    (employee as unknown as { profilePhotoUrl?: string }).profilePhotoUrl ||
-    (typeof window !== 'undefined' && window.localStorage
-      ? localStorage.getItem(`maxr_avatar_${employee.id}`) ||
-        ((employee as unknown as { userId?: string }).userId
-          ? localStorage.getItem(
-              `maxr_avatar_${(employee as unknown as { userId: string }).userId}`,
-            )
-          : null) ||
-        (employee.email
-          ? localStorage.getItem(`maxr_avatar_${employee.email.toLowerCase()}`)
-          : null)
-      : null);
-
   const statusVariant =
     employee.status === 'active'
       ? 'success'
@@ -235,22 +221,14 @@ export function EmployeeDetailPage() {
       {/* Profile Header Card */}
       <div className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4 min-w-0">
-          <div
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-soft text-primary-ink font-display font-bold text-xl sm:text-2xl flex items-center justify-center shrink-0 border border-primary/20 shadow-sm overflow-hidden relative"
-            aria-hidden="true"
-          >
-            {employeeAvatar ? (
-              <img
-                src={employeeAvatar}
-                alt={`${employee.firstName} ${employee.lastName}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : null}
-            <span className={employeeAvatar ? 'sr-only' : undefined}>{initials}</span>
-          </div>
+          <EmployeeAvatar
+            name={`${employee.firstName} ${employee.lastName}`}
+            employeeId={employee.id}
+            photoUrl={employee.photoUrl}
+            initials={initials}
+            decorative
+            className="h-16 w-16 border border-primary/20 bg-primary-soft font-display text-xl font-bold text-primary-ink shadow-sm sm:h-20 sm:w-20 sm:text-2xl"
+          />
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold text-text font-display truncate">

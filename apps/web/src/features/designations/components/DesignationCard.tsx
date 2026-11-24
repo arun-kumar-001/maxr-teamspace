@@ -1,5 +1,6 @@
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/StatusPill';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { getAvatarTone, getInitials } from '../../employees/components/hiringUtils';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import type { DepartmentOption, Designation } from '../types';
@@ -89,15 +90,16 @@ export function DesignationCard({
             visibleHolders.map((emp) => {
               const fullName = `${emp.firstName} ${emp.lastName}`;
               return (
-                <span
+                <EmployeeAvatar
                   key={emp.id}
+                  name={fullName}
+                  employeeId={emp.id}
+                  initials={getInitials(emp.firstName, emp.lastName)}
                   title={fullName}
-                  className={`w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center text-[10px] font-semibold transition-transform duration-200 hover:scale-110 hover:z-10 ${getAvatarTone(
+                  className={`h-7 w-7 border-2 border-surface text-[10px] font-semibold transition-transform duration-200 hover:z-10 hover:scale-110 ${getAvatarTone(
                     fullName,
                   )}`}
-                >
-                  {getInitials(emp.firstName, emp.lastName)}
-                </span>
+                />
               );
             })
           )}

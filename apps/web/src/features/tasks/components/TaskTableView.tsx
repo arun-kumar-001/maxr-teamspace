@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { useMemo, useState } from 'react';
 import { TaskPriorityBadge } from './TaskPriorityBadge';
 import { TaskStatusPill } from './TaskStatusPill';
@@ -151,9 +152,13 @@ export function TaskTableView({
                 {/* Assignee */}
                 <td className="py-3.5 px-4 whitespace-nowrap text-text text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-primary-soft text-primary-ink flex items-center justify-center font-semibold text-[10px] shrink-0">
-                      {getInitials(task.assigneeName)}
-                    </span>
+                    <EmployeeAvatar
+                      name={task.assigneeName}
+                      employeeId={task.assigneeEmployeeId}
+                      initials={getInitials(task.assigneeName)}
+                      decorative
+                      className="h-6 w-6 bg-primary-soft text-[10px] font-semibold text-primary-ink"
+                    />
                     <span className="font-medium">{task.assigneeName}</span>
                   </div>
                 </td>

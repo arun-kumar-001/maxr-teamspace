@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { useEffect, useState } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
@@ -346,13 +347,15 @@ export function TaskDetailModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Assignee Box */}
                 <div className="p-3 bg-surface-muted/40 rounded-xl border border-border/80 flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border shadow-2xs ring-1 ring-white ${getAvatarBg(
+                  <EmployeeAvatar
+                    name={task.assigneeName}
+                    employeeId={task.assigneeEmployeeId}
+                    initials={getInitials(task.assigneeName)}
+                    decorative
+                    className={`h-9 w-9 border text-xs font-bold shadow-2xs ring-1 ring-white ${getAvatarBg(
                       task.assigneeName,
                     )}`}
-                  >
-                    {getInitials(task.assigneeName)}
-                  </div>
+                  />
                   <div className="flex flex-col min-w-0">
                     <span className="text-[10.5px] font-semibold text-text-subtle uppercase tracking-wider">
                       Assigned To
@@ -367,13 +370,15 @@ export function TaskDetailModal({
 
                 {/* Assigner Box */}
                 <div className="p-3 bg-surface-muted/40 rounded-xl border border-border/80 flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border shadow-2xs ring-1 ring-white ${getAvatarBg(
+                  <EmployeeAvatar
+                    name={task.assignerName}
+                    employeeId={task.assignerEmployeeId}
+                    initials={getInitials(task.assignerName)}
+                    decorative
+                    className={`h-9 w-9 border text-xs font-bold shadow-2xs ring-1 ring-white ${getAvatarBg(
                       task.assignerName,
                     )}`}
-                  >
-                    {getInitials(task.assignerName)}
-                  </div>
+                  />
                   <div className="flex flex-col min-w-0">
                     <span className="text-[10.5px] font-semibold text-text-subtle uppercase tracking-wider">
                       Assigned By

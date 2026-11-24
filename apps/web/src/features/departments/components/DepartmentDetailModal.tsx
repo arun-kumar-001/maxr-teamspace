@@ -1,6 +1,7 @@
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { Badge } from '../../../components/ui/StatusPill';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { getAvatarTone, getInitials } from '../../employees/components/hiringUtils';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import type { Designation } from '../../designations/types';
@@ -219,12 +220,13 @@ export function DepartmentDetailModal({
                         className="flex min-h-[44px] items-center justify-between gap-3 py-3 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-strong"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <span
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${getAvatarTone(name)}`}
-                            aria-hidden="true"
-                          >
-                            {getInitials(employee.firstName, employee.lastName)}
-                          </span>
+                          <EmployeeAvatar
+                            name={name}
+                            employeeId={employee.id}
+                            initials={getInitials(employee.firstName, employee.lastName)}
+                            decorative
+                            className={`h-8 w-8 text-xs font-semibold ${getAvatarTone(name)}`}
+                          />
                           <div className="min-w-0">
                             <p className="font-semibold text-sm text-text break-words">{name}</p>
                             <p className="text-xs text-text-muted break-words">

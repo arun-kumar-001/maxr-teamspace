@@ -1,3 +1,4 @@
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import type { Task, TaskStatus } from '../types';
 import { TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
 import { TaskPriorityBadge } from './TaskPriorityBadge';
@@ -292,13 +293,15 @@ export function TaskCard({
               task.assignerName ? ` · Assigned by ${task.assignerName}` : ''
             }`}
           >
-            <div
-              className={`w-6.5 h-6.5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 border shadow-2xs ring-1 ring-white ${getAvatarBg(
+            <EmployeeAvatar
+              name={task.assigneeName}
+              employeeId={task.assigneeEmployeeId}
+              initials={getInitials(task.assigneeName)}
+              decorative
+              className={`w-6.5 h-6.5 border text-[10px] font-bold shadow-2xs ring-1 ring-white ${getAvatarBg(
                 task.assigneeName,
               )}`}
-            >
-              {getInitials(task.assigneeName)}
-            </div>
+            />
             <span className="font-medium text-text text-[11.5px] truncate">
               {task.assigneeName}
             </span>
