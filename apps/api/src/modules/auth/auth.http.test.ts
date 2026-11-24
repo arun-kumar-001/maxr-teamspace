@@ -143,14 +143,33 @@ describe('POST /auth/login', () => {
     expect(cookieOf(res)).toBe('');
   });
 
-  it('allows login from an ngrok development tunnel origin', async () => {
-    const { app } = makeApp({ nodeEnv: 'development' });
+  const TUNNEL_ORIGIN = 'https://nonengrossingly-nonecliptical-chelsey.ngrok-free.dev';
+
+  it('allows login from an ngrok development tunnel origin in development', async () => {
+    const { app } = makeApp({
+      nodeEnv: 'development',
+      auth: createTestAuth(makeApp().platform.audit, { config: { nodeEnv: 'development' } }),
+    });
     const res = await request(app)
       .post('/api/v1/auth/login')
-      .set('Origin', 'https://nonengrossingly-nonecliptical-chelsey.ngrok-free.dev')
+      .set('Origin', TUNNEL_ORIGIN)
       .send({ email: 'staff@maxr.test', password: TEST_PASSWORD });
     expect(res.status).toBe(200);
     expect(cookieOf(res)).toMatch(/^maxr_session=/);
+  });
+
+  it('refuses login from a tunnel origin in production, and when the environment is not set', async () => {
+    for (const nodeEnv of ['production', undefined]) {
+      const { app } = makeApp({
+        auth: createTestAuth(makeApp().platform.audit, { config: { nodeEnv } }),
+      });
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .set('Origin', TUNNEL_ORIGIN)
+        .send({ email: 'staff@maxr.test', password: TEST_PASSWORD });
+      expect(res.status, String(nodeEnv)).toBe(403);
+      expect(cookieOf(res)).toBe('');
+    }
   });
 
   it('is limited per IP by the login rate limiter', async () => {

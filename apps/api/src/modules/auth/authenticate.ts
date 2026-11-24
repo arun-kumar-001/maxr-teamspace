@@ -65,11 +65,12 @@ const originError = () => new AppError(403, ERROR_CODES.FORBIDDEN, 'Request orig
  * Checks whether an incoming request Origin is allowed.
  * In production: strictly matches allowedOrigin (or comma-separated list).
  * In development/test: also allows localhost/local IP and development tunnels (ngrok, localtunnel).
+ * An unknown environment counts as production, so a missing setting never widens the check.
  */
 export function isAllowedOrigin(
   origin: string | undefined,
   allowedOrigin: string,
-  nodeEnv: string = process.env.NODE_ENV || 'development',
+  nodeEnv: string = 'production',
 ): boolean {
   if (!origin) return true;
   if (origin === allowedOrigin) return true;
