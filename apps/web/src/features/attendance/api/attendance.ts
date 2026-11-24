@@ -165,7 +165,7 @@ export async function fetchTeamAttendance(
   return handleResponse<AttendanceListResponse>(res);
 }
 
-/** A fresh Idempotency-Key for one submission (the server needs 16 to 128 characters). */
+/** A fresh Idempotency-Key for one submission (the server accepts 8 to 128 letters, digits, "-" and "_"). */
 export function newIdempotencyKey(): string {
   return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()

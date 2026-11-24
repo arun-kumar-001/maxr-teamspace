@@ -168,6 +168,29 @@ describe('Attendance Corrections Feature Suite (Issue #36)', () => {
       expect(keyOf(2)).not.toBe(keyOf(0));
     });
 
+    it('takes a new Idempotency-Key after the server refused the request, which it remembers for the old key', async () => {
+      vi.mocked(attendanceApi.requestCorrection)
+        .mockRejectedValueOnce(
+          Object.assign(new Error('The requested times overlap another attendance session'), {
+            status: 409,
+          }),
+        )
+        .mockResolvedValue(mockCorrections[0]!);
+
+      render(<RequestCorrectionModal isOpen={true} onClose={vi.fn()} record={mockRecord} />);
+      fireEvent.change(screen.getByTestId('correction-reason-input'), {
+        target: { value: 'Forgot to swipe' },
+      });
+      fireEvent.click(screen.getByTestId('submit-correction-button'));
+      await screen.findByText('The requested times overlap another attendance session');
+
+      // The same form again, for example after the overlapping session was fixed elsewhere.
+      fireEvent.click(screen.getByTestId('submit-correction-button'));
+      await waitFor(() => expect(attendanceApi.requestCorrection).toHaveBeenCalledTimes(2));
+      const calls = vi.mocked(attendanceApi.requestCorrection).mock.calls;
+      expect(calls[1]![1]).not.toBe(calls[0]![1]);
+    });
+
     it('displays error banner if API request fails', async () => {
       vi.mocked(attendanceApi.requestCorrection).mockRejectedValue(
         new Error('A pending correction already exists for this record'),

@@ -121,6 +121,10 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
       onSuccess?.(correction);
       onClose();
     } catch (err) {
+      // An answer from the server (a 4xx refusal) is remembered for the key, so the next try needs
+      // a new one. With no answer (network, 5xx), the same key makes a retry safe.
+      const status = (err as { status?: number }).status;
+      if (typeof status === 'number' && status < 500) attempt.current = null;
       setError(err instanceof Error ? err.message : 'Failed to submit correction request.');
     } finally {
       setIsSubmitting(false);
