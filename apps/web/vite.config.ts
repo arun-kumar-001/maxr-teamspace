@@ -8,7 +8,14 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    allowedHosts: true,
+    // localhost and IP addresses are always allowed; these are the dev tunnels the API also trusts.
+    allowedHosts: [
+      '.ngrok-free.dev',
+      '.ngrok-free.app',
+      '.ngrok.app',
+      '.ngrok.io',
+      '.localtunnel.me',
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:4000',

@@ -44,12 +44,12 @@ async function handleResponse<T>(res: Response): Promise<T> {
     const detailMsg =
       Array.isArray(errorInfo?.details) && errorInfo.details.length > 0
         ? errorInfo.details
-          .map((d: { field?: string; message?: string }) => d.message || d.field)
-          .filter(Boolean)
-          .join(', ')
+            .map((d: { field?: string; message?: string }) => d.message || d.field)
+            .filter(Boolean)
+            .join(', ')
         : null;
     throw new AttendanceApiError(
-      detailMsg ?? (errorInfo?.message ?? `Request failed with status ${res.status}`),
+      detailMsg ?? errorInfo?.message ?? `Request failed with status ${res.status}`,
       res.status,
       errorInfo?.code ?? 'ATTENDANCE_ERROR',
       errorInfo?.details,
@@ -165,17 +165,21 @@ export async function fetchTeamAttendance(
   return handleResponse<AttendanceListResponse>(res);
 }
 
+/** A fresh Idempotency-Key for one submission (the server needs 16 to 128 characters). */
+export function newIdempotencyKey(): string {
+  return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `corr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 /**
- * Submit an attendance correction request.
+ * Submit an attendance correction request. Pass the same `idempotencyKey` when retrying the same
+ * submission, so the server answers from the first attempt instead of filing it twice.
  */
 export async function requestCorrection(
   payload: RequestCorrectionPayload,
+  idempotencyKey: string = newIdempotencyKey(),
 ): Promise<AttendanceCorrection> {
-  const idempotencyKey =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `corr-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
   const res = await apiFetch('/api/v1/attendance/corrections', {
     method: 'POST',
     headers: {

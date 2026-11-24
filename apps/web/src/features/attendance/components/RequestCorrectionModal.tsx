@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { FormField } from '../../../components/ui/FormField';
-import { requestCorrection } from '../api/attendance';
+import { newIdempotencyKey, requestCorrection } from '../api/attendance';
 import type { AttendanceCorrection, AttendanceRecord } from '../types';
 
 export interface RequestCorrectionModalProps {
@@ -25,6 +25,7 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
   const [reason, setReason] = useState(defaultReason || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
 
   // Initialize times from record when opened
   useEffect(() => {
@@ -71,7 +72,7 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
 
     // Construct datetimes from local time on the record's workDate
     const inDate = new Date(`${record.workDate}T${checkInTime}:00`);
-    let outDate = new Date(`${record.workDate}T${checkOutTime}:00`);
+    const outDate = new Date(`${record.workDate}T${checkOutTime}:00`);
 
     // If checkOut is earlier than checkIn, treat as overnight session (next day)
     if (outDate <= inDate) {
@@ -104,12 +105,19 @@ export const RequestCorrectionModal: React.FC<RequestCorrectionModalProps> = ({
     try {
       setIsSubmitting(true);
       setError(null);
-      const correction = await requestCorrection({
+      const payload = {
         attendanceRecordId: record.id,
         requestedCheckIn: inDate.toISOString(),
         requestedCheckOut: outDate.toISOString(),
         reason: effectiveReason,
-      });
+      };
+      // Retrying the same form reuses its key, so a request that did reach the server is not
+      // filed twice. Editing the form makes it a different request with a new key.
+      const fingerprint = JSON.stringify(payload);
+      if (attempt.current?.fingerprint !== fingerprint) {
+        attempt.current = { fingerprint, key: newIdempotencyKey() };
+      }
+      const correction = await requestCorrection(payload, attempt.current.key);
       onSuccess?.(correction);
       onClose();
     } catch (err) {

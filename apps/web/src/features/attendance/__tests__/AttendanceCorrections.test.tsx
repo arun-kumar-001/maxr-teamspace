@@ -10,6 +10,7 @@ import type { AttendanceCorrection, AttendanceRecord } from '../types';
 
 vi.mock('../api/attendance', () => ({
   requestCorrection: vi.fn(),
+  newIdempotencyKey: vi.fn(() => globalThis.crypto.randomUUID()),
   fetchCorrections: vi.fn(),
   cancelCorrection: vi.fn(),
   fetchTodayAttendance: vi.fn(),
@@ -132,10 +133,39 @@ describe('Attendance Corrections Feature Suite (Issue #36)', () => {
             attendanceRecordId: 'att-rec-1',
             reason: 'Forgot to swipe card at entrance',
           }),
+          expect.any(String),
         );
         expect(onSuccess).toHaveBeenCalled();
         expect(onClose).toHaveBeenCalled();
       });
+    });
+
+    it('retries the same form with the same Idempotency-Key, and an edited form with a new one', async () => {
+      vi.mocked(attendanceApi.requestCorrection)
+        .mockRejectedValueOnce(new Error('Network down'))
+        .mockRejectedValueOnce(new Error('Network down'))
+        .mockResolvedValue(mockCorrections[0]!);
+
+      render(<RequestCorrectionModal isOpen={true} onClose={vi.fn()} record={mockRecord} />);
+      const reasonInput = screen.getByTestId('correction-reason-input');
+      const submit = screen.getByTestId('submit-correction-button');
+      const keyOf = (call: number) =>
+        vi.mocked(attendanceApi.requestCorrection).mock.calls[call]![1];
+
+      fireEvent.change(reasonInput, { target: { value: 'Forgot to swipe' } });
+      fireEvent.click(submit);
+      await screen.findByText('Network down');
+
+      // Same form again: a request that did reach the server would be answered, not filed twice.
+      fireEvent.click(submit);
+      await waitFor(() => expect(attendanceApi.requestCorrection).toHaveBeenCalledTimes(2));
+      expect(keyOf(1)).toBe(keyOf(0));
+
+      // A different reason is a different request.
+      fireEvent.change(reasonInput, { target: { value: 'Forgot to swipe, gate was closed' } });
+      fireEvent.click(submit);
+      await waitFor(() => expect(attendanceApi.requestCorrection).toHaveBeenCalledTimes(3));
+      expect(keyOf(2)).not.toBe(keyOf(0));
     });
 
     it('displays error banner if API request fails', async () => {
