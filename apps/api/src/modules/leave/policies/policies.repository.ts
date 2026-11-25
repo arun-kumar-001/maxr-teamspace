@@ -24,6 +24,12 @@ export interface ILeavePoliciesRepository {
   insert(tx: LeaveTx, input: NewLeavePolicy): Promise<LeavePolicy>;
   /** Writes the new values and bumps the version. A 409 when the name is taken. */
   update(tx: LeaveTx, id: string, values: LeavePolicyValues): Promise<LeavePolicy>;
+  /** Switches whether the type keeps a balance. Callers check what was used first. */
+  setHasBalance(tx: LeaveTx, id: string, hasBalance: boolean): Promise<void>;
+  /** Balances of this type that have days used. */
+  countUsedBalances(tx: LeaveTx, id: string): Promise<number>;
+  /** Deletes every balance row of this type (only ever called when none has days used). */
+  deleteBalances(tx: LeaveTx, id: string): Promise<void>;
   /** Leave requests of this type, plus balances that have days used: the history that blocks a delete. */
   countHistory(tx: LeaveTx, id: string): Promise<number>;
   /** Removes the type, its policy and its untouched balances. A 409 when something else still refers to it. */
@@ -169,6 +175,25 @@ export class PgLeavePoliciesRepository implements ILeavePoliciesRepository {
     );
     const res = await tx.query<Row>(`${SELECT} WHERE t.id = $1`, [id]);
     return toPolicy(res.rows[0] as Row);
+  }
+
+  async setHasBalance(tx: LeaveTx, id: string, hasBalance: boolean): Promise<void> {
+    await tx.query(`UPDATE leave_types SET has_balance = $2, updated_at = NOW() WHERE id = $1`, [
+      id,
+      hasBalance,
+    ]);
+  }
+
+  async countUsedBalances(tx: LeaveTx, id: string): Promise<number> {
+    const res = await tx.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM leave_balances WHERE leave_type_id = $1 AND used > 0`,
+      [id],
+    );
+    return Number(res.rows[0]?.n ?? 0);
+  }
+
+  async deleteBalances(tx: LeaveTx, id: string): Promise<void> {
+    await tx.query('DELETE FROM leave_balances WHERE leave_type_id = $1', [id]);
   }
 
   async countHistory(tx: LeaveTx, id: string): Promise<number> {

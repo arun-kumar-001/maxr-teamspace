@@ -41,10 +41,17 @@ export const updateLeavePolicySchema = z
   .object({
     name: z.string().trim().min(1).max(100).optional(),
     isActive: z.boolean().optional(),
+    /** Whether the leave type keeps a yearly balance. Switching it on or off is checked against what was used. */
+    hasBalance: z.boolean().optional(),
     annualDays: days.optional(),
     carryForwardMax: days.optional(),
     allowHalfDay: z.boolean().optional(),
     maxBackdateDays: backdate.optional(),
+    /**
+     * Also sets this year's existing balances to the new annual days and carry forward. Without it a
+     * change only applies to balances created from now on (D-12). Days already used are kept.
+     */
+    applyToCurrentBalances: z.boolean().optional(),
     version: z.number().int().min(1),
   })
   .strict()

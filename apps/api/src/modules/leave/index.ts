@@ -73,6 +73,7 @@ export function createLeaveSetup(options: {
     options.policiesRepository ?? new PgLeavePoliciesRepository(pool),
     options.platform,
     (tx) => balances.accrueCurrentYear(tx),
+    (tx, leaveTypeId, syncOptions) => balances.syncTypeCurrentYear(tx, leaveTypeId, syncOptions),
   );
   const holidays = new HolidaysService(
     options.holidaysRepository ?? new PgHolidaysRepository(pool),

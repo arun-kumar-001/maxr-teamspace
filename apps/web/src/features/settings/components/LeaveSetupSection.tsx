@@ -10,6 +10,7 @@ import {
   type PermissionPolicyConfig,
   DEFAULT_PERMISSION_POLICY,
 } from '../hooks/useSettings';
+import { leaveCodeFromName, validateLeaveCode } from '../lib/leave-code';
 
 function IconClock({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -468,13 +469,12 @@ export function LeaveSetupSection({ draft, onUpdate, disabled = false }: LeaveSe
       setFormError('Please enter a leave type name');
       return;
     }
-    const cleanCode =
-      formCode.trim().toUpperCase() ||
-      cleanName
-        .replace(/[^a-zA-Z0-9]/g, '')
-        .slice(0, 4)
-        .toUpperCase() ||
-      'LV';
+    const codeResult = formCode.trim() ? validateLeaveCode(formCode) : leaveCodeFromName(cleanName);
+    if (!codeResult.ok) {
+      setFormError(codeResult.error);
+      return;
+    }
+    const cleanCode = codeResult.value;
 
     const quotaNum = formIsPaid ? Number(formQuota) || 0 : 0;
 

@@ -14,6 +14,9 @@ export class MemoryLeavePoliciesRepository implements ILeavePoliciesRepository {
   approvalSettings: LeaveApprovalSettings = { approverRole: 'hr_manager', version: 1 };
   /** Leave requests and used balances per leave type id, set by tests. */
   history = new Map<string, number>();
+  /** Balances with days used per leave type id, set by tests. */
+  usedBalances = new Map<string, number>();
+  deletedBalancesOf: string[] = [];
   constructor(public policies: LeavePolicy[] = []) {}
 
   async getApprovalSettings(): Promise<LeaveApprovalSettings> {
@@ -85,6 +88,19 @@ export class MemoryLeavePoliciesRepository implements ILeavePoliciesRepository {
       updatedAt: new Date().toISOString(),
     });
     return { ...found };
+  }
+
+  async setHasBalance(_tx: LeaveTx, id: string, hasBalance: boolean): Promise<void> {
+    const found = this.policies.find((p) => p.id === id) as LeavePolicy;
+    found.hasBalance = hasBalance;
+  }
+
+  async countUsedBalances(_tx: LeaveTx, id: string): Promise<number> {
+    return this.usedBalances.get(id) ?? 0;
+  }
+
+  async deleteBalances(_tx: LeaveTx, id: string): Promise<void> {
+    this.deletedBalancesOf.push(id);
   }
 
   async countHistory(_tx: LeaveTx, id: string): Promise<number> {
