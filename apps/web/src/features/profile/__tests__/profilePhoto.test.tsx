@@ -2,10 +2,8 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ROLES } from '@maxr/shared';
 import * as client from '../../../api/client';
-import { AuthContext, buildUserFromApi, type AuthContextValue } from '../../../auth/AuthContext';
-import type { AuthUser } from '../../../auth/types';
+import { buildUserFromApi } from '../../../auth/AuthContext';
 import { EmployeeCard } from '../../employees/components/EmployeeCard';
 import type { EmployeeDirectoryItem } from '../../employees/types';
 import { checkPhotoFile, deleteMyPhoto, uploadMyPhoto } from '../api/profileApi';
@@ -104,78 +102,62 @@ describe('profile photos are the server’s, not this browser’s', () => {
       createdAt: '2025-01-15T00:00:00.000Z',
       updatedAt: '2025-01-15T00:00:00.000Z',
       version: 1,
-      account: { userId: 'u1', isActive: true, lastLoginAt: null, roles: ['staff'] },
-    };
-    const baseUser: AuthUser = {
-      id: 'u1',
-      email: 'asha@maxr.test',
-      name: 'Asha Rao',
-      role: ROLES.STAFF,
-      roles: [ROLES.STAFF],
-      permissions: [],
-      avatarInitials: 'AR',
+      photoUrl: '/api/v1/employees/emp-100/photo?v=1',
     };
 
-    function renderHeader(user: AuthUser, updateUserAvatar = vi.fn()) {
-      const value: AuthContextValue = {
-        user,
-        role: user.role,
-        isAuthenticated: true,
-        isLoading: false,
-        login: vi.fn(),
-        logout: vi.fn(),
-        switchRole: vi.fn(),
-        updateUserAvatar,
-      };
-      render(
-        <AuthContext.Provider value={value}>
-          <ProfileHeader profile={profile} />
-        </AuthContext.Provider>,
-      );
-      return updateUserAvatar;
-    }
+    it('hands the chosen file to the upload it was given', async () => {
+      const onUpload = vi.fn(async () => undefined);
+      render(<ProfileHeader profile={profile} photo={{ onUpload, onRemove: vi.fn() }} />);
 
-    it('uploads the chosen photo and shows the server URL it gets back', async () => {
-      vi.spyOn(client, 'apiFetch').mockResolvedValue(
-        reply(200, { data: { photoUrl: '/api/v1/employees/e1/photo?v=9' } }),
-      );
-      const updateUserAvatar = renderHeader(baseUser);
-
+      const chosen = file('image/png');
       fireEvent.change(screen.getByTestId('profile-photo-file-input'), {
-        target: { files: [file('image/png')] },
+        target: { files: [chosen] },
       });
 
-      await waitFor(() =>
-        expect(updateUserAvatar).toHaveBeenCalledWith('/api/v1/employees/e1/photo?v=9'),
-      );
-      expect(localStorage.length).toBe(0);
+      await waitFor(() => expect(onUpload).toHaveBeenCalledWith(chosen));
     });
 
-    it('does not change the avatar, and says why, when the server refuses', async () => {
-      vi.spyOn(client, 'apiFetch').mockResolvedValue(
-        reply(400, { error: { message: 'The photo could not be checked' } }),
-      );
-      const updateUserAvatar = renderHeader(baseUser);
+    it('says why when the upload fails, and does not pretend it worked', async () => {
+      const onUpload = vi.fn(async () => {
+        throw new Error('The photo could not be checked');
+      });
+      render(<ProfileHeader profile={profile} photo={{ onUpload, onRemove: vi.fn() }} />);
 
       fireEvent.change(screen.getByTestId('profile-photo-file-input'), {
         target: { files: [file('image/png')] },
       });
 
       expect(await screen.findByText(/could not be checked/)).toBeInTheDocument();
-      expect(updateUserAvatar).not.toHaveBeenCalled();
     });
 
-    it('does not even try a file the server would not accept', async () => {
-      const apiFetch = vi.spyOn(client, 'apiFetch');
-      const updateUserAvatar = renderHeader(baseUser);
-
-      fireEvent.change(screen.getByTestId('profile-photo-file-input'), {
-        target: { files: [file('image/gif')] },
+    it('removes the photo through the remove it was given, and shows why when that fails', async () => {
+      const onRemove = vi.fn(async () => {
+        throw new Error('Photo storage is down');
       });
+      render(<ProfileHeader profile={profile} photo={{ onUpload: vi.fn(), onRemove }} />);
 
-      expect(await screen.findByText(/PNG or JPG/)).toBeInTheDocument();
-      expect(apiFetch).not.toHaveBeenCalled();
-      expect(updateUserAvatar).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Photo' }));
+
+      expect(await screen.findByText(/Photo storage is down/)).toBeInTheDocument();
+      expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    it('has no camera, file input or Remove Photo when the viewer may not change the photo', () => {
+      render(<ProfileHeader profile={profile} />);
+      expect(screen.queryByTestId('upload-avatar-btn')).toBeNull();
+      expect(screen.queryByTestId('profile-photo-file-input')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Remove Photo' })).toBeNull();
+    });
+
+    it('shows initials, and no Remove Photo, when there is no photo', () => {
+      render(
+        <ProfileHeader
+          profile={{ ...profile, photoUrl: null }}
+          photo={{ onUpload: vi.fn(), onRemove: vi.fn() }}
+        />,
+      );
+      expect(screen.getByText('AR')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Remove Photo' })).toBeNull();
     });
   });
 

@@ -1,8 +1,8 @@
 import type { EmployeeProfile } from '../types';
 import { PhoneEditor } from './PhoneEditor';
 
-export interface PersonalInformationProps {
-  profile: EmployeeProfile;
+/** What lets the employee edit their own phone; present only when they are looking at themselves. */
+export interface PhoneEditState {
   phoneDraft: string;
   isEditingPhone: boolean;
   isSavingPhone: boolean;
@@ -14,7 +14,13 @@ export interface PersonalInformationProps {
   onSavePhone: () => void;
 }
 
-function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+export interface PersonalInformationProps {
+  profile: EmployeeProfile;
+  /** Given for your own profile (the phone is yours to edit); left out for anyone else's. */
+  phone?: PhoneEditState;
+}
+
+function Field({ label, value, mono }: { label: string; value: string | null; mono?: boolean }) {
   return (
     <div>
       <span className="block text-xs font-semibold text-text-subtle mb-1.5">{label}</span>
@@ -23,7 +29,7 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
           mono ? 'font-mono' : ''
         }`}
       >
-        {value}
+        {value || <span className="text-text-muted font-normal">Not provided</span>}
       </div>
     </div>
   );
@@ -31,20 +37,10 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
 
 /**
  * Only what the employee record holds: name, code and work email are read-only here (HR maintains
- * them); the phone is the one thing the employee edits. Nothing is shown that is not stored.
+ * them). The phone is the one thing the employee edits on their own profile; on anyone else's it
+ * is shown like the rest. Nothing is shown that is not stored.
  */
-export function PersonalInformation({
-  profile,
-  phoneDraft,
-  isEditingPhone,
-  isSavingPhone,
-  saveError,
-  conflictWarning,
-  onDraftChange,
-  onStartEditPhone,
-  onCancelEditPhone,
-  onSavePhone,
-}: PersonalInformationProps) {
+export function PersonalInformation({ profile, phone }: PersonalInformationProps) {
   return (
     <section
       className="bg-surface border border-border rounded-card p-6 shadow-card"
@@ -71,7 +67,9 @@ export function PersonalInformation({
             Personal Information
           </h2>
           <p className="text-xs text-text-muted">
-            Your contact information on record. Phone is self-editable.
+            {phone
+              ? 'Your contact information on record. Phone is self-editable.'
+              : 'Contact information on record.'}
           </p>
         </div>
       </div>
@@ -84,19 +82,23 @@ export function PersonalInformation({
         <Field label="Work Email" value={profile.email} />
 
         <div className="border-t border-border pt-4">
-          <PhoneEditor
-            currentPhone={profile.phone}
-            phoneDraft={phoneDraft}
-            isEditing={isEditingPhone}
-            isSaving={isSavingPhone}
-            isDeactivated={profile.status === 'deactivated'}
-            saveError={saveError}
-            conflictWarning={conflictWarning}
-            onDraftChange={onDraftChange}
-            onStartEdit={onStartEditPhone}
-            onCancelEdit={onCancelEditPhone}
-            onSave={onSavePhone}
-          />
+          {phone ? (
+            <PhoneEditor
+              currentPhone={profile.phone}
+              phoneDraft={phone.phoneDraft}
+              isEditing={phone.isEditingPhone}
+              isSaving={phone.isSavingPhone}
+              isDeactivated={profile.status === 'deactivated'}
+              saveError={phone.saveError}
+              conflictWarning={phone.conflictWarning}
+              onDraftChange={phone.onDraftChange}
+              onStartEdit={phone.onStartEditPhone}
+              onCancelEdit={phone.onCancelEditPhone}
+              onSave={phone.onSavePhone}
+            />
+          ) : (
+            <Field label="Phone" value={profile.phone} />
+          )}
         </div>
       </div>
     </section>

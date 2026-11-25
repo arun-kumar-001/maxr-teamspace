@@ -23,3 +23,14 @@ export async function uploadEmployeePhoto(employeeId: string, file: File): Promi
   }
   return body.data.photoUrl;
 }
+
+/** Removes an employee's profile photo (Admin and HR). */
+export async function deleteEmployeePhoto(employeeId: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/employees/${encodeURIComponent(employeeId)}/photo`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    throw new Error(body?.error?.message ?? 'The photo could not be removed.');
+  }
+}
