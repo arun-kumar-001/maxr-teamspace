@@ -6,6 +6,7 @@ import {
   Route,
   useNavigate,
   useLocation,
+  useParams,
   Navigate,
 } from 'react-router-dom';
 import type { Role } from '@maxr/shared';
@@ -107,6 +108,18 @@ export interface AppProps {
   initialRole?: Role;
   initialPath?: string;
   persistSession?: boolean;
+}
+
+/**
+ * An employee's page is the My Profile page (/profile/details): your own record at
+ * /profile/details, anybody else's at /profile/details/:id. Older /employees/:id links land here.
+ */
+function EmployeeProfileRedirect() {
+  const { id } = useParams<{ id: string }>();
+  const { search } = useLocation();
+  const { user } = useAuth();
+  const target = id && id !== user?.employeeId ? `/profile/details/${id}` : '/profile/details';
+  return <Navigate to={`${target}${search}`} replace />;
 }
 
 function ShellLayoutInner({ children }: { children: ReactNode }) {
@@ -320,30 +333,9 @@ function AppRoutes() {
       />
 
       {/* Employee Detail & Edit Routes (Issue #21) */}
-      <Route
-        path="/employees/:id"
-        element={
-          <ShellLayout>
-            <EmployeeDetailPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/admin/employees/:id"
-        element={
-          <ShellLayout>
-            <EmployeeDetailPage />
-          </ShellLayout>
-        }
-      />
-      <Route
-        path="/hr/employees/:id"
-        element={
-          <ShellLayout>
-            <EmployeeDetailPage />
-          </ShellLayout>
-        }
-      />
+      <Route path="/employees/:id" element={<EmployeeProfileRedirect />} />
+      <Route path="/admin/employees/:id" element={<EmployeeProfileRedirect />} />
+      <Route path="/hr/employees/:id" element={<EmployeeProfileRedirect />} />
 
       {/* Departments Management Routes (Issue #18) */}
       <Route
@@ -382,6 +374,14 @@ function AppRoutes() {
         element={
           <ShellLayout>
             <ProfilePortalPage />
+          </ShellLayout>
+        }
+      />
+      <Route
+        path="/profile/details/:id"
+        element={
+          <ShellLayout>
+            <EmployeeDetailPage />
           </ShellLayout>
         }
       />

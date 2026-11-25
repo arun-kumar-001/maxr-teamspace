@@ -221,20 +221,15 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
     expect(screen.getByText(/Kavita Iyer/i)).toBeInTheDocument();
   });
 
-  it('displays Account & Security tab when account information is present for Admin', async () => {
+  it('shows the Account & Security card when account information is present for Admin', async () => {
     renderWithProviders('/employees/emp-1', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-page')).toBeInTheDocument();
     });
 
-    // Account tab button should exist
-    const accountTabBtn = screen.getByRole('radio', { name: /Account & Security/i });
-    expect(accountTabBtn).toBeInTheDocument();
-
-    // Click tab
-    fireEvent.click(accountTabBtn);
-
+    // One page, no tabs: the account card sits below the profile cards.
+    expect(screen.queryByRole('radio', { name: /Account & Security/i })).not.toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByTestId('tab-account')).toBeInTheDocument();
     });
@@ -244,7 +239,7 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
     expect(screen.getByText('STAFF')).toBeInTheDocument();
   });
 
-  it('hides Account & Security tab when account information is omitted for Staff', async () => {
+  it('hides the Account & Security card when account information is omitted for Staff', async () => {
     renderWithProviders('/employees/emp-staff-view', 'staff');
 
     await waitFor(() => {

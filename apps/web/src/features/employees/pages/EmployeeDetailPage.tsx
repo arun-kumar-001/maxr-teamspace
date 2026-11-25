@@ -2,14 +2,7 @@ import { EmployeeAvatar } from '../components/EmployeeAvatar';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
-import {
-  Badge,
-  Button,
-  ErrorState,
-  ForbiddenState,
-  SegmentedControl,
-  Skeleton,
-} from '../../../components/ui';
+import { Badge, Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
@@ -77,7 +70,6 @@ export function EmployeeDetailPage() {
   const { employee, isLoading, isSaving, error, isNotFound, isForbidden, refetch, updateEmployee } =
     useEmployeeDetail(id);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'personal' | 'account'>('overview');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [isChangeManagerOpen, setIsChangeManagerOpen] = useState(false);
@@ -184,15 +176,6 @@ export function EmployeeDetailPage() {
 
   const initials = `${employee.firstName[0] || ''}${employee.lastName[0] || ''}`.toUpperCase();
 
-  const tabOptions: Array<{
-    value: 'overview' | 'personal' | 'account';
-    label: string;
-  }> = [
-    { value: 'overview', label: 'Job & Overview' },
-    { value: 'personal', label: 'Personal Information' },
-    ...(employee.account ? [{ value: 'account' as const, label: 'Account & Security' }] : []),
-  ];
-
   return (
     <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-page">
       {/* Toast Notification */}
@@ -297,18 +280,7 @@ export function EmployeeDetailPage() {
         </div>
       )}
 
-      {/* Tabs Bar */}
-      <div className="overflow-x-auto max-w-full pb-1">
-        <SegmentedControl
-          options={tabOptions}
-          value={activeTab}
-          onChange={(val) => setActiveTab(val as typeof activeTab)}
-          ariaLabel="Employee detail sections"
-        />
-      </div>
-
-      {/* Tab Panels */}
-      {activeTab === 'overview' && (
+      {
         <div className="space-y-4" data-testid="tab-overview">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <RecordPersonalInformation profile={profile} />
@@ -329,9 +301,9 @@ export function EmployeeDetailPage() {
             </div>
           )}
         </div>
-      )}
+      }
 
-      {activeTab === 'personal' && (
+      {
         <div
           className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card space-y-6"
           data-testid="tab-personal"
@@ -457,9 +429,9 @@ export function EmployeeDetailPage() {
 
           <BankAccountDetailsSection employee={employee} />
         </div>
-      )}
+      }
 
-      {activeTab === 'account' && employee.account && (
+      {employee.account && (
         <div
           className="p-4 sm:p-6 bg-surface rounded-card border border-border shadow-card space-y-6"
           data-testid="tab-account"
