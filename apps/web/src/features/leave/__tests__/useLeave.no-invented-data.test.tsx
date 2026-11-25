@@ -13,6 +13,7 @@ vi.mock('../api/leave', () => ({
   fetchLeaveCalendar: vi.fn(),
   applyForLeave: vi.fn(),
   cancelLeaveRequest: vi.fn(),
+  createHoliday: vi.fn(),
 }));
 
 const payload = {
@@ -101,5 +102,42 @@ describe('useLeave never shows invented data outside a development demo', () => 
     await waitFor(() => expect(result.current.isLoadingRequests).toBe(false));
     await expect(result.current.editLeave('r1', payload)).rejects.toThrow('cannot be edited');
     expect(result.current.requests).toEqual([]);
+  });
+});
+
+describe('adding a holiday', () => {
+  afterEach(() => vi.resetAllMocks());
+
+  it('goes to the holiday year and reads it back when it is not the year on screen', async () => {
+    serverEmpty();
+    const holiday = { id: 'h1', date: '2025-12-25', name: 'Christmas Day' };
+    vi.mocked(leaveApi.createHoliday).mockResolvedValue(holiday as never);
+    const { result } = renderHook(() => useLeave(2026));
+    await waitFor(() => expect(result.current.isLoadingRequests).toBe(false));
+
+    vi.mocked(leaveApi.fetchHolidays).mockResolvedValue([holiday] as never);
+    await act(async () => {
+      await result.current.createHoliday({ date: '2025-12-25', name: 'Christmas Day' } as never);
+    });
+
+    // It is not left in 2026's list (where a refresh would drop it): the screen moved to 2025.
+    await waitFor(() => expect(result.current.selectedYear).toBe(2025));
+    expect(leaveApi.fetchHolidays).toHaveBeenLastCalledWith(2025);
+    await waitFor(() => expect(result.current.holidays).toEqual([holiday]));
+  });
+
+  it('adds it straight to the list when it is in the year on screen', async () => {
+    serverEmpty();
+    const holiday = { id: 'h2', date: '2026-08-15', name: 'Independence Day' };
+    vi.mocked(leaveApi.createHoliday).mockResolvedValue(holiday as never);
+    const { result } = renderHook(() => useLeave(2026));
+    await waitFor(() => expect(result.current.isLoadingRequests).toBe(false));
+
+    await act(async () => {
+      await result.current.createHoliday({ date: '2026-08-15', name: 'Independence Day' } as never);
+    });
+
+    expect(result.current.selectedYear).toBe(2026);
+    expect(result.current.holidays).toEqual([holiday]);
   });
 });

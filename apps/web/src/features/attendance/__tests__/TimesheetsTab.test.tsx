@@ -230,6 +230,25 @@ describe('TimesheetsTab', () => {
     expect(within(row).queryByText(/Engineering/)).toBeNull();
   });
 
+  it('adds up several sessions on one day in the details, not just the first', async () => {
+    renderTab([
+      record('r1', 'e1', '2026-11-02', 120, {
+        checkInTime: '2026-11-02T04:00:00Z',
+        checkOutTime: '2026-11-02T06:00:00Z',
+      }),
+      record('r2', 'e1', '2026-11-02', 180, {
+        checkInTime: '2026-11-02T08:00:00Z',
+        checkOutTime: '2026-11-02T11:00:00Z',
+      }),
+    ]);
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Timesheet details for Ann Tester' }),
+    );
+
+    // 2 h + 3 h on the Monday
+    expect(await screen.findByText(/\(5\.0 hrs\)/)).toBeInTheDocument();
+  });
+
   it('shows overtime as plus and says it in words', async () => {
     renderTab([
       record('r1', 'e1', '2026-11-02', 600),

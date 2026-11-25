@@ -862,22 +862,32 @@ export function TimesheetsTab({
               </span>
               <div className="border border-border/70 rounded-xl divide-y divide-border/60 overflow-hidden">
                 {weekInfo.days.map((day) => {
-                  const empDayRec = weekRecords.find(
+                  // A day can hold several sessions: show the first check-in, the last check-out
+                  // (Active while one is still open) and the hours of all of them.
+                  const empDayRecs = weekRecords.filter(
                     (r) =>
                       (r.employeeId === detailedEntry.employeeId ||
                         r.employeeId === detailedEntry.id.replace('ts-', '')) &&
                       r.workDate === day.isoDate,
                   );
-                  const hasRecord = !!empDayRec;
-                  const punchIn = empDayRec?.checkInTime
-                    ? formatPunchTime(empDayRec.checkInTime)
-                    : null;
-                  const punchOut = empDayRec?.checkOutTime
-                    ? formatPunchTime(empDayRec.checkOutTime)
-                    : null;
-                  const hours = empDayRec
-                    ? ((empDayRec.durationMinutes || 0) / 60).toFixed(1)
-                    : '0.0';
+                  const hasRecord = empDayRecs.length > 0;
+                  const checkIns = empDayRecs
+                    .map((r) => r.checkInTime)
+                    .filter((t): t is string => Boolean(t))
+                    .sort();
+                  const checkOuts = empDayRecs
+                    .map((r) => r.checkOutTime)
+                    .filter((t): t is string => Boolean(t))
+                    .sort();
+                  const stillOpen = empDayRecs.some((r) => r.checkInTime && !r.checkOutTime);
+                  const punchIn = checkIns[0] ? formatPunchTime(checkIns[0]) : null;
+                  const punchOut =
+                    !stillOpen && checkOuts.length > 0
+                      ? formatPunchTime(checkOuts[checkOuts.length - 1])
+                      : null;
+                  const hours = (
+                    empDayRecs.reduce((sum, r) => sum + (r.durationMinutes || 0), 0) / 60
+                  ).toFixed(1);
 
                   return (
                     <div
