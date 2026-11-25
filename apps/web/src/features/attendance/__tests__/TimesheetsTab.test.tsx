@@ -201,6 +201,26 @@ describe('TimesheetsTab', () => {
     expect(within(rowOf('Eve')).getByText(/\/ 3/)).toBeInTheDocument();
   });
 
+  it("labels the first column Employee and shows the employee's photo when there is one", async () => {
+    serverRecords = [];
+    const { container } = render(
+      <TimesheetsTab
+        records={[]}
+        employees={[
+          { ...employee('e1', 'Ann', 'E-001'), photoUrl: '/api/v1/employees/e1/photo?v=3' },
+          employee('e2', 'Bea', 'E-002'),
+        ]}
+        departments={[]}
+        canViewTeam={true}
+        selectedDate="2026-11-03"
+      />,
+    );
+
+    expect(await screen.findByRole('columnheader', { name: 'Employee' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Person' })).toBeNull();
+    expect(container.querySelector('img[src="/api/v1/employees/e1/photo?v=3"]')).not.toBeNull();
+  });
+
   it('shows only the name and the job title under the person', async () => {
     renderTab([]);
     const row = await screen.findByRole('button', { name: 'Timesheet details for Ann Tester' });

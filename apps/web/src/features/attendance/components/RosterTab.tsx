@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { Button, KpiCard, Modal } from '../../../components/ui';
 import { fetchMyAttendanceHistory, fetchTeamAttendance } from '../api/attendance';
 import type { AttendanceRecord } from '../types';
@@ -1116,10 +1117,13 @@ export function RosterTab({
                         {/* Employee Profile Cell */}
                         <td className="px-4 py-2.5 align-middle">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/80 shadow-xs">
-                              {emp.firstName[0]}
-                              {emp.lastName[0]}
-                            </div>
+                            <EmployeeAvatar
+                              name={`${emp.firstName} ${emp.lastName}`}
+                              employeeId={emp.id}
+                              photoUrl={emp.photoUrl}
+                              decorative
+                              className="h-8 w-8 shrink-0 border border-border/80 bg-surface-muted text-xs font-bold text-text shadow-xs"
+                            />
                             <div className="min-w-0 truncate">
                               <span className="font-semibold text-text block truncate text-xs sm:text-sm">
                                 {emp.firstName} {emp.lastName}
@@ -1280,10 +1284,13 @@ export function RosterTab({
                         {/* Sticky Employee Column */}
                         <td className="px-4 py-2.5 sticky left-0 bg-white z-20 w-[240px] min-w-[240px] max-w-[240px] border-r border-border/80 shadow-[2px_0_6px_-1px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-800 font-bold text-[11px] flex items-center justify-center shrink-0 border border-border/60">
-                              {emp.firstName[0]}
-                              {emp.lastName[0]}
-                            </div>
+                            <EmployeeAvatar
+                              name={`${emp.firstName} ${emp.lastName}`}
+                              employeeId={emp.id}
+                              photoUrl={emp.photoUrl}
+                              decorative
+                              className="h-7 w-7 shrink-0 border border-border/60 bg-slate-100 text-[11px] font-bold text-slate-800"
+                            />
                             <div className="min-w-0">
                               <span className="font-bold text-text block truncate text-xs">
                                 {emp.firstName} {emp.lastName}

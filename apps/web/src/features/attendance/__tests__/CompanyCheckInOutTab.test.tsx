@@ -259,4 +259,22 @@ describe('CompanyCheckInOutTab', () => {
       await waitFor(() => expect(screen.queryByAltText('Captured Selfie')).not.toBeInTheDocument());
     });
   });
+
+  it("shows an employee's photo when there is one, and initials when there is not", () => {
+    const withPhoto = mockEmployees.map((e, i) =>
+      i === 0 ? { ...e, photoUrl: '/api/v1/employees/photo-1/photo?v=7' } : e,
+    );
+    const { container } = render(
+      <CompanyCheckInOutTab
+        records={mockRecords}
+        employees={withPhoto}
+        departments={mockDepartments}
+        selectedDate="2026-11-03"
+      />,
+    );
+
+    const images = container.querySelectorAll('img[src*="/photo"]');
+    expect(images.length).toBeGreaterThanOrEqual(1);
+    expect(images[0]?.getAttribute('src')).toBe('/api/v1/employees/photo-1/photo?v=7');
+  });
 });

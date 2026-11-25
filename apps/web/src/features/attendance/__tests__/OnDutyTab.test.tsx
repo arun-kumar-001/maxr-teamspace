@@ -155,7 +155,7 @@ describe('TimesheetsTab Component', () => {
     for (const gone of ['Status', 'Actions']) {
       expect(screen.queryByRole('columnheader', { name: gone })).toBeNull();
     }
-    for (const kept of ['Person', 'Days', 'Planned', 'Worked', 'Breaks', 'Difference']) {
+    for (const kept of ['Employee', 'Days', 'Planned', 'Worked', 'Breaks', 'Difference']) {
       expect(screen.getByRole('columnheader', { name: kept })).toBeInTheDocument();
     }
   });

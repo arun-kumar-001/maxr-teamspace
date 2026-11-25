@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { Button, KpiCard, Modal } from '../../../components/ui';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 import type { AttendanceRecord } from '../types';
@@ -118,6 +119,7 @@ export interface TimesheetEntry {
   departmentName: string;
   /** The person's job title, shown under the name. */
   role: string;
+  photoUrl: string | null;
   /** Days with a check-in this week, not counting days of approved full-day leave. */
   daysWorked: number;
   /** Working days so far this week; null when the company plan could not be read. */
@@ -267,11 +269,19 @@ export function TimesheetsTab({
         name: `${emp.firstName} ${emp.lastName}`.trim(),
         department: emp.department?.name || 'General',
         role: emp.designation?.title ?? '',
+        photoUrl: emp.photoUrl ?? null,
       }));
     }
     const seen = new Map<
       string,
-      { id: string; code: string; name: string; department: string; role: string }
+      {
+        id: string;
+        code: string;
+        name: string;
+        department: string;
+        role: string;
+        photoUrl: string | null;
+      }
     >();
     for (const r of weekRecords) {
       if (!seen.has(r.employeeId)) {
@@ -281,6 +291,7 @@ export function TimesheetsTab({
           name: r.employeeName || 'Employee',
           department: 'General',
           role: '',
+          photoUrl: null,
         });
       }
     }
@@ -353,6 +364,7 @@ export function TimesheetsTab({
         employeeCode: person.code,
         departmentName: person.department,
         role: person.role,
+        photoUrl: person.photoUrl,
         daysWorked,
         plannedDays: planned ? planned.plannedDays : null,
         plannedHours: planned ? planned.plannedHours : null,
@@ -595,7 +607,7 @@ export function TimesheetsTab({
                       scope="col"
                       className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[170px]"
                     >
-                      Person
+                      Employee
                     </th>
                     <th
                       scope="col"
@@ -658,16 +670,13 @@ export function TimesheetsTab({
                               aria-label={`Timesheet details for ${ts.name}`}
                               className="flex w-full items-center gap-3 text-left min-h-[44px] cursor-pointer"
                             >
-                              <span
-                                aria-hidden="true"
-                                className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/60"
-                              >
-                                {ts.name
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .slice(0, 2)
-                                  .join('')}
-                              </span>
+                              <EmployeeAvatar
+                                name={ts.name}
+                                employeeId={ts.employeeId}
+                                photoUrl={ts.photoUrl}
+                                decorative
+                                className="h-8 w-8 shrink-0 border border-border/60 bg-surface-muted text-xs font-bold text-text"
+                              />
                               <span className="min-w-0">
                                 <span className="font-bold text-text block truncate text-xs sm:text-sm">
                                   {ts.name}
