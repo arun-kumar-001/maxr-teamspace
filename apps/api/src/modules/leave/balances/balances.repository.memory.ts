@@ -8,6 +8,9 @@ export class MemoryLeaveBalancesRepository implements ILeaveBalancesRepository {
   rows: EmployeeLeaveBalance[] = [];
   accruals: Array<{ year: number; employeeId?: string }> = [];
   createdPerAccrual = 0;
+  syncs: Array<{ year: number; leaveTypeId: string; rebuildUsed: boolean }> = [];
+  /** Set by tests to make a sync fail like the table's check does. */
+  syncError: Error | null = null;
 
   constructor(private readonly managerOf: (employeeId: string) => string | null = () => null) {}
 
@@ -17,6 +20,17 @@ export class MemoryLeaveBalancesRepository implements ILeaveBalancesRepository {
 
   async accrue(_tx: LeaveTx, year: number, employeeId?: string): Promise<number> {
     this.accruals.push({ year, employeeId });
+    return this.createdPerAccrual;
+  }
+
+  async syncType(
+    _tx: LeaveTx,
+    year: number,
+    leaveTypeId: string,
+    options: { rebuildUsed: boolean },
+  ): Promise<number> {
+    if (this.syncError) throw this.syncError;
+    this.syncs.push({ year, leaveTypeId, rebuildUsed: options.rebuildUsed });
     return this.createdPerAccrual;
   }
 

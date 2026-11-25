@@ -22,8 +22,11 @@ const EDITABLE = [
 
 /**
  * Leave types and their policies (D-12). Changing a policy does not touch balances that already
- * exist: they were allotted under the policy of their year. A new type, or one switched back on,
- * gets its balances created for everyone straight away (existing balances are left alone).
+ * exist: they were allotted under the policy of their year, unless the caller asks for it
+ * (`applyToCurrentBalances`), which sets this year's balances to the new policy and keeps the days
+ * used. A new type, or one switched back on, gets its balances created for everyone straight away
+ * (existing balances are left alone). Switching a type's balance on builds its balances from the
+ * approved leave of the year; switching it off removes them, and is refused once days were used.
  */
 export class LeavePoliciesService {
   constructor(
@@ -31,6 +34,12 @@ export class LeavePoliciesService {
     private readonly platform: Deps,
     /** Creates the missing balances of the current year in the caller's transaction. */
     private readonly accrueCurrentYear?: (tx: LeaveTx) => Promise<number>,
+    /** Brings one type's balances of the current year in line with its policy. */
+    private readonly syncBalances?: (
+      tx: LeaveTx,
+      leaveTypeId: string,
+      options: { rebuildUsed: boolean },
+    ) => Promise<number>,
   ) {}
 
   list(): Promise<LeavePolicy[]> {
@@ -110,27 +119,53 @@ export class LeavePoliciesService {
       if (current.version !== input.version) {
         throw conflict('This policy was changed by someone else; reload it and try again');
       }
+      const hasBalance = input.hasBalance ?? current.hasBalance;
+      const switchedBalanceOn = hasBalance && !current.hasBalance;
+      const switchedBalanceOff = !hasBalance && current.hasBalance;
       const next: LeavePolicyValues = {
         name: input.name ?? current.name,
         isActive: input.isActive ?? current.isActive,
-        annualDays: input.annualDays ?? current.annualDays,
-        carryForwardMax: input.carryForwardMax ?? current.carryForwardMax,
+        // A type that stops keeping a balance has no days to give, unless the caller says otherwise.
+        annualDays: input.annualDays ?? (switchedBalanceOff ? 0 : current.annualDays),
+        carryForwardMax:
+          input.carryForwardMax ?? (switchedBalanceOff ? 0 : current.carryForwardMax),
         allowHalfDay: input.allowHalfDay ?? current.allowHalfDay,
         maxBackdateDays: input.maxBackdateDays ?? current.maxBackdateDays,
       };
-      if (!current.hasBalance && (next.annualDays !== 0 || next.carryForwardMax !== 0)) {
+      if (!hasBalance && (next.annualDays !== 0 || next.carryForwardMax !== 0)) {
         throw unprocessable('A leave type without a balance has no annual days or carry forward');
+      }
+      if (switchedBalanceOff && (await this.repository.countUsedBalances(tx, id)) > 0) {
+        throw conflict(
+          'Some of this leave has already been used, so its balance cannot be switched off',
+        );
       }
       const changes: Record<string, { from: unknown; to: unknown }> = {};
       for (const key of EDITABLE) {
         if (current[key] !== next[key]) changes[key] = { from: current[key], to: next[key] };
       }
+      if (hasBalance !== current.hasBalance) {
+        changes.hasBalance = { from: current.hasBalance, to: hasBalance };
+      }
       // Nothing differs: no write, no version bump, no audit noise.
       if (Object.keys(changes).length === 0) return current;
 
       const updated = await this.repository.update(tx, id, next);
-      const switchedOn = !current.isActive && next.isActive && current.hasBalance;
-      const balancesCreated = switchedOn ? ((await this.accrueCurrentYear?.(tx)) ?? 0) : 0;
+      if (switchedBalanceOn || switchedBalanceOff) {
+        await this.repository.setHasBalance(tx, id, hasBalance);
+        updated.hasBalance = hasBalance;
+      }
+      const policyChanged = 'annualDays' in changes || 'carryForwardMax' in changes;
+      const reapply = hasBalance && input.applyToCurrentBalances === true && policyChanged;
+      const switchedOn = !current.isActive && next.isActive && hasBalance;
+      let balancesWritten = 0;
+      if (switchedBalanceOff) {
+        await this.repository.deleteBalances(tx, id);
+      } else if (switchedBalanceOn || reapply) {
+        balancesWritten = await this.syncBalancesOrExplain(tx, id, switchedBalanceOn);
+      } else if (switchedOn) {
+        balancesWritten = (await this.accrueCurrentYear?.(tx)) ?? 0;
+      }
       await audit.record(
         {
           action: 'leave_policy.update',
@@ -138,12 +173,31 @@ export class LeavePoliciesService {
           entityType: 'leave_policy',
           entityId: id,
           changes,
-          ...(switchedOn ? { metadata: { balancesCreated } } : {}),
+          ...(balancesWritten > 0 ? { metadata: { balancesCreated: balancesWritten } } : {}),
         },
         { transaction: tx },
       );
       return updated;
     });
+  }
+
+  /** A balance that would fall below the days already used is refused with the reason, not a 500. */
+  private async syncBalancesOrExplain(
+    tx: LeaveTx,
+    id: string,
+    rebuildUsed: boolean,
+  ): Promise<number> {
+    if (!this.syncBalances) return 0;
+    try {
+      return await this.syncBalances(tx, id, { rebuildUsed });
+    } catch (err) {
+      if ((err as { code?: string }).code === '23514') {
+        throw unprocessable(
+          'Some employees have already used or been approved for more days than this allows; raise the annual days or carry forward',
+        );
+      }
+      throw err;
+    }
   }
 
   /**

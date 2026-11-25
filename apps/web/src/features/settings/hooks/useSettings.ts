@@ -756,6 +756,7 @@ export function useSettings(): UseSettingsResult {
             if (existing) {
               const hasDiff =
                 existing.name !== item.name ||
+                existing.hasBalance !== hasBal ||
                 existing.annualDays !== annualDays ||
                 existing.carryForwardMax !== carryForwardMax ||
                 existing.allowHalfDay !== (item.allowHalfDay ?? true) ||
@@ -764,11 +765,14 @@ export function useSettings(): UseSettingsResult {
               if (hasDiff) {
                 await updateLeavePolicy(existing.id, {
                   name: item.name,
+                  hasBalance: hasBal,
                   annualDays,
                   carryForwardMax,
                   allowHalfDay: isPerm ? false : (item.allowHalfDay ?? true),
                   maxBackdateDays: item.maxBackdateDays ?? 0,
                   isActive: item.isActive ?? true,
+                  // Leave Setup is where the quota is set, so this year's balances follow it.
+                  applyToCurrentBalances: true,
                   version: existing.version,
                 });
               }

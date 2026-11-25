@@ -6603,6 +6603,9 @@
                   "isActive": {
                     "type": "boolean"
                   },
+                  "hasBalance": {
+                    "type": "boolean"
+                  },
                   "annualDays": {
                     "type": "number",
                     "minimum": 0,
@@ -6620,6 +6623,9 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 30
+                  },
+                  "applyToCurrentBalances": {
+                    "type": "boolean"
                   },
                   "version": {
                     "type": "integer",

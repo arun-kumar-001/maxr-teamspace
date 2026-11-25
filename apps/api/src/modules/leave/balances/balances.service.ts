@@ -86,6 +86,15 @@ export class LeaveBalancesService {
     return this.repository.accrue(tx, await this.currentYear());
   }
 
+  /** One leave type's balances for the current year, in line with its policy (see the repository). */
+  async syncTypeCurrentYear(
+    tx: LeaveTx,
+    leaveTypeId: string,
+    options: { rebuildUsed: boolean },
+  ): Promise<number> {
+    return this.repository.syncType(tx, await this.currentYear(), leaveTypeId, options);
+  }
+
   /**
    * The scheduled form of the accrual (D-12): creates whatever balances of the current company
    * year are missing, so nobody has to remember to run it on 1 January. It is safe to run every

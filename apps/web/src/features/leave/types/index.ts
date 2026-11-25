@@ -25,10 +25,14 @@ export interface CreateLeavePolicyInput {
 export interface UpdateLeavePolicyInput {
   name?: string;
   isActive?: boolean;
+  /** Whether the type keeps a yearly balance; the API checks it against what was used. */
+  hasBalance?: boolean;
   annualDays?: number;
   carryForwardMax?: number;
   allowHalfDay?: boolean;
   maxBackdateDays?: number;
+  /** Also set this year's existing balances to the new annual days and carry forward. */
+  applyToCurrentBalances?: boolean;
   version: number;
 }
 
