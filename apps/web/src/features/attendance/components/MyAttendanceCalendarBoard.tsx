@@ -29,17 +29,19 @@ export interface MyAttendanceCalendarBoardProps {
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
-const TIME_SLOTS = [
-  '09:00 AM',
-  '10:00 AM',
-  '11:00 AM',
-  '12:00 PM',
-  '01:00 PM',
-  '02:00 PM',
-  '03:00 PM',
-  '04:00 PM',
-  '05:00 PM',
-  '06:00 PM',
+const MOBILE_WEEK_TIME_AXIS = ['9 AM', '12 PM', '3 PM', '6 PM'] as const;
+
+const DESKTOP_WEEK_TIME_AXIS = [
+  '9 AM',
+  '10 AM',
+  '11 AM',
+  '12 PM',
+  '1 PM',
+  '2 PM',
+  '3 PM',
+  '4 PM',
+  '5 PM',
+  '6 PM',
 ] as const;
 
 const CATEGORY_STYLES: Record<
@@ -159,14 +161,14 @@ function StatusGlyph({ category }: { category: DayCategory }) {
   if (category === 'weekly_off' || category === 'leave') {
     return (
       <span
-        className="w-7 h-7 rounded-full inline-flex items-center justify-center shrink-0"
+        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full inline-flex items-center justify-center shrink-0"
         style={{
           backgroundColor: category === 'leave' ? style.iconBg : 'transparent',
           color: category === 'leave' ? 'rgb(255, 255, 255)' : 'rgb(55, 65, 81)',
         }}
       >
         <svg
-          className="w-4 h-4"
+          className="w-3.5 h-3.5 sm:w-4 sm:h-4"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -183,11 +185,11 @@ function StatusGlyph({ category }: { category: DayCategory }) {
   if (category === 'absent') {
     return (
       <span
-        className="w-7 h-7 rounded-full inline-flex items-center justify-center text-white shrink-0"
+        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full inline-flex items-center justify-center text-white shrink-0"
         style={{ backgroundColor: style.iconBg }}
       >
         <svg
-          className="w-3.5 h-3.5"
+          className="w-3 h-3 sm:w-3.5 sm:h-3.5"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -201,11 +203,11 @@ function StatusGlyph({ category }: { category: DayCategory }) {
   if (category === 'late' || category === 'half_day') {
     return (
       <span
-        className="w-7 h-7 rounded-full inline-flex items-center justify-center text-white shrink-0"
+        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full inline-flex items-center justify-center text-white shrink-0"
         style={{ backgroundColor: style.iconBg }}
       >
         <svg
-          className="w-3.5 h-3.5"
+          className="w-3 h-3 sm:w-3.5 sm:h-3.5"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -219,11 +221,11 @@ function StatusGlyph({ category }: { category: DayCategory }) {
   }
   return (
     <span
-      className="w-7 h-7 rounded-full inline-flex items-center justify-center text-white shrink-0"
+      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full inline-flex items-center justify-center text-white shrink-0"
       style={{ backgroundColor: style.iconBg }}
     >
       <svg
-        className="w-3.5 h-3.5"
+        className="w-3 h-3 sm:w-3.5 sm:h-3.5"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -413,7 +415,9 @@ export function MyAttendanceCalendarBoard({
 
   const weekDays = useMemo(() => {
     const start = new Date(viewDate);
-    start.setDate(start.getDate() - start.getDay());
+    const day = start.getDay(); // 0: Sun, 1: Mon, ...
+    const diffToMon = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + diffToMon);
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
@@ -507,93 +511,49 @@ export function MyAttendanceCalendarBoard({
   ];
 
   return (
-    <div className="w-full space-y-5">
+    <div className="w-full space-y-4">
       {/* Main Attendance Calendar (Expanded Full-Width) */}
-      <div className="w-full space-y-4 relative">
-        {/* Calendar Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h2
-            className="text-lg sm:text-xl font-bold font-display"
-            style={{ color: 'rgb(8, 11, 12)' }}
-          >
+      <div className="w-full space-y-3 sm:space-y-4 relative">
+        {/* Calendar Header Bar: Month/Year on left, View Switcher on right */}
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base sm:text-xl font-bold font-display text-text">
             {mainMonthTitle}
           </h2>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Month / Week / Day View Switcher */}
-            <div
-              className="inline-flex rounded-xl border p-0.5 bg-white"
-              style={{ borderColor: 'rgb(229, 231, 235)' }}
-              role="group"
-              aria-label="Calendar view mode"
-            >
-              {(['month', 'week', 'day'] as CalendarViewMode[]).map((mode) => {
-                const active = calendarView === mode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setCalendarView(mode)}
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors cursor-pointer min-h-[36px]"
-                    style={
-                      active
-                        ? { backgroundColor: 'rgb(85, 205, 179)', color: 'rgb(8, 11, 12)' }
-                        : { color: 'rgb(55, 65, 81)' }
-                    }
-                    data-testid={`my-calendar-view-${mode}`}
-                  >
-                    {mode}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Prev / Today / Next */}
-            <div className="inline-flex items-center gap-1.5">
-              <button
-                type="button"
-                aria-label="Previous period"
-                onClick={() => handleShiftPeriod(-1)}
-                className="w-9 h-9 rounded-xl border bg-white flex items-center justify-center text-sm hover:bg-gray-50 cursor-pointer"
-                style={{ borderColor: 'rgb(229, 231, 235)', color: 'rgb(8, 11, 12)' }}
-              >
-                &lsaquo;
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const now = new Date();
-                  setViewDate(now);
-                  setSelectedDateKey(toDateKey(now));
-                }}
-                className="px-3.5 h-9 rounded-xl border bg-white text-xs font-semibold hover:bg-gray-50 cursor-pointer"
-                style={{ borderColor: 'rgb(229, 231, 235)', color: 'rgb(8, 11, 12)' }}
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                aria-label="Next period"
-                onClick={() => handleShiftPeriod(1)}
-                className="w-9 h-9 rounded-xl border bg-white flex items-center justify-center text-sm hover:bg-gray-50 cursor-pointer"
-                style={{ borderColor: 'rgb(229, 231, 235)', color: 'rgb(8, 11, 12)' }}
-              >
-                &rsaquo;
-              </button>
-            </div>
+          {/* Month / Week / Day View Switcher */}
+          <div
+            className="inline-flex rounded-xl border border-border/80 p-0.5 bg-white shadow-xs"
+            role="group"
+            aria-label="Calendar view mode"
+          >
+            {(['month', 'week', 'day'] as CalendarViewMode[]).map((mode) => {
+              const active = calendarView === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setCalendarView(mode)}
+                  className={`px-3 sm:px-3.5 py-1 rounded-lg text-xs font-semibold capitalize transition-colors cursor-pointer min-h-[34px] ${
+                    active ? 'bg-primary text-text shadow-xs' : 'text-text-muted hover:text-text'
+                  }`}
+                  data-testid={`my-calendar-view-${mode}`}
+                >
+                  {mode}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* 6 KPI Summary Cards */}
+        {/* 6 KPI Summary Cards: 2 cols on mobile, 3 on tablet, 6 on desktop */}
         <div
-          className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5"
           data-testid="my-attendance-kpi-grid"
         >
           {kpiCards.map((card) => (
             <div
               key={card.label}
-              className="p-2.5 rounded-2xl border bg-white flex items-center gap-2"
-              style={{ borderColor: 'rgb(229, 231, 235)' }}
+              className="p-2.5 sm:p-3 rounded-2xl border border-border/80 bg-white flex items-center gap-2.5 shadow-xs"
             >
               {card.glyph === 'ring' ? (
                 <CircularProgressRing percentage={monthStats.pct} />
@@ -650,11 +610,10 @@ export function MyAttendanceCalendarBoard({
                 </span>
               )}
               <div className="min-w-0">
-                <p className="text-[11px] font-medium text-gray-500 leading-tight">{card.label}</p>
-                <p
-                  className="text-base font-bold font-display tabular-nums leading-tight mt-0.5"
-                  style={{ color: 'rgb(8, 11, 12)' }}
-                >
+                <p className="text-[11px] font-medium text-text-muted leading-tight truncate">
+                  {card.label}
+                </p>
+                <p className="text-base sm:text-lg font-bold font-display text-text tabular-nums leading-tight mt-0.5">
                   {card.value}
                 </p>
               </div>
@@ -662,138 +621,227 @@ export function MyAttendanceCalendarBoard({
           ))}
         </div>
 
+        {/* Compact Navigation Controls Bar (Shifted below KPI cards) */}
+        <div className="flex items-center justify-between gap-2 bg-white rounded-xl border border-border/80 px-2.5 py-1.5 sm:px-3 sm:py-2 shadow-xs">
+          <button
+            type="button"
+            aria-label="Previous period"
+            onClick={() => handleShiftPeriod(-1)}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-border/80 bg-white flex items-center justify-center text-sm font-bold text-text hover:bg-surface-muted cursor-pointer shrink-0 transition-colors"
+          >
+            &lsaquo;
+          </button>
+
+          <span className="text-xs sm:text-sm font-semibold text-text text-center truncate px-1">
+            {calendarView === 'week'
+              ? `${weekDays[0]?.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} \u2013 ${weekDays[6]?.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+              : calendarView === 'month'
+                ? `${viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+                : selectedDayItem.date.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+          </span>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                setViewDate(now);
+                setSelectedDateKey(toDateKey(now));
+              }}
+              className="px-2.5 sm:px-3 h-8 sm:h-9 rounded-lg border border-border/80 bg-white text-xs font-semibold text-text hover:bg-surface-muted cursor-pointer transition-colors"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              aria-label="Next period"
+              onClick={() => handleShiftPeriod(1)}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-border/80 bg-white flex items-center justify-center text-sm font-bold text-text hover:bg-surface-muted cursor-pointer shrink-0 transition-colors"
+            >
+              &rsaquo;
+            </button>
+          </div>
+        </div>
+
         {/* Main Calendar Body */}
         {calendarView === 'week' && (
           <div
-            className="rounded-2xl border bg-white overflow-x-auto"
-            style={{ borderColor: 'rgb(229, 231, 235)' }}
+            className="rounded-2xl border border-border/80 bg-white p-2 sm:p-3 md:p-4 shadow-xs"
             data-testid="my-attendance-week-grid"
           >
-            <div className="min-w-[680px] p-3 sm:p-4">
-              {/* Weekday Column Headers */}
-              <div className="grid grid-cols-[68px_repeat(7,minmax(0,1fr))] gap-2 mb-2">
-                <div />
-                {weekDays.map((item) => {
-                  const isSelected = item.dateStr === selectedDateKey;
-                  return (
-                    <button
-                      key={`hdr-${item.dateStr}`}
-                      type="button"
-                      onClick={() => handleSelectDay(item.date, true)}
-                      className="py-2 px-1 rounded-xl text-center transition-colors cursor-pointer border"
-                      style={
-                        isSelected
-                          ? {
-                              backgroundColor: 'rgb(240, 253, 250)',
-                              borderColor: 'rgb(85, 205, 179)',
-                            }
-                          : { borderColor: 'transparent' }
-                      }
-                    >
-                      <p className="text-xs font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
-                        {item.date.toLocaleDateString('en-US', { weekday: 'short' })}
-                      </p>
-                      <p className="text-[11px] text-gray-500">
-                        {item.date.toLocaleDateString('en-US', {
-                          day: '2-digit',
-                          month: 'short',
-                        })}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Weekday Column Headers Aligned with Time Column */}
+            <div className="grid grid-cols-[28px_repeat(7,minmax(0,1fr))] sm:grid-cols-[44px_repeat(7,minmax(0,1fr))] gap-1 sm:gap-2 w-full mb-1.5">
+              <div />
+              {weekDays.map((item) => (
+                <div key={`hdr-${item.dateStr}`} className="text-center min-w-0">
+                  <p className="text-[10px] sm:text-xs font-bold text-text truncate">
+                    {item.date.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </p>
+                  <p className="text-[9px] sm:text-[11px] text-text-muted truncate">
+                    {item.date.toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-              {/* Time Slots + 7 Colored Status Columns */}
-              <div className="grid grid-cols-[68px_repeat(7,minmax(0,1fr))] gap-2 items-stretch">
-                {/* 09:00 AM – 06:00 PM Time Axis */}
-                <div className="flex flex-col justify-between py-2 text-[11px] text-gray-500 font-medium">
-                  {TIME_SLOTS.map((slot) => (
-                    <span key={slot} className="leading-none">
+            {/* Left-Side Timer / Time Axis + 7 Equal Day Columns Without Horizontal Scrolling */}
+            <div className="grid grid-cols-[28px_repeat(7,minmax(0,1fr))] sm:grid-cols-[44px_repeat(7,minmax(0,1fr))] gap-1 sm:gap-2 w-full items-stretch">
+              {/* Left-Side Timer Column */}
+              <div
+                className="flex flex-col justify-between py-1 sm:py-3 text-[8px] sm:text-[10px] text-text-muted font-semibold text-right pr-0.5 sm:pr-1 select-none"
+                aria-label="Daily work hours timeline"
+              >
+                {/* Mobile: concise 3-hour milestones (9 AM, 12 PM, 3 PM, 6 PM) */}
+                <div className="sm:hidden flex flex-col justify-between h-full">
+                  {MOBILE_WEEK_TIME_AXIS.map((slot) => (
+                    <span key={`mob-${slot}`} className="leading-none whitespace-nowrap">
                       {slot}
                     </span>
                   ))}
                 </div>
+                {/* Desktop: detailed 1-hour milestones */}
+                <div className="hidden sm:flex flex-col justify-between h-full">
+                  {DESKTOP_WEEK_TIME_AXIS.map((slot) => (
+                    <span key={`desk-${slot}`} className="leading-none whitespace-nowrap">
+                      {slot}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-                {/* Day Status Cards */}
-                {weekDays.map((item) => {
-                  const style = CATEGORY_STYLES[item.category];
-                  const isSelected = item.dateStr === selectedDateKey;
-                  return (
-                    <button
-                      key={item.dateStr}
-                      type="button"
-                      onClick={() => handleSelectDay(item.date, true)}
-                      className="min-h-[290px] rounded-2xl border p-2.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:brightness-[0.98] cursor-pointer"
-                      style={{
-                        backgroundColor: style.cardBg,
-                        borderColor: isSelected ? 'rgb(85, 205, 179)' : style.cardBorder,
-                        boxShadow: isSelected ? '0 0 0 2px rgba(85, 205, 179, 0.35)' : undefined,
-                      }}
-                      data-testid={`week-day-card-${item.dateStr}`}
-                    >
+              {/* 7 Day Cards */}
+              {weekDays.map((item) => {
+                const style = CATEGORY_STYLES[item.category];
+                const isSelected = item.dateStr === selectedDateKey;
+                const shortStatus =
+                  item.category === 'weekly_off'
+                    ? 'Off'
+                    : item.category === 'late'
+                      ? 'Late'
+                      : item.category === 'absent'
+                        ? 'Abs'
+                        : item.category === 'present'
+                          ? 'Pres'
+                          : item.label === 'Scheduled'
+                            ? 'Sched'
+                            : item.label;
+
+                return (
+                  <button
+                    key={item.dateStr}
+                    type="button"
+                    onClick={() => handleSelectDay(item.date, true)}
+                    className="min-h-[105px] sm:min-h-[190px] md:min-h-[210px] rounded-xl sm:rounded-2xl border p-1 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer hover:brightness-[0.98]"
+                    style={{
+                      backgroundColor: style.cardBg,
+                      borderColor: isSelected ? 'rgb(85, 205, 179)' : style.cardBorder,
+                      boxShadow: isSelected ? '0 0 0 2px rgba(85, 205, 179, 0.4)' : undefined,
+                    }}
+                    data-testid={`week-day-card-${item.dateStr}`}
+                  >
+                    {/* Status Glyph & Label */}
+                    <div className="flex flex-col items-center gap-0.5 sm:gap-1.5 pt-0.5 sm:pt-1 w-full min-w-0">
                       <StatusGlyph category={item.category} />
-                      <span className="text-xs font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
+                      {/* Short label on mobile, full label on tablet/desktop */}
+                      <span className="sm:hidden text-[9px] font-bold text-text truncate max-w-full">
+                        {shortStatus}
+                      </span>
+                      <span className="hidden sm:inline text-xs font-bold text-text truncate max-w-full">
                         {item.label}
                       </span>
+                    </div>
+
+                    {/* Desktop Middle: Check-In & Check-Out times */}
+                    {item.checkInLabel !== '\u2014' ? (
+                      <div className="hidden sm:flex flex-col items-center text-[10px] text-text-muted leading-tight">
+                        <span>{item.checkInLabel}</span>
+                        <span className="text-[9px] text-text-subtle">&ndash;</span>
+                        <span>{item.checkOutLabel}</span>
+                      </div>
+                    ) : (
+                      <div className="hidden sm:block text-[10px] text-text-subtle">
+                        {item.category === 'weekly_off' ? 'Off Day' : 'No punches'}
+                      </div>
+                    )}
+
+                    {/* Working Duration if applicable */}
+                    <div className="pb-0.5 sm:pb-1 w-full min-w-0">
                       {item.checkInLabel !== '\u2014' ? (
-                        <>
-                          <span className="text-[11px] text-gray-700 leading-tight">
-                            {item.checkInLabel} &ndash;
-                            <br />
-                            {item.checkOutLabel}
-                          </span>
-                          <span className="text-[11px] font-semibold text-gray-800">
-                            {item.hoursLabel}
-                          </span>
-                        </>
+                        <span className="text-[9px] sm:text-xs font-semibold text-text truncate block">
+                          {item.hoursLabel}
+                        </span>
                       ) : item.category !== 'weekly_off' ? (
-                        <span className="text-xs text-gray-500">&mdash;</span>
+                        <span className="text-[9px] sm:text-xs text-text-muted">&mdash;</span>
                       ) : null}
-                    </button>
-                  );
-                })}
-              </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
         {calendarView === 'month' && (
           <div
-            className="rounded-2xl border bg-white p-3 sm:p-4"
-            style={{ borderColor: 'rgb(229, 231, 235)' }}
+            className="rounded-2xl border border-border/80 bg-white p-2 sm:p-3 md:p-4 shadow-xs"
             data-testid="my-attendance-month-grid"
           >
-            <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-gray-500 mb-2">
+            {/* Weekday Labels Header */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 text-center text-[10px] sm:text-xs font-semibold text-text-muted mb-2">
               {WEEKDAYS.map((w) => (
                 <div key={w}>{w}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-2">
+
+            {/* 7 Columns of Date Cells Without Horizontal Scroll */}
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2">
               {monthViewDays.map((item, idx) => {
-                if (!item) return <div key={`m-empty-${idx}`} className="min-h-[84px]" />;
+                if (!item) {
+                  return <div key={`m-empty-${idx}`} className="min-h-[58px] sm:min-h-[72px]" />;
+                }
                 const style = CATEGORY_STYLES[item.category];
                 const isSelected = item.dateStr === selectedDateKey;
+                const shortLabel =
+                  item.category === 'weekly_off'
+                    ? 'Week Off'
+                    : item.label === 'Scheduled'
+                      ? 'Sched'
+                      : item.label;
+
                 return (
                   <button
                     key={item.dateStr}
                     type="button"
                     onClick={() => handleSelectDay(item.date, true)}
-                    className="min-h-[84px] rounded-xl border p-2 text-left flex flex-col justify-between cursor-pointer transition-all"
+                    className="min-h-[58px] sm:min-h-[72px] md:min-h-[78px] rounded-xl border p-1 sm:p-1.5 text-left flex flex-col justify-between cursor-pointer transition-all hover:brightness-[0.98]"
                     style={{
                       backgroundColor: style.cardBg,
                       borderColor: isSelected ? 'rgb(85, 205, 179)' : style.cardBorder,
+                      boxShadow: isSelected ? '0 0 0 2px rgba(85, 205, 179, 0.4)' : undefined,
                     }}
                   >
-                    <span className="text-xs font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
+                    <span className="text-[11px] sm:text-xs font-bold text-text">
                       {item.date.getDate()}
                     </span>
-                    <div>
-                      <p className="text-[11px] font-semibold" style={{ color: style.badgeText }}>
-                        {item.label}
+                    <div className="min-w-0">
+                      <p
+                        className="text-[9px] sm:text-[10px] md:text-[11px] font-semibold truncate leading-tight"
+                        style={{ color: style.badgeText }}
+                      >
+                        {shortLabel}
                       </p>
                       {item.hoursLabel !== '\u2014' && (
-                        <p className="text-[10px] text-gray-700">{item.hoursLabel}</p>
+                        <p className="text-[8px] sm:text-[10px] text-text-muted leading-tight truncate">
+                          {item.hoursLabel}
+                        </p>
                       )}
                     </div>
                   </button>
@@ -805,13 +853,12 @@ export function MyAttendanceCalendarBoard({
 
         {calendarView === 'day' && (
           <div
-            className="rounded-2xl border bg-white p-4 sm:p-5 space-y-4"
-            style={{ borderColor: 'rgb(229, 231, 235)' }}
+            className="rounded-2xl border border-border/80 bg-white p-3 sm:p-4 md:p-5 space-y-3 sm:space-y-4 shadow-xs"
             data-testid="my-attendance-day-view"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
               <div>
-                <h3 className="text-base font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
+                <h3 className="text-sm sm:text-base font-bold text-text">
                   {selectedDayItem.date.toLocaleDateString('en-US', {
                     weekday: 'long',
                     day: 'numeric',
@@ -819,12 +866,12 @@ export function MyAttendanceCalendarBoard({
                     year: 'numeric',
                   })}
                 </h3>
-                <p className="text-xs text-gray-500">
+                <p className="text-[11px] sm:text-xs text-text-muted">
                   Daily schedule window: 09:00 AM &ndash; 06:00 PM
                 </p>
               </div>
               <span
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold w-fit"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold w-fit"
                 style={{
                   backgroundColor: CATEGORY_STYLES[selectedDayItem.category].badgeBg,
                   color: CATEGORY_STYLES[selectedDayItem.category].badgeText,
@@ -834,35 +881,29 @@ export function MyAttendanceCalendarBoard({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 rounded-xl border" style={{ borderColor: 'rgb(229, 231, 235)' }}>
-                <p className="text-gray-500">Check-in Time</p>
-                <p className="font-bold mt-1" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {selectedDayItem.checkInLabel}
-                </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-xs">
+              <div className="p-2.5 sm:p-3 rounded-xl border border-border/80 bg-surface-muted/30">
+                <p className="text-[11px] text-text-muted">Check-in Time</p>
+                <p className="font-bold text-text mt-0.5">{selectedDayItem.checkInLabel}</p>
               </div>
-              <div className="p-3 rounded-xl border" style={{ borderColor: 'rgb(229, 231, 235)' }}>
-                <p className="text-gray-500">Check-out Time</p>
-                <p className="font-bold mt-1" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {selectedDayItem.checkOutLabel}
-                </p>
+              <div className="p-2.5 sm:p-3 rounded-xl border border-border/80 bg-surface-muted/30">
+                <p className="text-[11px] text-text-muted">Check-out Time</p>
+                <p className="font-bold text-text mt-0.5">{selectedDayItem.checkOutLabel}</p>
               </div>
-              <div className="p-3 rounded-xl border" style={{ borderColor: 'rgb(229, 231, 235)' }}>
-                <p className="text-gray-500">Total Working Hours</p>
-                <p className="font-bold mt-1" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {selectedDayItem.hoursLabel}
-                </p>
+              <div className="p-2.5 sm:p-3 rounded-xl border border-border/80 bg-surface-muted/30">
+                <p className="text-[11px] text-text-muted">Total Working Hours</p>
+                <p className="font-bold text-text mt-0.5">{selectedDayItem.hoursLabel}</p>
               </div>
-              <div className="p-3 rounded-xl border" style={{ borderColor: 'rgb(229, 231, 235)' }}>
-                <p className="text-gray-500">Break Duration</p>
-                <p className="font-bold mt-1" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {selectedDayItem.breakLabel}
-                </p>
+              <div className="p-2.5 sm:p-3 rounded-xl border border-border/80 bg-surface-muted/30">
+                <p className="text-[11px] text-text-muted">Break Duration</p>
+                <p className="font-bold text-text mt-0.5">{selectedDayItem.breakLabel}</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-              <p className="text-xs text-gray-600">Notes: {selectedDayItem.notesLabel}</p>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/80">
+              <p className="text-xs text-text-muted truncate max-w-sm">
+                Notes: {selectedDayItem.notesLabel}
+              </p>
               {selectedDayItem.record ? (
                 <Button
                   type="button"
@@ -881,115 +922,102 @@ export function MyAttendanceCalendarBoard({
           </div>
         )}
 
-        {/* Attendance Details Popover */}
+        {/* Attendance Details Popover / Floating Card */}
         {popoverItem && (
-          <div
-            role="dialog"
-            aria-label="Attendance day details"
-            className="sm:absolute sm:right-4 sm:bottom-4 z-30 w-full sm:w-[320px] rounded-2xl border bg-white p-4 space-y-3"
-            style={{
-              borderColor: 'rgb(229, 231, 235)',
-              boxShadow: '0 20px 40px rgba(8, 11, 12, 0.14)',
-            }}
-            data-testid="attendance-detail-popover"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1.5">
-                <h3 className="text-sm font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {popoverItem.date.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </h3>
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                  style={{
-                    backgroundColor: CATEGORY_STYLES[popoverItem.category].badgeBg,
-                    color: CATEGORY_STYLES[popoverItem.category].badgeText,
-                  }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: CATEGORY_STYLES[popoverItem.category].dotColor }}
-                  />
-                  {popoverItem.label}
-                </span>
-              </div>
-              <button
-                type="button"
-                aria-label="Close attendance details"
-                onClick={() => setPopoverDateKey(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-
-            <dl
-              className="space-y-2 text-xs pt-1 border-t"
-              style={{ borderColor: 'rgb(229, 231, 235)' }}
+          <>
+            <div
+              className="fixed inset-0 bg-black/20 z-40 sm:hidden"
+              onClick={() => setPopoverDateKey(null)}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-label="Attendance day details"
+              className="fixed inset-x-3 bottom-3 sm:absolute sm:right-4 sm:bottom-4 sm:inset-x-auto z-40 max-w-sm mx-auto sm:mx-0 w-auto sm:w-[320px] rounded-2xl border border-border/80 bg-white p-4 space-y-3 shadow-xl"
+              data-testid="attendance-detail-popover"
             >
-              <div className="flex items-center justify-between pt-1">
-                <dt className="text-gray-500">Check-in Time</dt>
-                <dd className="font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {popoverItem.checkInLabel}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500">Check-out Time</dt>
-                <dd className="font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {popoverItem.checkOutLabel}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500">Total Working Hours</dt>
-                <dd className="font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {popoverItem.hoursLabel}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500">Break Duration</dt>
-                <dd className="font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {popoverItem.breakLabel}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-gray-500">Late Arrival</dt>
-                <dd className="font-semibold" style={{ color: 'rgb(8, 11, 12)' }}>
-                  {popoverItem.lateLabel}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt className="text-gray-500 shrink-0">Notes</dt>
-                <dd
-                  className="font-semibold text-right truncate"
-                  style={{ color: 'rgb(8, 11, 12)' }}
-                >
-                  {popoverItem.notesLabel}
-                </dd>
-              </div>
-            </dl>
-
-            {popoverItem.record && (
-              <div className="pt-2 border-t" style={{ borderColor: 'rgb(229, 231, 235)' }}>
-                <Button
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-text">
+                    {popoverItem.date.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </h3>
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                    style={{
+                      backgroundColor: CATEGORY_STYLES[popoverItem.category].badgeBg,
+                      color: CATEGORY_STYLES[popoverItem.category].badgeText,
+                    }}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: CATEGORY_STYLES[popoverItem.category].dotColor }}
+                    />
+                    {popoverItem.label}
+                  </span>
+                </div>
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    const rec = popoverItem.record!;
-                    setPopoverDateKey(null);
-                    onOpenCorrectionModal(rec);
-                  }}
+                  aria-label="Close attendance details"
+                  onClick={() => setPopoverDateKey(null)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-surface-muted cursor-pointer transition-colors"
                 >
-                  Request Correction
-                </Button>
+                  &times;
+                </button>
               </div>
-            )}
-          </div>
+
+              <dl className="space-y-1.5 text-xs pt-1.5 border-t border-border/80">
+                <div className="flex items-center justify-between">
+                  <dt className="text-text-muted">Check-in Time</dt>
+                  <dd className="font-semibold text-text">{popoverItem.checkInLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-text-muted">Check-out Time</dt>
+                  <dd className="font-semibold text-text">{popoverItem.checkOutLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-text-muted">Total Working Hours</dt>
+                  <dd className="font-semibold text-text">{popoverItem.hoursLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-text-muted">Break Duration</dt>
+                  <dd className="font-semibold text-text">{popoverItem.breakLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-text-muted">Late Arrival</dt>
+                  <dd className="font-semibold text-text">{popoverItem.lateLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-text-muted shrink-0">Notes</dt>
+                  <dd className="font-semibold text-right truncate text-text">
+                    {popoverItem.notesLabel}
+                  </dd>
+                </div>
+              </dl>
+
+              {popoverItem.record && (
+                <div className="pt-2 border-t border-border/80">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const rec = popoverItem.record!;
+                      setPopoverDateKey(null);
+                      onOpenCorrectionModal(rec);
+                    }}
+                  >
+                    Request Correction
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

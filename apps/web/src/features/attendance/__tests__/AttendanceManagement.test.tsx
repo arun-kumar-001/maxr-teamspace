@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { AttendancePage } from '../pages/AttendancePage';
@@ -233,14 +233,25 @@ describe('Attendance Management 4-Tab Module', () => {
       expect(screen.getAllByText('Completed sprint backlog')[0]).toBeDefined();
     });
 
-    // Switch to Check-In / Check-Out tab & verify panel + attendance history card
-    fireEvent.click(screen.getByTestId('attendance-tab-check-in'));
+    // Verify check-in subnav button is removed
+    expect(screen.queryByTestId('attendance-tab-check-in')).toBeNull();
+    expect(screen.queryByTestId('attendance-tab-leave-requests')).toBeNull();
+    expect(screen.queryByTestId('attendance-tab-team-calendar')).toBeNull();
+    expect(fetchSpy).toHaveBeenCalled();
+  });
+
+  it('renders CheckInOutTab directly when initialTab is check-in', async () => {
+    setupFetchMock();
+
+    render(
+      <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+        <AttendancePage initialTab="check-in" />
+      </AuthProvider>,
+    );
+
     await waitFor(() => {
       expect(screen.getByTestId('check-in-tab-panel')).toBeDefined();
       expect(screen.getByTestId('attendance-history-card')).toBeDefined();
     });
-    expect(fetchSpy).toHaveBeenCalled();
-    expect(screen.queryByTestId('attendance-tab-leave-requests')).toBeNull();
-    expect(screen.queryByTestId('attendance-tab-team-calendar')).toBeNull();
   });
 });

@@ -34,11 +34,6 @@ export interface AttendancePageProps {
   initialTab?: 'on-duty' | 'roster' | 'timesheets' | 'check-in-out' | AttendanceManagementTab;
 }
 
-const SUB_TABS: Array<{ id: AttendanceManagementTab; label: string }> = [
-  { id: 'my-attendance', label: 'My Attendance' },
-  { id: 'check-in', label: 'Check-In / Check-Out' },
-];
-
 function EmployeeAttendanceWorkspace({
   defaultTab = 'my-attendance',
 }: {
@@ -111,48 +106,11 @@ function EmployeeAttendanceWorkspace({
 
   return (
     <div className="space-y-6 w-full min-w-0 font-sans select-none" data-testid="attendance-page">
-      {/* Top Clean White Header & Sub-Navigation */}
-      <div className="rounded-card p-4 sm:p-6 md:p-7 border border-border/80 space-y-4 bg-white shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-primary-strong">
-              MAXR TEAMSPACE WORKFORCE HUB
-            </p>
-            <h1 className="text-xl sm:text-2xl font-bold font-display text-text mt-0.5">
-              Attendance Management
-            </h1>
-            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-              Track your attendance, manage check-in/out, leaves and view team attendance.
-            </p>
-          </div>
-        </div>
-
-        {/* 4 Mint-Teal Sub-Navigation Tabs */}
-        <nav
-          aria-label="Attendance sections"
-          className="flex flex-wrap gap-2"
-          data-testid="attendance-subnav"
-        >
-          {SUB_TABS.map((tab) => {
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold min-h-[42px] transition-all cursor-pointer border ${
-                  active
-                    ? 'bg-primary-deep text-white border-primary-deep shadow-xs'
-                    : 'bg-white border-border/80 text-text hover:bg-surface-muted'
-                }`}
-                aria-current={active ? 'page' : undefined}
-                data-testid={`attendance-tab-${tab.id}`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
+      {/* Main Page Heading */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold font-display text-text">
+          Attendance Management
+        </h1>
       </div>
 
       {/* Tab Content */}

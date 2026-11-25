@@ -35,8 +35,12 @@ function getLocalSession(): LocalSession | null {
     const raw = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as LocalSession;
-    if (parsed.startTimeMs && Date.now() - parsed.startTimeMs < 24 * 60 * 60 * 1000) {
-      return parsed;
+    if (parsed.startTimeMs) {
+      const sessionDate = new Date(parsed.startTimeMs).toDateString();
+      const todayDate = new Date().toDateString();
+      if (sessionDate === todayDate && Date.now() - parsed.startTimeMs < 24 * 60 * 60 * 1000) {
+        return parsed;
+      }
     }
     localStorage.removeItem(ATTENDANCE_STORAGE_KEY);
     return null;
@@ -106,6 +110,7 @@ export function TimeTrackerCard({
   const [isCompletedToday, setIsCompletedToday] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
+  const isPausedByUserRef = useRef(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [captureMode, setCaptureMode] = useState<'check-in' | 'check-out'>('check-in');
 
@@ -144,7 +149,14 @@ export function TimeTrackerCard({
         setIsCheckedIn(true);
         setIsCompletedToday(false);
         const isOnBreak = Boolean(active.breaks?.some((b) => b.endTime === null));
-        setTimeTrackerRunning(!isOnBreak);
+        if (isOnBreak) {
+          isPausedByUserRef.current = true;
+          setTimeTrackerRunning(false);
+        } else if (isPausedByUserRef.current) {
+          setTimeTrackerRunning(false);
+        } else {
+          setTimeTrackerRunning(true);
+        }
         saveLocalSession({
           isCheckedIn: true,
           checkInTime: formattedCheckIn,
@@ -155,6 +167,7 @@ export function TimeTrackerCard({
         setIsCheckedIn(false);
         setIsCompletedToday(true);
         setTimeTrackerRunning(false);
+        isPausedByUserRef.current = false;
         setSecondsElapsed((summary.totalDurationMinutes ?? 0) * 60);
         clearLocalSession();
         const lastSession = summary.sessions[summary.sessions.length - 1];
@@ -167,6 +180,15 @@ export function TimeTrackerCard({
             }),
           );
         }
+      } else if (summary.sessionsCount === 0) {
+        // Explicitly 0 sessions today from server -> user is not checked in
+        setIsCompletedToday(false);
+        setIsCheckedIn(false);
+        setTimeTrackerRunning(false);
+        isPausedByUserRef.current = false;
+        setSecondsElapsed(0);
+        setCheckInTime('--:--');
+        clearLocalSession();
       } else {
         setIsCompletedToday(false);
         const local = getLocalSession();
@@ -234,6 +256,7 @@ export function TimeTrackerCard({
     }
 
     const nextCheckedIn = !isCheckedIn;
+    isPausedByUserRef.current = false;
     setIsCheckedIn(nextCheckedIn);
     setTimeTrackerRunning(nextCheckedIn);
     const now = new Date();
@@ -309,6 +332,7 @@ export function TimeTrackerCard({
         : '';
 
       if (captureMode === 'check-in') {
+        isPausedByUserRef.current = false;
         // Optimistically set UI state immediately so timer runs instantly
         setSecondsElapsed(0);
         setIsCheckedIn(true);
@@ -332,6 +356,7 @@ export function TimeTrackerCard({
           }
         }
       } else {
+        isPausedByUserRef.current = false;
         setSecondsElapsed(0);
         setCheckInTime('--:--');
         setIsCheckedIn(false);
@@ -362,6 +387,7 @@ export function TimeTrackerCard({
     // Cannot start timer without official active check-in
     if (busy || !isCheckedIn) return;
     const isPausing = timeTrackerRunning;
+    isPausedByUserRef.current = isPausing;
     setTimeTrackerRunning(!isPausing);
     setBusy(true);
     try {

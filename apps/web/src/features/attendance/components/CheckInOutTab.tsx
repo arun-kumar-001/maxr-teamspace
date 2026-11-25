@@ -366,7 +366,7 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
       {/* 1. Bottom Split: Recent Attendance + Monthly Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Attendance Table */}
-        <div className="p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-3">
+        <div className="p-3.5 sm:p-5 rounded-2xl border border-border/80 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold font-display text-text">Recent Attendance</h3>
             {onViewAllHistory && (
@@ -385,45 +385,85 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               No recent attendance records found.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-border/80 text-text-muted">
-                    <th className="py-2 pr-3 font-medium">Date</th>
-                    <th className="py-2 px-2 font-medium">Check-in</th>
-                    <th className="py-2 px-2 font-medium">Check-out</th>
-                    <th className="py-2 px-2 font-medium">Working Hours</th>
-                    <th className="py-2 pl-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {recentRecords.map((rec) => (
-                    <tr key={rec.id} className="hover:bg-surface-muted/30 transition-colors">
-                      <td className="py-2.5 pr-3 font-semibold whitespace-nowrap text-text">
+            <>
+              {/* Mobile Card Layout */}
+              <div className="sm:hidden space-y-2">
+                {recentRecords.map((rec) => (
+                  <div
+                    key={`rec-mob-${rec.id}`}
+                    className="p-3 rounded-xl border border-border/70 bg-surface-muted/30 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-text">
                         {formatRecordDate(rec.workDate)}
-                      </td>
-                      <td className="py-2.5 px-2 text-text whitespace-nowrap">
-                        {formatClock(rec.checkInTime)}
-                      </td>
-                      <td className="py-2.5 px-2 text-text-muted whitespace-nowrap">
-                        {formatClock(rec.checkOutTime)}
-                      </td>
-                      <td className="py-2.5 px-2 font-medium text-text whitespace-nowrap">
-                        {formatDuration(rec.durationMinutes)}
-                      </td>
-                      <td className="py-2.5 pl-2 whitespace-nowrap">
-                        <StatusPillBadge status={rec.status} />
-                      </td>
+                      </span>
+                      <StatusPillBadge status={rec.status} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 text-[11px] pt-1.5 border-t border-border/60 text-text">
+                      <div>
+                        <span className="text-[10px] text-text-muted block">Check-in</span>
+                        <span className="font-semibold text-text">
+                          {formatClock(rec.checkInTime)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-text-muted block">Check-out</span>
+                        <span className="font-semibold text-text">
+                          {formatClock(rec.checkOutTime)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-text-muted block">Working Hrs</span>
+                        <span className="font-semibold text-text">
+                          {formatDuration(rec.durationMinutes)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop / Tablet Table View */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border/80 text-text-muted">
+                      <th className="py-2 pr-3 font-medium">Date</th>
+                      <th className="py-2 px-2 font-medium">Check-in</th>
+                      <th className="py-2 px-2 font-medium">Check-out</th>
+                      <th className="py-2 px-2 font-medium">Working Hours</th>
+                      <th className="py-2 pl-2 font-medium">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {recentRecords.map((rec) => (
+                      <tr key={rec.id} className="hover:bg-surface-muted/30 transition-colors">
+                        <td className="py-2.5 pr-3 font-semibold whitespace-nowrap text-text">
+                          {formatRecordDate(rec.workDate)}
+                        </td>
+                        <td className="py-2.5 px-2 text-text whitespace-nowrap">
+                          {formatClock(rec.checkInTime)}
+                        </td>
+                        <td className="py-2.5 px-2 text-text-muted whitespace-nowrap">
+                          {formatClock(rec.checkOutTime)}
+                        </td>
+                        <td className="py-2.5 px-2 font-medium text-text whitespace-nowrap">
+                          {formatDuration(rec.durationMinutes)}
+                        </td>
+                        <td className="py-2.5 pl-2 whitespace-nowrap">
+                          <StatusPillBadge status={rec.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
         {/* Monthly Attendance Summary */}
-        <div className="p-5 rounded-card border border-border/80 bg-white shadow-xs space-y-3">
+        <div className="p-3.5 sm:p-5 rounded-2xl border border-border/80 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-base font-bold font-display text-text">Monthly Attendance</h3>
             <select
@@ -554,17 +594,13 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
 
       {/* 5. Full-Width Attendance History Table */}
       <div
-        className="p-5 rounded-2xl border bg-white space-y-4"
-        style={{
-          borderColor: 'rgb(229, 231, 235)',
-          boxShadow: '0 2px 10px rgba(8, 11, 12, 0.03)',
-        }}
+        className="p-3.5 sm:p-5 rounded-2xl border border-border/80 bg-white shadow-xs space-y-3 sm:space-y-4"
         data-testid="attendance-history-card"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <svg
-              className="w-4 h-4 text-gray-800 shrink-0"
+              className="w-4 h-4 text-text shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -575,14 +611,12 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               <line x1="16" y1="13" x2="8" y2="13" />
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
-            <h3 className="text-base font-bold font-display" style={{ color: 'rgb(8, 11, 12)' }}>
-              Attendance History
-            </h3>
+            <h3 className="text-base font-bold font-display text-text">Attendance History</h3>
           </div>
 
           <div className="relative w-full sm:w-64">
             <svg
-              className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -597,69 +631,106 @@ export function CheckInOutTab({ records, onViewAllHistory }: CheckInOutTabProps)
               onChange={(e) => setDateSearch(e.target.value)}
               placeholder="Search by date..."
               aria-label="Search attendance history by date"
-              className="w-full pl-9 pr-3 py-2 rounded-xl border text-xs text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary-strong"
-              style={{ borderColor: 'rgb(229, 231, 235)' }}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-border/80 text-xs text-text bg-white focus:outline-none focus:ring-2 focus:ring-primary-strong"
               data-testid="attendance-history-search"
             />
           </div>
         </div>
 
         {filteredHistoryRecords.length === 0 ? (
-          <p className="text-xs text-gray-500 py-6 text-center">
+          <p className="text-xs text-text-muted py-6 text-center">
             {dateSearch.trim()
               ? 'No attendance records match that date.'
               : 'No attendance history records found.'}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr
-                  style={{
-                    backgroundColor: 'rgb(236, 253, 245)',
-                    color: 'rgb(8, 11, 12)',
-                  }}
+          <>
+            {/* Mobile View: Compact History Cards */}
+            <div className="sm:hidden space-y-2">
+              {filteredHistoryRecords.map((rec) => (
+                <div
+                  key={`hist-mob-${rec.id}`}
+                  className="p-3 rounded-xl border border-border/70 bg-surface-muted/30 space-y-2"
                 >
-                  <th className="py-3 px-4 font-semibold rounded-l-xl">Date</th>
-                  <th className="py-3 px-3 font-semibold">Check-In</th>
-                  <th className="py-3 px-3 font-semibold">Check-Out</th>
-                  <th className="py-3 px-3 font-semibold">Working Hours</th>
-                  <th className="py-3 px-3 font-semibold">Break Duration</th>
-                  <th className="py-3 px-4 font-semibold rounded-r-xl">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y" style={{ borderColor: 'rgb(243, 244, 246)' }}>
-                {filteredHistoryRecords.map((rec) => (
-                  <tr key={`hist-${rec.id}`} className="hover:bg-gray-50/70 transition-colors">
-                    <td
-                      className="py-3 px-4 font-medium whitespace-nowrap"
-                      style={{ color: 'rgb(8, 11, 12)' }}
-                    >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-text">
                       {formatRecordDate(rec.workDate)}
-                    </td>
-                    <td className="py-3 px-3 text-gray-700 whitespace-nowrap tabular-nums">
-                      {formatClock(rec.checkInTime)}
-                    </td>
-                    <td className="py-3 px-3 text-gray-700 whitespace-nowrap tabular-nums">
-                      {formatClock(rec.checkOutTime)}
-                    </td>
-                    <td
-                      className="py-3 px-3 font-medium whitespace-nowrap tabular-nums"
-                      style={{ color: 'rgb(8, 11, 12)' }}
-                    >
-                      {formatDuration(rec.durationMinutes)}
-                    </td>
-                    <td className="py-3 px-3 text-gray-700 whitespace-nowrap tabular-nums">
-                      {formatDuration(rec.breakMinutes)}
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <StatusPillBadge status={rec.status} />
-                    </td>
+                    </span>
+                    <StatusPillBadge status={rec.status} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1.5 border-t border-border/50 text-text">
+                    <div className="p-2 rounded-lg bg-white border border-border/60">
+                      <span className="text-[10px] text-text-muted block">Check-in</span>
+                      <span className="font-semibold text-text">
+                        {formatClock(rec.checkInTime)}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white border border-border/60">
+                      <span className="text-[10px] text-text-muted block">Check-out</span>
+                      <span className="font-semibold text-text">
+                        {formatClock(rec.checkOutTime)}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white border border-border/60">
+                      <span className="text-[10px] text-text-muted block">Working Hours</span>
+                      <span className="font-semibold text-text">
+                        {formatDuration(rec.durationMinutes)}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white border border-border/60">
+                      <span className="text-[10px] text-text-muted block">Break Duration</span>
+                      <span className="font-semibold text-text">
+                        {formatDuration(rec.breakMinutes)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop / Tablet View: Full Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="bg-emerald-50 text-text">
+                    <th className="py-3 px-4 font-semibold rounded-l-xl">Date</th>
+                    <th className="py-3 px-3 font-semibold">Check-In</th>
+                    <th className="py-3 px-3 font-semibold">Check-Out</th>
+                    <th className="py-3 px-3 font-semibold">Working Hours</th>
+                    <th className="py-3 px-3 font-semibold">Break Duration</th>
+                    <th className="py-3 px-4 font-semibold rounded-r-xl">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filteredHistoryRecords.map((rec) => (
+                    <tr
+                      key={`hist-${rec.id}`}
+                      className="hover:bg-surface-muted/40 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-medium whitespace-nowrap text-text">
+                        {formatRecordDate(rec.workDate)}
+                      </td>
+                      <td className="py-3 px-3 text-text-muted whitespace-nowrap tabular-nums">
+                        {formatClock(rec.checkInTime)}
+                      </td>
+                      <td className="py-3 px-3 text-text-muted whitespace-nowrap tabular-nums">
+                        {formatClock(rec.checkOutTime)}
+                      </td>
+                      <td className="py-3 px-3 font-medium whitespace-nowrap tabular-nums text-text">
+                        {formatDuration(rec.durationMinutes)}
+                      </td>
+                      <td className="py-3 px-3 text-text-muted whitespace-nowrap tabular-nums">
+                        {formatDuration(rec.breakMinutes)}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <StatusPillBadge status={rec.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
