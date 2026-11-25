@@ -12,8 +12,6 @@ export interface AttendancePolicyCardProps {
   canEdit?: boolean;
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 export const AttendancePolicyCard: React.FC<AttendancePolicyCardProps> = ({
   policy,
   shifts,
@@ -82,7 +80,7 @@ export const AttendancePolicyCard: React.FC<AttendancePolicyCardProps> = ({
     }
   };
 
-  const workWeekText = policy.workWeek.map((dayNum) => DAY_NAMES[dayNum % 7]).join(', ');
+  const workWeekText = policy.workWeek.days.join(', ');
 
   return (
     <div

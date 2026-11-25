@@ -58,7 +58,11 @@ describe('TimesheetsTab', () => {
             halfDayMinutes: 240,
             defaultShiftId: 's1',
             timezone: 'Asia/Kolkata',
-            workWeek: [1, 2, 3, 4, 5],
+            workWeek: {
+              start: 'Monday',
+              end: 'Friday',
+              days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            },
           },
         });
       }

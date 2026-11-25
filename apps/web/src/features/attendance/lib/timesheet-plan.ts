@@ -1,3 +1,5 @@
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 export interface PlannedHours {
   /** Working days so far this week that the person was expected to work. */
   plannedDays: number;
@@ -13,8 +15,8 @@ export function plannedFor(input: {
   /** The 7 dates of the week, YYYY-MM-DD, Monday first. */
   weekDates: readonly string[];
   today: string;
-  /** Company work week as ISO weekdays: 1 = Monday ... 7 = Sunday. */
-  workWeek: readonly number[];
+  /** The company work week as day names, for example `Monday`. */
+  workDays: readonly string[];
   holidays: ReadonlySet<string>;
   leaveDates: ReadonlySet<string>;
   fullDayMinutes: number;
@@ -22,8 +24,8 @@ export function plannedFor(input: {
   let plannedDays = 0;
   for (const date of input.weekDates) {
     if (date > input.today) continue;
-    const weekday = new Date(`${date}T00:00:00Z`).getUTCDay() || 7;
-    if (!input.workWeek.includes(weekday)) continue;
+    const weekday = WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()] as string;
+    if (!input.workDays.includes(weekday)) continue;
     if (input.holidays.has(date) || input.leaveDates.has(date)) continue;
     plannedDays += 1;
   }

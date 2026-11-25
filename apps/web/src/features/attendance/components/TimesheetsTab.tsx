@@ -155,7 +155,7 @@ export function TimesheetsTab({
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
   const [hoveredChartDay, setHoveredChartDay] = useState<string | null>(null);
   const [plan, setPlan] = useState<{
-    workWeek: number[];
+    workDays: string[];
     fullDayMinutes: number;
     holidays: Set<string>;
     leaves: LeaveCalendarEntry[];
@@ -244,7 +244,7 @@ export function TimesheetsTab({
         return;
       }
       setPlan({
-        workWeek: policy.value.workWeek,
+        workDays: policy.value.workWeek.days,
         fullDayMinutes: policy.value.fullDayMinutes,
         holidays: new Set(holidays.status === 'fulfilled' ? holidays.value.map((h) => h.date) : []),
         leaves: leaves.status === 'fulfilled' ? leaves.value : [],
@@ -304,7 +304,7 @@ export function TimesheetsTab({
         ? plannedFor({
             weekDates,
             today: todayIso,
-            workWeek: plan.workWeek,
+            workDays: plan.workDays,
             holidays: plan.holidays,
             leaveDates,
             fullDayMinutes: plan.fullDayMinutes,

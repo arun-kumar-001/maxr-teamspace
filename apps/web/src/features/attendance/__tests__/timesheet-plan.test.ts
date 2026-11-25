@@ -13,7 +13,7 @@ const weekDates = [
 ];
 const base = {
   weekDates,
-  workWeek: [1, 2, 3, 4, 5],
+  workDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
   holidays: new Set<string>(),
   leaveDates: new Set<string>(),
   fullDayMinutes: 480,
@@ -50,7 +50,7 @@ describe('plannedFor', () => {
       plannedFor({
         ...base,
         today: '2026-11-20',
-        workWeek: [1, 2, 3, 4, 5, 6],
+        workDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
         fullDayMinutes: 450,
       }),
     ).toEqual({ plannedDays: 6, plannedHours: 45 });

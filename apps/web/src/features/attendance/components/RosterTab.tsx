@@ -336,8 +336,18 @@ export function RosterTab({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const workWeek = useMemo<number[]>(() => {
-    if (attendancePolicy?.workWeek && attendancePolicy.workWeek.length > 0) {
-      return attendancePolicy.workWeek;
+    const days = attendancePolicy?.workWeek?.days;
+    if (days && days.length > 0) {
+      const isoWeekdays = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
+      return days.map((d) => isoWeekdays.indexOf(d) + 1).filter((n) => n > 0);
     }
     return [1, 2, 3, 4, 5];
   }, [attendancePolicy]);
