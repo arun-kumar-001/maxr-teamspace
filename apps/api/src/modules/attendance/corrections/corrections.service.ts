@@ -132,6 +132,17 @@ export class AttendanceCorrectionsService implements ApprovalHandler {
       if (record.employeeId !== caller.employeeId) {
         // Only reachable with company-wide approval authority (see above).
         await this.applyApproved(tx, correction, record, audit, { appliedDirectly: true });
+        // Nobody asked for this change, so the person whose record it is gets told.
+        events.add({
+          type: 'attendance.correction_applied',
+          payload: {
+            correctionId: correction.id,
+            employeeId: targetEmployeeId,
+            attendanceRecordId: record.id,
+          },
+          actorId: caller.actorId,
+          requestId: caller.requestId,
+        });
         return { ...correction, status: 'approved' as const, approvalId: null };
       }
 

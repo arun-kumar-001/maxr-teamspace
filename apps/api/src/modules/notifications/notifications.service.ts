@@ -64,6 +64,9 @@ export class NotificationsService {
       this.onApprovalDecided(event, 'approval.rejected'),
     );
     bus.subscribe('leave.cancelled', (event) => this.onLeaveCancelled(event));
+    bus.subscribe('attendance.correction_applied', (event) =>
+      this.onAttendanceCorrectionApplied(event),
+    );
     bus.subscribe('tasks.assigned', (event) => this.onTaskAssigned(event));
     bus.subscribe('tasks.status_changed', (event) => this.onTaskStatusChanged(event));
     bus.subscribe('tasks.commented', (event) => this.onTaskCommented(event));
@@ -113,6 +116,15 @@ export class NotificationsService {
     await this.notify(recipient, 'leave.cancelled', {
       link: '/leave',
       dedupeKey: `leave.cancelled:${p.leaveRequestId}`,
+    });
+  }
+
+  /** Admin or HR corrected someone's attendance without a request: that person is told. */
+  private async onAttendanceCorrectionApplied(event: DomainEvent): Promise<void> {
+    const p = event.payload as { correctionId: string; employeeId: string };
+    await this.notifyEmployee(p.employeeId, 'attendance.correction_applied', {
+      link: '/attendance',
+      dedupeKey: `attendance.correction_applied:${p.correctionId}`,
     });
   }
 
