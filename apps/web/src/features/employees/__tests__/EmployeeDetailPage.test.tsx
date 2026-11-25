@@ -103,7 +103,7 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
         });
       }
 
-      if (url.includes('/api/v1/employees/emp-1/documents')) {
+      if (/\/api\/v1\/employees\/[^/]+\/documents/.test(url)) {
         return new Response(JSON.stringify({ data: [], meta: { total: 0 } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
