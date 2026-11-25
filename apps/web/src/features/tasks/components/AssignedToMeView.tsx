@@ -1,5 +1,6 @@
 import { formatRelativeTaskDue } from './TaskCard';
 import { TaskStatusPill } from './TaskStatusPill';
+import { CompletedTasksCard } from './CompletedTasksCard';
 import type { Task, TaskStatus } from '../types';
 import { TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
 
@@ -26,7 +27,8 @@ export function AssignedToMeView({
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const openMine = myTasks.filter((t) => t.status !== 'completed');
-  const completedCount = myTasks.filter((t) => t.status === 'completed').length;
+  const completedTasks = myTasks.filter((t) => t.status === 'completed');
+  const completedCount = completedTasks.length;
 
   const todayTasks = openMine.filter(
     (t) => t.isOverdue || t.isDaily || (t.dueDate !== null && t.dueDate <= todayStr),
@@ -196,6 +198,16 @@ export function AssignedToMeView({
         {renderAgendaList('Today', todayTasks, 'No tasks due today or overdue.')}
         {renderAgendaList('Later', laterTasks, 'No upcoming tasks scheduled.')}
       </div>
+
+      {completedTasks.length > 0 && (
+        <CompletedTasksCard
+          tasks={completedTasks}
+          onSelectTask={onSelectTask}
+          onStatusChange={onStatusChange}
+          currentEmployeeId={currentEmployeeId}
+          isAdmin={isAdmin}
+        />
+      )}
 
       <p className="text-xs text-text-muted flex items-center gap-1.5">
         <span aria-hidden="true">✓</span>

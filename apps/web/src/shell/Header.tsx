@@ -69,7 +69,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           <button
             type="button"
             onClick={onToggleMobileNav}
-            className="inline-flex items-center justify-center rounded-input p-2 text-text-muted hover:bg-surface-raised hover:text-text focus:outline-none focus:ring-2 focus:ring-primary md:hidden min-h-[44px] min-w-[44px]"
+            className="inline-flex items-center justify-center rounded-xl p-2 text-[#080B0C] hover:bg-surface-muted/60 focus:outline-none focus:ring-2 focus:ring-primary md:hidden min-h-[44px] min-w-[44px] border-0 border-transparent bg-transparent shadow-none transition-colors"
             aria-label="Open navigation menu"
             data-testid="mobile-menu-toggle"
           >
@@ -87,10 +87,35 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           </button>
 
           {title ? (
-            <div>
+            <div className="hidden md:block">
               <h2 className="text-base font-semibold text-text sm:text-lg">{title}</h2>
             </div>
           ) : null}
+        </div>
+
+        {/* Center: Mobile Logo Mark (Image Reference) */}
+        <div className="flex md:hidden items-center gap-2 select-none">
+          <div className="w-6 h-6 rounded-md bg-[#55CDB3]/20 text-[#0D9488] flex items-center justify-center font-bold">
+            <svg
+              viewBox="0 0 24 24"
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-xs font-bold font-display text-text tracking-tight">
+              MaxR Teamspace
+            </span>
+            <span className="text-[8px] font-semibold text-text-muted uppercase tracking-wider">
+              Staff Management
+            </span>
+          </div>
         </div>
 
         {/* Right: Notifications & User Profile Menu with Dropdown */}

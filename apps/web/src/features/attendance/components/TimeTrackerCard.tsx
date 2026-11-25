@@ -419,7 +419,7 @@ export function TimeTrackerCard({
   const cardSurfaceClass =
     variant === 'overview'
       ? 'p-4 sm:p-5 bg-white border border-border/80 rounded-card shadow-xs flex flex-col justify-between min-w-0 transition-all duration-200 hover:shadow-card hover:-translate-y-0.5 hover:border-border'
-      : 'rounded-[26px] p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out bg-white border border-border/80';
+      : 'rounded-[20px] sm:rounded-[26px] p-2.5 xs:p-3 sm:p-5 flex flex-col justify-between shadow-xs hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-out bg-white border border-border/80 min-w-0 overflow-hidden';
 
   const timerRing = (ringSizeClass: string, timeTextClass: string) => (
     <div className="relative flex items-center justify-center shrink-0">
@@ -447,52 +447,52 @@ export function TimeTrackerCard({
         />
       </svg>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="flex items-baseline gap-0.5">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-1">
+        <div className="flex items-baseline gap-0.5 justify-center">
           <p
-            className={`${timeTextClass} font-bold font-display leading-tight tracking-tight text-text`}
+            className={`${timeTextClass} font-bold font-display leading-none tracking-tight text-text whitespace-nowrap`}
           >
             {hoursMinutes}
           </p>
           <span
-            className="text-xs font-display font-bold tabular-nums animate-pulse"
+            className="text-[9px] xs:text-[10px] sm:text-xs font-display font-bold tabular-nums animate-pulse"
             style={{ color: isCheckedIn ? 'rgb(85, 205, 179)' : 'rgba(8, 11, 12, 0.4)' }}
           >
             :{seconds}
           </span>
         </div>
-        <p className="text-[10px] flex items-center gap-1.5 text-text-muted">
+        <p className="text-[8px] xs:text-[9px] sm:text-[10px] flex items-center gap-1 text-text-muted mt-0.5 xs:mt-1 whitespace-nowrap">
           {isCheckedIn && timeTrackerRunning ? (
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-1.5 w-1.5 xs:h-2 xs:w-2">
               <span
                 className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                 style={{ backgroundColor: 'rgb(85, 205, 179)' }}
               />
               <span
-                className="relative inline-flex rounded-full h-2 w-2"
+                className="relative inline-flex rounded-full h-1.5 w-1.5 xs:h-2 xs:w-2"
                 style={{ backgroundColor: 'rgb(85, 205, 179)' }}
               />
             </span>
           ) : (
             <span
-              className="w-2 h-2 rounded-full"
+              className="w-1.5 h-1.5 xs:w-2 xs:h-2 rounded-full"
               style={{ backgroundColor: 'rgba(8, 11, 12, 0.3)' }}
             />
           )}
-          {isCompletedToday ? 'Completed for Today' : isCheckedIn ? 'Work Time' : 'Session Paused'}
+          {isCompletedToday ? 'Completed' : isCheckedIn ? 'Work Time' : 'Session Paused'}
         </p>
       </div>
     </div>
   );
 
   const actionControls = (alignClass: string) => (
-    <div className={`flex items-center ${alignClass} gap-2 flex-wrap`}>
+    <div className={`flex items-center ${alignClass} gap-1.5 xs:gap-2 flex-nowrap w-full`}>
       <button
         type="button"
         onClick={() => void handleAttendanceToggle()}
         disabled={busy || isCompletedToday}
         data-testid="attendance-toggle-button"
-        className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all duration-200 disabled:opacity-75 disabled:cursor-not-allowed ${
+        className={`flex-1 min-w-0 max-w-[130px] px-2 xs:px-3 py-1.5 rounded-full text-[11px] xs:text-xs font-semibold flex items-center justify-center gap-1 shadow-xs transition-all duration-200 disabled:opacity-75 disabled:cursor-not-allowed whitespace-nowrap shrink-0 ${
           isCompletedToday
             ? 'bg-surface-muted text-text-muted border border-border cursor-not-allowed'
             : isCheckedIn && timeTrackerRunning
@@ -517,14 +517,16 @@ export function TimeTrackerCard({
         }
       >
         <span className="text-[10px]">{isCompletedToday ? '✓' : isCheckedIn ? '⏹' : '▷'}</span>
-        <span>{isCompletedToday ? 'Completed' : isCheckedIn ? 'Check Out' : 'Check In'}</span>
+        <span className="truncate">
+          {isCompletedToday ? 'Completed' : isCheckedIn ? 'Check Out' : 'Check In'}
+        </span>
       </button>
 
       <button
         type="button"
         onClick={() => void handlePausePlay()}
         disabled={busy || !isCheckedIn || isCompletedToday}
-        className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        className="w-7 h-7 xs:w-8 xs:h-8 rounded-full text-xs font-semibold flex items-center justify-center shadow-xs hover:opacity-90 transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
         style={{
           backgroundColor: !timeTrackerRunning ? 'rgb(73, 53, 72)' : 'rgb(244, 247, 246)',
           color: !timeTrackerRunning ? 'rgb(255, 255, 255)' : 'rgb(8, 11, 12)',
@@ -646,12 +648,12 @@ export function TimeTrackerCard({
   return (
     <div className={`${cardSurfaceClass} ${className}`}>
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-text">Time tracker</span>
+        <div className="flex items-center justify-between mb-1 xs:mb-1.5">
+          <span className="text-xs xs:text-sm font-semibold text-text truncate">Time tracker</span>
           <button
             type="button"
             onClick={handleOpenDetails}
-            className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-xs shrink-0 bg-surface-muted text-text border border-border"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-xs shrink-0 bg-surface-muted text-text border border-border"
             aria-label="View time tracker details"
           >
             <svg
@@ -665,13 +667,14 @@ export function TimeTrackerCard({
             </svg>
           </button>
         </div>
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <p className="text-2xl sm:text-[26px] font-bold font-display leading-none whitespace-nowrap text-text">
+        <div className="flex items-center gap-1.5 xs:gap-2 mt-0.5 min-w-0">
+          <p className="text-sm xs:text-base sm:text-lg lg:text-xl font-bold font-display leading-none whitespace-nowrap text-text">
             {checkInTime}
           </p>
+          <span className="text-text-muted/40 text-xs select-none">•</span>
           <p
-            className={`text-xs inline-flex items-center gap-1.5 whitespace-nowrap ${
-              isCheckedIn ? 'text-primary-ink' : 'text-text-muted'
+            className={`text-[10px] xs:text-[11px] font-medium inline-flex items-center gap-1 whitespace-nowrap truncate ${
+              isCheckedIn ? 'text-primary-ink font-semibold' : 'text-text-muted'
             }`}
           >
             <span
@@ -684,7 +687,12 @@ export function TimeTrackerCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-center">{timerRing('w-28 h-28', 'text-2xl')}</div>
+      <div className="flex items-center justify-center my-auto py-1 xs:py-1.5">
+        {timerRing(
+          'w-[86px] h-[86px] xs:w-[94px] xs:h-[94px] sm:w-28 sm:h-28',
+          'text-base xs:text-lg sm:text-2xl',
+        )}
+      </div>
 
       {actionControls('justify-center')}
 

@@ -173,34 +173,132 @@ export function AppShell({ currentPath, onNavigate, children }: AppShellProps) {
         </main>
       </div>
 
-      {/* Phone Bottom Navigation Bar (DESIGN.md §5) */}
+      {/* Phone Bottom Navigation Bar (DESIGN.md §5, Staff Portal Mobile Optimization) */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-20 bg-surface border-t border-border flex items-center justify-around px-2 py-1 shadow-card"
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#E3E9E7] flex items-center shadow-card select-none"
+        style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom, 10px))', paddingTop: '8px' }}
         aria-label="Mobile Navigation"
         data-testid="bottom-nav"
       >
-        {bottomNavItems.map((item) => {
-          const isActive =
-            currentPath === item.path ||
-            (item.path !== '/dashboard' && currentPath.startsWith(item.path));
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onNavigate(item.path)}
-              className={`flex flex-col items-center justify-center p-1 min-h-[44px] min-w-[44px] rounded-input text-xs font-medium transition-colors ${
-                isActive ? 'text-primary-deep font-semibold' : 'text-text-muted hover:text-text'
-              }`}
-              data-testid={`bottom-nav-${item.id}`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full mb-1 ${isActive ? 'bg-primary ring-2 ring-primary-soft' : 'bg-transparent'}`}
-                aria-hidden="true"
-              />
-              <span className="text-[11px] truncate max-w-[72px]">{item.label}</span>
-            </button>
-          );
-        })}
+        {role === 'staff' ? (
+          <div className="grid grid-cols-3 w-full px-2 max-w-md mx-auto">
+            {[
+              {
+                id: 'profile',
+                label: 'Profile',
+                path: '/profile',
+                isActive: currentPath === '/profile' || currentPath.startsWith('/profile'),
+                icon: (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                ),
+              },
+              {
+                id: 'tasks',
+                label: 'Tasks',
+                path: '/staff/tasks',
+                isActive: currentPath.includes('tasks'),
+                icon: (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                    />
+                  </svg>
+                ),
+              },
+              {
+                id: 'payslips',
+                label: 'Payslips',
+                path: '/staff/payslips',
+                isActive: currentPath.includes('payslips'),
+                icon: (
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                ),
+              },
+            ].map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onNavigate(item.path)}
+                className={`flex flex-col items-center justify-center py-1 min-h-[48px] min-w-[44px] transition-all active:scale-95 ${
+                  item.isActive ? 'text-[#0D9488]' : 'text-[#13201E]/70 hover:text-[#13201E]'
+                }`}
+                data-testid={`bottom-nav-${item.id}`}
+              >
+                <div
+                  className={`flex items-center justify-center transition-all ${
+                    item.isActive ? 'px-3.5 py-1 rounded-full bg-[#E9F8F6] text-[#0D9488]' : 'p-1'
+                  }`}
+                >
+                  {item.icon}
+                </div>
+                <span
+                  className={`text-[11px] leading-normal mt-0.5 whitespace-nowrap select-none ${
+                    item.isActive ? 'font-bold text-[#0D9488]' : 'font-medium text-[#13201E]/70'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-around w-full px-2">
+            {bottomNavItems.map((item) => {
+              const isActive =
+                currentPath === item.path ||
+                (item.path !== '/dashboard' && currentPath.startsWith(item.path));
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onNavigate(item.path)}
+                  className={`flex flex-col items-center justify-center p-1 min-h-[44px] min-w-[44px] rounded-input text-xs font-medium transition-colors ${
+                    isActive ? 'text-primary-deep font-semibold' : 'text-text-muted hover:text-text'
+                  }`}
+                  data-testid={`bottom-nav-${item.id}`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full mb-1 ${isActive ? 'bg-primary ring-2 ring-primary-soft' : 'bg-transparent'}`}
+                    aria-hidden="true"
+                  />
+                  <span className="text-[11px] truncate max-w-[72px]">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </nav>
     </div>
   );

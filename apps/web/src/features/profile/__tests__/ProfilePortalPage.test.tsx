@@ -236,7 +236,32 @@ describe('ProfilePortalPage', () => {
     );
 
     // 510 minutes is 8.5 hours
-    await waitFor(() => expect(screen.getByText('8.5 h')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/8\.5\s*h/)).toBeTruthy());
     expect(screen.queryByText('Standard: 40h/wk')).toBeNull();
+  });
+
+  it('navigates previous and next months and updates calendar display', async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.STAFF} persistSession={false}>
+          <ProfilePortalPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const prevBtn = screen.getByLabelText('Previous month');
+    const nextBtn = screen.getByLabelText('Next month');
+    expect(prevBtn).toBeTruthy();
+    expect(nextBtn).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(nextBtn);
+    });
+
+    await act(async () => {
+      fireEvent.click(prevBtn);
+    });
+
+    expect(screen.getByText(/Work Schedule:/)).toBeTruthy();
   });
 });

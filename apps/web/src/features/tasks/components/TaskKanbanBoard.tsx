@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TaskCard } from './TaskCard';
+import { CompletedTasksCard } from './CompletedTasksCard';
 import type { Task, TaskStatus } from '../types';
 import { TASK_STATUS_LABELS } from '../types';
 
@@ -92,8 +93,11 @@ export function TaskKanbanBoard({
         </div>
       )}
 
-      <div className="w-full pb-4 overflow-x-auto" data-testid="task-kanban-board">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-start min-w-[1100px] 2xl:min-w-0">
+      <div
+        className="w-full pb-4 overflow-x-auto xl:overflow-x-visible"
+        data-testid="task-kanban-board"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 items-start w-full min-w-0 xl:min-w-[1100px] 2xl:min-w-0">
           {COLUMN_KEYS.map((colKey) => {
             const tasksInCol = columns[colKey] || [];
             const tone = COLUMN_HEADER_TONES[colKey];
@@ -101,6 +105,41 @@ export function TaskKanbanBoard({
             const isOver = dragOverCol === colKey;
             const validTarget = isOver && canDropInto(colKey);
             const invalidTarget = isOver && draggedItem !== null && !canDropInto(colKey);
+
+            if (colKey === 'completed') {
+              return (
+                <div
+                  key={colKey}
+                  onDragOver={(e) => {
+                    if (!onStatusChange) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = canDropInto(colKey) ? 'move' : 'none';
+                    if (dragOverCol !== colKey) setDragOverCol(colKey);
+                  }}
+                  onDragLeave={(e) => {
+                    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                    setDragOverCol((prev) => (prev === colKey ? null : prev));
+                  }}
+                  onDrop={(e) => handleDrop(e, colKey)}
+                  className={`min-w-0 transition-all duration-150 ${
+                    validTarget
+                      ? 'ring-2 ring-primary scale-[1.01]'
+                      : invalidTarget
+                        ? 'ring-2 ring-danger/40'
+                        : ''
+                  }`}
+                  data-testid={`kanban-column-${colKey}`}
+                >
+                  <CompletedTasksCard
+                    tasks={tasksInCol}
+                    onSelectTask={onSelectTask}
+                    onStatusChange={onStatusChange}
+                    currentEmployeeId={currentEmployeeId}
+                    isAdmin={isAdmin}
+                  />
+                </div>
+              );
+            }
 
             return (
               <div
@@ -137,7 +176,7 @@ export function TaskKanbanBoard({
                       {tasksInCol.length}
                     </span>
                   </div>
-                  {canCreate && onQuickCreateClick && colKey !== 'completed' && (
+                  {canCreate && onQuickCreateClick && (
                     <button
                       type="button"
                       onClick={onQuickCreateClick}
