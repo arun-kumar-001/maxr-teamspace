@@ -61,8 +61,16 @@ function BankAccountDetailsSection({ employee }: { employee: EmployeeDetail }) {
   );
 }
 
+/**
+ * Keyed by the employee id, so going from one profile to another starts from a clean state instead
+ * of showing the previous employee until the next one has loaded.
+ */
 export function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
+  return <EmployeeDetailView key={id} id={id} />;
+}
+
+function EmployeeDetailView({ id }: { id: string | undefined }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { role, user } = useAuth();

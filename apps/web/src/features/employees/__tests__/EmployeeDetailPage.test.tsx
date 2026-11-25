@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { EmployeeDetailPage } from '../pages/EmployeeDetailPage';
 import type { EmployeeDetail } from '../types';
@@ -268,6 +268,46 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
     });
 
     expect(screen.getByRole('heading', { name: /Access Restricted/i })).toBeInTheDocument();
+  });
+
+  it('does not show the previous employee while the next one loads', async () => {
+    const base = globalThis.fetch;
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (
+        String(input).includes('/api/v1/employees/emp-1') &&
+        !String(input).includes('documents')
+      ) {
+        await gate;
+      }
+      return base(input, init);
+    }) as typeof fetch;
+
+    render(
+      <AuthProvider initialRole="admin" persistSession={false}>
+        <MemoryRouter initialEntries={['/employees/emp-deactivated']}>
+          <Link to="/employees/emp-1">next employee</Link>
+          <Routes>
+            <Route path="/employees/:id" element={<EmployeeDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByTestId('deactivated-notice')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('next employee'));
+
+    // The deactivated employee must be gone at once, not kept on screen until emp-1 arrives.
+    expect(screen.queryByTestId('deactivated-notice')).toBeNull();
+    expect(screen.getByTestId('employee-detail-loading')).toBeInTheDocument();
+
+    release();
+    await waitFor(() => expect(screen.getByTestId('employee-detail-page')).toBeInTheDocument());
+    expect(screen.queryByTestId('deactivated-notice')).toBeNull();
   });
 
   it('renders deactivated notice banner when viewing a deactivated employee and disallows edit', async () => {
