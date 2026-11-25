@@ -1,3 +1,4 @@
+import { photoProblem } from '../lib/photo';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Button, FormField, Input, Select, StatusPill } from '../../../components/ui';
 import { CreateEmployeeStepper } from './CreateEmployeeStepper';
@@ -97,13 +98,9 @@ export function CreateEmployeeForm({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Please select a valid image file (PNG, JPG, or WEBP).');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setPhotoError('Image size exceeds 5MB limit.');
+    const problem = photoProblem(file);
+    if (problem) {
+      setPhotoError(problem);
       return;
     }
 
@@ -466,13 +463,13 @@ export function CreateEmployeeForm({
           <div className="flex-1 space-y-1.5">
             <h3 className="text-sm font-semibold text-text">Employee Profile Picture</h3>
             <p className="text-xs text-text-muted">
-              Upload a professional portrait or passport-size photo (PNG, JPG, or WEBP, max 5MB).
+              Upload a professional portrait or passport-size photo (PNG or JPEG, max 2MB).
             </p>
             <div className="flex items-center gap-2 pt-1">
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/webp"
+                accept="image/png, image/jpeg"
                 className="hidden"
                 data-testid="input-employee-photo"
                 onChange={handlePhotoChange}

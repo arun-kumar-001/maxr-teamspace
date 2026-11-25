@@ -1,3 +1,5 @@
+import { uploadEmployeePhoto } from '../api/photo';
+import { dataUrlToFile } from '../lib/photo';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { demoOr } from '@/lib/demo-data';
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, ROLES, type Role } from '@maxr/shared';
@@ -245,6 +247,7 @@ export function useCreateEmployee({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdEmployee, setCreatedEmployee] = useState<CreatedEmployee | null>(null);
+  const [photoWarning, setPhotoWarning] = useState<string | null>(null);
 
   // Idempotency Key Management:
   // Must regenerate whenever the payload changes, but reuse for retries of the same payload.
@@ -824,15 +827,21 @@ export function useCreateEmployee({
 
     try {
       const result = await createEmployee(payload, idempotencyKeyRef.current);
-      if (formData.avatarUrl && typeof window !== 'undefined' && window.localStorage) {
+      // The photo is stored on the server, so every user and device sees it. A photo that cannot
+      // be saved does not undo the employee: the success page says so and it can be set later.
+      setPhotoWarning(null);
+      const photo = formData.avatarUrl ? dataUrlToFile(formData.avatarUrl, 'employee') : null;
+      if (formData.avatarUrl && !photo) {
+        setPhotoWarning('The photo was not saved: it must be a PNG or JPEG image.');
+      } else if (photo) {
         try {
-          if (result.id) localStorage.setItem(`maxr_avatar_${result.id}`, formData.avatarUrl);
-          if (result.userId)
-            localStorage.setItem(`maxr_avatar_${result.userId}`, formData.avatarUrl);
-          if (result.email)
-            localStorage.setItem(`maxr_avatar_${result.email.toLowerCase()}`, formData.avatarUrl);
-        } catch {
-          // ignore localStorage error
+          await uploadEmployeePhoto(result.id, photo);
+        } catch (photoErr: unknown) {
+          setPhotoWarning(
+            `The employee was created, but the photo was not saved: ${
+              photoErr instanceof Error ? photoErr.message : 'unknown error'
+            }`,
+          );
         }
       }
       setCreatedEmployee(result);
@@ -907,6 +916,7 @@ export function useCreateEmployee({
     setCurrentStep(1);
     setSubmitError(null);
     setCreatedEmployee(null);
+    setPhotoWarning(null);
   };
 
   const regeneratePassword = useCallback(() => {
@@ -925,6 +935,7 @@ export function useCreateEmployee({
     isSubmitting,
     submitError,
     createdEmployee,
+    photoWarning,
     idempotencyKey: idempotencyKeyRef.current,
     departments,
     isLoadingDepartments,
