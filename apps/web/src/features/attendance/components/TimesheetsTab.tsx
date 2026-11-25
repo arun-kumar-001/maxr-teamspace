@@ -7,8 +7,7 @@ import { fetchTeamAttendance, fetchMyAttendanceHistory } from '../api/attendance
 import { fetchHolidays, fetchLeaveCalendar } from '../../leave/api/leave';
 import type { LeaveCalendarEntry } from '../../leave/types';
 import { fetchAttendancePolicy } from '../../shifts/api/shifts';
-import { isPermissionLeave } from '../../leave/lib/leave-type';
-import { plannedFor, varianceHours } from '../lib/timesheet-plan';
+import { leaveFractionsFor, plannedFor, varianceHours } from '../lib/timesheet-plan';
 
 function formatPunchTime(isoString?: string | null): string {
   if (!isoString) return '—';
@@ -310,21 +309,9 @@ export function TimesheetsTab({
       const totalMinutes = empRecords.reduce((acc, r) => acc + (r.durationMinutes || 0), 0);
       const workedHours = parseFloat((totalMinutes / 60).toFixed(1));
 
-      // Approved leave by date: a whole day is 1, a half day 0.5. A permission (a few hours) is not
-      // a day off, so it does not reduce what was planned.
-      const leaveFractions = new Map<string, number>();
-      for (const leave of plan?.leaves ?? []) {
-        if (leave.employeeId !== person.id || leave.status !== 'approved') continue;
-        if (isPermissionLeave({ code: leave.leaveTypeCode, name: leave.leaveTypeName })) continue;
-        for (const date of weekDates) {
-          if (date >= leave.startDate && date <= leave.endDate) {
-            leaveFractions.set(
-              date,
-              Math.min(1, (leaveFractions.get(date) ?? 0) + (leave.halfDay ? 0.5 : 1)),
-            );
-          }
-        }
-      }
+      // A permission (a few hours) is not a day off, so it does not reduce what was planned.
+      const leaveFractions = leaveFractionsFor(plan?.leaves ?? [], person.id, weekDates);
+
       // Hours worked on a day of full leave still count as worked (it shows as overtime), but
       // that day is not one of the planned days.
       const daysWorked = new Set(

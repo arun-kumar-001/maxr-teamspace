@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ROLES } from '@maxr/shared';
 import { AuthProvider } from '../../../auth/AuthContext';
 import { ProfilePortalPage } from '../pages/ProfilePortalPage';
+import * as attendanceApi from '../../attendance/api/attendance';
 import * as tasksApi from '../../tasks/api/tasksApi';
 import type { Task } from '../../tasks/types';
 
@@ -206,5 +207,36 @@ describe('ProfilePortalPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Create New Task')).toBeTruthy();
     });
+  });
+
+  it("shows this week's real hours instead of a fixed 0.0 h and 40h/wk", async () => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    vi.spyOn(attendanceApi, 'fetchMyAttendanceHistory').mockResolvedValue({
+      data: [
+        {
+          id: 'r1',
+          employeeId: 'emp-1',
+          employeeName: 'x',
+          workDate: today,
+          checkInTime: `${today}T09:00:00Z`,
+          checkOutTime: `${today}T17:30:00Z`,
+          durationMinutes: 510,
+        },
+      ],
+      meta: { page: 1, pageSize: 50, total: 1, totalPages: 1 },
+    } as unknown as Awaited<ReturnType<typeof attendanceApi.fetchMyAttendanceHistory>>);
+
+    render(
+      <MemoryRouter>
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <ProfilePortalPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    // 510 minutes is 8.5 hours
+    await waitFor(() => expect(screen.getByText('8.5 h')).toBeTruthy());
+    expect(screen.queryByText('Standard: 40h/wk')).toBeNull();
   });
 });

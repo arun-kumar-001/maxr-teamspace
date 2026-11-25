@@ -1,3 +1,5 @@
+import { isPermissionLeave } from '../../leave/lib/leave-type';
+
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export interface PlannedHours {
@@ -40,4 +42,34 @@ export function plannedFor(input: {
 /** Worked against planned: positive is overtime, negative a shortfall; one decimal. */
 export function varianceHours(workedHours: number, plannedHours: number): number {
   return Math.round((workedHours - plannedHours) * 10) / 10;
+}
+
+/**
+ * One person's approved leave by date within a week: 1 for a whole day, 0.5 for a half day. A
+ * permission (a few hours) is not a day off, and leave that is only pending does not count yet.
+ */
+export function leaveFractionsFor(
+  leaves: ReadonlyArray<{
+    employeeId: string;
+    status: string;
+    leaveTypeCode: string;
+    leaveTypeName: string;
+    startDate: string;
+    endDate: string;
+    halfDay: boolean;
+  }>,
+  employeeId: string,
+  weekDates: readonly string[],
+): Map<string, number> {
+  const fractions = new Map<string, number>();
+  for (const leave of leaves) {
+    if (leave.employeeId !== employeeId || leave.status !== 'approved') continue;
+    if (isPermissionLeave({ code: leave.leaveTypeCode, name: leave.leaveTypeName })) continue;
+    for (const date of weekDates) {
+      if (date >= leave.startDate && date <= leave.endDate) {
+        fractions.set(date, Math.min(1, (fractions.get(date) ?? 0) + (leave.halfDay ? 0.5 : 1)));
+      }
+    }
+  }
+  return fractions;
 }
