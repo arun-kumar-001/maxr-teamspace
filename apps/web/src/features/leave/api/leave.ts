@@ -38,6 +38,16 @@ async function handleResponse<T>(res: Response): Promise<T> {
       if (errorData?.error?.message) {
         errorMsg = errorData.error.message;
         code = errorData.error.code;
+        // "Request validation failed" alone does not say what to fix.
+        const details: unknown = errorData.error.details;
+        if (Array.isArray(details)) {
+          const parts = details
+            .map((d: { field?: string; message?: string }) =>
+              d.field && d.message ? `${d.field}: ${d.message}` : (d.message ?? d.field ?? ''),
+            )
+            .filter(Boolean);
+          if (parts.length > 0) errorMsg += ` (${parts.join('; ')})`;
+        }
       }
     } catch {
       // response not JSON

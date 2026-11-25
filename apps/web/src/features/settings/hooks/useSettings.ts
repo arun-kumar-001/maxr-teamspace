@@ -1,3 +1,4 @@
+import { leaveCodeFromName, validateLeaveCode } from '../lib/leave-code';
 import { isDemoDataEnabled } from '@/lib/demo-data';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getSettings, updateSettings, SettingsApiError } from '../api/settingsApi';
@@ -724,26 +725,34 @@ export function useSettings(): UseSettingsResult {
         setLeaveNotice(null);
       }
 
-      // Synchronize configured leave types with the backend leave_policies table
+      // Synchronize configured leave types with the backend leave_policies table. A failure is
+      // reported to the admin, never swallowed: a type that is not on the server would vanish on
+      // the next refresh.
+      const policyErrors: string[] = [];
+      const reasonOf = (err: unknown) => (err instanceof Error ? err.message : 'unknown error');
       if (draft.customLeaveTypes && draft.customLeaveTypes.length > 0) {
+        let currentBackend: LeavePolicy[] | null = null;
         try {
-          const currentBackend = await fetchLeavePolicies().catch(() => [] as LeavePolicy[]);
-          for (const item of draft.customLeaveTypes) {
-            const existing = currentBackend.find(
-              (bp) =>
-                bp.id === item.id ||
-                (item.code && bp.code.toUpperCase() === item.code.toUpperCase()),
-            );
-            const isPerm =
-              item.category === 'permission' ||
-              item.code === 'PM' ||
-              item.code === 'PERMISSION' ||
-              item.name.toLowerCase().includes('permission');
-            const hasBal = isPerm ? false : (item.isPaid ?? true);
-            const annualDays = hasBal ? item.quota || 0 : 0;
-            const carryForwardMax =
-              hasBal && item.carryForwardEnabled ? item.carryForwardMax || 0 : 0;
+          currentBackend = await fetchLeavePolicies();
+        } catch (err) {
+          policyErrors.push(`Leave types could not be checked on the server (${reasonOf(err)})`);
+        }
+        for (const item of currentBackend ? draft.customLeaveTypes : []) {
+          const existing = (currentBackend ?? []).find(
+            (bp) =>
+              bp.id === item.id || (item.code && bp.code.toUpperCase() === item.code.toUpperCase()),
+          );
+          const isPerm =
+            item.category === 'permission' ||
+            item.code === 'PM' ||
+            item.code === 'PERMISSION' ||
+            item.name.toLowerCase().includes('permission');
+          const hasBal = isPerm ? false : (item.isPaid ?? true);
+          const annualDays = hasBal ? item.quota || 0 : 0;
+          const carryForwardMax =
+            hasBal && item.carryForwardEnabled ? item.carryForwardMax || 0 : 0;
 
+          try {
             if (existing) {
               const hasDiff =
                 existing.name !== item.name ||
@@ -761,28 +770,27 @@ export function useSettings(): UseSettingsResult {
                   maxBackdateDays: item.maxBackdateDays ?? 0,
                   isActive: item.isActive ?? true,
                   version: existing.version,
-                }).catch(() => {});
+                });
               }
             } else {
-              const rawCode =
-                (item.code || item.name.slice(0, 4))
-                  .trim()
-                  .toUpperCase()
-                  .replace(/[^A-Z0-9_]/g, '') || 'LV';
-              const cleanCode = rawCode.length >= 2 ? rawCode : `${rawCode}X`;
+              const code = item.code ? validateLeaveCode(item.code) : leaveCodeFromName(item.name);
+              if (!code.ok) {
+                policyErrors.push(`"${item.name}": ${code.error}`);
+                continue;
+              }
               await createLeavePolicy({
-                code: cleanCode,
+                code: code.value,
                 name: item.name,
                 hasBalance: hasBal,
                 annualDays,
                 carryForwardMax,
                 allowHalfDay: isPerm ? false : (item.allowHalfDay ?? true),
                 maxBackdateDays: item.maxBackdateDays ?? (isPerm ? 2 : 0),
-              }).catch(() => {});
+              });
             }
+          } catch (err) {
+            policyErrors.push(`"${item.name}" could not be saved (${reasonOf(err)})`);
           }
-        } catch {
-          // Leave policy sync is best-effort alongside company settings
         }
       }
 
@@ -796,6 +804,13 @@ export function useSettings(): UseSettingsResult {
         if (updatedSettings.integrations?.payrollExport !== undefined) {
           setStaffPayslipsEnabled(updatedSettings.integrations.payrollExport);
         }
+      }
+
+      if (policyErrors.length > 0) {
+        setError(
+          `Company settings were saved, but leave types were not: ${policyErrors.join('; ')}`,
+        );
+        return false;
       }
 
       return true;
