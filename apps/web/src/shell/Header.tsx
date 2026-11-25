@@ -69,7 +69,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
           <button
             type="button"
             onClick={onToggleMobileNav}
-            className="inline-flex items-center justify-center rounded-xl p-2 text-[#080B0C] hover:bg-surface-muted/60 focus:outline-none focus:ring-2 focus:ring-primary md:hidden min-h-[44px] min-w-[44px] border-0 border-transparent bg-transparent shadow-none transition-colors"
+            className="inline-flex items-center justify-center rounded-xl p-2 text-text hover:bg-surface-muted/60 focus:outline-none focus:ring-2 focus:ring-primary md:hidden min-h-[44px] min-w-[44px] border-0 border-transparent bg-transparent shadow-none transition-colors"
             aria-label="Open navigation menu"
             data-testid="mobile-menu-toggle"
           >
@@ -95,7 +95,7 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
 
         {/* Center: Mobile Logo Mark (Image Reference) */}
         <div className="flex md:hidden items-center gap-2 select-none">
-          <div className="w-6 h-6 rounded-md bg-[#55CDB3]/20 text-[#0D9488] flex items-center justify-center font-bold">
+          <div className="w-6 h-6 rounded-md bg-primary/20 text-primary-strong flex items-center justify-center font-bold">
             <svg
               viewBox="0 0 24 24"
               className="w-4 h-4"
