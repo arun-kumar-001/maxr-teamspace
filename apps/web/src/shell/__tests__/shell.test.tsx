@@ -23,6 +23,25 @@ describe('TC-12-04: Responsive Shell Components Rendering', () => {
     });
   });
 
+  describe('Header page title for the profile', () => {
+    const titleAt = (path: string) =>
+      renderToStaticMarkup(
+        <AuthProvider initialRole={ROLES.ADMIN} persistSession={false}>
+          <Header activePath={path} onToggleMobileNav={() => {}} />
+        </AuthProvider>,
+      );
+
+    it('is My Profile for your own profile and Employee Profile for another employee', () => {
+      expect(titleAt('/profile/details')).toContain('>My Profile<');
+      expect(titleAt('/profile/details/be27a704-1dc0-478c-8616-aad576f2d1d7')).toContain(
+        '>Employee Profile<',
+      );
+      expect(titleAt('/profile/details/be27a704-1dc0-478c-8616-aad576f2d1d7')).not.toContain(
+        '>My Profile<',
+      );
+    });
+  });
+
   describe('AppShell Component with Floating Petalo Sidebar', () => {
     it('should render brand logo, staff navigation groups, and user card', () => {
       const html = renderToStaticMarkup(

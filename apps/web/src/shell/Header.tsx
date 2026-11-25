@@ -51,6 +51,8 @@ export function Header({ onToggleMobileNav, activePath = '/dashboard', onNavigat
     if (path.includes('leave')) return 'My Leave & Balances';
     if (path.includes('projects')) return 'Projects & Initiatives';
     if (path.includes('tasks')) return 'Tasks & Projects';
+    // Your own profile, or somebody else's (/profile/details/:id)
+    if (/^\/profile\/details\/[^/]+/.test(path)) return 'Employee Profile';
     if (path.includes('profile')) return 'My Profile';
     if (path.includes('payslips')) return 'Payslip Statements';
     if (path.includes('components')) return 'Shared UI Component Gallery';

@@ -36,8 +36,8 @@ const CreateEmployeePage = lazy(() =>
 const EmployeeDeactivationPage = lazy(() =>
   import('./features/employees').then((m) => ({ default: m.EmployeeDeactivationPage })),
 );
-const EmployeeDetailPage = lazy(() =>
-  import('./features/employees').then((m) => ({ default: m.EmployeeDetailPage })),
+const EmployeeProfilePage = lazy(() =>
+  import('./features/profile').then((m) => ({ default: m.EmployeeProfilePage })),
 );
 const EmployeeDirectoryPage = lazy(() =>
   import('./features/employees').then((m) => ({ default: m.EmployeeDirectoryPage })),
@@ -56,9 +56,6 @@ const OrgChartPage = lazy(() =>
 );
 const DepartmentsPage = lazy(() =>
   import('./features/departments').then((m) => ({ default: m.DepartmentsPage })),
-);
-const MyProfilePage = lazy(() =>
-  import('./features/profile').then((m) => ({ default: m.MyProfilePage })),
 );
 const ProfilePortalPage = lazy(() =>
   import('./features/profile').then((m) => ({ default: m.ProfilePortalPage })),
@@ -382,7 +379,7 @@ function AppRoutes() {
         path="/profile/details/:id"
         element={
           <ShellLayout>
-            <EmployeeDetailPage />
+            <EmployeeProfilePage />
           </ShellLayout>
         }
       />
@@ -390,7 +387,7 @@ function AppRoutes() {
         path="/profile/details"
         element={
           <ShellLayout>
-            <MyProfilePage />
+            <EmployeeProfilePage />
           </ShellLayout>
         }
       />

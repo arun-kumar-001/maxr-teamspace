@@ -40,7 +40,6 @@ export * from './components/EmployeeDocumentsTab';
 export * from './components/ChangeManagerModal';
 export * from './components/OrgChartNode';
 export * from './pages/EmployeeDirectoryPage';
-export * from './pages/EmployeeDetailPage';
 export * from './pages/OrgChartPage';
 export * from './pages/CreateEmployeePage';
 export * from './pages/EmployeeDocumentsPage';

@@ -1,16 +1,20 @@
+import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/StatusPill';
 import type { EmployeeProfile } from '../types';
 
 export interface EmploymentInformationProps {
   profile: EmployeeProfile;
+  /** Given to someone who may change the reporting manager (Admin, HR). */
+  onChangeManager?: () => void;
 }
 
-export function EmploymentInformation({ profile }: EmploymentInformationProps) {
+export function EmploymentInformation({ profile, onChangeManager }: EmploymentInformationProps) {
   const managerDisplayName = profile.manager
     ? `${profile.manager.firstName} ${profile.manager.lastName} (${profile.manager.employeeCode})`
     : 'None (Direct Report / Executive)';
 
   const formattedJoiningDate = (() => {
+    if (!profile.joiningDate) return 'Not provided';
     try {
       const date = new Date(profile.joiningDate);
       if (!Number.isNaN(date.getTime())) {
@@ -128,6 +132,21 @@ export function EmploymentInformation({ profile }: EmploymentInformationProps) {
           </div>
         </div>
       </div>
+
+      {onChangeManager && (
+        <div className="flex justify-end mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onChangeManager}
+            className="text-xs min-h-[44px]"
+            data-testid="open-change-manager-btn"
+          >
+            Change Manager
+          </Button>
+        </div>
+      )}
     </section>
   );
 }
