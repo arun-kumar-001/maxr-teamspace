@@ -564,7 +564,7 @@ function AttendanceOpsWorkspace({
               records={records}
               employees={employees}
               departments={departments}
-              canApproveTimesheets={canManage}
+              canViewTeam={canManage}
               selectedDate={selectedDate}
             />
           )}
