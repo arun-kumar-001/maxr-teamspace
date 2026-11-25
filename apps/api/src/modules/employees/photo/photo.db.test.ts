@@ -98,4 +98,14 @@ describe('employee photos against PostgreSQL', () => {
     expect(await repo().find(ids.member, { kind: 'all' })).toBeNull();
     expect(await repo().clear(ids.member)).toBeNull();
   });
+
+  it('knows whether an employee exists inside the caller scope', async () => {
+    expect(await repo().isInScope(ids.member, { kind: 'all' })).toBe(true);
+    expect(await repo().isInScope(randomUUID(), { kind: 'all' })).toBe(false);
+    expect(await repo().isInScope(ids.member, { kind: 'team', managerId: ids.lead })).toBe(true);
+    expect(await repo().isInScope(ids.member, { kind: 'team', managerId: ids.outsider })).toBe(
+      false,
+    );
+    expect(await repo().isInScope(ids.member, { kind: 'none' })).toBe(false);
+  });
 });
