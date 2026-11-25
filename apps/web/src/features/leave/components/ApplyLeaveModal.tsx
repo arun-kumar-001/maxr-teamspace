@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { LeavePolicy, LeaveBalance, Holiday, ApplyForLeavePayload } from '../types';
 import { Modal, Button, FormField } from '../../../components/ui';
 import { fetchLeaveApprovalRoute } from '../api/leave';
+import { getBasicSettings } from '../../settings/api/settingsApi';
+import { DEFAULT_WORK_DAYS, countLeaveDays } from '../lib/leave-days';
 import type { LeaveApprovalRoute } from '../types';
 
 export interface InitialLeaveRequest {
@@ -300,33 +302,32 @@ export const ApplyLeaveModal: React.FC<ApplyLeaveModalProps> = ({
   }, [filteredPolicies.length, highlightedIndex]);
 
   // Calculate estimated working days excluding weekend days and holidays
+  // The company work week decides which days count; until it loads, Monday to Friday stands in.
+  const [workDays, setWorkDays] = useState<readonly string[]>(DEFAULT_WORK_DAYS);
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    getBasicSettings()
+      .then((basic) => {
+        if (active && basic.workWeek?.days?.length) setWorkDays(basic.workWeek.days);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
+
   const { estimatedDays, excludedDays } = useMemo(() => {
     if (!startDate || !endDate || endDate < startDate) return { estimatedDays: 0, excludedDays: 0 };
-    if (isPermission) return { estimatedDays: 0.25, excludedDays: 0 };
-    if (halfDay) return { estimatedDays: 0.5, excludedDays: 0 };
-
-    let count = 0;
-    let weekendCount = 0;
-    const cur = new Date(`${startDate}T00:00:00Z`);
-    const end = new Date(`${endDate}T00:00:00Z`);
-
-    const holidaySet = new Set(holidays.map((h) => h.date));
-
-    while (cur <= end) {
-      const dayOfWeek = cur.getUTCDay();
-      const dateStr = cur.toISOString().slice(0, 10);
-
-      // Standard work week Mon-Fri (day 1-5); exclude Sat(6) and Sun(0)
-      if (dayOfWeek === 0 || dayOfWeek === 6 || holidaySet.has(dateStr)) {
-        weekendCount += 1;
-      } else {
-        count += 1;
-      }
-      cur.setUTCDate(cur.getUTCDate() + 1);
-    }
-
-    return { estimatedDays: count, excludedDays: weekendCount };
-  }, [startDate, endDate, halfDay, holidays, isPermission]);
+    const counted = countLeaveDays({
+      startDate,
+      endDate: isPermission || halfDay ? startDate : endDate,
+      halfDay: halfDay && !isPermission,
+      workDays,
+      holidays: holidays.map((h) => h.date),
+    });
+    return { estimatedDays: counted.days, excludedDays: counted.excluded };
+  }, [startDate, endDate, halfDay, holidays, isPermission, workDays]);
 
   const handleStartDateChange = (val: string) => {
     setStartDate(val);
