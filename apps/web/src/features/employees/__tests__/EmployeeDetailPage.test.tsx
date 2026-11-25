@@ -207,6 +207,10 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
     expect(screen.getAllByText('EMP-001').length).toBeGreaterThan(0);
     expect(screen.getByTestId('profile-header')).toBeInTheDocument();
     expect(screen.queryByTestId('upload-avatar-btn')).toBeNull();
+    // Same two cards as /profile/details, with only the data the record holds.
+    expect(screen.getByTestId('personal-info-card')).toBeInTheDocument();
+    expect(screen.queryByText('Nick Name')).toBeNull();
+    expect(screen.queryByText('Gender')).toBeNull();
     expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/v1|Version 1/).length).toBeGreaterThan(0);
 
@@ -317,7 +321,7 @@ describe('EmployeeDetailPage Component (Issue #21)', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 1, name: /Janet Doe/i })).toBeInTheDocument();
-      expect(screen.getAllByText(/v2/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Version 2/).length).toBeGreaterThan(0);
     });
   });
 

@@ -15,6 +15,7 @@ import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
 import { EmploymentInformation } from '../../profile/components/EmploymentInformation';
+import { RecordPersonalInformation } from '../../profile/components/RecordPersonalInformation';
 import { ProfileHeader } from '../../profile/components/ProfileHeader';
 import type { EmployeeProfile } from '../../profile/types';
 import type { EmployeeDetail, EmployeePatch } from '../types';
@@ -214,23 +215,6 @@ export function EmployeeDetailPage() {
         </div>
       )}
 
-      {/* Breadcrumb & Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/employees')}
-          className="min-h-[44px]"
-          data-testid="back-to-directory-btn"
-        >
-          &larr; Back to Directory
-        </Button>
-
-        <div className="text-xs font-mono text-text-muted">
-          Record Version: <span className="font-semibold text-text">v{employee.version}</span>
-        </div>
-      </div>
-
       {/* Same header as My Profile; the photo is read-only here */}
       <ProfileHeader
         profile={profile}
@@ -326,7 +310,10 @@ export function EmployeeDetailPage() {
       {/* Tab Panels */}
       {activeTab === 'overview' && (
         <div className="space-y-4" data-testid="tab-overview">
-          <EmploymentInformation profile={profile} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <RecordPersonalInformation profile={profile} />
+            <EmploymentInformation profile={profile} />
+          </div>
           {canEdit && (
             <div className="flex justify-end">
               <Button
