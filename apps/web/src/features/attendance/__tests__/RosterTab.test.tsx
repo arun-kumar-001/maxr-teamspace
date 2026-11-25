@@ -112,4 +112,24 @@ describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
     const blankCells = screen.getAllByRole('button').filter((b) => b.textContent === '—');
     expect(blankCells.length).toBeGreaterThan(0);
   });
+
+  it("shows an employee's photo in the employee column when there is one", () => {
+    const withPhoto = mockEmployees.map((e, i) =>
+      i === 0 ? { ...e, photoUrl: '/api/v1/employees/photo-1/photo?v=7' } : e,
+    );
+    const { container } = render(
+      <RosterTab
+        employees={withPhoto}
+        departments={mockDepartments}
+        shifts={[]}
+        selectedDate="2026-11-03"
+        initialRecords={mockRecords}
+        canManageRoster={true}
+      />,
+    );
+
+    expect(
+      container.querySelector('img[src="/api/v1/employees/photo-1/photo?v=7"]'),
+    ).not.toBeNull();
+  });
 });
