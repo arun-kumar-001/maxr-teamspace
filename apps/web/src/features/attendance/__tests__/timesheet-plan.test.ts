@@ -15,7 +15,7 @@ const base = {
   weekDates,
   workDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
   holidays: new Set<string>(),
-  leaveDates: new Set<string>(),
+  leaveFractions: new Map<string, number>(),
   fullDayMinutes: 480,
 };
 
@@ -40,9 +40,19 @@ describe('plannedFor', () => {
         ...base,
         today: '2026-11-20',
         holidays: new Set(['2026-11-04']),
-        leaveDates: new Set(['2026-11-06']),
+        leaveFractions: new Map([['2026-11-06', 1]]),
       }),
     ).toEqual({ plannedDays: 3, plannedHours: 24 });
+  });
+
+  it('takes half a day off the plan for a half day of leave', () => {
+    expect(
+      plannedFor({
+        ...base,
+        today: '2026-11-20',
+        leaveFractions: new Map([['2026-11-06', 0.5]]),
+      }),
+    ).toEqual({ plannedDays: 4.5, plannedHours: 36 });
   });
 
   it('follows the company work week and the full-day minutes', () => {

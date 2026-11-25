@@ -1,14 +1,15 @@
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export interface PlannedHours {
-  /** Working days so far this week that the person was expected to work. */
+  /** Working days so far this week that the person was expected to work (a half day counts 0.5). */
   plannedDays: number;
   plannedHours: number;
 }
 
 /**
  * What a person was expected to work in a week up to `today` (or the whole week once it is over):
- * the company work week, minus holidays, minus the days of approved leave, at the full-day hours.
+ * the company work week, minus holidays, minus approved leave (half a day for a half day), at
+ * the full-day hours.
  * Days that have not happened yet are not counted, so a Monday does not look like 40 hours short.
  */
 export function plannedFor(input: {
@@ -18,7 +19,8 @@ export function plannedFor(input: {
   /** The company work week as day names, for example `Monday`. */
   workDays: readonly string[];
   holidays: ReadonlySet<string>;
-  leaveDates: ReadonlySet<string>;
+  /** Approved leave by date: 1 for a whole day, 0.5 for a half day. */
+  leaveFractions: ReadonlyMap<string, number>;
   fullDayMinutes: number;
 }): PlannedHours {
   let plannedDays = 0;
@@ -26,8 +28,8 @@ export function plannedFor(input: {
     if (date > input.today) continue;
     const weekday = WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()] as string;
     if (!input.workDays.includes(weekday)) continue;
-    if (input.holidays.has(date) || input.leaveDates.has(date)) continue;
-    plannedDays += 1;
+    if (input.holidays.has(date)) continue;
+    plannedDays += 1 - Math.min(1, input.leaveFractions.get(date) ?? 0);
   }
   return {
     plannedDays,

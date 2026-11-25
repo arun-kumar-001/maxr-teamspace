@@ -378,7 +378,7 @@ function AttendanceOpsWorkspace({
       return 'Weekly shift schedules and employee assignments.';
     }
     if (activeTab === 'timesheets') {
-      return 'Review and approve employee working hours and overtime.';
+      return 'Review employee working hours against what was planned.';
     }
     return 'Live employee check-in and check-out tracking with photos, locations, and break statuses.';
   })();

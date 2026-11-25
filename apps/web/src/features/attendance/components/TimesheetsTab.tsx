@@ -6,6 +6,7 @@ import { fetchTeamAttendance, fetchMyAttendanceHistory } from '../api/attendance
 import { fetchHolidays, fetchLeaveCalendar } from '../../leave/api/leave';
 import type { LeaveCalendarEntry } from '../../leave/types';
 import { fetchAttendancePolicy } from '../../shifts/api/shifts';
+import { isPermissionLeave } from '../../leave/lib/leave-type';
 import { plannedFor, varianceHours } from '../lib/timesheet-plan';
 
 function formatPunchTime(isoString?: string | null): string {
@@ -115,7 +116,9 @@ export interface TimesheetEntry {
   name: string;
   employeeCode: string;
   departmentName: string;
-  /** Days with a check-in this week. */
+  /** The person's job title, shown under the name. */
+  role: string;
+  /** Days with a check-in this week, not counting days of approved full-day leave. */
   daysWorked: number;
   /** Working days so far this week; null when the company plan could not be read. */
   plannedDays: number | null;
@@ -263,9 +266,13 @@ export function TimesheetsTab({
         code: emp.employeeCode,
         name: `${emp.firstName} ${emp.lastName}`.trim(),
         department: emp.department?.name || 'General',
+        role: emp.designation?.title ?? '',
       }));
     }
-    const seen = new Map<string, { id: string; code: string; name: string; department: string }>();
+    const seen = new Map<
+      string,
+      { id: string; code: string; name: string; department: string; role: string }
+    >();
     for (const r of weekRecords) {
       if (!seen.has(r.employeeId)) {
         seen.set(r.employeeId, {
@@ -273,6 +280,7 @@ export function TimesheetsTab({
           code: '',
           name: r.employeeName || 'Employee',
           department: 'General',
+          role: '',
         });
       }
     }
@@ -290,23 +298,36 @@ export function TimesheetsTab({
       );
       const totalMinutes = empRecords.reduce((acc, r) => acc + (r.durationMinutes || 0), 0);
       const workedHours = parseFloat((totalMinutes / 60).toFixed(1));
-      const daysWorked = new Set(empRecords.filter((r) => r.checkInTime).map((r) => r.workDate))
-        .size;
 
-      const leaveDates = new Set<string>();
+      // Approved leave by date: a whole day is 1, a half day 0.5. A permission (a few hours) is not
+      // a day off, so it does not reduce what was planned.
+      const leaveFractions = new Map<string, number>();
       for (const leave of plan?.leaves ?? []) {
         if (leave.employeeId !== person.id || leave.status !== 'approved') continue;
+        if (isPermissionLeave({ code: leave.leaveTypeCode, name: leave.leaveTypeName })) continue;
         for (const date of weekDates) {
-          if (date >= leave.startDate && date <= leave.endDate) leaveDates.add(date);
+          if (date >= leave.startDate && date <= leave.endDate) {
+            leaveFractions.set(
+              date,
+              Math.min(1, (leaveFractions.get(date) ?? 0) + (leave.halfDay ? 0.5 : 1)),
+            );
+          }
         }
       }
+      // Hours worked on a day of full leave still count as worked (it shows as overtime), but
+      // that day is not one of the planned days.
+      const daysWorked = new Set(
+        empRecords
+          .filter((r) => r.checkInTime && (leaveFractions.get(r.workDate) ?? 0) < 1)
+          .map((r) => r.workDate),
+      ).size;
       const planned = plan
         ? plannedFor({
             weekDates,
             today: todayIso,
             workDays: plan.workDays,
             holidays: plan.holidays,
-            leaveDates,
+            leaveFractions,
             fullDayMinutes: plan.fullDayMinutes,
           })
         : null;
@@ -331,6 +352,7 @@ export function TimesheetsTab({
         name: person.name,
         employeeCode: person.code,
         departmentName: person.department,
+        role: person.role,
         daysWorked,
         plannedDays: planned ? planned.plannedDays : null,
         plannedHours: planned ? planned.plannedHours : null,
@@ -578,7 +600,7 @@ export function TimesheetsTab({
                     <th
                       scope="col"
                       className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
-                      title="Days with a check-in, out of the working days so far"
+                      title="Days with a check-in, out of the working days so far (leave days are not counted)"
                     >
                       Days
                     </th>
@@ -619,9 +641,6 @@ export function TimesheetsTab({
                     </tr>
                   ) : (
                     filteredTimesheets.map((ts) => {
-                      const subtitle = [ts.employeeCode, ts.departmentName]
-                        .filter(Boolean)
-                        .join(' · ');
                       return (
                         <tr
                           key={ts.id}
@@ -654,7 +673,7 @@ export function TimesheetsTab({
                                   {ts.name}
                                 </span>
                                 <span className="text-[11px] text-text-muted block truncate font-medium">
-                                  {subtitle}
+                                  {ts.role}
                                 </span>
                                 {ts.discrepancyNote && (
                                   <span className="mt-0.5 block text-[11px] font-semibold text-rose-700">
@@ -815,7 +834,7 @@ export function TimesheetsTab({
         <Modal
           isOpen={true}
           onClose={() => setDetailedEntry(null)}
-          title={`Timesheet Details: ${detailedEntry.name} (${detailedEntry.employeeCode})`}
+          title={`Timesheet Details: ${detailedEntry.name}`}
         >
           <div className="space-y-4 pt-2 text-xs">
             <div className="grid grid-cols-3 gap-3 p-3 bg-surface-muted rounded-xl">

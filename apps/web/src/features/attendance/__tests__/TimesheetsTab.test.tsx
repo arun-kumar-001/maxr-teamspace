@@ -13,6 +13,7 @@ const employee = (id: string, firstName: string, code: string): EmployeeDirector
     lastName: 'Tester',
     employeeCode: code,
     department: { id: 'd1', name: 'Engineering' },
+    designation: { id: 'g1', title: 'Software Engineer' },
   }) as unknown as EmployeeDirectoryItem;
 
 const record = (
@@ -84,6 +85,42 @@ describe('TimesheetsTab', () => {
               days: 1,
               status: 'approved',
             },
+            {
+              requestId: 'l2',
+              employeeId: 'e3',
+              employeeName: 'Cy',
+              leaveTypeCode: 'AL',
+              leaveTypeName: 'Annual',
+              startDate: '2026-11-06',
+              endDate: '2026-11-06',
+              halfDay: true,
+              days: 0.5,
+              status: 'approved',
+            },
+            {
+              requestId: 'l3',
+              employeeId: 'e4',
+              employeeName: 'Dee',
+              leaveTypeCode: 'LP',
+              leaveTypeName: 'Late Permission',
+              startDate: '2026-11-06',
+              endDate: '2026-11-06',
+              halfDay: false,
+              days: 1,
+              status: 'approved',
+            },
+            {
+              requestId: 'l4',
+              employeeId: 'e5',
+              employeeName: 'Eve',
+              leaveTypeCode: 'AL',
+              leaveTypeName: 'Annual',
+              startDate: '2026-11-02',
+              endDate: '2026-11-02',
+              halfDay: false,
+              days: 1,
+              status: 'approved',
+            },
           ],
         });
       }
@@ -108,7 +145,13 @@ describe('TimesheetsTab', () => {
     return render(
       <TimesheetsTab
         records={records}
-        employees={[employee('e1', 'Ann', 'E-001'), employee('e2', 'Bea', 'E-002')]}
+        employees={[
+          employee('e1', 'Ann', 'E-001'),
+          employee('e2', 'Bea', 'E-002'),
+          employee('e3', 'Cy', 'E-003'),
+          employee('e4', 'Dee', 'E-004'),
+          employee('e5', 'Eve', 'E-005'),
+        ]}
         departments={[]}
         canViewTeam={true}
         selectedDate="2026-11-03"
@@ -135,6 +178,36 @@ describe('TimesheetsTab', () => {
     // Bea: less the holiday and her approved leave day = 3 days, 24 h planned, none worked.
     expect(within(rowOf('Bea')).getByText('24h')).toBeInTheDocument();
     expect(within(rowOf('Bea')).getByText(/-24h short/)).toBeInTheDocument();
+  });
+
+  it('takes half a day off the plan for a half day of leave, and nothing for a permission', async () => {
+    renderTab([]);
+
+    // Cy: 4 working days (the 4th is a holiday) less half a day = 3.5 days, 28 h.
+    await waitFor(() => expect(within(rowOf('Cy')).getByText('28h')).toBeInTheDocument());
+    expect(within(rowOf('Cy')).getByText(/3\.5/)).toBeInTheDocument();
+    // Dee: a permission is a few hours, not a day off: still 4 days, 32 h.
+    expect(within(rowOf('Dee')).getByText('32h')).toBeInTheDocument();
+  });
+
+  it('counts hours worked on a leave day as worked, but that day is not a planned day', async () => {
+    renderTab([record('r1', 'e5', '2026-11-02', 480)]);
+
+    // Eve: leave on Monday, so 3 planned days (24 h). She worked 8 h on the leave day.
+    await waitFor(() => expect(within(rowOf('Eve')).getByText('24h')).toBeInTheDocument());
+    expect(within(rowOf('Eve')).getByText('8h')).toBeInTheDocument();
+    expect(within(rowOf('Eve')).getByText(/-16h short/)).toBeInTheDocument();
+    // 0 of the 3 planned days were worked: the leave day is not counted
+    expect(within(rowOf('Eve')).getByText(/\/ 3/)).toBeInTheDocument();
+  });
+
+  it('shows only the name and the job title under the person', async () => {
+    renderTab([]);
+    const row = await screen.findByRole('button', { name: 'Timesheet details for Ann Tester' });
+    expect(within(row).getByText('Ann Tester')).toBeInTheDocument();
+    expect(within(row).getByText('Software Engineer')).toBeInTheDocument();
+    expect(within(row).queryByText(/E-001/)).toBeNull();
+    expect(within(row).queryByText(/Engineering/)).toBeNull();
   });
 
   it('shows overtime as plus and says it in words', async () => {

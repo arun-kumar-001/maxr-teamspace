@@ -1125,7 +1125,7 @@ export function RosterTab({
                                 {emp.firstName} {emp.lastName}
                               </span>
                               <span className="text-[11px] text-text-muted block truncate font-normal">
-                                {emp.designation?.title || emp.employeeCode}
+                                {emp.designation?.title}
                               </span>
                             </div>
                           </div>
@@ -1289,7 +1289,7 @@ export function RosterTab({
                                 {emp.firstName} {emp.lastName}
                               </span>
                               <span className="text-[10px] text-text-muted block truncate font-medium">
-                                {emp.designation?.title || emp.employeeCode}
+                                {emp.designation?.title}
                               </span>
                             </div>
                           </div>
