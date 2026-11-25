@@ -182,4 +182,55 @@ describe('employee profile photos', () => {
       .map((e) => e.action);
     expect(actions.sort()).toEqual(['profile.photo_remove', 'profile.photo_update']);
   });
+
+  describe("setting another employee's photo", () => {
+    const putFor = (
+      s: Awaited<ReturnType<typeof setup>>,
+      who: 'staff' | 'team_lead' | 'hr_manager' | 'admin',
+      employeeId: string,
+    ) =>
+      s.as[who]
+        .put(`/api/v1/employees/${employeeId}/photo`)
+        .set('Content-Type', 'image/png')
+        .set('X-Filename', 'them.png')
+        .send(PNG);
+
+    it('lets HR and Admin set the photo of an employee, and it serves at that employee URL', async () => {
+      const s = await setup();
+      s.repo.employees.add(s.users.staff.employeeId);
+
+      for (const who of ['hr_manager', 'admin'] as const) {
+        const put = await putFor(s, who, s.users.staff.employeeId);
+        expect(put.status, who).toBe(200);
+        expect(put.body.data.photoUrl).toMatch(
+          new RegExp(`^/api/v1/employees/${s.users.staff.employeeId}/photo\\?v=\\d+$`),
+        );
+      }
+      const got = await s.as.admin.get(`/api/v1/employees/${s.users.staff.employeeId}/photo`);
+      expect(got.status).toBe(200);
+      expect(s.auditStore.find((e) => e.action === 'employee.photo_update').length).toBe(2);
+    });
+
+    it('does not let Staff or a Team Lead set anyone elses photo', async () => {
+      const s = await setup();
+      s.repo.employees.add(s.users.staff.employeeId);
+      s.repo.employees.add(s.users.hr_manager.employeeId);
+
+      expect((await putFor(s, 'staff', s.users.hr_manager.employeeId)).status).toBe(403);
+      expect((await putFor(s, 'team_lead', s.users.staff.employeeId)).status).toBe(403);
+    });
+
+    it('answers 404 for an employee that does not exist, and removes a photo on request', async () => {
+      const s = await setup();
+      s.repo.employees.add(s.users.staff.employeeId);
+      expect((await putFor(s, 'admin', '11111111-1111-4111-8111-111111111111')).status).toBe(404);
+
+      await putFor(s, 'admin', s.users.staff.employeeId);
+      const del = await s.as.admin.delete(`/api/v1/employees/${s.users.staff.employeeId}/photo`);
+      expect(del.status).toBe(204);
+      expect(
+        (await s.as.admin.get(`/api/v1/employees/${s.users.staff.employeeId}/photo`)).status,
+      ).toBe(404);
+    });
+  });
 });

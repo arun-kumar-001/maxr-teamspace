@@ -306,6 +306,7 @@ export function AdminDashboard() {
     const summary = computeTaskCounts(list);
     return {
       teamMembers: 0,
+      activeMembers: 0,
       presentToday: 0,
       leaveRequests: 0,
       openTasks: summary.pending + summary.overdue,
@@ -331,10 +332,13 @@ export function AdminDashboard() {
     async function loadData() {
       const now = new Date();
       const todayIso = now.toISOString().slice(0, 10);
-      const [meRes, empRes, approvalsRes, tasksRes, teamAttRes, leaveReqRes] =
+      const [meRes, empRes, activeEmpRes, approvalsRes, tasksRes, teamAttRes, leaveReqRes] =
         await Promise.allSettled([
           apiFetch('/api/v1/auth/me').then((r) => (r.ok ? r.json() : null)),
           apiFetch('/api/v1/employees?pageSize=1').then((r) => (r.ok ? r.json() : null)),
+          apiFetch('/api/v1/employees?status=active&pageSize=1').then((r) =>
+            r.ok ? r.json() : null,
+          ),
           fetchApprovals({ status: 'pending', pageSize: 3 }),
           fetchTeamTasks({ pageSize: 100 }),
           fetchTeamAttendance({ startDate: todayIso, endDate: todayIso, pageSize: 100 }),
@@ -358,6 +362,13 @@ export function AdminDashboard() {
           ...prev,
           teamMembers: empRes.value.meta.total,
         }));
+      }
+
+      if (
+        activeEmpRes.status === 'fulfilled' &&
+        typeof activeEmpRes.value?.meta?.total === 'number'
+      ) {
+        setMetrics((prev) => ({ ...prev, activeMembers: activeEmpRes.value.meta.total }));
       }
 
       if (teamAttRes.status === 'fulfilled') {
@@ -701,12 +712,10 @@ export function AdminDashboard() {
             opacity: 1;
           }
         }
+        /* Only the start is given: the bar grows to the width set on the element (its real value). */
         @keyframes maxrProgressTrack {
           from {
             width: 0%;
-          }
-          to {
-            width: 76%;
           }
         }
         .maxr-card-entrance {
@@ -755,7 +764,7 @@ export function AdminDashboard() {
           label="Team Members"
           value={metrics.teamMembers}
           icon={<IconUsers className="w-7 h-7" />}
-          badge={metrics.teamMembers > 0 ? '100% active' : '0 active'}
+          badge={`${metrics.activeMembers} active`}
           variant="emerald"
           style={{ animationDelay: '50ms' }}
           className="maxr-card-entrance"

@@ -1,8 +1,13 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { Button, KpiCard, Modal } from '../../../components/ui';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 import type { AttendanceRecord } from '../types';
 import { fetchTeamAttendance, fetchMyAttendanceHistory } from '../api/attendance';
+import { fetchHolidays, fetchLeaveCalendar } from '../../leave/api/leave';
+import type { LeaveCalendarEntry } from '../../leave/types';
+import { fetchAttendancePolicy } from '../../shifts/api/shifts';
+import { leaveFractionsFor, plannedFor, varianceHours } from '../lib/timesheet-plan';
 
 function formatPunchTime(isoString?: string | null): string {
   if (!isoString) return '—';
@@ -87,23 +92,6 @@ function IconDownload({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function IconCheck({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
 function IconClock({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg
@@ -128,11 +116,19 @@ export interface TimesheetEntry {
   name: string;
   employeeCode: string;
   departmentName: string;
-  plannedHours: number;
+  /** The person's job title, shown under the name. */
+  role: string;
+  photoUrl: string | null;
+  /** Days with a check-in this week, not counting days of approved full-day leave. */
+  daysWorked: number;
+  /** Working days so far this week; null when the company plan could not be read. */
+  plannedDays: number | null;
+  plannedHours: number | null;
   workedHours: number;
-  overtimeHours: number;
+  /** Worked minus planned (positive is overtime); null when the plan is not known. */
+  varianceHours: number | null;
   breakDuration: string;
-  status: 'submitted' | 'approved' | 'flagged';
+  /** A check-in on a past day with no check-out. */
   discrepancyNote?: string;
 }
 
@@ -140,26 +136,34 @@ export interface TimesheetsTabProps {
   records: AttendanceRecord[];
   employees: EmployeeDirectoryItem[];
   departments: DepartmentItem[];
-  canApproveTimesheets: boolean;
+  /** Whether the whole team's attendance may be listed (otherwise only the viewer's own). */
+  canViewTeam: boolean;
   selectedDate?: string;
 }
+
+const formatHours = (hours: number | null): string => (hours === null ? '—' : `${hours}h`);
+
+const localIso = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export function TimesheetsTab({
   records,
   employees,
   departments,
-  canApproveTimesheets,
+  canViewTeam,
   selectedDate,
 }: TimesheetsTabProps) {
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [statusTab, setStatusTab] = useState<'all' | 'submitted' | 'flagged' | 'approved'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailedEntry, setDetailedEntry] = useState<TimesheetEntry | null>(null);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
   const [selectedChartDay, setSelectedChartDay] = useState<string | null>(null);
   const [hoveredChartDay, setHoveredChartDay] = useState<string | null>(null);
-  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
+  const [plan, setPlan] = useState<{
+    workDays: string[];
+    fullDayMinutes: number;
+    holidays: Set<string>;
+    leaves: LeaveCalendarEntry[];
+  } | null>(null);
   const [weekRecords, setWeekRecords] = useState<AttendanceRecord[]>(records);
 
   const activeSelectedDate = useMemo(() => {
@@ -191,7 +195,7 @@ export function TimesheetsTab({
   // Fetch full week team records
   const loadWeekRecords = useCallback(async () => {
     try {
-      const res = canApproveTimesheets
+      const res = canViewTeam
         ? await fetchTeamAttendance({
             startDate: weekInfo.mondayIso,
             endDate: weekInfo.sundayIso,
@@ -208,7 +212,7 @@ export function TimesheetsTab({
     } catch {
       // Keep existing weekRecords if API fails
     }
-  }, [canApproveTimesheets, weekInfo.mondayIso, weekInfo.sundayIso]);
+  }, [canViewTeam, weekInfo.mondayIso, weekInfo.sundayIso]);
 
   useEffect(() => {
     void loadWeekRecords();
@@ -227,128 +231,160 @@ export function TimesheetsTab({
     };
   }, [loadWeekRecords]);
 
-  // Derive timesheets by aggregating records per employee
-  const timesheetList = useMemo<TimesheetEntry[]>(() => {
-    const now = new Date();
-    const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-    if (employees.length > 0) {
-      return employees.map((emp) => {
-        const empRecords = weekRecords.filter(
-          (r) => r.employeeId === emp.id || r.employeeId === emp.employeeCode,
-        );
-        const totalMinutes = empRecords.reduce((acc, r) => acc + (r.durationMinutes || 0), 0);
-        const workedHours = parseFloat((totalMinutes / 60).toFixed(1));
-        const plannedHours = 40.0;
-        const overtimeHours =
-          workedHours > plannedHours ? parseFloat((workedHours - plannedHours).toFixed(1)) : 0;
-
-        // Break duration from real data
-        const totalBreakMinutes = empRecords.reduce((acc, r) => acc + (r.breakMinutes || 0), 0);
-        const breakH = Math.floor(totalBreakMinutes / 60);
-        const breakM = totalBreakMinutes % 60;
-        const breakDuration =
-          totalBreakMinutes > 0
-            ? breakH > 0
-              ? `${breakH}h ${breakM > 0 ? `${breakM}m` : ''}`
-              : `${breakM}m`
-            : '0m';
-
-        // Check for missing punch-out on past days
-        const missingPunchRecord = empRecords.find(
-          (r) => r.checkInTime && !r.checkOutTime && r.workDate < todayIso,
-        );
-
-        let status: 'submitted' | 'approved' | 'flagged' = 'submitted';
-        if (approvedIds.has(emp.id) || approvedIds.has(`ts-${emp.id}`)) {
-          status = 'approved';
-        } else if (missingPunchRecord) {
-          status = 'flagged';
-        }
-
-        return {
-          id: `ts-${emp.id}`,
-          employeeId: emp.id,
-          name: `${emp.firstName} ${emp.lastName}`.trim(),
-          employeeCode: emp.employeeCode,
-          departmentName: emp.department?.name || 'General',
-          plannedHours,
-          workedHours,
-          overtimeHours,
-          breakDuration,
-          status,
-          discrepancyNote: missingPunchRecord
-            ? `Missing check-out on ${missingPunchRecord.workDate}`
-            : undefined,
-        };
+  // What the week should hold: the company work week and full-day hours, holidays and leave.
+  useEffect(() => {
+    let active = true;
+    const years = [
+      ...new Set([Number(weekInfo.mondayIso.slice(0, 4)), Number(weekInfo.sundayIso.slice(0, 4))]),
+    ];
+    void Promise.allSettled([
+      fetchAttendancePolicy(),
+      Promise.all(years.map((y) => fetchHolidays(y))).then((lists) => lists.flat()),
+      fetchLeaveCalendar(weekInfo.mondayIso, weekInfo.sundayIso),
+    ]).then(([policy, holidays, leaves]) => {
+      if (!active) return;
+      if (policy.status !== 'fulfilled') {
+        setPlan(null);
+        return;
+      }
+      setPlan({
+        workDays: policy.value.workWeek.days,
+        fullDayMinutes: policy.value.fullDayMinutes,
+        holidays: new Set(holidays.status === 'fulfilled' ? holidays.value.map((h) => h.date) : []),
+        leaves: leaves.status === 'fulfilled' ? leaves.value : [],
       });
-    }
+    });
+    return () => {
+      active = false;
+    };
+  }, [weekInfo.mondayIso, weekInfo.sundayIso]);
 
-    // Fallback if rendered with records only (e.g. staff history)
-    return weekRecords.map((r) => {
-      const workedHours = parseFloat(((r.durationMinutes || 0) / 60).toFixed(1));
-      const plannedHours = 40.0;
-      const overtimeHours =
-        workedHours > plannedHours ? parseFloat((workedHours - plannedHours).toFixed(1)) : 0;
-      const totalBreakMinutes = r.breakMinutes || 0;
+  // Who is shown: the employees we know, or (a person's own history) whoever the records name.
+  const people = useMemo(() => {
+    if (employees.length > 0) {
+      return employees.map((emp) => ({
+        id: emp.id,
+        code: emp.employeeCode,
+        name: `${emp.firstName} ${emp.lastName}`.trim(),
+        department: emp.department?.name || 'General',
+        role: emp.designation?.title ?? '',
+        photoUrl: emp.photoUrl ?? null,
+      }));
+    }
+    const seen = new Map<
+      string,
+      {
+        id: string;
+        code: string;
+        name: string;
+        department: string;
+        role: string;
+        photoUrl: string | null;
+      }
+    >();
+    for (const r of weekRecords) {
+      if (!seen.has(r.employeeId)) {
+        seen.set(r.employeeId, {
+          id: r.employeeId,
+          code: '',
+          name: r.employeeName || 'Employee',
+          department: 'General',
+          role: '',
+          photoUrl: null,
+        });
+      }
+    }
+    return [...seen.values()];
+  }, [employees, weekRecords]);
+
+  // One timesheet per person: the week's attendance against what was expected of them
+  const timesheetList = useMemo<TimesheetEntry[]>(() => {
+    const todayIso = localIso(new Date());
+    const weekDates = weekInfo.days.map((d) => d.isoDate);
+
+    return people.map((person) => {
+      const empRecords = weekRecords.filter(
+        (r) => r.employeeId === person.id || (person.code && r.employeeId === person.code),
+      );
+      const totalMinutes = empRecords.reduce((acc, r) => acc + (r.durationMinutes || 0), 0);
+      const workedHours = parseFloat((totalMinutes / 60).toFixed(1));
+
+      // A permission (a few hours) is not a day off, so it does not reduce what was planned.
+      const leaveFractions = leaveFractionsFor(plan?.leaves ?? [], person.id, weekDates);
+
+      // Hours worked on a day of full leave still count as worked (it shows as overtime), but
+      // that day is not one of the planned days.
+      const daysWorked = new Set(
+        empRecords
+          .filter((r) => r.checkInTime && (leaveFractions.get(r.workDate) ?? 0) < 1)
+          .map((r) => r.workDate),
+      ).size;
+      const planned = plan
+        ? plannedFor({
+            weekDates,
+            today: todayIso,
+            workDays: plan.workDays,
+            holidays: plan.holidays,
+            leaveFractions,
+            fullDayMinutes: plan.fullDayMinutes,
+          })
+        : null;
+
+      const totalBreakMinutes = empRecords.reduce((acc, r) => acc + (r.breakMinutes || 0), 0);
       const breakH = Math.floor(totalBreakMinutes / 60);
       const breakM = totalBreakMinutes % 60;
       const breakDuration =
         totalBreakMinutes > 0
           ? breakH > 0
-            ? `${breakH}h ${breakM > 0 ? `${breakM}m` : ''}`
+            ? `${breakH}h ${breakM > 0 ? `${breakM}m` : ''}`.trim()
             : `${breakM}m`
           : '0m';
 
-      let status: 'submitted' | 'approved' | 'flagged' = 'submitted';
-      if (approvedIds.has(r.id) || approvedIds.has(`ts-${r.id}`)) {
-        status = 'approved';
-      } else if (r.checkInTime && !r.checkOutTime && r.workDate < todayIso) {
-        status = 'flagged';
-      }
+      const missingPunchRecord = empRecords.find(
+        (r) => r.checkInTime && !r.checkOutTime && r.workDate < todayIso,
+      );
 
       return {
-        id: `ts-${r.id}`,
-        employeeId: r.employeeId,
-        name: r.employeeName || 'Employee',
-        employeeCode: 'EMP',
-        departmentName: 'General',
-        plannedHours,
+        id: `ts-${person.id}`,
+        employeeId: person.id,
+        name: person.name,
+        employeeCode: person.code,
+        departmentName: person.department,
+        role: person.role,
+        photoUrl: person.photoUrl,
+        daysWorked,
+        plannedDays: planned ? planned.plannedDays : null,
+        plannedHours: planned ? planned.plannedHours : null,
         workedHours,
-        overtimeHours,
+        varianceHours: planned ? varianceHours(workedHours, planned.plannedHours) : null,
         breakDuration,
-        status,
-        discrepancyNote: status === 'flagged' ? `Missing check-out on ${r.workDate}` : undefined,
+        discrepancyNote: missingPunchRecord
+          ? `Missing check-out on ${missingPunchRecord.workDate}`
+          : undefined,
       };
     });
-  }, [employees, weekRecords, approvedIds]);
+  }, [people, weekRecords, weekInfo.days, plan]);
 
   // KPI Calculations
   const totalHoursWorked = useMemo(() => {
     return timesheetList.reduce((acc, ts) => acc + ts.workedHours, 0).toFixed(0);
   }, [timesheetList]);
 
+  const totalPlannedHours = useMemo(
+    () => (plan ? timesheetList.reduce((acc, ts) => acc + (ts.plannedHours ?? 0), 0) : null),
+    [timesheetList, plan],
+  );
+
   const totalOvertime = useMemo(() => {
-    return timesheetList.reduce((acc, ts) => acc + ts.overtimeHours, 0).toFixed(1);
+    return timesheetList
+      .reduce((acc, ts) => acc + Math.max(0, ts.varianceHours ?? 0), 0)
+      .toFixed(1);
   }, [timesheetList]);
 
-  const pendingCount = useMemo(() => {
-    return timesheetList.filter((ts) => ts.status === 'submitted').length;
-  }, [timesheetList]);
-
-  const flaggedCount = useMemo(() => {
-    return timesheetList.filter((ts) => ts.status === 'flagged').length;
-  }, [timesheetList]);
-
-  // Status counts for filter pills
-  const statusCounts = useMemo(() => {
-    return {
-      all: timesheetList.length,
-      submitted: timesheetList.filter((t) => t.status === 'submitted').length,
-      flagged: timesheetList.filter((t) => t.status === 'flagged').length,
-      approved: timesheetList.filter((t) => t.status === 'approved').length,
-    };
-  }, [timesheetList]);
+  const missingCheckoutCount = useMemo(
+    () => timesheetList.filter((ts) => ts.discrepancyNote).length,
+    [timesheetList],
+  );
 
   const filteredTimesheets = useMemo(() => {
     return timesheetList.filter((ts) => {
@@ -356,9 +392,6 @@ export function TimesheetsTab({
         departmentFilter !== 'all' &&
         ts.departmentName.toLowerCase() !== departmentFilter.toLowerCase()
       ) {
-        return false;
-      }
-      if (statusTab !== 'all' && ts.status !== statusTab) {
         return false;
       }
       if (searchQuery.trim()) {
@@ -369,41 +402,7 @@ export function TimesheetsTab({
       }
       return true;
     });
-  }, [timesheetList, departmentFilter, statusTab, searchQuery]);
-
-  // Bulk Actions
-  const handleSelectAll = () => {
-    if (selectedIds.size === filteredTimesheets.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredTimesheets.map((ts) => ts.id)));
-    }
-  };
-
-  const handleSelectOne = (id: string) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setSelectedIds(next);
-  };
-
-  const handleApproveSingle = (id: string) => {
-    setApprovedIds((prev) => new Set([...prev, id]));
-    setSuccessToast('Timesheet approved successfully.');
-    setTimeout(() => setSuccessToast(null), 3000);
-  };
-
-  const handleApproveSelected = () => {
-    setApprovedIds((prev) => {
-      const next = new Set(prev);
-      selectedIds.forEach((id) => next.add(id));
-      return next;
-    });
-    const count = selectedIds.size;
-    setSelectedIds(new Set());
-    setSuccessToast(`${count} timesheets approved.`);
-    setTimeout(() => setSuccessToast(null), 3000);
-  };
+  }, [timesheetList, departmentFilter, searchQuery]);
 
   // CSV Export
   const handleExportCSV = () => {
@@ -411,19 +410,23 @@ export function TimesheetsTab({
       'Employee Code',
       'Name',
       'Department',
+      'Days Worked',
       'Planned Hours',
       'Worked Hours',
       'Break Duration',
-      'Status',
+      'Difference (h)',
+      'Note',
     ];
     const rows = filteredTimesheets.map((ts) => [
       `"${ts.employeeCode}"`,
       `"${ts.name}"`,
       `"${ts.departmentName}"`,
-      `"${ts.plannedHours}h"`,
-      `"${ts.workedHours}h"`,
+      `"${ts.daysWorked}"`,
+      `"${ts.plannedHours ?? ''}"`,
+      `"${ts.workedHours}"`,
       `"${ts.breakDuration}"`,
-      `"${ts.status}"`,
+      `"${ts.varianceHours ?? ''}"`,
+      `"${ts.discrepancyNote ?? ''}"`,
     ]);
     const csvContent =
       'data:text/csv;charset=utf-8,' +
@@ -469,27 +472,34 @@ export function TimesheetsTab({
 
   return (
     <div className="space-y-6">
-      {/* Toast Alert */}
-      {successToast && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-between">
-          <span>{successToast}</span>
-          <button type="button" onClick={() => setSuccessToast(null)} className="text-emerald-700">
-            ✕
-          </button>
-        </div>
-      )}
-
-      {/* 1. Four Top KPI Cards (Universal KpiCard) */}
+      {/* 1. Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        {/* Card 1: Hours Worked */}
         <KpiCard
           label="Hours Worked"
           value={`${Number(totalHoursWorked).toLocaleString()}h`}
           icon={<IconClock className="w-6 h-6" />}
           variant="blue"
         />
-
-        {/* Card 2: Overtime */}
+        <KpiCard
+          label="Planned So Far"
+          value={totalPlannedHours === null ? '—' : `${Math.round(totalPlannedHours * 10) / 10}h`}
+          icon={
+            <svg
+              className="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          }
+          variant="emerald"
+        />
         <KpiCard
           label="Overtime"
           value={`${totalOvertime}h`}
@@ -506,33 +516,9 @@ export function TimesheetsTab({
           }
           variant="amber"
         />
-
-        {/* Card 3: To Approve */}
         <KpiCard
-          label="To Approve"
-          value={pendingCount}
-          icon={
-            <svg
-              className="w-6 h-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          }
-          variant="emerald"
-        />
-
-        {/* Card 4: Flagged */}
-        <KpiCard
-          label="Flagged"
-          value={flaggedCount}
+          label="Missing Check-outs"
+          value={missingCheckoutCount}
           icon={
             <svg
               className="w-6 h-6"
@@ -559,37 +545,6 @@ export function TimesheetsTab({
           {/* Controls Bar (Filter Pills, Search, Export, and Approve Button) */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Status Filter Pills with Counts */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {(['all', 'submitted', 'flagged', 'approved'] as const).map((tab) => {
-                  const isActive = statusTab === tab;
-                  const count = statusCounts[tab];
-                  return (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setStatusTab(tab)}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-xl capitalize transition-all flex items-center gap-1.5 ${
-                        isActive
-                          ? 'bg-sidebar text-white shadow-xs'
-                          : 'bg-surface border border-border/80 text-text hover:bg-surface-muted'
-                      }`}
-                    >
-                      <span>{tab}</span>
-                      {count > 0 && tab !== 'all' && (
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-md ${
-                            isActive ? 'bg-white/20 text-white' : 'bg-surface-muted text-text-muted'
-                          }`}
-                        >
-                          {count}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
               {/* Department Dropdown */}
               <select
                 aria-label="Filter by Department"
@@ -623,21 +578,6 @@ export function TimesheetsTab({
                 <IconDownload />
                 Export
               </Button>
-              {canApproveTimesheets && (
-                <button
-                  type="button"
-                  onClick={handleApproveSelected}
-                  disabled={selectedIds.size === 0}
-                  className={`min-h-[36px] px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs ${
-                    selectedIds.size > 0
-                      ? 'bg-primary-deep hover:bg-primary-strong text-white cursor-pointer'
-                      : 'bg-primary-deep/60 text-white cursor-not-allowed opacity-80'
-                  }`}
-                >
-                  <IconCheck className="w-3.5 h-3.5" />
-                  <span>Approve {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}</span>
-                </button>
-              )}
             </div>
           </div>
 
@@ -650,180 +590,126 @@ export function TimesheetsTab({
               >
                 <thead className="bg-surface-muted/60 border-b border-border/80 text-xs font-bold text-text-muted">
                   <tr>
-                    <th scope="col" className="w-8 px-3.5 py-3 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        aria-label="Select all timesheets"
-                        checked={
-                          selectedIds.size === filteredTimesheets.length &&
-                          filteredTimesheets.length > 0
-                        }
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
-                      />
-                    </th>
                     <th
                       scope="col"
-                      className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[150px]"
+                      className="px-3.5 py-3 font-bold text-text whitespace-nowrap min-w-[170px]"
                     >
-                      Person
+                      Employee
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3 text-center whitespace-nowrap min-w-[65px]"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
+                      title="Days with a check-in, out of the working days so far (leave days are not counted)"
+                    >
+                      Days
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
+                      title="Working days so far this week, less holidays and approved leave, at the full-day hours"
                     >
                       Planned
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3 text-center whitespace-nowrap min-w-[75px]"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
                     >
                       Worked
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3 text-center whitespace-nowrap min-w-[60px]"
+                      className="px-3 py-3 text-center whitespace-nowrap min-w-[70px]"
                     >
                       Breaks
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3 text-center whitespace-nowrap min-w-[85px]"
+                      className="px-3.5 py-3 text-right whitespace-nowrap min-w-[90px]"
+                      title="Worked minus planned: plus is overtime, minus is a shortfall"
                     >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3.5 py-3 text-right whitespace-nowrap min-w-[70px]"
-                    >
-                      Actions
+                      Difference
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60 text-text">
                   {filteredTimesheets.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-xs text-text-muted">
+                      <td colSpan={6} className="px-4 py-10 text-center text-xs text-text-muted">
                         No timesheets found matching filters.
                       </td>
                     </tr>
                   ) : (
                     filteredTimesheets.map((ts) => {
-                      const isFlagged = ts.status === 'flagged';
-                      const variance = Math.round((ts.workedHours - ts.plannedHours) * 10) / 10;
                       return (
                         <tr
                           key={ts.id}
                           className={`transition-colors ${
-                            isFlagged
+                            ts.discrepancyNote
                               ? 'bg-rose-50/40 hover:bg-rose-50/70'
                               : 'hover:bg-surface-muted/30'
                           }`}
                         >
-                          <td className="w-8 px-3.5 py-3 align-middle">
-                            <input
-                              type="checkbox"
-                              aria-label={`Select ${ts.name}`}
-                              checked={selectedIds.has(ts.id)}
-                              onChange={() => handleSelectOne(ts.id)}
-                              className="w-4 h-4 rounded border-border-strong text-primary-strong focus:ring-1 focus:ring-primary-strong cursor-pointer"
-                            />
-                          </td>
-
-                          {/* Person: Avatar + Name + Subtitle */}
+                          {/* Person: the whole cell opens the week's details */}
                           <td className="px-3.5 py-3 align-middle">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-surface-muted text-text font-bold text-xs flex items-center justify-center shrink-0 border border-border/60">
-                                {ts.name
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .slice(0, 2)
-                                  .join('')}
-                              </div>
-                              <div className="min-w-0">
+                            <button
+                              type="button"
+                              onClick={() => setDetailedEntry(ts)}
+                              aria-label={`Timesheet details for ${ts.name}`}
+                              className="flex w-full items-center gap-3 text-left min-h-[44px] cursor-pointer"
+                            >
+                              <EmployeeAvatar
+                                name={ts.name}
+                                employeeId={ts.employeeId}
+                                photoUrl={ts.photoUrl}
+                                decorative
+                                className="h-8 w-8 shrink-0 border border-border/60 bg-surface-muted text-xs font-bold text-text"
+                              />
+                              <span className="min-w-0">
                                 <span className="font-bold text-text block truncate text-xs sm:text-sm">
                                   {ts.name}
                                 </span>
                                 <span className="text-[11px] text-text-muted block truncate font-medium">
-                                  {ts.employeeCode} · {ts.departmentName}
+                                  {ts.role}
                                 </span>
-                              </div>
-                            </div>
+                                {ts.discrepancyNote && (
+                                  <span className="mt-0.5 block text-[11px] font-semibold text-rose-700">
+                                    ⚠ {ts.discrepancyNote}
+                                  </span>
+                                )}
+                              </span>
+                            </button>
                           </td>
 
-                          <td className="px-3 py-3 text-center text-xs text-text-muted align-middle">
-                            {ts.plannedHours}h
-                          </td>
-
-                          {/* Worked with Colored Variance Tag */}
-                          <td className="px-3 py-3 text-center align-middle font-bold text-text text-xs sm:text-sm">
-                            <span>{ts.workedHours}h</span>
-                            {variance < 0 && (
-                              <span className="ml-1.5 text-rose-600 font-extrabold text-[11px]">
-                                {variance}h
-                              </span>
-                            )}
-                            {variance > 0 && (
-                              <span className="ml-1.5 text-emerald-600 font-extrabold text-[11px]">
-                                +{variance}h
-                              </span>
+                          <td className="px-3 py-3 text-center text-xs text-text align-middle tabular-nums">
+                            {ts.daysWorked}
+                            {ts.plannedDays !== null && (
+                              <span className="text-text-muted"> / {ts.plannedDays}</span>
                             )}
                           </td>
 
-                          <td className="px-3 py-3 text-center text-xs text-text-muted align-middle">
-                            {ts.breakDuration || '1.0h'}
+                          <td className="px-3 py-3 text-center text-xs text-text-muted align-middle tabular-nums">
+                            {formatHours(ts.plannedHours)}
                           </td>
 
-                          {/* Status Badge with Colored Dot */}
-                          <td className="px-3 py-3 text-center align-middle">
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                ts.status === 'approved'
-                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                  : ts.status === 'flagged'
-                                    ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                                    : 'bg-amber-50 text-amber-800 border border-amber-200'
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  ts.status === 'approved'
-                                    ? 'bg-emerald-600'
-                                    : ts.status === 'flagged'
-                                      ? 'bg-rose-600'
-                                      : 'bg-amber-600'
-                                }`}
-                              />
-                              {ts.status === 'approved'
-                                ? 'Approved'
-                                : ts.status === 'flagged'
-                                  ? 'Flagged'
-                                  : 'Submitted'}
-                            </span>
+                          <td className="px-3 py-3 text-center align-middle font-bold text-text text-xs sm:text-sm tabular-nums">
+                            {ts.workedHours}h
                           </td>
 
-                          {/* Action Button: Checkmark button & Details */}
-                          <td className="px-3.5 py-3 text-right align-middle">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {ts.status !== 'approved' && canApproveTimesheets && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleApproveSingle(ts.id)}
-                                  className="w-7 h-7 rounded-lg border border-border/80 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-slate-400 flex items-center justify-center transition-colors cursor-pointer"
-                                  title="Approve timesheet"
-                                >
-                                  <IconCheck className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDetailedEntry(ts)}
-                                className="min-h-[28px] text-[11px] px-2.5 py-0.5 rounded-lg"
-                              >
-                                Details
-                              </Button>
-                            </div>
+                          <td className="px-3 py-3 text-center text-xs text-text-muted align-middle tabular-nums">
+                            {ts.breakDuration}
+                          </td>
+
+                          {/* Difference: sign and words as well as colour */}
+                          <td className="px-3.5 py-3 text-right align-middle text-xs font-bold tabular-nums">
+                            {ts.varianceHours === null ? (
+                              <span className="text-text-muted font-normal">—</span>
+                            ) : ts.varianceHours > 0 ? (
+                              <span className="text-emerald-700">+{ts.varianceHours}h over</span>
+                            ) : ts.varianceHours < 0 ? (
+                              <span className="text-rose-700">{ts.varianceHours}h short</span>
+                            ) : (
+                              <span className="text-text-muted font-semibold">On plan</span>
+                            )}
                           </td>
                         </tr>
                       );
@@ -944,23 +830,29 @@ export function TimesheetsTab({
         <Modal
           isOpen={true}
           onClose={() => setDetailedEntry(null)}
-          title={`Timesheet Details: ${detailedEntry.name} (${detailedEntry.employeeCode})`}
+          title={`Timesheet Details: ${detailedEntry.name}`}
         >
           <div className="space-y-4 pt-2 text-xs">
-            <div className="grid grid-cols-2 gap-3 p-3 bg-surface-muted rounded-xl">
+            <div className="grid grid-cols-3 gap-3 p-3 bg-surface-muted rounded-xl">
               <div>
                 <span className="text-text-muted block">Planned</span>
-                <span className="font-bold text-text text-sm">{detailedEntry.plannedHours}h</span>
+                <span className="font-bold text-text text-sm">
+                  {formatHours(detailedEntry.plannedHours)}
+                </span>
               </div>
               <div>
                 <span className="text-text-muted block">Worked</span>
                 <span className="font-bold text-text text-sm">{detailedEntry.workedHours}h</span>
               </div>
+              <div>
+                <span className="text-text-muted block">Breaks</span>
+                <span className="font-bold text-text text-sm">{detailedEntry.breakDuration}</span>
+              </div>
             </div>
 
             {detailedEntry.discrepancyNote && (
               <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl font-semibold">
-                ⚠️ Discrepancy: {detailedEntry.discrepancyNote}
+                ⚠ {detailedEntry.discrepancyNote}
               </div>
             )}
 
@@ -970,22 +862,32 @@ export function TimesheetsTab({
               </span>
               <div className="border border-border/70 rounded-xl divide-y divide-border/60 overflow-hidden">
                 {weekInfo.days.map((day) => {
-                  const empDayRec = weekRecords.find(
+                  // A day can hold several sessions: show the first check-in, the last check-out
+                  // (Active while one is still open) and the hours of all of them.
+                  const empDayRecs = weekRecords.filter(
                     (r) =>
                       (r.employeeId === detailedEntry.employeeId ||
                         r.employeeId === detailedEntry.id.replace('ts-', '')) &&
                       r.workDate === day.isoDate,
                   );
-                  const hasRecord = !!empDayRec;
-                  const punchIn = empDayRec?.checkInTime
-                    ? formatPunchTime(empDayRec.checkInTime)
-                    : null;
-                  const punchOut = empDayRec?.checkOutTime
-                    ? formatPunchTime(empDayRec.checkOutTime)
-                    : null;
-                  const hours = empDayRec
-                    ? ((empDayRec.durationMinutes || 0) / 60).toFixed(1)
-                    : '0.0';
+                  const hasRecord = empDayRecs.length > 0;
+                  const checkIns = empDayRecs
+                    .map((r) => r.checkInTime)
+                    .filter((t): t is string => Boolean(t))
+                    .sort();
+                  const checkOuts = empDayRecs
+                    .map((r) => r.checkOutTime)
+                    .filter((t): t is string => Boolean(t))
+                    .sort();
+                  const stillOpen = empDayRecs.some((r) => r.checkInTime && !r.checkOutTime);
+                  const punchIn = checkIns[0] ? formatPunchTime(checkIns[0]) : null;
+                  const punchOut =
+                    !stillOpen && checkOuts.length > 0
+                      ? formatPunchTime(checkOuts[checkOuts.length - 1])
+                      : null;
+                  const hours = (
+                    empDayRecs.reduce((sum, r) => sum + (r.durationMinutes || 0), 0) / 60
+                  ).toFixed(1);
 
                   return (
                     <div
@@ -1017,19 +919,6 @@ export function TimesheetsTab({
               >
                 Close
               </Button>
-              {detailedEntry.status === 'submitted' && canApproveTimesheets && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    handleApproveSingle(detailedEntry.id);
-                    setDetailedEntry(null);
-                  }}
-                  className="text-xs font-bold bg-primary-deep text-white"
-                >
-                  Approve Timesheet
-                </Button>
-              )}
             </div>
           </div>
         </Modal>

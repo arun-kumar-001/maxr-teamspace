@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import type { AttendanceRecord, AttendanceBreak } from '../types';
 import type { EmployeeDirectoryItem, DepartmentItem } from '../../employees/types';
 import { fetchAttendancePhotoLink } from '../api/attendance';
@@ -568,9 +569,13 @@ export function CompanyCheckInOutTab({
                     {/* Employee Profile */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary-soft text-primary-deep font-bold flex items-center justify-center shrink-0 border border-primary-strong/20">
-                          {row.fullName.slice(0, 2).toUpperCase()}
-                        </div>
+                        <EmployeeAvatar
+                          name={row.fullName}
+                          employeeId={row.employee.id}
+                          photoUrl={row.employee.photoUrl}
+                          decorative
+                          className="h-9 w-9 shrink-0 border border-primary-strong/20 bg-primary-soft text-sm font-bold text-primary-deep"
+                        />
                         <div>
                           <p className="font-bold text-text text-sm">{row.fullName}</p>
                           <p className="text-[11px] text-text-muted">

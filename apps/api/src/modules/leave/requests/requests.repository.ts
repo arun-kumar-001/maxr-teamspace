@@ -33,6 +33,16 @@ export interface ILeaveRequestsRepository {
     leaveTypeId: string,
     year: number,
   ): Promise<{ available: number } | null>;
+  /**
+   * How many requests of this type the employee has in a month (`YYYY-MM`, by start date) that are
+   * still in play: applied, pending or approved.
+   */
+  countInMonth(
+    tx: LeaveTx,
+    employeeId: string,
+    leaveTypeId: string,
+    month: string,
+  ): Promise<number>;
   /** Status `applied`. A 409 when it overlaps a live request of the same employee. */
   insert(tx: LeaveTx, input: NewLeaveRequest): Promise<LeaveRequest>;
   findForUpdate(tx: LeaveTx, id: string): Promise<LeaveRequest | null>;
@@ -143,6 +153,22 @@ export class PgLeaveRequestsRepository implements ILeaveRequestsRepository {
       [employeeId, leaveTypeId, year],
     );
     return { available: Number(balance.rows[0].remaining) - Number(reserved.rows[0]?.days ?? 0) };
+  }
+
+  async countInMonth(
+    tx: LeaveTx,
+    employeeId: string,
+    leaveTypeId: string,
+    month: string,
+  ): Promise<number> {
+    const res = await tx.query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM leave_requests
+        WHERE employee_id = $1 AND leave_type_id = $2
+          AND status IN ('applied', 'pending', 'approved')
+          AND to_char(start_date, 'YYYY-MM') = $3`,
+      [employeeId, leaveTypeId, month],
+    );
+    return Number(res.rows[0]?.n ?? 0);
   }
 
   async insert(tx: LeaveTx, input: NewLeaveRequest): Promise<LeaveRequest> {

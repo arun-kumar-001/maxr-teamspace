@@ -12,6 +12,7 @@ export type TemplateType =
   | 'approval.rejected'
   | 'approval.reminder'
   | 'leave.cancelled'
+  | 'attendance.correction_applied'
   | 'task.assigned'
   | 'task.in_review'
   | 'task.blocked'
@@ -91,6 +92,11 @@ export function renderNotification(
       return {
         title: 'Your approved leave was cancelled by HR',
         body: 'Open your leave requests to see the details.',
+      };
+    case 'attendance.correction_applied':
+      return {
+        title: 'Your attendance record was corrected',
+        body: 'Open your attendance to see what changed.',
       };
   }
 }

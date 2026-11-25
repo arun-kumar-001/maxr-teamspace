@@ -53,7 +53,11 @@ const mockPolicy: AttendancePolicy = {
   halfDayMinutes: 240,
   defaultShiftId: 'shift-001',
   timezone: 'Asia/Kolkata',
-  workWeek: [1, 2, 3, 4, 5],
+  workWeek: {
+    start: 'Monday',
+    end: 'Friday',
+    days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+  },
   updatedAt: '2026-10-30T00:00:00Z',
 };
 

@@ -565,7 +565,14 @@ export function useLeave(initialYear: number = new Date().getFullYear()) {
 
   const handleCreateHoliday = async (payload: CreateHolidayInput) => {
     const created = await leaveApi.createHoliday(payload);
-    setHolidays((prev) => [...prev, created]);
+    const holidayYear = Number(created.date.slice(0, 4));
+    if (holidayYear === selectedYear) {
+      setHolidays((prev) => [...prev, created]);
+    } else {
+      // The calendar lists one year from the server. Adding to another year's list would show it
+      // now and lose it on the next load, so go to that year and read it back.
+      handleYearChange(holidayYear);
+    }
     return created;
   };
 

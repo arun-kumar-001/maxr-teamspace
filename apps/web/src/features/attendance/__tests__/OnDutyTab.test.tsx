@@ -138,17 +138,25 @@ describe('OnDutyTab Component & Attendance Status Chart', () => {
 });
 
 describe('TimesheetsTab Component', () => {
-  it('renders timesheets table with bulk approval and export buttons', () => {
+  it('renders the timesheets table with export, and no approval controls', () => {
     render(
       <TimesheetsTab
         records={mockRecords}
         employees={mockEmployees}
         departments={mockDepartments}
-        canApproveTimesheets={true}
+        canViewTeam={true}
       />,
     );
 
     expect(screen.getByRole('button', { name: /Export/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Approve/i }).length).toBeGreaterThanOrEqual(1);
+    // Nothing is submitted for approval, so the table has no status, tick or bulk-select columns.
+    expect(screen.queryByRole('button', { name: /Approve/i })).toBeNull();
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    for (const gone of ['Status', 'Actions']) {
+      expect(screen.queryByRole('columnheader', { name: gone })).toBeNull();
+    }
+    for (const kept of ['Employee', 'Days', 'Planned', 'Worked', 'Breaks', 'Difference']) {
+      expect(screen.getByRole('columnheader', { name: kept })).toBeInTheDocument();
+    }
   });
 });

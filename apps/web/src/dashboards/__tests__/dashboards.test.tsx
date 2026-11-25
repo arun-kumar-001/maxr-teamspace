@@ -70,8 +70,8 @@ describe('TC-12-05: Four Distinct Role Dashboard Shells', () => {
       expect(html).toContain('Attendance Session');
       expect(html).toContain('data-testid="attendance-toggle-button"');
       expect(html).toContain('My Leave Balances');
-      expect(html).toContain('Annual Leave');
-      expect(html).toContain('Sick Leave');
+      // Balances come from the server; nothing is invented before they load.
+      expect(html).not.toContain('14 of 18');
       expect(html).toContain('Recent Payslips (Read-Only)');
     });
   });

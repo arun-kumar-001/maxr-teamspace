@@ -4,6 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { Badge, Button, ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
 import { DeactivateEmployeeModal } from '../components/DeactivateEmployeeModal';
+import { EmployeeDocumentsCard } from '../components/EmployeeDocumentsCard';
 import { EditEmployeeModal } from '../components/EditEmployeeModal';
 import { ChangeManagerModal } from '../components/ChangeManagerModal';
 import { useEmployeeDetail } from '../hooks/useEmployeeDetail';
@@ -438,6 +439,8 @@ function EmployeeDetailView({ id }: { id: string | undefined }) {
           <BankAccountDetailsSection employee={employee} />
         </div>
       }
+
+      <EmployeeDocumentsCard employeeId={employee.id} />
 
       {employee.account && (
         <div

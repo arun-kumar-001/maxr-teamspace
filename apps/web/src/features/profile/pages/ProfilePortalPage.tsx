@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ROLE_DISPLAY_NAMES, ROLES } from '@maxr/shared';
 import { useAuth } from '../../../auth/AuthContext';
 import { TimeTrackerCard } from '../../attendance';
+import { fetchMyAttendanceHistory } from '../../attendance/api/attendance';
+import { leaveFractionsFor, plannedFor } from '../../attendance/lib/timesheet-plan';
+import { fetchHolidays, fetchLeaveCalendar } from '../../leave/api/leave';
+import { fetchAttendancePolicy } from '../../shifts/api/shifts';
 import { downloadPayslipPdf, fetchMyPayslips } from '../../payslips/api/payslips';
 import { changeTaskStatus, createTask, fetchMyTasks } from '../../tasks/api/tasksApi';
 import {
@@ -81,15 +85,19 @@ function TaskItemIcon({ task }: { task: Task }) {
   );
 }
 
-const WEEKLY_PROGRESS_BARS = [
-  { day: 'S', height: 0, active: false },
-  { day: 'M', height: 0, active: false },
-  { day: 'T', height: 0, active: false },
-  { day: 'W', height: 0, active: false },
-  { day: 'T', height: 0, active: false },
-  { day: 'F', height: 0, active: true },
-  { day: 'S', height: 0, active: false },
-];
+const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const localIso = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** The seven dates of this week, Sunday first, with whether each is today. */
+function thisWeek(now: Date): Array<{ iso: string; initial: string; isToday: boolean }> {
+  const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+  return DAY_INITIALS.map((initial, i) => {
+    const d = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + i);
+    return { iso: localIso(d), initial, isToday: localIso(d) === localIso(now) };
+  });
+}
 
 /**
  * Shared My Profile portal view available across Admin, HR Manager, Team Lead, and Staff portals.
@@ -97,6 +105,56 @@ const WEEKLY_PROGRESS_BARS = [
 export function ProfilePortalPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // This week's hours and days worked, and what was planned so far, from the server
+  const week = useMemo(() => thisWeek(new Date()), []);
+  const [weekProgress, setWeekProgress] = useState<{
+    workedHours: number;
+    workedDates: Set<string>;
+    plannedHours: number | null;
+  }>({ workedHours: 0, workedDates: new Set(), plannedHours: null });
+  const employeeId = user?.employeeId;
+  useEffect(() => {
+    let active = true;
+    const first = week[0]?.iso ?? '';
+    const last = week[6]?.iso ?? '';
+    const todayIso = localIso(new Date());
+    void Promise.allSettled([
+      fetchMyAttendanceHistory({ startDate: first, endDate: last, pageSize: 50 }),
+      fetchAttendancePolicy(),
+      fetchHolidays(Number(todayIso.slice(0, 4))),
+      fetchLeaveCalendar(first, last),
+    ]).then(([attendance, policy, holidays, leaves]) => {
+      if (!active || attendance.status !== 'fulfilled') return;
+      const records = attendance.value.data;
+      const minutes = records.reduce((sum, r) => sum + (r.durationMinutes || 0), 0);
+      const planned =
+        policy.status === 'fulfilled' && employeeId
+          ? plannedFor({
+              weekDates: week.map((d) => d.iso),
+              today: todayIso,
+              workDays: policy.value.workWeek.days,
+              holidays: new Set(
+                holidays.status === 'fulfilled' ? holidays.value.map((h) => h.date) : [],
+              ),
+              leaveFractions: leaveFractionsFor(
+                leaves.status === 'fulfilled' ? leaves.value : [],
+                employeeId,
+                week.map((d) => d.iso),
+              ),
+              fullDayMinutes: policy.value.fullDayMinutes,
+            }).plannedHours
+          : null;
+      setWeekProgress({
+        workedHours: Math.round((minutes / 60) * 10) / 10,
+        workedDates: new Set(records.filter((r) => r.checkInTime).map((r) => r.workDate)),
+        plannedHours: planned,
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, [week, employeeId]);
 
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
@@ -474,7 +532,7 @@ export function ProfilePortalPage() {
                 className="text-2xl sm:text-3xl font-bold font-display"
                 style={{ color: 'rgb(8, 11, 12)' }}
               >
-                0.0 h
+                {weekProgress.workedHours.toFixed(1)} h
               </p>
               <p className="text-xs" style={{ color: 'rgba(8, 11, 12, 0.6)' }}>
                 Work Time this week
@@ -491,14 +549,16 @@ export function ProfilePortalPage() {
                   color: 'rgb(8, 11, 12)',
                 }}
               >
-                Standard: 40h/wk
+                {weekProgress.plannedHours === null
+                  ? 'This week'
+                  : `Planned so far: ${weekProgress.plannedHours}h`}
               </span>
             </div>
 
             <div className="flex items-end justify-between h-24 px-2 gap-2">
-              {WEEKLY_PROGRESS_BARS.map((item, idx) => (
+              {week.map((item) => (
                 <div
-                  key={`${item.day}-${idx}`}
+                  key={item.iso}
                   className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer"
                 >
                   <div
@@ -508,14 +568,16 @@ export function ProfilePortalPage() {
                   <div
                     className="w-1.5 h-1.5 rounded-full transition-transform group-hover:scale-150"
                     style={{
-                      backgroundColor: item.active ? 'rgb(85, 205, 179)' : 'rgb(8, 11, 12)',
+                      backgroundColor: weekProgress.workedDates.has(item.iso)
+                        ? 'rgb(85, 205, 179)'
+                        : 'rgb(8, 11, 12)',
                     }}
                   />
                   <span
                     className="text-[11px] font-medium transition-colors group-hover:text-black"
-                    style={{ color: item.active ? 'rgb(8, 11, 12)' : 'rgba(8, 11, 12, 0.6)' }}
+                    style={{ color: item.isToday ? 'rgb(8, 11, 12)' : 'rgba(8, 11, 12, 0.6)' }}
                   >
-                    {item.day}
+                    {item.initial}
                   </span>
                 </div>
               ))}

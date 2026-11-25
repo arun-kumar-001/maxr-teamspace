@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { ROLE_DISPLAY_NAMES } from '@maxr/shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as profileApi from '../api/profileApi';
 import { MyProfilePage } from '../pages/MyProfilePage';
@@ -82,7 +83,7 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
 
     // Profile Header checks
     expect(screen.getByTestId('profile-header')).toBeInTheDocument();
-    expect(screen.getByText('Priya Sharma')).toBeInTheDocument();
+    expect(screen.getAllByText('Priya Sharma').length).toBeGreaterThanOrEqual(1); // header and Full Name
     expect(screen.getAllByText('Active').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('PS')).toBeInTheDocument(); // Initials
     expect(screen.getAllByText('EMP-001').length).toBeGreaterThanOrEqual(1);
@@ -91,6 +92,11 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
     expect(screen.getByTestId('personal-info-card')).toBeInTheDocument();
     expect(screen.getByText('priya.sharma@example.com')).toBeInTheDocument();
     expect(screen.getByTestId('profile-phone-display')).toHaveTextContent('+91 98765 00000');
+    // Nothing is shown that the record does not hold (no invented gender, country, language...)
+    for (const invented of ['Nick Name', 'Gender', 'Country', 'Language', 'Time Zone']) {
+      expect(screen.queryByText(invented)).toBeNull();
+    }
+    expect(screen.queryByTestId('add-email-address-btn')).toBeNull();
 
     // Employment Information checks
     expect(screen.getByTestId('employment-info-card')).toBeInTheDocument();
@@ -115,7 +121,9 @@ describe('MyProfilePage Component Suite (Issue #22)', () => {
     expect(screen.getByTestId('account-info-card')).toBeInTheDocument();
     expect(screen.getByText('Account & System Access')).toBeInTheDocument();
     expect(screen.getByText('Active Login')).toBeInTheDocument();
-    expect(screen.getByText('Admin')).toBeInTheDocument(); // Role display
+    expect(
+      within(screen.getByTestId('account-info-card')).getByText(ROLE_DISPLAY_NAMES.admin),
+    ).toBeInTheDocument(); // Role display
   });
 
   it('allows editing phone number, validates input, and updates UI on success', async () => {

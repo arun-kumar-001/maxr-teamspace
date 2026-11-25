@@ -101,7 +101,7 @@ async function setup() {
     as[who]
       .post('/api/v1/attendance/corrections', payload)
       .set('Idempotency-Key', `correction-${who}-${++n}-abcdefgh`);
-  return { app, as, repo, kit, auditStore, recordFor, body, file, approvalsRepo };
+  return { app, as, repo, kit, auditStore, platform, recordFor, body, file, approvalsRepo };
 }
 
 describe('attendance corrections API: access', () => {
@@ -180,6 +180,29 @@ describe('attendance corrections API: access', () => {
       expect(JSON.stringify(entries[0])).not.toContain('a private reason');
     },
   );
+
+  it('tells the employee when their record was corrected for them, and not for their own request', async () => {
+    const { file, recordFor, body, platform, kit } = await setup();
+    const told: Array<{ employeeId: string; correctionId: string }> = [];
+    platform.events.subscribe('attendance.correction_applied', (event) => {
+      told.push(event.payload as { employeeId: string; correctionId: string });
+    });
+
+    // HR corrects the staff member's record: the staff member is told.
+    const res = await file('hr_manager', body(recordFor('staff')));
+    expect(res.status).toBe(201);
+    expect(told).toEqual([
+      expect.objectContaining({
+        employeeId: kit.users.staff.employeeId,
+        correctionId: res.body.data.id,
+      }),
+    ]);
+
+    // A team lead asks for a correction of their own record: that goes to approval, no notice.
+    const own = await file('team_lead', body(recordFor('team_lead')));
+    expect(own.status).toBe(201);
+    expect(told).toHaveLength(1);
+  });
 
   it('keeps a team lead out of a direct report’s record: it answers like a missing one and nothing changes', async () => {
     const { file, recordFor, body, repo } = await setup();

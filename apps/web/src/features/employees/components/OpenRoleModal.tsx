@@ -178,11 +178,7 @@ export function OpenRoleModal({
                     value: emp.id,
                     label: `${emp.firstName} ${emp.lastName} (${emp.designation?.title ?? emp.department?.name ?? 'Team'})`,
                   }))
-                : [
-                    { value: 'mgr-priya', label: 'Priya Sharma (HR Manager)' },
-                    { value: 'mgr-rajesh', label: 'Rajesh Patel (Staff Engineer)' },
-                    { value: 'mgr-arun', label: 'Arun Kumar (Engineering Director)' },
-                  ]
+                : [{ value: '', label: 'No employees available' }]
             }
           />
         </FormField>

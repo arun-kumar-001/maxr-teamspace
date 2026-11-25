@@ -18,6 +18,7 @@ import {
   listRoutes,
   signInAs,
 } from '../../rbac/rbac.testing';
+import type { PermissionPolicy } from '../../settings/settings.types';
 import { MemoryHolidaysRepository } from '../holidays/holidays.repository.memory';
 import { createLeaveSetup } from '../index';
 import { MemoryLeavePoliciesRepository } from '../policies/policies.repository.memory';
@@ -29,6 +30,7 @@ const CASUAL = '71000000-0000-4000-8000-000000000002';
 const SICK = '71000000-0000-4000-8000-000000000003';
 const UNPAID = '71000000-0000-4000-8000-000000000004';
 const RETIRED = '71000000-0000-4000-8000-000000000005';
+const PERMISSION = '71000000-0000-4000-8000-000000000006';
 const MISSING = '74000000-0000-4000-8000-000000000999';
 
 const policy = (id: string, code: string, patch: Partial<LeavePolicy> = {}): LeavePolicy => ({
@@ -46,7 +48,10 @@ const policy = (id: string, code: string, patch: Partial<LeavePolicy> = {}): Lea
   ...patch,
 });
 
-async function setup(approverRole: 'hr_manager' | 'team_lead' = 'hr_manager') {
+async function setup(
+  approverRole: 'hr_manager' | 'team_lead' = 'hr_manager',
+  permissionPolicy: PermissionPolicy | null = null,
+) {
   const silent = createLogger({ level: 'silent', write: () => undefined });
   const { platform, auditStore } = createTestPlatform({ logger: silent });
   const kit = createTestAuth(platform.audit);
@@ -95,6 +100,12 @@ async function setup(approverRole: 'hr_manager' | 'team_lead' = 'hr_manager') {
     policy(SICK, 'SICK', { maxBackdateDays: 7 }),
     policy(UNPAID, 'UNPAID', { hasBalance: false, annualDays: 0 }),
     policy(RETIRED, 'RETIRED', { isActive: false }),
+    policy(PERMISSION, 'LP', {
+      name: 'Late Permission',
+      hasBalance: false,
+      annualDays: 0,
+      allowHalfDay: false,
+    }),
   ]);
   policiesRepo.approvalSettings.approverRole = approverRole;
   const leave = createLeaveSetup({
@@ -112,6 +123,7 @@ async function setup(approverRole: 'hr_manager' | 'team_lead' = 'hr_manager') {
           days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
         },
       }),
+      getPermissionPolicy: async () => permissionPolicy,
     },
     policiesRepository: policiesRepo,
     holidaysRepository: holidaysRepo,
@@ -212,6 +224,66 @@ describe('leave requests API: access', () => {
       expect((await as[approverRole].post(`/api/v1/approvals/${id}/approve`)).status).toBe(200);
     },
   );
+
+  describe('the monthly cap on permissions', () => {
+    const cap = (maxPermissionsPerMonth: number, enabled = true) => ({
+      enabled,
+      maxPermissionsPerMonth,
+      maxHoursPerPermission: 2,
+    });
+    const permissionOn = (startDate: string) => ({
+      leaveTypeId: PERMISSION,
+      startDate,
+      endDate: startDate,
+    });
+
+    it('refuses a permission once the month already holds the allowed number', async () => {
+      const { apply } = await setup('hr_manager', cap(2));
+      expect((await apply('staff', permissionOn('2026-11-02'))).status).toBe(201);
+      expect((await apply('staff', permissionOn('2026-11-03'))).status).toBe(201);
+
+      const third = await apply('staff', permissionOn('2026-11-05'));
+
+      expect(third.status).toBe(422);
+      expect(third.body.error.message).toMatch(/allows 2 a month/);
+    });
+
+    it('counts each month on its own, and each employee on their own', async () => {
+      const { apply } = await setup('hr_manager', cap(1));
+      expect((await apply('staff', permissionOn('2026-11-02'))).status).toBe(201);
+      expect((await apply('staff', permissionOn('2026-12-01'))).status).toBe(201);
+      expect((await apply('team_lead', permissionOn('2026-11-02'))).status).toBe(201);
+    });
+
+    it('does not limit permissions when the policy is off or has no number', async () => {
+      for (const policy of [null, cap(2, false), cap(0)]) {
+        const { apply } = await setup('hr_manager', policy);
+        for (const day of ['2026-11-02', '2026-11-03', '2026-11-05']) {
+          expect((await apply('staff', permissionOn(day))).status).toBe(201);
+        }
+      }
+    });
+
+    it('does not cap other leave types', async () => {
+      const { apply, week } = await setup('hr_manager', cap(1));
+      expect(
+        (
+          await apply(
+            'staff',
+            week({ leaveTypeId: SICK, startDate: '2026-11-02', endDate: '2026-11-02' }),
+          )
+        ).status,
+      ).toBe(201);
+      expect(
+        (
+          await apply(
+            'staff',
+            week({ leaveTypeId: SICK, startDate: '2026-11-03', endDate: '2026-11-03' }),
+          )
+        ).status,
+      ).toBe(201);
+    });
+  });
 
   it('rejects missing and invalid choices and unavailable TL without writing a request', async () => {
     const { apply, week, approvalsRepo, requestsRepo, kit } = await setup();

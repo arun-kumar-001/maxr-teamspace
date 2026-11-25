@@ -51,7 +51,8 @@ export interface AttendancePolicy extends Record<string, unknown> {
   halfDayMinutes: number;
   defaultShiftId: string;
   timezone: string;
-  workWeek: number[];
+  /** The company work week, as the API sends it: day names from `start` to `end`. */
+  workWeek: { start: string; end: string; days: string[] };
   updatedAt?: string;
 }
 

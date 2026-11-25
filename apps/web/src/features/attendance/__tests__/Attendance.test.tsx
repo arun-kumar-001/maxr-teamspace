@@ -369,7 +369,7 @@ describe('Attendance Feature UI Components & Pages', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText('Review and approve employee working hours and overtime.'),
+          screen.getByText('Review employee working hours against what was planned.'),
         ).toBeInTheDocument();
       });
 

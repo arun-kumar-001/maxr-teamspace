@@ -4,12 +4,15 @@ import type { CreatedEmployee } from '../types';
 
 export interface CreateEmployeeSuccessViewProps {
   createdEmployee: CreatedEmployee;
+  /** Why the photo was not saved, when the employee was created but the photo was not. */
+  photoWarning?: string | null;
   onViewDirectory: () => void;
   onCreateAnother: () => void;
 }
 
 export function CreateEmployeeSuccessView({
   createdEmployee,
+  photoWarning,
   onViewDirectory,
   onCreateAnother,
 }: CreateEmployeeSuccessViewProps) {
@@ -51,6 +54,16 @@ export function CreateEmployeeSuccessView({
           </p>
         </div>
       </div>
+
+      {photoWarning && (
+        <div
+          role="alert"
+          className="rounded-input border border-warning/40 bg-warning/10 p-3 text-sm text-text"
+          data-testid="create-photo-warning"
+        >
+          {photoWarning}
+        </div>
+      )}
 
       {/* Summary Card */}
       <div className="bg-surface-muted border border-border rounded-input p-4 space-y-3">

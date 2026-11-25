@@ -18,6 +18,15 @@ export class PgEmployeePhotoRepository implements IEmployeePhotoRepository {
     return row?.key && row.version !== null ? { key: row.key, version: Number(row.version) } : null;
   }
 
+  async isInScope(employeeId: string, scope: ScopeFilter): Promise<boolean> {
+    const { clause, values } = scopeToSql(scope, 'e.id', 2);
+    const res = await this.getPool().query(
+      `SELECT 1 FROM employees e WHERE e.id = $1 AND ${clause}`,
+      [employeeId, ...values],
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
+
   async replace(employeeId: string, key: string) {
     const client = await this.getPool().connect();
     try {

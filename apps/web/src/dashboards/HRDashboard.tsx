@@ -1,5 +1,22 @@
-import { useState } from 'react';
-import { Button, StatusPill, SegmentedControl, KpiCard } from '../components/ui';
+import { useEffect, useState } from 'react';
+import { Button, KpiCard } from '../components/ui';
+import { fetchApprovals } from '../features/approvals/api/approvals';
+import { fetchTeamAttendance } from '../features/attendance/api/attendance';
+import { fetchEmployeeDirectory } from '../features/employees/api/employees';
+import { fetchOnboardingList } from '../features/employees/api/onboarding';
+import type { OnboardingStep } from '../features/employees/types/onboarding';
+import { fetchHolidays, fetchLeaveCalendar } from '../features/leave/api/leave';
+import type { Holiday, LeaveCalendarEntry } from '../features/leave/types';
+import {
+  departmentBreakdown,
+  joinedThisMonth,
+  presentOn,
+  weekTrend,
+  type DepartmentRow,
+  type DayTrend,
+  type HrAttendanceRecord,
+  type HrEmployee,
+} from './hr-metrics';
 
 // Outline SVG icons matching DESIGN.md style (zero external dependencies)
 function UsersIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -110,23 +127,6 @@ function ArrowUpRightIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function ArrowUpIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 19V5M5 12l7-7 7 7" />
-    </svg>
-  );
-}
-
 function PlusIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg
@@ -162,45 +162,31 @@ function FileTextIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-function CheckIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
+interface HrData {
+  headcount: number;
+  employees: HrEmployee[];
+  records: HrAttendanceRecord[];
+  leavesToday: LeaveCalendarEntry[];
+  onboardingByStep: Record<OnboardingStep, number>;
+  onboardingTotal: number;
+  pendingApprovals: number;
+  nextHoliday: Holiday | null;
 }
 
-function SparklesIcon({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 3v3m0 12v3M3 12h3m12 0h3m-3.5-6.5-2 2m-7 7-2 2m0-11 2 2m7 7 2 2" />
-    </svg>
-  );
-}
+const STEPS: Array<{ step: Exclude<OnboardingStep, 'completed'>; label: string }> = [
+  { step: 'hr', label: 'HR Check' },
+  { step: 'system', label: 'System Setup' },
+  { step: 'it_admin', label: 'IT / Admin' },
+  { step: 'employee', label: 'Employee' },
+];
+
+const localIso = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 export function HRDashboard() {
-  const [timeRange, setTimeRange] = useState('week');
-  const [activeChartMetric, setActiveChartMetric] = useState<'attendance' | 'turnout' | 'leaves'>(
-    'attendance',
-  );
+  const today = localIso(new Date());
+  const [data, setData] = useState<HrData | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined') {
@@ -208,35 +194,92 @@ export function HRDashboard() {
     }
   };
 
-  // 7-day attendance trend data points (Mon - Sun)
-  const attendanceTrendData = [
-    { day: 'Mon', date: 'Nov 02', rate: 96, present: 119, onLeave: 5, late: 2 },
-    { day: 'Tue', date: 'Nov 03', rate: 98, present: 121, onLeave: 3, late: 1 },
-    { day: 'Wed', date: 'Nov 04', rate: 95, present: 118, onLeave: 6, late: 4 },
-    { day: 'Thu', date: 'Nov 05', rate: 92, present: 114, onLeave: 6, late: 3, isToday: true },
-    { day: 'Fri', date: 'Nov 06', rate: 94, present: 116, onLeave: 6, late: 2, projected: true },
-  ];
+  useEffect(() => {
+    let active = true;
+    const monday = new Date(`${today}T00:00:00`);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+
+    void Promise.allSettled([
+      fetchEmployeeDirectory({ status: 'active', pageSize: 100 }),
+      fetchTeamAttendance({ startDate: localIso(monday), endDate: today, pageSize: 300 }),
+      fetchLeaveCalendar(today, today),
+      fetchOnboardingList({ status: 'in_progress', pageSize: 100 }),
+      fetchApprovals({ status: 'pending', pageSize: 1 }),
+      fetchHolidays(Number(today.slice(0, 4))),
+    ]).then(([employees, attendance, leaves, onboarding, approvals, holidays]) => {
+      if (!active) return;
+      // Without the employee list there is nothing honest to show.
+      if (employees.status !== 'fulfilled') {
+        setFailed(true);
+        return;
+      }
+      const byStep: Record<OnboardingStep, number> = {
+        hr: 0,
+        system: 0,
+        it_admin: 0,
+        employee: 0,
+        completed: 0,
+      };
+      if (onboarding.status === 'fulfilled') {
+        for (const c of onboarding.value.data) byStep[c.currentStep] += 1;
+      }
+      setData({
+        headcount: employees.value.meta.total,
+        employees: employees.value.data.map((e) => ({
+          id: e.id,
+          joiningDate: e.joiningDate,
+          departmentName: e.department?.name || 'No department',
+        })),
+        records: attendance.status === 'fulfilled' ? attendance.value.data : [],
+        leavesToday:
+          leaves.status === 'fulfilled' ? leaves.value.filter((l) => l.status === 'approved') : [],
+        onboardingByStep: byStep,
+        onboardingTotal: onboarding.status === 'fulfilled' ? onboarding.value.total : 0,
+        pendingApprovals:
+          approvals.status === 'fulfilled'
+            ? (approvals.value.meta?.total ?? approvals.value.data.length)
+            : 0,
+        nextHoliday:
+          holidays.status === 'fulfilled'
+            ? ([...holidays.value]
+                .filter((h) => h.date >= today)
+                .sort((a, b) => a.date.localeCompare(b.date))[0] ?? null)
+            : null,
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, [today]);
+
+  const trend: DayTrend[] = data ? weekTrend(data.records, data.headcount, today) : [];
+  const presentToday = data ? presentOn(data.records, today) : new Set<string>();
+  const departments: DepartmentRow[] = data
+    ? departmentBreakdown(data.employees, presentToday)
+    : [];
+  const dash = '—';
 
   return (
     <div className="space-y-6 w-full min-w-0 pb-10" data-testid="hr-dashboard">
       {/* Top Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-soft text-primary-strong border border-primary-soft-border">
-              <CalendarIcon className="w-3.5 h-3.5" />
-              <span>Thursday &middot; Nov 5, 2026</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-soft text-primary-strong border border-primary-soft-border">
+            <CalendarIcon className="w-3.5 h-3.5" />
+            <span>
+              {new Date(`${today}T00:00:00`).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-positive-soft text-positive-ink">
-              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-              Shift Active (09:00 - 18:00)
-            </span>
-          </div>
+          </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-text font-display tracking-tight">
             HR Management Overview
           </h1>
           <p className="text-xs sm:text-sm text-text-muted">
-            Workforce headcount, onboarding pipeline, and leave policy status
+            Workforce headcount, onboarding pipeline, and leave status
           </p>
         </div>
 
@@ -262,586 +305,249 @@ export function HRDashboard() {
         </div>
       </div>
 
-      {/* 4 Core HR Operational KPI Cards */}
+      {failed && (
+        <div
+          role="alert"
+          className="rounded-card border border-danger/40 bg-danger/10 p-4 text-sm text-text"
+        >
+          The workforce numbers could not be loaded. Refresh the page to try again.
+        </div>
+      )}
+
+      {/* Core HR Operational KPI Cards, all from the server */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        {/* Card 1: Total Headcount */}
         <KpiCard
           label="Total Headcount"
-          value="124"
+          value={data ? data.headcount : dash}
           icon={<UsersIcon className="w-7 h-7" />}
-          badge="+4 new this month"
+          badge={data ? `${joinedThisMonth(data.employees, today)} joined this month` : undefined}
           variant="teal"
         />
-
-        {/* Card 2: Today's Turnout / Attendance */}
         <KpiCard
           label="Today's Attendance"
-          value="114"
+          value={data ? presentToday.size : dash}
           icon={<ClockCheckIcon className="w-7 h-7" />}
-          badge="91.9% Present"
+          badge={
+            data && data.headcount > 0
+              ? `${Math.round((presentToday.size / data.headcount) * 100)}% present`
+              : undefined
+          }
           variant="emerald"
         />
-
-        {/* Card 3: Onboarding Pipeline */}
         <KpiCard
           label="Onboarding Pipeline"
-          value="3"
+          value={data ? data.onboardingTotal : dash}
           icon={<UserPlusIcon className="w-7 h-7" />}
-          badge="3 in review"
+          badge={data ? `${data.onboardingTotal} in progress` : undefined}
           variant="amber"
         />
-
-        {/* Card 4: Pending HR Approvals (Action Center) */}
         <KpiCard
           label="Pending Actions"
-          value="7"
+          value={data ? data.pendingApprovals : dash}
           icon={<AlertCircleIcon className="w-7 h-7" />}
-          badge="7 require review"
+          badge={data ? `${data.pendingApprovals} awaiting approval` : undefined}
           variant="rose"
         />
       </div>
 
-      {/* Interactive HR Analytics & Trends Chart Section */}
-      <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-text font-display">
-                Workforce Turnout & Attendance Trends
-              </h2>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary-soft text-primary-strong">
-                Weekly Insights
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-              Daily turnout percentages, on-time arrivals, and leave trends across the organization
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <SegmentedControl
-              ariaLabel="Date range selector"
-              value={timeRange}
-              onChange={setTimeRange}
-              options={[
-                { value: 'week', label: 'This Week' },
-                { value: 'month', label: 'Past 30 Days' },
-                { value: 'quarter', label: 'Quarterly' },
-              ]}
-            />
-          </div>
+      {/* This week's turnout */}
+      <section className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-5">
+        <div>
+          <h2 className="text-lg font-bold text-text font-display">
+            Workforce Turnout &amp; Attendance Trends
+          </h2>
+          <p className="text-xs sm:text-sm text-text-muted mt-0.5">
+            People who checked in each day this week, as a share of the headcount
+          </p>
         </div>
-
-        {/* Metric Selector Tabs */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            type="button"
-            onClick={() => setActiveChartMetric('attendance')}
-            className={`p-3.5 rounded-tile text-left transition-all border ${
-              activeChartMetric === 'attendance'
-                ? 'bg-surface-raised border-primary-strong shadow-raised ring-1 ring-primary-strong'
-                : 'bg-surface-muted border-border hover:bg-surface-raised'
-            }`}
-          >
-            <span className="text-xs text-text-muted block">Average Turnout Rate</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="font-display text-2xl font-bold text-text tabular-nums">95.0%</span>
-              <span className="text-xs font-medium text-positive-ink flex items-center gap-0.5">
-                <ArrowUpIcon className="w-3 h-3" />
-                +1.4% vs last week
-              </span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveChartMetric('turnout')}
-            className={`p-3.5 rounded-tile text-left transition-all border ${
-              activeChartMetric === 'turnout'
-                ? 'bg-surface-raised border-primary-strong shadow-raised ring-1 ring-primary-strong'
-                : 'bg-surface-muted border-border hover:bg-surface-raised'
-            }`}
-          >
-            <span className="text-xs text-text-muted block">Punctuality & On-Time</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="font-display text-2xl font-bold text-primary-ink tabular-nums">
-                92.4%
-              </span>
-              <span className="text-xs text-text-muted">Checked in by 09:30 AM</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveChartMetric('leaves')}
-            className={`p-3.5 rounded-tile text-left transition-all border ${
-              activeChartMetric === 'leaves'
-                ? 'bg-surface-raised border-primary-strong shadow-raised ring-1 ring-primary-strong'
-                : 'bg-surface-muted border-border hover:bg-surface-raised'
-            }`}
-          >
-            <span className="text-xs text-text-muted block">Leave Utilization Rate</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="font-display text-2xl font-bold text-warning tabular-nums">
-                4.8%
-              </span>
-              <span className="text-xs text-text-muted">6 staff on approved leave</span>
-            </div>
-          </button>
-        </div>
-
-        {/* Visual Trend Chart (SVG Area & Bar Combo) */}
-        <div className="pt-2">
-          <div className="h-64 w-full flex flex-col justify-between">
-            {/* Chart Area */}
-            <div className="relative h-48 w-full flex items-end justify-between gap-2 sm:gap-6 px-2 sm:px-6 border-b border-border">
-              {/* Background Reference Lines */}
-              <div className="absolute inset-x-0 top-0 border-b border-dashed border-border" />
-              <div className="absolute inset-x-0 top-1/2 border-b border-dashed border-border" />
-
-              {/* Data Columns */}
-              {attendanceTrendData.map((item) => {
-                const heightPercent = ((item.rate - 75) / 25) * 100; // Scaled between 75% and 100%
-                return (
+        {!data ? (
+          <p className="text-sm text-text-muted">Loading…</p>
+        ) : (
+          <ul className="space-y-2.5" data-testid="hr-week-trend">
+            {trend.map((day) => (
+              <li key={day.date} className="flex items-center gap-3 text-xs">
+                <span className="w-9 font-semibold text-text">{day.label}</span>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface-muted">
                   <div
-                    key={item.day}
-                    className="flex-1 flex flex-col items-center justify-end h-full z-10 group"
-                  >
-                    {/* Tooltip / Value on top */}
-                    <div className="mb-2 text-center opacity-90 group-hover:opacity-100 transition-opacity">
-                      <span
-                        className={`text-xs font-bold tabular-nums block ${
-                          item.isToday
-                            ? 'text-primary-strong font-extrabold'
-                            : item.projected
-                              ? 'text-text-muted'
-                              : 'text-text'
-                        }`}
-                      >
-                        {item.rate}%
-                      </span>
-                      <span className="text-[10px] text-text-muted hidden sm:block">
-                        {item.present} staff
-                      </span>
-                    </div>
-
-                    {/* Bar visualization */}
-                    <div className="w-full max-w-[56px] flex flex-col justify-end bg-surface-muted rounded-t-lg h-36 overflow-hidden">
-                      {/* Stacked bar segments */}
-                      <div
-                        className={`w-full rounded-t-lg transition-all duration-500 ${
-                          item.isToday
-                            ? 'bg-primary shadow-primary'
-                            : item.projected
-                              ? 'bg-primary/40 border border-dashed border-primary-strong'
-                              : 'bg-primary-deep hover:bg-primary-deeper'
-                        }`}
-                        style={{ height: `${heightPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* X-Axis Day Labels */}
-            <div className="flex items-center justify-between px-2 sm:px-6 pt-3 text-xs text-text-muted">
-              {attendanceTrendData.map((item) => (
-                <div key={item.day} className="flex-1 text-center">
-                  <span
-                    className={`block font-semibold ${
-                      item.isToday ? 'text-primary-ink font-bold' : 'text-text'
-                    }`}
-                  >
-                    {item.day}
-                  </span>
-                  <span className="text-[11px] text-text-subtle">{item.date}</span>
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${Math.min(100, day.rate ?? 0)}%` }}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
+                <span className="w-28 text-right tabular-nums text-text-muted">
+                  {day.present} present{day.rate === null ? '' : ` · ${day.rate}%`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-          {/* Chart Legend & Summary Strip */}
-          <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between text-xs text-text-muted gap-3">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary-deep" />
-                <span>Turnout Rate (&ge;95% Target)</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary" />
-                <span>Today (Real-time active)</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary/40 border border-dashed border-primary-strong" />
-                <span>Projected</span>
-              </span>
-            </div>
-            <div className="font-medium text-text">
-              Target Turnout: <span className="font-semibold text-positive-ink">95% (Met)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Two Column Layout: Onboarding Pipeline & Department Capacity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Onboarding Checklist Summary (4-step per AGENTS.md §9) */}
-        <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-5">
+        {/* Onboarding (4 steps per AGENTS.md §9) */}
+        <section className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-text font-display">
-                  4-Step Onboarding Pipeline
-                </h2>
-                {/* Screen-reader marker ensures strict compliance with TC-12-05 static markup assertions */}
-                <span className="sr-only">4-Step Onboarding Pipeline (AGENTS.md §9)</span>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-text font-display">
+                4-Step Onboarding Pipeline
+              </h2>
+              {/* Screen-reader marker ensures strict compliance with TC-12-05 static markup assertions */}
+              <span className="sr-only">4-Step Onboarding Pipeline (AGENTS.md §9)</span>
               <p className="text-xs text-text-muted mt-0.5">
-                HR Verification &rarr; System Setup &rarr; IT Provisioning &rarr; Document Signing
+                Where each new joiner is now: HR check, system setup, IT / admin, then the employee
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigateTo('/hr/lifecycle')}
-              className="text-xs font-semibold text-primary-ink hover:underline shrink-0 flex items-center gap-1"
+              className="text-xs font-semibold text-primary-ink hover:underline shrink-0 flex items-center gap-1 min-h-[44px]"
             >
               <span>View Lifecycle</span>
               <ArrowUpRightIcon className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          {/* 4-Step Visual Progress Breadcrumb */}
-          <div className="grid grid-cols-4 gap-1.5 p-2 bg-surface-muted rounded-tile text-[11px] font-medium text-text-muted">
-            <div className="flex items-center gap-1 text-positive-ink">
-              <span className="w-4 h-4 rounded-full bg-positive-soft flex items-center justify-center font-bold text-[10px]">
-                <CheckIcon />
-              </span>
-              <span className="truncate">1. HR Check</span>
-            </div>
-            <div className="flex items-center gap-1 text-primary-strong">
-              <span className="w-4 h-4 rounded-full bg-primary-soft flex items-center justify-center font-bold text-[10px]">
-                2
-              </span>
-              <span className="truncate">2. System</span>
-            </div>
-            <div className="flex items-center gap-1 text-warning">
-              <span className="w-4 h-4 rounded-full bg-tile-yellow flex items-center justify-center font-bold text-[10px]">
-                3
-              </span>
-              <span className="truncate">3. IT Admin</span>
-            </div>
-            <div className="flex items-center gap-1 text-text-muted">
-              <span className="w-4 h-4 rounded-full bg-surface-raised flex items-center justify-center font-bold text-[10px]">
-                4
-              </span>
-              <span className="truncate">4. Signing</span>
-            </div>
-          </div>
-
-          {/* Active Candidates List */}
-          <div className="space-y-3">
-            {[
-              {
-                candidate: 'Rohan Sharma',
-                initials: 'RS',
-                role: 'Frontend Engineer',
-                step: 'Step 3: IT/Admin Provisioning',
-                progress: 75,
-                status: 'In Progress' as const,
-                checklistStatus: 'Laptop assigned &bull; ID card pending',
-              },
-              {
-                candidate: 'Priya Patel',
-                initials: 'PP',
-                role: 'Product Designer',
-                step: 'Step 2: System Account Setup',
-                progress: 50,
-                status: 'In Progress' as const,
-                checklistStatus: 'Email created &bull; Slack invite sent',
-              },
-              {
-                candidate: 'Vikram Mehta',
-                initials: 'VM',
-                role: 'DevOps Lead',
-                step: 'Step 4: Employee Document Signing',
-                progress: 90,
-                status: 'In Review' as const,
-                checklistStatus: 'Offer signed &bull; Bank docs under review',
-              },
-            ].map((candidate, idx) => (
-              <div
-                key={idx}
-                className="p-3 bg-surface-raised border border-border rounded-tile flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-border-strong transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-9 h-9 rounded-full bg-primary-soft text-primary-strong flex items-center justify-center font-bold text-xs shrink-0">
-                    {candidate.initials}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-text text-sm truncate">
-                      {candidate.candidate}
-                    </p>
-                    <p className="text-xs text-text-muted truncate">
-                      {candidate.role} &middot;{' '}
-                      <span className="text-primary-ink font-medium">{candidate.step}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-                  <div className="w-20 hidden sm:block">
-                    <div className="flex justify-between text-[10px] text-text-muted mb-1">
-                      <span>Progress</span>
-                      <span className="font-medium text-text">{candidate.progress}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-track rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${candidate.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  <StatusPill status={candidate.status} size="sm" />
-                </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {STEPS.map(({ step, label }, index) => (
+              <div key={step} className="rounded-tile bg-surface-muted p-3 text-center">
+                <p className="text-2xl font-bold font-display text-text tabular-nums">
+                  {data ? data.onboardingByStep[step] : dash}
+                </p>
+                <p className="text-[11px] font-medium text-text-muted">
+                  {index + 1}. {label}
+                </p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Department Distribution & Capacity */}
-        <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-5">
+        {/* Department Distribution */}
+        <section className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-text font-display">
                 Department Distribution
               </h2>
               <p className="text-xs text-text-muted mt-0.5">
-                Workforce headcount, capacity health, and open vacancies
+                Active headcount per department and who is in today
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigateTo('/hr/departments')}
-              className="text-xs font-semibold text-primary-ink hover:underline shrink-0 flex items-center gap-1"
+              className="text-xs font-semibold text-primary-ink hover:underline shrink-0 flex items-center gap-1 min-h-[44px]"
             >
               <span>Manage Teams</span>
               <ArrowUpRightIcon className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          <div className="space-y-4">
-            {[
-              {
-                name: 'Engineering',
-                count: 62,
-                percentage: 50,
-                barColor: 'bg-primary',
-                turnout: '98% present',
-                budget: 'Optimal',
-              },
-              {
-                name: 'Operations & Support',
-                count: 32,
-                percentage: 26,
-                barColor: 'bg-chart-1',
-                turnout: '94% present',
-                budget: 'On track',
-              },
-              {
-                name: 'Product & Design',
-                count: 18,
-                percentage: 15,
-                barColor: 'bg-chart-4',
-                turnout: '94% present',
-                budget: 'On track',
-              },
-              {
-                name: 'Human Resources',
-                count: 12,
-                percentage: 9,
-                barColor: 'bg-chart-3',
-                turnout: '100% present',
-                budget: 'Optimal',
-              },
-            ].map((dept) => (
-              <div key={dept.name} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-text">{dept.name}</span>
-                    <span className="text-[11px] text-text-muted hidden sm:inline">
-                      &bull; {dept.turnout}
+          {!data ? (
+            <p className="text-sm text-text-muted">Loading…</p>
+          ) : departments.length === 0 ? (
+            <p className="text-sm text-text-muted">There are no active employees yet.</p>
+          ) : (
+            <ul className="space-y-4" data-testid="hr-departments">
+              {departments.map((d) => (
+                <li key={d.name} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-text">{d.name}</span>
+                    <span className="text-xs text-text-muted tabular-nums">
+                      {d.headcount} {d.headcount === 1 ? 'person' : 'people'} · {d.presentToday} in
+                      today
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-text-muted tabular-nums font-medium">
-                      {dept.count} staff ({dept.percentage}%)
-                    </span>
-                    <span className="text-[11px] font-semibold text-positive-ink bg-positive-soft px-2 py-0.5 rounded-full">
-                      {dept.budget}
-                    </span>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${d.share}%` }}
+                    />
                   </div>
-                </div>
-                <div className="h-2.5 w-full bg-track rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${dept.barColor} rounded-full transition-all`}
-                    style={{ width: `${dept.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Department Breakdown Footnote */}
-          <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-text-muted">
-            <span>4 Departments &middot; 8 Designations</span>
-            <span className="font-semibold text-text">124 Total Headcount</span>
-          </div>
-        </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
-      {/* Leave Management & Compliance Alert Hub */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Out of Office Today (2 cols on lg) */}
-        <div className="lg:col-span-2 p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
+        {/* Out of Office Today */}
+        <section className="lg:col-span-2 p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4 text-primary-strong" />
-                <span>Out of Office Today (6 Employees)</span>
+                <span>Out of Office Today{data ? ` (${data.leavesToday.length})` : ''}</span>
               </h2>
-              <p className="text-xs text-text-muted mt-0.5">
-                Approved leaves, return dates, and cover assignees
-              </p>
+              <p className="text-xs text-text-muted mt-0.5">Approved leave that covers today</p>
             </div>
             <button
               type="button"
-              onClick={() => navigateTo('/hr/policies')}
-              className="text-xs font-semibold text-primary-ink hover:underline shrink-0 flex items-center gap-1"
+              onClick={() => navigateTo('/leave')}
+              className="text-xs font-semibold text-primary-ink hover:underline shrink-0 flex items-center gap-1 min-h-[44px]"
             >
               <span>Leave Calendar</span>
               <ArrowUpRightIcon className="w-3.5 h-3.5" />
             </button>
           </div>
+          {!data ? (
+            <p className="text-sm text-text-muted">Loading…</p>
+          ) : data.leavesToday.length === 0 ? (
+            <p className="text-sm text-text-muted" data-testid="hr-no-leave-today">
+              Nobody is on approved leave today.
+            </p>
+          ) : (
+            <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {data.leavesToday.map((l) => (
+                <li
+                  key={l.requestId}
+                  className="rounded-tile border border-border bg-surface-muted p-3 space-y-0.5"
+                >
+                  <p className="text-sm font-semibold text-text truncate">{l.employeeName}</p>
+                  <p className="text-xs text-text-muted">
+                    {l.leaveTypeName}
+                    {l.halfDay ? ' (half day)' : ''} · until {l.endDate}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {[
-              {
-                name: 'Aarav Patel',
-                dept: 'Engineering',
-                type: 'Annual Leave',
-                duration: 'Nov 4 - Nov 8',
-                badge: 'bg-primary-soft text-primary-strong',
-              },
-              {
-                name: 'Sneha Rao',
-                dept: 'Product & Design',
-                type: 'Casual Leave',
-                duration: 'Today only',
-                badge: 'bg-tile-yellow text-warning',
-              },
-              {
-                name: 'Karthik V',
-                dept: 'Operations',
-                type: 'Sick Leave',
-                duration: 'Nov 5 - Nov 6',
-                badge: 'bg-tile-peach text-negative-ink',
-              },
-              {
-                name: 'Divya Nair',
-                dept: 'Engineering',
-                type: 'Annual Leave',
-                duration: 'Nov 3 - Nov 7',
-                badge: 'bg-primary-soft text-primary-strong',
-              },
-              {
-                name: 'Meera Iyer',
-                dept: 'Human Resources',
-                type: 'Comp Off',
-                duration: 'Today only',
-                badge: 'bg-positive-soft text-positive-ink',
-              },
-              {
-                name: 'Suresh Kumar',
-                dept: 'Operations',
-                type: 'Sick Leave',
-                duration: 'Today only',
-                badge: 'bg-tile-peach text-negative-ink',
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="p-3 bg-surface-raised border border-border rounded-tile flex items-center justify-between gap-2 hover:border-border-strong transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-text truncate">{item.name}</p>
-                  <p className="text-[11px] text-text-muted truncate">{item.dept}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.badge}`}
-                  >
-                    {item.type}
-                  </span>
-                  <p className="text-[10px] text-text-subtle mt-0.5">{item.duration}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* HR Action & Compliance Quick Radar */}
-        <div className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs hover:shadow-card transition-all space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-text font-display flex items-center gap-2">
-              <SparklesIcon className="w-4 h-4 text-warning" />
-              <span>HR Priority Radar</span>
-            </h2>
-            <span className="text-[11px] font-semibold text-primary-ink bg-primary-soft px-2 py-0.5 rounded-full">
-              4 Tasks
-            </span>
-          </div>
-
+        {/* HR Priority Radar: only what the system knows */}
+        <section className="p-5 sm:p-6 bg-white border border-border/80 rounded-card shadow-xs space-y-4">
+          <h2 className="text-base font-bold text-text font-display">HR Priority Radar</h2>
           <div className="space-y-3">
-            <div className="p-3 bg-surface-muted border border-border rounded-tile space-y-1">
+            <div className="p-3 bg-surface-muted border border-border rounded-tile">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-text">Pending Leave Approvals</span>
-                <span className="text-negative-ink font-bold">4 Requests</span>
+                <span className="font-semibold text-text">Pending Approvals</span>
+                <span className="font-bold text-text tabular-nums">
+                  {data ? data.pendingApprovals : dash}
+                </span>
               </div>
-              <p className="text-[11px] text-text-muted">
-                2 requests pending manager review &gt; 48 hours
+              <p className="text-[11px] text-text-muted mt-1">
+                Leave and attendance requests waiting for a decision
               </p>
             </div>
-
-            <div className="p-3 bg-surface-muted border border-border rounded-tile space-y-1">
+            <div className="p-3 bg-surface-muted border border-border rounded-tile">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-text">Probation Reviews Due</span>
-                <span className="text-warning font-bold">2 Staff</span>
+                <span className="font-semibold text-text">Onboarding In Progress</span>
+                <span className="font-bold text-text tabular-nums">
+                  {data ? data.onboardingTotal : dash}
+                </span>
               </div>
-              <p className="text-[11px] text-text-muted">
-                90-day review due for Rohan S. &amp; Priya P.
+              <p className="text-[11px] text-text-muted mt-1">
+                New joiners whose checklist is open
               </p>
             </div>
-
-            <div className="p-3 bg-surface-muted border border-border rounded-tile space-y-1">
+            <div className="p-3 bg-surface-muted border border-border rounded-tile">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-text">Statutory Document Audit</span>
-                <span className="text-positive-ink font-bold">98.4% Compliant</span>
+                <span className="font-semibold text-text">Next Public Holiday</span>
+                <span className="font-bold text-text">{data?.nextHoliday?.date ?? dash}</span>
               </div>
-              <p className="text-[11px] text-text-muted">
-                Only 2 new joiners need PAN/Aadhaar verification
+              <p className="text-[11px] text-text-muted mt-1">
+                {data ? (data.nextHoliday?.name ?? 'No upcoming holiday is set up') : 'Loading…'}
               </p>
-            </div>
-
-            <div className="p-3 bg-surface-muted border border-border rounded-tile space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-text">Upcoming Public Holiday</span>
-                <span className="text-primary-ink font-bold">Nov 12</span>
-              </div>
-              <p className="text-[11px] text-text-muted">Diwali Festival &bull; Company Holiday</p>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

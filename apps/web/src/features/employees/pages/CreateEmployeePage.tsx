@@ -106,6 +106,7 @@ export function CreateEmployeePage() {
       {formProps.createdEmployee ? (
         <CreateEmployeeSuccessView
           createdEmployee={formProps.createdEmployee}
+          photoWarning={formProps.photoWarning}
           onViewDirectory={() => navigate('/employees')}
           onCreateAnother={formProps.resetForm}
         />

@@ -460,4 +460,114 @@ describe('CreateEmployeePage Component (Issue #20)', () => {
 
     readAsDataURLSpy.mockRestore();
   });
+
+  describe('the employee photo chosen while creating', () => {
+    const created = {
+      id: 'emp-new',
+      userId: 'usr-new',
+      employeeCode: 'EMP-099',
+      firstName: 'Rahul',
+      lastName: 'Sharma',
+      email: 'rahul.sharma@maxr.example',
+      phone: '+91 98765 43210',
+      departmentId: 'dept-eng',
+      designationId: 'desig-swe',
+      managerId: 'mgr-1',
+      status: 'pending',
+      role: 'staff',
+      joiningDate: '2026-11-20',
+      createdAt: '2026-11-02T10:00:00Z',
+    };
+
+    async function createWithPhoto(photoStatus: number) {
+      fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === '/api/v1/employees' && init?.method === 'POST') {
+          return new Response(JSON.stringify({ data: created }), { status: 201 });
+        }
+        if (url === '/api/v1/employees/emp-new/photo' && init?.method === 'PUT') {
+          return photoStatus === 200
+            ? new Response(
+                JSON.stringify({ data: { photoUrl: '/api/v1/employees/emp-new/photo?v=1' } }),
+                { status: 200 },
+              )
+            : new Response(JSON.stringify({ error: { message: 'Photo storage is down' } }), {
+                status: photoStatus,
+              });
+        }
+        if (url.includes('/api/v1/departments')) {
+          return new Response(JSON.stringify({ data: mockDepartments }), { status: 200 });
+        }
+        if (url.includes('/api/v1/designations')) {
+          return new Response(JSON.stringify({ data: mockDesignations }), { status: 200 });
+        }
+        if (url.includes('/api/v1/employees?status=active')) {
+          return new Response(JSON.stringify({ data: mockManagers }), { status: 200 });
+        }
+        return new Response(JSON.stringify({}), { status: 200 });
+      });
+      const readSpy = vi.spyOn(FileReader.prototype, 'readAsDataURL').mockImplementation(function (
+        this: FileReader,
+      ) {
+        Object.defineProperty(this, 'result', {
+          value: 'data:image/png;base64,iVBORw0KGgo=',
+          configurable: true,
+        });
+        this.onload?.({} as ProgressEvent<FileReader>);
+      });
+
+      renderWithRole(ROLES.ADMIN);
+      fireEvent.change(screen.getByTestId('input-first-name'), { target: { value: 'Rahul' } });
+      fireEvent.change(screen.getByTestId('input-last-name'), { target: { value: 'Sharma' } });
+      fireEvent.change(screen.getByTestId('input-email'), {
+        target: { value: 'rahul.sharma@maxr.example' },
+      });
+      fireEvent.change(screen.getByTestId('input-phone'), { target: { value: '+91 98765 43210' } });
+      fireEvent.change(screen.getByTestId('input-employee-code'), { target: { value: 'EMP-099' } });
+      fireEvent.change(screen.getByTestId('input-employee-photo'), {
+        target: { files: [new File(['x'], 'me.png', { type: 'image/png' })] },
+      });
+      await waitFor(() => {
+        expect(screen.getByText('Engineering')).toBeInTheDocument();
+      });
+      fireEvent.change(screen.getByTestId('select-department'), { target: { value: 'dept-eng' } });
+      await waitFor(() => {
+        expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+      });
+      fireEvent.change(screen.getByTestId('select-designation'), {
+        target: { value: 'desig-swe' },
+      });
+      fireEvent.change(screen.getByTestId('input-joining-date'), {
+        target: { value: '2026-11-20' },
+      });
+      fireEvent.click(screen.getByTestId('desktop-submit-button'));
+      await waitFor(() => {
+        expect(screen.getByTestId('create-employee-success-view')).toBeInTheDocument();
+      });
+      readSpy.mockRestore();
+    }
+
+    it('is uploaded to the new employee, not kept in this browser', async () => {
+      await createWithPhoto(200);
+
+      const upload = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          String(url) === '/api/v1/employees/emp-new/photo' && init?.method === 'PUT',
+      );
+      expect(upload).toBeDefined();
+      expect(new Headers((upload?.[1] as RequestInit).headers).get('Content-Type')).toBe(
+        'image/png',
+      );
+      expect(screen.queryByTestId('create-photo-warning')).toBeNull();
+      expect(localStorage.getItem('maxr_avatar_emp-new')).toBeNull();
+    });
+
+    it('does not undo the employee when the photo fails, and says why', async () => {
+      await createWithPhoto(503);
+
+      expect(screen.getByTestId('create-photo-warning')).toHaveTextContent(
+        /employee was created, but the photo was not saved: Photo storage is down/,
+      );
+    });
+  });
 });
