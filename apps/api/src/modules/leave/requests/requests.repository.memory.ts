@@ -62,6 +62,21 @@ export class MemoryLeaveRequestsRepository implements ILeaveRequestsRepository {
     return { available: balance.allotted + balance.carriedForward - balance.used - reserved };
   }
 
+  async countInMonth(
+    _tx: LeaveTx,
+    employeeId: string,
+    leaveTypeId: string,
+    month: string,
+  ): Promise<number> {
+    return this.requests.filter(
+      (r) =>
+        r.employeeId === employeeId &&
+        r.leaveTypeId === leaveTypeId &&
+        ['applied', 'pending', 'approved'].includes(r.status) &&
+        r.startDate.startsWith(month),
+    ).length;
+  }
+
   async insert(_tx: LeaveTx, input: NewLeaveRequest): Promise<LeaveRequest> {
     if (
       this.requests.some(

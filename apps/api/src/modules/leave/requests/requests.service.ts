@@ -40,6 +40,12 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const localDate = (instant: Date, timeZone: string): string =>
   new Intl.DateTimeFormat('en-CA', { timeZone }).format(instant);
 
+/** A short-absence type: the code or the name says so (the same test Leave Setup uses). */
+const isPermissionType = (policy: LeavePolicy): boolean =>
+  policy.code === 'PM' ||
+  policy.code === 'PERMISSION' ||
+  policy.name.toLowerCase().includes('permission');
+
 const minusDays = (date: string, days: number): string =>
   new Date(Date.parse(`${date}T00:00:00Z`) - days * DAY_MS).toISOString().slice(0, 10);
 
@@ -89,6 +95,7 @@ export class LeaveRequestsService implements ApprovalHandler {
       );
     }
     const { timezone, workWeek } = await this.settings.getBasic();
+    const permissionPolicy = (await this.settings.getPermissionPolicy?.()) ?? null;
     const today = localDate(this.clock(), timezone);
     if (input.startDate < minusDays(today, policy.maxBackdateDays)) {
       throw unprocessable(
@@ -112,6 +119,17 @@ export class LeaveRequestsService implements ApprovalHandler {
     });
     const events = new EventCollector();
     const created = await this.repository.transaction(async (tx) => {
+      // Short absences have no balance; the company caps how many a month may hold.
+      const monthlyCap = permissionPolicy?.enabled ? permissionPolicy.maxPermissionsPerMonth : 0;
+      if (isPermissionType(policy) && monthlyCap > 0) {
+        const month = input.startDate.slice(0, 7);
+        const taken = await this.repository.countInMonth(tx, caller.employeeId, policy.id, month);
+        if (taken >= monthlyCap) {
+          throw unprocessable(
+            `You already have ${taken} ${policy.name} request(s) in ${month}; the company allows ${monthlyCap} a month`,
+          );
+        }
+      }
       if (policy.hasBalance) {
         const balance = await this.repository.lockBalance(tx, caller.employeeId, policy.id, year);
         if (!balance) throw unprocessable(`You have no ${policy.name} balance for ${year}`);
