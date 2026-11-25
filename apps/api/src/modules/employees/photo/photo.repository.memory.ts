@@ -13,6 +13,15 @@ export class MemoryEmployeePhotoRepository implements IEmployeePhotoRepository {
     return this.photos.get(employeeId) ?? null;
   }
 
+  /** Tests list the employees that exist; one not listed is not found. */
+  employees = new Set<string>();
+
+  async isInScope(employeeId: string, scope: ScopeFilter) {
+    return (
+      this.employees.has(employeeId) && scopeAllows(scope, employeeId, this.managerOf(employeeId))
+    );
+  }
+
   async replace(employeeId: string, key: string) {
     const replacedKey = this.photos.get(employeeId)?.key ?? null;
     const version = (this.clock += 1);

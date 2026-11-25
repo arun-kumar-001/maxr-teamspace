@@ -9,6 +9,8 @@ export interface StoredPhoto {
 export interface IEmployeePhotoRepository {
   /** The photo of an employee inside the caller's scope; null when none, or out of scope. */
   find(employeeId: string, scope: ScopeFilter): Promise<StoredPhoto | null>;
+  /** Whether the employee exists inside the caller's scope. */
+  isInScope(employeeId: string, scope: ScopeFilter): Promise<boolean>;
   /** Stores the key of a new photo and returns the key it replaced, if any. */
   replace(
     employeeId: string,

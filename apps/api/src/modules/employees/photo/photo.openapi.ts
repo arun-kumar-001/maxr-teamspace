@@ -42,3 +42,32 @@ registerRoute({
   },
   success: { status: 200, description: 'The image (image/png or image/jpeg)' },
 });
+
+registerRoute({
+  method: 'put',
+  path: '/employees/{id}/photo',
+  tags,
+  summary:
+    "Set one employee's profile photo (Admin and HR Manager, for the people in their scope): the image is the raw request body (PNG or JPEG, up to 2 MB, virus-scanned). It replaces the previous one",
+  permission: 'employees.update',
+  params: idParamSchema,
+  upload: { contentTypes: ['image/png', 'image/jpeg'] },
+  extraResponses: { 404: 'No such employee, or not in your scope' },
+  success: {
+    status: 200,
+    description: 'Where the photo is now served from (the `v` changes with every new photo)',
+    schema: z.object({ data: z.object({ photoUrl: z.string() }) }),
+  },
+});
+
+registerRoute({
+  method: 'delete',
+  path: '/employees/{id}/photo',
+  tags,
+  summary:
+    "Remove one employee's profile photo (Admin and HR Manager, for the people in their scope)",
+  permission: 'employees.update',
+  params: idParamSchema,
+  extraResponses: { 404: 'No such employee, or not in your scope' },
+  success: { status: 204, description: 'Removed (also when there was none)' },
+});

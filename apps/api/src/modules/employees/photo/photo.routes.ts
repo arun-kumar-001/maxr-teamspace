@@ -15,7 +15,8 @@ function caller(req: Request): PhotoCaller {
 }
 
 /**
- * `PUT` and `DELETE /api/v1/employees/me/photo`, and `GET /api/v1/employees/{id}/photo`.
+ * `PUT` and `DELETE /api/v1/employees/me/photo`, `PUT` and `DELETE /api/v1/employees/{id}/photo`
+ * (Admin and HR, for the people in their scope), and `GET /api/v1/employees/{id}/photo`.
  * Mount on `/employees` BEFORE the detail router (`/:id`).
  */
 export function createEmployeePhotoRouter(options: {
@@ -41,6 +42,37 @@ export function createEmployeePhotoRouter(options: {
     requirePermission('profile.update'),
     asyncHandler(async (req: Request, res: Response) => {
       await service.remove(caller(req));
+      res.status(204).end();
+    }),
+  );
+
+  router.put(
+    '/:id/photo',
+    authenticate,
+    requirePermission('employees.update'),
+    validate({ params: idParamSchema }),
+    rawUploadParser(MAX_PHOTO_BYTES),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: idParamSchema });
+      res.status(200).json({
+        data: await service.uploadFor(
+          params.id,
+          accessFor(req).filter,
+          caller(req),
+          readRawUpload(req),
+        ),
+      });
+    }),
+  );
+
+  router.delete(
+    '/:id/photo',
+    authenticate,
+    requirePermission('employees.update'),
+    validate({ params: idParamSchema }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { params } = validated(req, { params: idParamSchema });
+      await service.removeFor(params.id, accessFor(req).filter, caller(req));
       res.status(204).end();
     }),
   );

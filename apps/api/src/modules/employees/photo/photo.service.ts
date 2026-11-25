@@ -30,6 +30,35 @@ export class EmployeePhotoService {
 
   /** Replaces the caller's photo. The old file is removed once the new one is in place. */
   async upload(caller: PhotoCaller, raw: RawUpload): Promise<{ photoUrl: string }> {
+    return this.store(caller.employeeId, caller, raw, 'profile.photo_update');
+  }
+
+  /**
+   * Sets another employee's photo (Admin and HR, for the people in their scope, for example when
+   * creating the employee). Someone out of scope looks exactly like someone who does not exist.
+   */
+  async uploadFor(
+    employeeId: string,
+    scope: ScopeFilter,
+    caller: PhotoCaller,
+    raw: RawUpload,
+  ): Promise<{ photoUrl: string }> {
+    if (!(await this.repo.isInScope(employeeId, scope))) throw notFound('Employee not found');
+    return this.store(employeeId, caller, raw, 'employee.photo_update');
+  }
+
+  /** Removes another employee's photo, with the same scope rule as `uploadFor`. */
+  async removeFor(employeeId: string, scope: ScopeFilter, caller: PhotoCaller): Promise<void> {
+    if (!(await this.repo.isInScope(employeeId, scope))) throw notFound('Employee not found');
+    await this.clear(employeeId, caller, 'employee.photo_remove');
+  }
+
+  private async store(
+    employeeId: string,
+    caller: PhotoCaller,
+    raw: RawUpload,
+    action: string,
+  ): Promise<{ photoUrl: string }> {
     const stored = await this.platform.storage.upload({
       category: 'profilePhotos',
       filename: raw.filename,
@@ -39,7 +68,7 @@ export class EmployeePhotoService {
     });
     let result: { replacedKey: string | null; version: number };
     try {
-      result = await this.repo.replace(caller.employeeId, stored.key);
+      result = await this.repo.replace(employeeId, stored.key);
     } catch (err) {
       await this.platform.storage.delete(stored.key).catch(() => undefined);
       throw err;
@@ -50,24 +79,28 @@ export class EmployeePhotoService {
     await this.platform.audit
       .withContext({ actorId: caller.actorId, requestId: caller.requestId })
       .tryRecord({
-        action: 'profile.photo_update',
+        action,
         outcome: 'success',
         entityType: 'employee',
-        entityId: caller.employeeId,
+        entityId: employeeId,
       });
-    return { photoUrl: employeePhotoUrl(caller.employeeId, result.version) as string };
+    return { photoUrl: employeePhotoUrl(employeeId, result.version) as string };
   }
 
   async remove(caller: PhotoCaller): Promise<void> {
-    const key = await this.repo.clear(caller.employeeId);
+    await this.clear(caller.employeeId, caller, 'profile.photo_remove');
+  }
+
+  private async clear(employeeId: string, caller: PhotoCaller, action: string): Promise<void> {
+    const key = await this.repo.clear(employeeId);
     if (key) await this.platform.storage.delete(key).catch(() => undefined);
     await this.platform.audit
       .withContext({ actorId: caller.actorId, requestId: caller.requestId })
       .tryRecord({
-        action: 'profile.photo_remove',
+        action,
         outcome: 'success',
         entityType: 'employee',
-        entityId: caller.employeeId,
+        entityId: employeeId,
       });
   }
 
