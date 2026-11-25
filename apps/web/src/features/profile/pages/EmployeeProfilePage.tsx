@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { uuidString } from '@maxr/shared';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../auth/AuthContext';
 import { ErrorState, ForbiddenState, Skeleton } from '../../../components/ui';
@@ -25,6 +26,22 @@ import { useOwnPhone } from '../hooks/useOwnPhone';
 export function EmployeeProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // An id in the link that is not a UUID can never be an employee (the API refuses it too), so say
+  // so now instead of asking the server and showing whatever its refusal turns into.
+  if (id !== undefined && !uuidString.safeParse(id).success) {
+    return (
+      <div className="space-y-6 w-full min-w-0" data-testid="employee-detail-not-found">
+        <ErrorState
+          title="Employee Not Found"
+          message="This employee link is not valid. Open the employee from the directory instead."
+          onRetry={() => navigate('/employees')}
+        />
+      </div>
+    );
+  }
+
   const employeeId = id ?? user?.employeeId;
   return <EmployeeProfileView key={employeeId} employeeId={employeeId} />;
 }

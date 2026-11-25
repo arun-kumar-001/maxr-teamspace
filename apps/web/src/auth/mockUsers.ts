@@ -1,4 +1,5 @@
 import { ROLES, type Role } from '@maxr/shared';
+import { DEMO_USER_EMPLOYEE_IDS } from '@/lib/demo-ids';
 import { AuthUser } from './types';
 
 export interface MockUser extends AuthUser {
@@ -10,7 +11,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
   [ROLES.ADMIN]: {
     id: 'usr-admin-001',
     userId: 'usr-admin-001',
-    employeeId: 'emp-001',
+    employeeId: DEMO_USER_EMPLOYEE_IDS.admin,
     role: ROLES.ADMIN,
     roles: [ROLES.ADMIN],
     permissions: [],
@@ -24,7 +25,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
   [ROLES.HR_MANAGER]: {
     id: 'usr-hr-002',
     userId: 'usr-hr-002',
-    employeeId: 'emp-002',
+    employeeId: DEMO_USER_EMPLOYEE_IDS.hr_manager,
     role: ROLES.HR_MANAGER,
     roles: [ROLES.HR_MANAGER],
     permissions: [],
@@ -38,7 +39,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
   [ROLES.TEAM_LEAD]: {
     id: 'usr-lead-003',
     userId: 'usr-lead-003',
-    employeeId: 'emp-003',
+    employeeId: DEMO_USER_EMPLOYEE_IDS.team_lead,
     role: ROLES.TEAM_LEAD,
     roles: [ROLES.TEAM_LEAD],
     permissions: [],
@@ -53,7 +54,7 @@ export const MOCK_USERS: Record<Role, MockUser> = {
   [ROLES.STAFF]: {
     id: 'usr-staff-004',
     userId: 'usr-staff-004',
-    employeeId: 'emp-004',
+    employeeId: DEMO_USER_EMPLOYEE_IDS.staff,
     role: ROLES.STAFF,
     roles: [ROLES.STAFF],
     permissions: [],
