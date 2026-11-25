@@ -6,11 +6,12 @@ import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '../../../auth/AuthContext';
 import * as employeePhotoApi from '../../employees/api/photo';
 import * as profileApi from '../api/profileApi';
+import { DEMO_USER_EMPLOYEE_IDS } from '../../../lib/demo-ids';
 import { EmployeeProfilePage } from '../pages/EmployeeProfilePage';
 import type { EmployeeDetail } from '../../employees/types';
 
 const mockEmployeeAdminView: EmployeeDetail = {
-  id: 'emp-1',
+  id: 'f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73',
   employeeCode: 'EMP-001',
   firstName: 'Jane',
   lastName: 'Doe',
@@ -34,13 +35,13 @@ const mockEmployeeAdminView: EmployeeDetail = {
 
 const mockEmployeeStaffView: EmployeeDetail = {
   ...mockEmployeeAdminView,
-  id: 'emp-staff-view',
+  id: '702911e7-7525-4b7b-a0d4-37b98d68bd49',
   account: undefined, // Omitted for non-HR/Admin callers
 };
 
 const mockDeactivatedEmployee: EmployeeDetail = {
   ...mockEmployeeAdminView,
-  id: 'emp-deactivated',
+  id: 'a777a5c9-7493-4ad3-ab9c-fdd4fe2e15bf',
   status: 'deactivated',
 };
 
@@ -113,7 +114,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         });
       }
 
-      if (url.includes('/api/v1/employees/emp-1')) {
+      if (url.includes('/api/v1/employees/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73')) {
         if (method === 'PUT') {
           const body = JSON.parse(String(init?.body || '{}'));
           if (body.version !== 1) {
@@ -144,21 +145,21 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         });
       }
 
-      if (url.includes('/api/v1/employees/emp-staff-view')) {
+      if (url.includes('/api/v1/employees/702911e7-7525-4b7b-a0d4-37b98d68bd49')) {
         return new Response(JSON.stringify({ data: mockEmployeeStaffView }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
       }
 
-      if (url.includes('/api/v1/employees/emp-deactivated')) {
+      if (url.includes('/api/v1/employees/a777a5c9-7493-4ad3-ab9c-fdd4fe2e15bf')) {
         return new Response(JSON.stringify({ data: mockDeactivatedEmployee }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
       }
 
-      if (url.includes('/api/v1/employees/unknown-404')) {
+      if (url.includes('/api/v1/employees/8ffa3fa6-7e13-4755-b9a2-8d66325655f4')) {
         return new Response(
           JSON.stringify({
             error: {
@@ -170,7 +171,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         );
       }
 
-      if (url.includes('/api/v1/employees/forbidden-403')) {
+      if (url.includes('/api/v1/employees/8206e54a-96c5-44bb-b9fd-784f280901f7')) {
         return new Response(
           JSON.stringify({
             error: {
@@ -182,20 +183,26 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         );
       }
 
-      const own = /\/api\/v1\/employees\/(emp-00[1-4])$/.exec(url.split('?')[0] ?? '');
+      const own = new RegExp(
+        `/api/v1/employees/(${Object.values(DEMO_USER_EMPLOYEE_IDS).join('|')})$`,
+      ).exec(url.split('?')[0] ?? '');
       if (own) {
         const ownId = own[1] as string;
-        const mayHaveAccount = ownId === 'emp-001' || ownId === 'emp-002';
+        const mayHaveAccount =
+          ownId === DEMO_USER_EMPLOYEE_IDS.admin || ownId === DEMO_USER_EMPLOYEE_IDS.hr_manager;
         return new Response(
           JSON.stringify({
             data: {
               ...mockEmployeeAdminView,
               id: ownId,
-              firstName: `Own${ownId.slice(-1)}`,
+              firstName: `Own${Object.values(DEMO_USER_EMPLOYEE_IDS).indexOf(ownId as never) + 1}`,
               lastName: 'Person',
-              phone: ownId === 'emp-004' ? null : '+91 90000 00000',
+              phone: ownId === DEMO_USER_EMPLOYEE_IDS.staff ? null : '+91 90000 00000',
               // Only the first user has a photo: the rest show initials
-              photoUrl: ownId === 'emp-001' ? `/api/v1/employees/${ownId}/photo?v=1` : null,
+              photoUrl:
+                ownId === DEMO_USER_EMPLOYEE_IDS.admin
+                  ? `/api/v1/employees/${ownId}/photo?v=1`
+                  : null,
               account: mayHaveAccount ? mockEmployeeAdminView.account : undefined,
             },
           }),
@@ -219,7 +226,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('renders employee detail header, status, and job info correctly', async () => {
-    renderWithProviders('/profile/details/emp-1', 'admin');
+    renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-page')).toBeInTheDocument();
@@ -247,7 +254,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('shows the Account & Security card when account information is present for Admin', async () => {
-    renderWithProviders('/profile/details/emp-1', 'admin');
+    renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-page')).toBeInTheDocument();
@@ -265,7 +272,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('hides the Account & Security card when account information is omitted for Staff', async () => {
-    renderWithProviders('/profile/details/emp-staff-view', 'staff');
+    renderWithProviders('/profile/details/702911e7-7525-4b7b-a0d4-37b98d68bd49', 'staff');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-page')).toBeInTheDocument();
@@ -276,7 +283,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('renders error state when employee is not found (404)', async () => {
-    renderWithProviders('/profile/details/unknown-404', 'admin');
+    renderWithProviders('/profile/details/8ffa3fa6-7e13-4755-b9a2-8d66325655f4', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-not-found')).toBeInTheDocument();
@@ -286,7 +293,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('renders forbidden state when access is restricted (403)', async () => {
-    renderWithProviders('/profile/details/forbidden-403', 'staff');
+    renderWithProviders('/profile/details/8206e54a-96c5-44bb-b9fd-784f280901f7', 'staff');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-forbidden')).toBeInTheDocument();
@@ -303,7 +310,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
     });
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       if (
-        String(input).includes('/api/v1/employees/emp-1') &&
+        String(input).includes('/api/v1/employees/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73') &&
         !String(input).includes('documents')
       ) {
         await gate;
@@ -313,8 +320,8 @@ describe('EmployeeProfilePage: the one employee profile', () => {
 
     render(
       <AuthProvider initialRole="admin" persistSession={false}>
-        <MemoryRouter initialEntries={['/profile/details/emp-deactivated']}>
-          <Link to="/profile/details/emp-1">next employee</Link>
+        <MemoryRouter initialEntries={['/profile/details/a777a5c9-7493-4ad3-ab9c-fdd4fe2e15bf']}>
+          <Link to="/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73">next employee</Link>
           <Routes>
             <Route path="/profile/details/:id" element={<EmployeeProfilePage />} />
           </Routes>
@@ -326,7 +333,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
 
     fireEvent.click(screen.getByText('next employee'));
 
-    // The deactivated employee must be gone at once, not kept on screen until emp-1 arrives.
+    // The deactivated employee must be gone at once, not kept on screen until f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73 arrives.
     expect(screen.queryByTestId('deactivated-notice')).toBeNull();
     expect(screen.getByTestId('employee-detail-loading')).toBeInTheDocument();
 
@@ -336,7 +343,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('renders deactivated notice banner when viewing a deactivated employee and disallows edit', async () => {
-    renderWithProviders('/profile/details/emp-deactivated', 'admin');
+    renderWithProviders('/profile/details/a777a5c9-7493-4ad3-ab9c-fdd4fe2e15bf', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('employee-detail-page')).toBeInTheDocument();
@@ -347,7 +354,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('allows Admin to edit employee details and send optimistic version', async () => {
-    renderWithProviders('/profile/details/emp-1', 'admin');
+    renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('edit-employee-btn')).toBeInTheDocument();
@@ -386,7 +393,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('restricts employee code and email to read-only for HR Manager', async () => {
-    renderWithProviders('/profile/details/emp-1', 'hr_manager');
+    renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'hr_manager');
 
     await waitFor(() => {
       expect(screen.getByTestId('edit-employee-btn')).toBeInTheDocument();
@@ -405,7 +412,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
   });
 
   it('handles 409 concurrency conflict by presenting a conflict banner and reload button', async () => {
-    renderWithProviders('/profile/details/emp-1', 'admin');
+    renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
 
     await waitFor(() => {
       expect(screen.getByTestId('edit-employee-btn')).toBeInTheDocument();
@@ -472,7 +479,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
       expect(inOrder(own)).toBe(true);
       cleanup();
 
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
       expect(inOrder(own)).toBe(true);
     });
@@ -483,7 +490,9 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         await screen.findByRole('heading', { level: 1, name: /Own1 Person/ }),
       ).toBeInTheDocument();
       expect(
-        fetchMock.mock.calls.some(([url]) => String(url).endsWith('/api/v1/employees/emp-001')),
+        fetchMock.mock.calls.some(([url]) =>
+          String(url).endsWith(`/api/v1/employees/${DEMO_USER_EMPLOYEE_IDS.admin}`),
+        ),
       ).toBe(true);
     });
 
@@ -492,7 +501,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
       expect(await screen.findByRole('button', { name: /Edit Phone/i })).toBeInTheDocument();
       cleanup();
 
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
       expect(screen.queryByRole('button', { name: /Edit Phone/i })).toBeNull();
       expect(
@@ -508,13 +517,13 @@ describe('EmployeeProfilePage: the one employee profile', () => {
       expect(screen.queryByTestId('deactivate-employee-btn')).toBeNull();
       cleanup();
 
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
       expect(screen.getByTestId('deactivate-employee-btn')).toBeInTheDocument();
     });
 
     it('lets HR edit but not deactivate', async () => {
-      renderWithProviders('/profile/details/emp-1', 'hr_manager');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'hr_manager');
       await screen.findByTestId('universal-employee-profile');
       expect(screen.getByTestId('edit-employee-btn')).toBeInTheDocument();
       expect(screen.getByTestId('open-change-manager-btn')).toBeInTheDocument();
@@ -522,7 +531,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
     });
 
     it("gives a team lead the org chart but no editing of someone else's record or photo", async () => {
-      renderWithProviders('/profile/details/emp-1', 'team_lead');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'team_lead');
       await screen.findByTestId('universal-employee-profile');
       expect(screen.getByTestId('view-org-chart-btn')).toBeInTheDocument();
       expect(screen.queryByTestId('edit-employee-btn')).toBeNull();
@@ -545,7 +554,9 @@ describe('EmployeeProfilePage: the one employee profile', () => {
       renderWithProviders('/profile/details', 'admin');
       await screen.findByTestId('universal-employee-profile');
       expect(
-        document.querySelector('img[src="/api/v1/employees/emp-001/photo?v=1"]'),
+        document.querySelector(
+          `img[src="/api/v1/employees/${DEMO_USER_EMPLOYEE_IDS.admin}/photo?v=1"]`,
+        ),
       ).not.toBeNull();
       cleanup();
 
@@ -578,7 +589,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
               { status: 200 },
             ),
       );
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
 
       expect(
@@ -594,7 +605,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
     });
 
     it('keeps a deactivated employee read-only for everyone, including Admin', async () => {
-      renderWithProviders('/profile/details/emp-deactivated', 'admin');
+      renderWithProviders('/profile/details/a777a5c9-7493-4ad3-ab9c-fdd4fe2e15bf', 'admin');
       await screen.findByTestId('deactivated-notice');
       expect(screen.queryByTestId('edit-employee-btn')).toBeNull();
       expect(screen.queryByTestId('deactivate-employee-btn')).toBeNull();
@@ -609,7 +620,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
           ? new Response(JSON.stringify({ data: [] }), { status: 200 })
           : new Response(JSON.stringify({ data: withBank }), { status: 200 }),
       );
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
       // One bank section (it used to be repeated inside the account card too)
       expect(screen.getAllByText('Bank Account Details')).toHaveLength(1);
@@ -617,7 +628,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
     });
 
     it('leaves out the bank and identity groups when the API sent none, instead of saying Not provided', async () => {
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
       expect(screen.queryByText('Bank Account Details')).toBeNull();
       expect(screen.queryByText('PAN Number')).toBeNull();
@@ -635,10 +646,15 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         init?: RequestInit,
       ) => Promise<Response>;
       fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) =>
-        String(input).endsWith('/api/v1/employees/emp-004')
+        String(input).endsWith(`/api/v1/employees/${DEMO_USER_EMPLOYEE_IDS.staff}`)
           ? new Response(
               JSON.stringify({
-                data: { ...mockEmployeeStaffView, id: 'emp-004', phone, version },
+                data: {
+                  ...mockEmployeeStaffView,
+                  id: DEMO_USER_EMPLOYEE_IDS.staff,
+                  phone,
+                  version,
+                },
               }),
               { status: 200 },
             )
@@ -669,7 +685,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
     it('uploads your own photo through your own endpoint', async () => {
       const mine = vi
         .spyOn(profileApi, 'uploadMyPhoto')
-        .mockResolvedValue('/api/v1/employees/emp-001/photo?v=2');
+        .mockResolvedValue(`/api/v1/employees/${DEMO_USER_EMPLOYEE_IDS.admin}/photo?v=2`);
       const theirs = vi.spyOn(employeePhotoApi, 'uploadEmployeePhoto');
 
       renderWithProviders('/profile/details', 'admin');
@@ -686,7 +702,7 @@ describe('EmployeeProfilePage: the one employee profile', () => {
       const mine = vi.spyOn(profileApi, 'uploadMyPhoto');
       const theirs = vi
         .spyOn(employeePhotoApi, 'uploadEmployeePhoto')
-        .mockResolvedValue('/api/v1/employees/emp-1/photo?v=2');
+        .mockResolvedValue('/api/v1/employees/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73/photo?v=2');
       const removal = vi
         .spyOn(employeePhotoApi, 'deleteEmployeePhoto')
         .mockResolvedValue(undefined);
@@ -695,26 +711,33 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         init?: RequestInit,
       ) => Promise<Response>;
       fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) =>
-        String(input).endsWith('/api/v1/employees/emp-1')
+        String(input).endsWith('/api/v1/employees/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73')
           ? new Response(
               JSON.stringify({
-                data: { ...mockEmployeeAdminView, photoUrl: '/api/v1/employees/emp-1/photo?v=1' },
+                data: {
+                  ...mockEmployeeAdminView,
+                  photoUrl: '/api/v1/employees/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73/photo?v=1',
+                },
               }),
               { status: 200 },
             )
           : base(input, init),
       );
 
-      renderWithProviders('/profile/details/emp-1', 'admin');
+      renderWithProviders('/profile/details/f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', 'admin');
       await screen.findByTestId('universal-employee-profile');
       const chosen = png();
       fireEvent.change(screen.getByTestId('profile-photo-file-input'), {
         target: { files: [chosen] },
       });
-      await waitFor(() => expect(theirs).toHaveBeenCalledWith('emp-1', chosen));
+      await waitFor(() =>
+        expect(theirs).toHaveBeenCalledWith('f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73', chosen),
+      );
 
       fireEvent.click(screen.getByRole('button', { name: 'Remove Photo' }));
-      await waitFor(() => expect(removal).toHaveBeenCalledWith('emp-1'));
+      await waitFor(() =>
+        expect(removal).toHaveBeenCalledWith('f4f2eb3d-ed23-41d1-8314-6fc9d45a8d73'),
+      );
       expect(mine).not.toHaveBeenCalled();
     });
 
@@ -724,10 +747,15 @@ describe('EmployeeProfilePage: the one employee profile', () => {
         init?: RequestInit,
       ) => Promise<Response>;
       fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) =>
-        String(input).endsWith('/api/v1/employees/emp-004')
-          ? new Response(JSON.stringify({ data: { ...mockDeactivatedEmployee, id: 'emp-004' } }), {
-              status: 200,
-            })
+        String(input).endsWith(`/api/v1/employees/${DEMO_USER_EMPLOYEE_IDS.staff}`)
+          ? new Response(
+              JSON.stringify({
+                data: { ...mockDeactivatedEmployee, id: DEMO_USER_EMPLOYEE_IDS.staff },
+              }),
+              {
+                status: 200,
+              },
+            )
           : base(input, init),
       );
 

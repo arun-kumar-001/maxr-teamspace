@@ -1,4 +1,5 @@
 import { demoOr, isDemoDataEnabled } from '@/lib/demo-data';
+import { DEMO_DIRECTORY_EMPLOYEE_IDS } from '@/lib/demo-ids';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ApiError,
@@ -88,13 +89,13 @@ export const FALLBACK_DESIGNATIONS: DesignationItem[] = [
 ];
 
 export const FALLBACK_MANAGERS: ManagerOption[] = [
-  { id: 'emp-2', name: 'Shagul Hamithu', employeeCode: 'EMP-0001' },
-  { id: 'emp-1', name: 'Mohamed Azad', employeeCode: 'E-002' },
+  { id: DEMO_DIRECTORY_EMPLOYEE_IDS[1], name: 'Shagul Hamithu', employeeCode: 'EMP-0001' },
+  { id: DEMO_DIRECTORY_EMPLOYEE_IDS[0], name: 'Mohamed Azad', employeeCode: 'E-002' },
 ];
 
 export const FALLBACK_EMPLOYEES: EmployeeDirectoryItem[] = [
   {
-    id: 'emp-1',
+    id: DEMO_DIRECTORY_EMPLOYEE_IDS[0],
     employeeCode: 'E-002',
     firstName: 'Mohamed',
     lastName: 'Azad',
@@ -109,7 +110,7 @@ export const FALLBACK_EMPLOYEES: EmployeeDirectoryItem[] = [
     updatedAt: '2023-01-15T09:00:00Z',
   },
   {
-    id: 'emp-2',
+    id: DEMO_DIRECTORY_EMPLOYEE_IDS[1],
     employeeCode: 'EMP-0001',
     firstName: 'Shagul',
     lastName: 'Hamithu',
@@ -124,7 +125,7 @@ export const FALLBACK_EMPLOYEES: EmployeeDirectoryItem[] = [
     updatedAt: '2023-01-01T09:00:00Z',
   },
   {
-    id: 'emp-3',
+    id: DEMO_DIRECTORY_EMPLOYEE_IDS[2],
     employeeCode: 'E008',
     firstName: 'Shajitha Banu',
     lastName: 'Rasul Khan',
@@ -139,7 +140,7 @@ export const FALLBACK_EMPLOYEES: EmployeeDirectoryItem[] = [
     updatedAt: '2023-03-10T09:00:00Z',
   },
   {
-    id: 'emp-4',
+    id: DEMO_DIRECTORY_EMPLOYEE_IDS[3],
     employeeCode: 'E-011',
     firstName: 'Yovtri',
     lastName: 'Galilea',
@@ -154,7 +155,7 @@ export const FALLBACK_EMPLOYEES: EmployeeDirectoryItem[] = [
     updatedAt: '2023-06-01T09:00:00Z',
   },
   {
-    id: 'emp-5',
+    id: DEMO_DIRECTORY_EMPLOYEE_IDS[4],
     employeeCode: 'E-015',
     firstName: 'Jonathan Sebastian',
     lastName: 'Gilbert',
@@ -169,7 +170,7 @@ export const FALLBACK_EMPLOYEES: EmployeeDirectoryItem[] = [
     updatedAt: '2023-08-15T09:00:00Z',
   },
   {
-    id: 'emp-6',
+    id: DEMO_DIRECTORY_EMPLOYEE_IDS[5],
     employeeCode: 'E-016',
     firstName: 'Theresa Christiana',
     lastName: 'An',
