@@ -219,7 +219,7 @@ export function OnDutyTab({
       return records.map((r, idx) => ({
         id: r.id || `rec-${idx}`,
         employeeId: r.employeeId,
-        name: r.employeeName || 'Jane Doe',
+        name: r.employeeName || 'Employee',
         firstName: r.employeeName?.split(' ')[0] || 'Jane',
         lastName: r.employeeName?.split(' ')[1] || 'Doe',
         employeeCode: `EMP-000${idx + 1}`,

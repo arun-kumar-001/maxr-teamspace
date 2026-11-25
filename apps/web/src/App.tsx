@@ -21,6 +21,7 @@ import {
 } from './shell/NavigationBlockerContext';
 import { DashboardRouter } from './dashboards/DashboardRouter';
 import { NotFoundPage } from './shell/NotFoundPage';
+import { PageErrorBoundary } from './shell/PageErrorBoundary';
 import { SetPasswordPage } from './features/employees';
 
 // Each screen is its own chunk, loaded when first visited, so the first load stays small.
@@ -138,7 +139,7 @@ function ShellLayoutInner({ children }: { children: ReactNode }) {
             </div>
           }
         >
-          {children}
+          <PageErrorBoundary resetKey={location.pathname}>{children}</PageErrorBoundary>
         </Suspense>
       </AppShell>
     </RouteGuard>

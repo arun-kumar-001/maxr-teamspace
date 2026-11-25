@@ -629,7 +629,7 @@ export function StaffDashboard() {
 
       {/* 4. Row 1: Four Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-stretch">
-        {/* Card 1: Female Portrait Profile Card (Lora Piterson) with Floating Badge & Lift */}
+        {/* Card 1: Profile card with floating badge & lift */}
         <div
           className="relative rounded-[26px] overflow-hidden shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 ease-out h-64 sm:h-72 w-full group"
           style={{
@@ -657,7 +657,7 @@ export function StaffDashboard() {
           >
             <div>
               <h2 className="text-base font-bold font-display text-white leading-tight drop-shadow-sm">
-                {user?.name || 'Lora Piterson'}
+                {user?.name || 'Employee'}
               </h2>
               <p className="text-xs text-white/80 drop-shadow-sm">
                 {user?.title || 'UX/UI Designer'}
