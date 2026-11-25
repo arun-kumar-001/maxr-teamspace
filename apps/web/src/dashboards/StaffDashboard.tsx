@@ -5,7 +5,17 @@ import type { PayslipRecord } from '../features/payslips/types';
 import { changeTaskStatus, fetchMyTasks } from '../features/tasks/api/tasksApi';
 import type { Task } from '../features/tasks/types';
 import { fetchProjects } from '../features/projects/api/projectsApi';
-import { fetchTodayAttendance } from '../features/attendance/api/attendance';
+import {
+  fetchMyAttendanceHistory,
+  fetchTodayAttendance,
+} from '../features/attendance/api/attendance';
+import {
+  fetchHolidays,
+  fetchMyLeaveBalances,
+  fetchMyLeaveRequests,
+} from '../features/leave/api/leave';
+import { getBasicSettings } from '../features/settings/api/settingsApi';
+import { computeMonthMetrics, type MonthMetrics } from './staff-month-metrics';
 
 const ACTIVE_SESSION_KEY = 'maxr_time_tracker_active_session';
 
@@ -46,6 +56,50 @@ export function StaffDashboard() {
   const [recentPayslips, setRecentPayslips] = useState<PayslipRecord[]>([]);
   const [realTasks, setRealTasks] = useState<Task[]>([]);
   const [projectsCount, setProjectsCount] = useState(0);
+  const [monthMetrics, setMonthMetrics] = useState<MonthMetrics | null>(null);
+  const [leaveBalanceSummary, setLeaveBalanceSummary] = useState<string | null>(null);
+
+  // This month's attendance and leave, and the leave balances, from the server.
+  useEffect(() => {
+    let active = true;
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const monthStart = `${today.slice(0, 7)}-01`;
+
+    void Promise.allSettled([
+      getBasicSettings(),
+      fetchHolidays(now.getFullYear()),
+      fetchMyAttendanceHistory({ startDate: monthStart, endDate: today, pageSize: 100 }),
+      fetchMyLeaveRequests({ status: 'approved', from: monthStart, to: today, pageSize: 100 }),
+    ]).then(([settings, holidays, attendance, leaves]) => {
+      if (!active || settings.status !== 'fulfilled' || attendance.status !== 'fulfilled') return;
+      setMonthMetrics(
+        computeMonthMetrics({
+          today,
+          workDays: settings.value.workWeek.days,
+          holidays: holidays.status === 'fulfilled' ? holidays.value.map((h) => h.date) : [],
+          attendedDates: new Set(attendance.value.data.map((r) => r.workDate)),
+          approvedLeaves: leaves.status === 'fulfilled' ? leaves.value.data : [],
+        }),
+      );
+    });
+
+    void fetchMyLeaveBalances()
+      .then((balances) => {
+        if (!active) return;
+        setLeaveBalanceSummary(
+          balances
+            .map((b) => `${b.name} (${b.remaining} of ${b.allotted + b.carriedForward} days)`)
+            .join(', '),
+        );
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
   const [isCompletedToday, setIsCompletedToday] = useState(false);
 
   useEffect(() => {
@@ -388,7 +442,7 @@ export function StaffDashboard() {
       <div className="sr-only">
         <h1>Staff Member Dashboard</h1>
         <h2>Attendance Session</h2>
-        <p>My Leave Balances: Annual Leave (14 of 18 days), Sick Leave (8 of 10 days)</p>
+        <p>My Leave Balances: {leaveBalanceSummary || 'none set up yet'}</p>
         <p>Recent Payslips (Read-Only)</p>
       </div>
 
@@ -540,7 +594,7 @@ export function StaffDashboard() {
 
       {/* 3. Header Metrics Badges Row */}
       <div className="flex flex-wrap items-center gap-3 sm:gap-5 mb-6 pb-2">
-        {/* Attendance 15% */}
+        {/* Attendance this month, of the working days so far */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
             Attendance
@@ -552,11 +606,11 @@ export function StaffDashboard() {
               color: 'rgb(255, 255, 255)',
             }}
           >
-            15%
+            {monthMetrics?.attendancePct == null ? '—' : `${monthMetrics.attendancePct}%`}
           </span>
         </div>
 
-        {/* Leave 15% */}
+        {/* Leave */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
             Leave
@@ -568,43 +622,7 @@ export function StaffDashboard() {
               color: 'rgb(8, 11, 12)',
             }}
           >
-            15%
-          </span>
-        </div>
-
-        {/* Project time 60% with flowing animated stripes */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
-            Project time
-          </span>
-          <span className="text-xs font-bold" style={{ color: 'rgb(8, 11, 12)' }}>
-            60%
-          </span>
-          <div
-            className="w-28 sm:w-40 h-3.5 rounded-full overflow-hidden border animate-stripe-flow"
-            style={{
-              borderColor: 'rgba(8, 11, 12, 0.15)',
-              background:
-                'repeating-linear-gradient(45deg, rgba(85, 205, 179, 0.35), rgba(85, 205, 179, 0.35) 4px, rgb(255, 255, 255) 4px, rgb(255, 255, 255) 8px)',
-              backgroundSize: '40px 40px',
-            }}
-            title="60% project allocation (real-time active)"
-          />
-        </div>
-
-        {/* Output 10% Plum */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium" style={{ color: 'rgba(8, 11, 12, 0.7)' }}>
-            Output
-          </span>
-          <span
-            className="text-xs font-semibold px-2.5 py-0.5 rounded-full shadow-xs"
-            style={{
-              backgroundColor: 'rgb(73, 53, 72)',
-              color: 'rgb(255, 255, 255)',
-            }}
-          >
-            10%
+            {monthMetrics?.leavePct == null ? '—' : `${monthMetrics.leavePct}%`}
           </span>
         </div>
       </div>
