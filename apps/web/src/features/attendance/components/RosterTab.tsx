@@ -3,7 +3,8 @@ import { Button, KpiCard, Modal } from '../../../components/ui';
 import { fetchMyAttendanceHistory, fetchTeamAttendance } from '../api/attendance';
 import type { AttendanceRecord } from '../types';
 import type { DepartmentItem, EmployeeDirectoryItem } from '../../employees/types';
-import { fetchLeaveCalendar } from '../../leave/api/leave';
+import { fetchHolidays, fetchLeaveCalendar } from '../../leave/api/leave';
+import { isAbsentDay } from '../lib/roster-absence';
 import type { LeaveCalendarEntry } from '../../leave/types';
 import { assignShift, createShift, fetchEmployeeShiftAssignments } from '../../shifts/api/shifts';
 import type { AttendancePolicy, Shift, ShiftAssignment } from '../../shifts/types';
@@ -176,6 +177,7 @@ function resolveEmployeePunch(
   emp: EmployeeDirectoryItem,
   wd: { dateStr: string; isPast: boolean; isToday: boolean; isWeekend: boolean },
   record: AttendanceRecord | undefined,
+  context: { isHoliday: boolean; hasLeave: boolean } = { isHoliday: false, hasLeave: false },
 ): {
   inTime: string;
   outTime: string | null;
@@ -243,7 +245,20 @@ function resolveEmployeePunch(
     }
   }
 
-  // When there is no check-in record, default must be blank ('—') instead of fake times
+  if (
+    isAbsentDay({
+      dateStr: wd.dateStr,
+      isPast: wd.isPast,
+      isWeekend: wd.isWeekend,
+      isHoliday: context.isHoliday,
+      hasLeave: context.hasLeave,
+      joiningDate: emp.joiningDate,
+    })
+  ) {
+    return { inTime: '--:--', outTime: null, status: 'absent', display: 'Absent' };
+  }
+
+  // Today and days that are not working days stay blank ('—') instead of fake times
   return {
     inTime: '',
     outTime: null,
@@ -310,6 +325,7 @@ export function RosterTab({
 
   const [weekRecords, setWeekRecords] = useState<AttendanceRecord[]>(initialRecords);
   const [weekLeaves, setWeekLeaves] = useState<LeaveCalendarEntry[]>(initialLeaves);
+  const [holidayDates, setHolidayDates] = useState<Set<string>>(new Set());
 
   // Sync initialRecords and initialLeaves when passed/updated from parent
   useEffect(() => {
@@ -511,9 +527,17 @@ export function RosterTab({
         ? fetchTeamAttendance({ startDate: start, endDate: end, pageSize: 300 })
         : fetchMyAttendanceHistory({ startDate: start, endDate: end, pageSize: 150 });
 
-      void Promise.allSettled([attPromise, fetchLeaveCalendar(start, end)]).then(
-        ([attRes, leaveRes]) => {
+      const years = [...new Set([Number(start.slice(0, 4)), Number(end.slice(0, 4))])];
+      const holidayPromise = Promise.all(years.map((y) => fetchHolidays(y))).then((lists) =>
+        lists.flat(),
+      );
+
+      void Promise.allSettled([attPromise, fetchLeaveCalendar(start, end), holidayPromise]).then(
+        ([attRes, leaveRes, holidayRes]) => {
           if (!active) return;
+          if (holidayRes.status === 'fulfilled') {
+            setHolidayDates(new Set(holidayRes.value.map((h) => h.date)));
+          }
           if (attRes.status === 'fulfilled') {
             setWeekRecords(attRes.value.data || []);
           }
@@ -1131,7 +1155,11 @@ export function RosterTab({
                               : undefined);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, wd.dateStr);
                           const cellConfig = getShiftCellConfig(shift, !!leave, wd.isWeekend);
-                          const punch = resolveEmployeePunch(emp, wd, record);
+                          const isHoliday = holidayDates.has(wd.dateStr);
+                          const punch = resolveEmployeePunch(emp, wd, record, {
+                            isHoliday,
+                            hasLeave: !!leave,
+                          });
 
                           return (
                             <td
@@ -1147,6 +1175,10 @@ export function RosterTab({
                               ) : cellConfig.isLeave ? (
                                 <div className="h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold select-none">
                                   On Leave
+                                </div>
+                              ) : isHoliday && punch.status === 'empty' ? (
+                                <div className="h-8 w-full max-w-[104px] mx-auto rounded-lg flex items-center justify-center bg-surface-muted/60 border border-border/70 text-text-muted text-xs font-semibold select-none">
+                                  Holiday
                                 </div>
                               ) : (
                                 <button
@@ -1173,9 +1205,11 @@ export function RosterTab({
                                         ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
                                         : punch.status === 'late'
                                           ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
-                                          : punch.status === 'empty'
-                                            ? 'bg-surface-muted/30 text-text-muted/60 border border-border/60 hover:bg-surface-muted/50'
-                                            : 'bg-surface-muted/60 text-text border border-border/80 hover:bg-surface-muted'
+                                          : punch.status === 'absent'
+                                            ? 'bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100/70'
+                                            : punch.status === 'empty'
+                                              ? 'bg-surface-muted/30 text-text-muted/60 border border-border/60 hover:bg-surface-muted/50'
+                                              : 'bg-surface-muted/60 text-text border border-border/80 hover:bg-surface-muted'
                                   } ${
                                     canManageRoster
                                       ? 'cursor-pointer hover:shadow-xs'
@@ -1295,7 +1329,11 @@ export function RosterTab({
                               : undefined);
                           const shift = resolveShiftForEmployeeOnDate(emp.id, d.dateStr);
                           const cellConfig = getShiftCellConfig(shift, !!leave, d.isWeekend);
-                          const punch = resolveEmployeePunch(emp, d, record);
+                          const isHoliday = holidayDates.has(d.dateStr);
+                          const punch = resolveEmployeePunch(emp, d, record, {
+                            isHoliday,
+                            hasLeave: !!leave,
+                          });
 
                           if (!d.isWeekend && !leave) {
                             const h = shift ? parseShiftHours(shift.startTime, shift.endTime) : 8;
@@ -1312,6 +1350,14 @@ export function RosterTab({
                               {cellConfig.isOff ? (
                                 <div className="h-[34px] w-[58px] mx-auto rounded-lg flex items-center justify-center text-[10px] font-semibold text-slate-300">
                                   Off
+                                </div>
+                              ) : cellConfig.isLeave ? (
+                                <div className="h-[34px] w-[58px] mx-auto rounded-lg flex items-center justify-center bg-amber-50 border border-amber-200/80 text-[10px] font-semibold text-amber-900 select-none">
+                                  Leave
+                                </div>
+                              ) : isHoliday && punch.status === 'empty' ? (
+                                <div className="h-[34px] w-[58px] mx-auto rounded-lg flex items-center justify-center bg-surface-muted/60 border border-border/70 text-[10px] font-semibold text-text-muted select-none">
+                                  Hol
                                 </div>
                               ) : (
                                 <button
@@ -1334,9 +1380,11 @@ export function RosterTab({
                                         ? 'bg-primary-soft text-primary-ink border border-primary-strong/40 hover:bg-primary-soft/90'
                                         : punch.status === 'late'
                                           ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100/70'
-                                          : punch.status === 'empty'
-                                            ? 'bg-surface-muted/30 text-text-muted/60 border border-border/60'
-                                            : 'bg-surface-muted/60 text-text border border-border/80'
+                                          : punch.status === 'absent'
+                                            ? 'bg-rose-50 text-rose-700 border border-rose-200/80'
+                                            : punch.status === 'empty'
+                                              ? 'bg-surface-muted/30 text-text-muted/60 border border-border/60'
+                                              : 'bg-surface-muted/60 text-text border border-border/80'
                                   } ${
                                     canManageRoster
                                       ? 'cursor-pointer hover:scale-105 hover:shadow-xs'
@@ -1347,7 +1395,9 @@ export function RosterTab({
                                     ? 'In'
                                     : punch.status === 'empty'
                                       ? '—'
-                                      : punch.inTime}
+                                      : punch.status === 'absent'
+                                        ? 'AB'
+                                        : punch.inTime}
                                 </button>
                               )}
                             </td>

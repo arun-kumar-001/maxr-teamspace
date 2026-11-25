@@ -84,9 +84,8 @@ describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
     const timeCells = screen.getAllByRole('button').filter((b) => b.textContent?.includes('–'));
     expect(timeCells.length).toBeGreaterThan(0);
 
-    // Verify empty/unrecorded days are blank (em-dash '—') without fake default punches
-    const blankCells = screen.getAllByRole('button').filter((b) => b.textContent === '—');
-    expect(blankCells.length).toBeGreaterThan(0);
+    // A past working day with no record is Absent (not blank), and no fake punch is invented
+    expect(screen.getAllByText('Absent').length).toBeGreaterThan(0);
 
     // Verify weekend off badges are displayed cleanly
     const offBadges = screen.getAllByText('Off');
@@ -95,5 +94,22 @@ describe('RosterTab Compact Grid & Real-Time Check-In/Out Display', () => {
     // Verify table structure has proper accessible label
     const table = screen.getByLabelText('Attendance Shift Roster Grid');
     expect(table).toBeInTheDocument();
+  });
+
+  it('keeps days that have not happened yet blank instead of marking them absent', () => {
+    render(
+      <RosterTab
+        employees={mockEmployees}
+        departments={mockDepartments}
+        shifts={[]}
+        selectedDate="2099-01-06"
+        initialRecords={[]}
+        canManageRoster={true}
+      />,
+    );
+
+    expect(screen.queryByText('Absent')).toBeNull();
+    const blankCells = screen.getAllByRole('button').filter((b) => b.textContent === '—');
+    expect(blankCells.length).toBeGreaterThan(0);
   });
 });
