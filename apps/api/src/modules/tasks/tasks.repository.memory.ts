@@ -47,6 +47,7 @@ export class MemoryTasksRepository implements ITasksRepository {
       assigneeName: this.name(input.assigneeEmployeeId),
       assignerEmployeeId: input.assignerEmployeeId,
       assignerName: this.name(input.assignerEmployeeId),
+      assignerRole: input.assignerEmployeeId === input.assigneeEmployeeId ? 'Staff' : 'Team Lead',
       status: 'todo',
       priority: input.priority,
       dueDate: input.dueDate,

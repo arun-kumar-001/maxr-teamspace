@@ -1,5 +1,9 @@
 import type { Task, TaskStatus } from '../types';
-import { TASK_STATUS_LABELS, TASK_TRANSITIONS } from '../types';
+import {
+  TASK_STATUS_LABELS,
+  TASK_TRANSITIONS,
+  formatTaskAssignmentInfo,
+} from '../types';
 import { TaskPriorityBadge } from './TaskPriorityBadge';
 import { EmployeeAvatar } from '../../employees/components/EmployeeAvatar';
 import { formatRelativeTaskDue, formatTaskDueDate, formatTaskCreated } from './TaskCard';
@@ -26,14 +30,6 @@ export function CompletedTasksCard({
   isAdmin = false,
   className = '',
 }: CompletedTasksCardProps) {
-  const getInitials = (name: string) =>
-    name
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join('');
-
   return (
     <div
       className={`w-full min-w-0 bg-surface rounded-card border border-border border-t-4 border-t-emerald-600 shadow-card p-3.5 sm:p-5 flex flex-col gap-3 transition-all ${className}`}
@@ -79,6 +75,7 @@ export function CompletedTasksCard({
               return true;
             });
 
+            const assignmentInfo = formatTaskAssignmentInfo(task, currentEmployeeId);
             const dueRelative = formatRelativeTaskDue(task.dueDate, true);
             const dueFormatted = formatTaskDueDate(task.dueDate);
             const createdFormatted = formatTaskCreated(task.createdAt);
@@ -96,19 +93,45 @@ export function CompletedTasksCard({
                 }}
                 tabIndex={0}
                 role="button"
-                aria-label={`Completed Task: ${task.title}. Priority: ${task.priority}.`}
+                aria-label={`Completed Task: ${task.title}. ${assignmentInfo.typeLabel}. Priority: ${task.priority}.`}
                 data-testid={`task-card-${task.id}`}
                 className="p-3.5 sm:p-4 hover:bg-surface-muted/40 transition-colors cursor-pointer group flex flex-col gap-2.5 focus:outline-none focus:ring-1 focus:ring-primary-strong"
               >
-                {/* Row Top: Project Badge + Priority + Status */}
+                {/* Row Top: Task Type Badge + Project + Priority + Status */}
                 <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-teal-50 text-teal-800 border border-teal-200/80 truncate max-w-[160px]">
+                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                     <span
-                      className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span className="truncate">{projectName}</span>
-                  </span>
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold select-none ${
+                        assignmentInfo.isSelf
+                          ? 'bg-primary-soft text-primary-ink border border-primary-strong/20'
+                          : 'bg-[#F4F1F4] text-[#493548] border border-[#493548]/20'
+                      }`}
+                      data-testid={`task-type-badge-${task.id}`}
+                    >
+                      {assignmentInfo.isSelf ? (
+                        <svg className="w-3 h-3 text-primary-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 text-[#493548]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                      )}
+                      <span>{assignmentInfo.typeLabel}</span>
+                    </span>
+
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-medium bg-surface-muted text-text-muted border border-border/80 truncate max-w-[140px]">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{projectName}</span>
+                    </span>
+                  </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <TaskPriorityBadge priority={task.priority} />
@@ -176,23 +199,34 @@ export function CompletedTasksCard({
                   </div>
                 </div>
 
-                {/* Assignee & Progress */}
+                {/* Assignment & Progress */}
                 <div className="flex flex-col gap-2 pt-2 border-t border-border/60">
-                  <div className="flex items-center justify-between gap-1.5 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
                     <div
                       className="flex items-center gap-2 min-w-0"
-                      title={`Assigned to ${task.assigneeName}${
-                        task.assignerName ? ` · Assigned by ${task.assignerName}` : ''
-                      }`}
+                      title={`${assignmentInfo.attributionPrefix} ${assignmentInfo.displayName}`}
                     >
                       <EmployeeAvatar
-                        name={task.assigneeName}
-                        employeeId={task.assigneeEmployeeId}
-                        initials={getInitials(task.assigneeName)}
+                        name={assignmentInfo.avatarName}
+                        employeeId={assignmentInfo.avatarEmployeeId}
                         decorative
-                        className="w-6 h-6 border text-[10px] font-bold shadow-2xs ring-1 ring-white bg-teal-100 text-teal-800 border-teal-200"
+                        className="w-6 h-6 border text-[10px] font-bold shadow-2xs ring-1 ring-white"
                       />
-                      <span className="font-medium text-text text-[11.5px] truncate">
+                      <div className="flex items-center gap-1 min-w-0 text-[11px] truncate">
+                        <span className="text-text-subtle font-medium shrink-0">
+                          {assignmentInfo.attributionPrefix}:
+                        </span>
+                        <span className="font-semibold text-text truncate">
+                          {assignmentInfo.displayName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 min-w-0 text-[11px] truncate">
+                      <span className="text-text-subtle font-medium shrink-0">
+                        Assignee:
+                      </span>
+                      <span className="font-semibold text-text truncate">
                         {task.assigneeName}
                       </span>
                     </div>

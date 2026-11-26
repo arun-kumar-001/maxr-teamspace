@@ -20,12 +20,14 @@ const LEGAL: Array<[TaskStatus, TaskStatus]> = [
   ['in_progress', 'blocked'],
   ['in_review', 'in_progress'],
   ['in_review', 'completed'],
+  ['in_review', 'blocked'],
   ['blocked', 'in_progress'],
+  ['blocked', 'in_review'],
   ['completed', 'in_progress'],
 ];
 
 describe('the task transition table (D-14)', () => {
-  it('is exactly the eight moves of the decision', () => {
+  it('is exactly the ten moves of the decision', () => {
     const all = TASK_STATUSES.flatMap((from) => TASK_TRANSITIONS[from].map((to) => [from, to]));
     expect(all.map((move) => move.join('>')).sort()).toEqual(
       LEGAL.map((move) => move.join('>')).sort(),
@@ -73,9 +75,17 @@ describe('the task transition table (D-14)', () => {
     expect(checkTransition('completed', 'in_progress', admin)).toEqual({ ok: true });
   });
 
-  it('lets someone who assigned a task to themselves do all of it', () => {
-    expect(checkTransition('in_review', 'completed', selfAssigned)).toEqual({ ok: true });
-    expect(checkTransition('completed', 'in_progress', selfAssigned)).toEqual({ ok: true });
+  it('requires an Admin to complete or reopen a self-assigned task', () => {
+    expect(checkTransition('in_review', 'completed', selfAssigned)).toMatchObject({
+      ok: false,
+      reason: 'forbidden',
+    });
+    expect(checkTransition('completed', 'in_progress', selfAssigned)).toMatchObject({
+      ok: false,
+      reason: 'forbidden',
+    });
+    expect(checkTransition('in_review', 'completed', admin)).toEqual({ ok: true });
+    expect(checkTransition('completed', 'in_progress', admin)).toEqual({ ok: true });
   });
 
   it('refuses a stranger everything, and says nothing about which moves are legal', () => {

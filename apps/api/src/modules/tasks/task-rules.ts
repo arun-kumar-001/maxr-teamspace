@@ -8,8 +8,8 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 export const TASK_TRANSITIONS: Readonly<Record<TaskStatus, readonly TaskStatus[]>> = {
   todo: ['in_progress'],
   in_progress: ['todo', 'in_review', 'blocked'],
-  in_review: ['in_progress', 'completed'],
-  blocked: ['in_progress'],
+  in_review: ['in_progress', 'completed', 'blocked'],
+  blocked: ['in_progress', 'in_review'],
   completed: ['in_progress'],
 };
 
@@ -27,7 +27,8 @@ export type TransitionVerdict =
  * Whether `party` may move a task from `from` to `to` (D-14).
  * Only the assignee, the assigner and an Admin may move a task at all. Of those, only the
  * assigner or an Admin may complete a task or reopen a completed one; the assignee moves it to
- * review. The rights are checked first so a stranger learns nothing about legal moves.
+ * review. Employees cannot directly complete tasks (self-tasks or assigned tasks); an Admin must approve.
+ * The rights are checked first so a stranger learns nothing about legal moves.
  */
 export function checkTransition(
   from: TaskStatus,
@@ -45,13 +46,37 @@ export function checkTransition(
       message: `A task that is ${from} cannot become ${to}; it can become: ${allowed}`,
     };
   }
-  const closesOrReopens = to === 'completed' || from === 'completed';
-  if (closesOrReopens && !party.isAssigner && !party.isAdmin) {
-    return {
-      ok: false,
-      reason: 'forbidden',
-      message: 'Only the person who assigned the task, or an Admin, can complete or reopen it',
-    };
+  if (to === 'completed') {
+    if (party.isAssignee && !party.isAdmin) {
+      return {
+        ok: false,
+        reason: 'forbidden',
+        message: 'Employees cannot complete tasks directly; an Administrator must review and approve it',
+      };
+    }
+    if (!party.isAssigner && !party.isAdmin) {
+      return {
+        ok: false,
+        reason: 'forbidden',
+        message: 'Only the person who assigned the task, or an Admin, can complete it',
+      };
+    }
+  }
+  if (from === 'completed') {
+    if (party.isAssignee && !party.isAdmin) {
+      return {
+        ok: false,
+        reason: 'forbidden',
+        message: 'Employees cannot reopen a completed task directly',
+      };
+    }
+    if (!party.isAssigner && !party.isAdmin) {
+      return {
+        ok: false,
+        reason: 'forbidden',
+        message: 'Only the person who assigned the task, or an Admin, can complete or reopen it',
+      };
+    }
   }
   return { ok: true };
 }

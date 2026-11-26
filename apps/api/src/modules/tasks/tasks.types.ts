@@ -14,6 +14,7 @@ export interface Task {
   assigneeName: string;
   assignerEmployeeId: string;
   assignerName: string;
+  assignerRole?: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   /** `YYYY-MM-DD`, a calendar date with no timezone. */

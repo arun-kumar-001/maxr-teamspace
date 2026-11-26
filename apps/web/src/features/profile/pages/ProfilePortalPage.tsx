@@ -1377,10 +1377,13 @@ export function ProfilePortalPage() {
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         mode="create"
+        isStaff={true}
+        defaultAssigneeId={user?.employeeId}
         onSubmitCreate={async (input) => {
           const created = await createTask(input);
           setMyTasks((prev) => [created, ...prev]);
           setActiveTasksCount((prev) => prev + 1);
+          return created;
         }}
       />
     </div>

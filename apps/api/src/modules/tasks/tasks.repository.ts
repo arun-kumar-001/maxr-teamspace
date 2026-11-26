@@ -54,6 +54,7 @@ interface Row {
   assignee_name: string;
   assigner_employee_id: string;
   assigner_name: string;
+  assigner_role?: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
@@ -75,6 +76,7 @@ const toTask = (row: Row): Omit<Task, 'isOverdue'> => ({
   assigneeName: row.assignee_name,
   assignerEmployeeId: row.assigner_employee_id,
   assignerName: row.assigner_name,
+  assignerRole: row.assigner_role ?? null,
   status: row.status,
   priority: row.priority,
   dueDate: row.due_date,
@@ -91,6 +93,19 @@ const SELECT = `
   SELECT t.id, t.title, t.description, t.project_id, p.name AS project_name,
          t.assignee_employee_id, a.first_name || ' ' || a.last_name AS assignee_name,
          t.assigner_employee_id, r.first_name || ' ' || r.last_name AS assigner_name,
+         (
+           SELECT CASE 
+             WHEN ro.name = 'admin' THEN 'Admin'
+             WHEN ro.name = 'team_lead' THEN 'Team Lead'
+             WHEN ro.name = 'hr_manager' THEN 'HR Manager'
+             ELSE 'Staff'
+           END
+           FROM roles ro
+           JOIN user_roles ur ON ur.role_id = ro.id
+           JOIN users u ON u.id = ur.user_id
+           WHERE u.employee_id = t.assigner_employee_id
+           LIMIT 1
+         ) AS assigner_role,
          t.status, t.priority, t.due_date::text AS due_date, t.is_daily,
          t.daily_last_done_date::text AS daily_last_done_date, t.completed_at, t.version,
          t.created_at, t.updated_at

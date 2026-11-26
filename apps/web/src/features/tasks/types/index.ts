@@ -9,8 +9,8 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 export const TASK_TRANSITIONS: Readonly<Record<TaskStatus, readonly TaskStatus[]>> = {
   todo: ['in_progress'],
   in_progress: ['todo', 'in_review', 'blocked'],
-  in_review: ['in_progress', 'completed'],
-  blocked: ['in_progress'],
+  in_review: ['in_progress', 'completed', 'blocked'],
+  blocked: ['in_progress', 'in_review'],
   completed: ['in_progress'],
 };
 
@@ -33,13 +33,13 @@ export const TASK_TRANSITION_PATHS: Readonly<
     in_progress: ['in_progress'],
     completed: ['completed'],
     todo: ['in_progress', 'todo'],
-    blocked: ['in_progress', 'blocked'],
+    blocked: ['blocked'],
   },
   blocked: {
     in_progress: ['in_progress'],
+    in_review: ['in_review'],
     todo: ['in_progress', 'todo'],
-    in_review: ['in_progress', 'in_review'],
-    completed: ['in_progress', 'in_review', 'completed'],
+    completed: ['in_review', 'completed'],
   },
   completed: {
     in_progress: ['in_progress'],
@@ -74,6 +74,7 @@ export interface Task {
   assigneeName: string;
   assignerEmployeeId: string;
   assignerName: string;
+  assignerRole?: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate: string | null;
@@ -91,10 +92,57 @@ export interface Task {
   updatedAt: string;
 }
 
+export type TaskType = 'general' | 'self';
+
+export function getTaskType(task: Task): TaskType {
+  return task.assignerEmployeeId === task.assigneeEmployeeId ? 'self' : 'general';
+}
+
+export interface TaskAssignmentInfo {
+  isSelf: boolean;
+  typeLabel: 'Self Task' | 'General Task';
+  attributionPrefix: 'Created by' | 'Assigned by';
+  displayName: string;
+  avatarEmployeeId: string;
+  avatarName: string;
+  roleLabel: string;
+}
+
+export function formatTaskAssignmentInfo(
+  task: Task,
+  currentEmployeeId?: string,
+): TaskAssignmentInfo {
+  const isSelf = task.assignerEmployeeId === task.assigneeEmployeeId;
+  const isMe = Boolean(currentEmployeeId && task.assignerEmployeeId === currentEmployeeId);
+
+  if (isSelf) {
+    return {
+      isSelf: true,
+      typeLabel: 'Self Task',
+      attributionPrefix: 'Created by',
+      displayName: isMe ? `${task.assignerName} (You)` : task.assignerName,
+      avatarEmployeeId: task.assignerEmployeeId,
+      avatarName: task.assignerName,
+      roleLabel: 'Self',
+    };
+  }
+
+  const role = task.assignerRole || 'Team Lead';
+  return {
+    isSelf: false,
+    typeLabel: 'General Task',
+    attributionPrefix: 'Assigned by',
+    displayName: `${task.assignerName} (${role})`,
+    avatarEmployeeId: task.assignerEmployeeId,
+    avatarName: task.assignerName,
+    roleLabel: role,
+  };
+}
+
 export interface CreateTaskInput {
   title: string;
   description?: string;
-  assigneeEmployeeId: string;
+  assigneeEmployeeId?: string;
   priority?: TaskPriority;
   dueDate?: string;
   projectId?: string;

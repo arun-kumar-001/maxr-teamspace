@@ -118,6 +118,16 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
       ? crypto.randomUUID()
       : `task-idemp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+  const sanitizedBody = {
+    title: input.title.trim(),
+    description: input.description?.trim() || undefined,
+    assigneeEmployeeId: input.assigneeEmployeeId || undefined,
+    priority: input.priority || 'medium',
+    dueDate: input.dueDate || undefined,
+    projectId: input.projectId || undefined,
+    isDaily: Boolean(input.isDaily),
+  };
+
   const res = await withAuthRetry(() =>
     apiFetch('/api/v1/tasks', {
       method: 'POST',
@@ -125,7 +135,7 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
         'Content-Type': 'application/json',
         'Idempotency-Key': idempotencyKey,
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify(sanitizedBody),
     }),
   );
 
@@ -136,9 +146,9 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
       description: input.description ?? null,
       projectId: input.projectId ?? null,
       projectName: null,
-      assigneeEmployeeId: input.assigneeEmployeeId,
+      assigneeEmployeeId: input.assigneeEmployeeId || 'me',
       assigneeName: 'Me',
-      assignerEmployeeId: input.assigneeEmployeeId,
+      assignerEmployeeId: input.assigneeEmployeeId || 'me',
       assignerName: 'Me',
       status: 'todo',
       priority: input.priority ?? 'medium',

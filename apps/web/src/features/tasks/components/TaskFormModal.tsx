@@ -240,8 +240,8 @@ export function TaskFormModal({
     setServerError(null);
 
     const targetAssigneeId = isStaffUser
-      ? effectiveEmployeeId || user?.employeeId || assigneeId
-      : assigneeId;
+      ? effectiveEmployeeId || user?.employeeId || assigneeId || undefined
+      : assigneeId || undefined;
 
     try {
       if (mode === 'create') {
@@ -264,7 +264,7 @@ export function TaskFormModal({
         const input: Omit<UpdateTaskInput, 'version'> = {
           title: title.trim(),
           description: description.trim() || null,
-          assigneeEmployeeId: targetAssigneeId,
+          assigneeEmployeeId: targetAssigneeId || undefined,
           priority,
           dueDate: dueDate || null,
           projectId: projectId || null,
